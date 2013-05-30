@@ -10,3 +10,4 @@ Flocking forms the core of the self-organization methods used in these algorithm
 I would be very interested in discussing or collaborating with anyone interested in these aspects of neural network learning, and machine learning in general.  My email address is mark@markwhite.name
 
 Mark White
+Mark@MarkWhite.name
