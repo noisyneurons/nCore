@@ -1,7 +1,7 @@
 nCore -- an artificial neural network research library
 ======================================================
 
-This library is under continuous development.  The goal is to create artificial neural network algorithms that generalize extremely well and learn relatively quickly -- by using a combination of flocking (i.e., a form of clustering) and backpropagation of both (1) output error and (2) flocking error.  It is hoped that such algorithms will be particularly useful for training deep neural networks (i.e., multiple hidden layers).
+This library is currently under continuous development.  The goal is to create artificial neural network algorithms that generalize extremely well and learn relatively quickly -- by using a combination of flocking (i.e., a form of clustering) and backpropagation of both (1) output error and (2) flocking error.  It is hoped that such algorithms will be particularly useful for training deep neural networks (i.e., multiple hidden layers).
 
 The study of the most fundamental processes involved in the formation of analogies is also a particularly optimistic goal for this project.  
 
