@@ -137,7 +137,7 @@ puts network
 
 ############################### train ...
 trainingSequence = TrainingSequence.create(network, args)
-theTrainer = SimpleAdjustableLearningRateTrainerMultiFlockIterations.new(trainingSequence, network, args)
+theTrainer = SimpleAdjustableLearningRateTrainer.new(trainingSequence, network, args)
 
 arrayOfNeuronsForIOPlots = nil
 lastEpoch, lastTrainingMSE, dPrimes = theTrainer.simpleLearningWithFlocking(examples, arrayOfNeuronsForIOPlots)

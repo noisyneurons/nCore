@@ -3,7 +3,6 @@
 
 require_relative 'Utilities'
 
-
 class AbstractTrainer
   attr_accessor :trainingSequence, :minMSE, :maxNumEpochs, :examples, :dataArray, :args,
                 :numberOfExamples, :dataStoreManager,
@@ -309,73 +308,7 @@ class AbstractTrainer
   # end
 end
 
-class SimplestNetworkTrainer < AbstractTrainer # Used for main: "SimplestFlockingDemo2.rb"
-
-  def postInitialize
-    @allNeuronsInOneArray = network.allNeuronsInOneArray
-    @inputLayer = network.inputLayer
-    @outputLayer = network.outputLayer
-    @theBiasNeuron = network.theBiasNeuron
-  end
-
-  def hiddenLayer
-    STDERR.puts "ERROR: Access to hiddenLayer has been attempted"
-  end
-
-  def hiddenLayer1
-    STDERR.puts "ERROR: Access to hiddenLayer1 has been attempted"
-  end
-
-  protected
-
-  def step1NameTrainingGroupsAndLearningRates
-    # PHASE 1   -----   Adaption to OUTPUT Error  ------
-    self.neuronsWithInputLinks = outputLayer
-    setUniversalNeuronGroupNames
-    self.neuronsToAdaptToOutputError = outputLayer
-    self.learningRateNoFlockPhase1 = args[:learningRateNoFlockPhase1]
-
-    # PHASE 2 -----   Adaption to FLOCKING Error  -------
-    self.neuronsCreatingFlockingError = outputLayer
-    self.neuronsAdaptingToLocalFlockingError = outputLayer
-    self.neuronsAdaptingToBackPropedFlockingError = []
-    self.neuronsWhoseClustersNeedToBeSeeded = neuronsCreatingFlockingError
-    self.learningRateFlockPhase2 = args[:learningRateLocalFlockPhase2]
-  end
-end
-
-class SimpleAdjustableLearningRateTrainer < SimplestNetworkTrainer
-
-  def postInitialize
-    @allNeuronsInOneArray = network.allNeuronsInOneArray
-    @inputLayer = network.inputLayer
-    @outputLayer = network.outputLayer
-    @theBiasNeuron = network.theBiasNeuron
-    @learningRateTuner = LearningRateTuner.new(outputLayer)
-  end
-
-  ###------------   Adaption to OUTPUT Error  ------------------------------
-  def noFlockingAdaptNetwork
-    noFlockingMeasureAndStoreAllNeuralResponses
-    neuronsToAdaptToOutputError.each { |aNeuron| aNeuron.saveDeltaWAccumulated }
-    #neuronsToAdaptToOutputError.each { |aNeuron| aNeuron.addAccumulationToWeight }
-    mse = logNetworksResponses(outputLayer)
-    [mse, dPrimes]
-  end
-
-  def flockingOnlyAdaptNetwork(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError, neuronsAdaptingToBackPropedFlockingError)
-    flockingOnlyMeasureAndStoreAllNeuralResponses(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError, neuronsAdaptingToBackPropedFlockingError)
-    learningRateTuner.printInfo
-    learningRateTuner.tune
-
-    (neuronsAdaptingToLocalFlockingError + neuronsAdaptingToBackPropedFlockingError).each { |aNeuron| aNeuron.addAccumulationToWeight }
-    dPrimes = recenterEachNeuronsClusters(neuronsCreatingFlockingError)
-    mse = logNetworksResponses(neuronsCreatingFlockingError)
-    [mse, dPrimes]
-  end
-end
-
-class SimpleAdjustableLearningRateTrainerMultiFlockIterations < SimplestNetworkTrainer
+class SimpleAdjustableLearningRateTrainer < AbstractTrainer
 
   def postInitialize
     @allNeuronsInOneArray = network.allNeuronsInOneArray
@@ -399,54 +332,25 @@ class SimpleAdjustableLearningRateTrainerMultiFlockIterations < SimplestNetworkT
     learningRateTuner.tune
 
     (neuronsAdaptingToLocalFlockingError + neuronsAdaptingToBackPropedFlockingError).each { |aNeuron| aNeuron.addAccumulationToWeight }
-    dPrimes = recenterEachNeuronsClusters(neuronsCreatingFlockingError)
+    dPrimes = recenterEachNeuronsClusters(neuronsCreatingFlockingError) # TODO this recenter is largely redundant to that in the 'stepLearning' routine
     mse = logNetworksResponses(neuronsCreatingFlockingError)
     [mse, dPrimes]
   end
 
-  def flockingOnlyAdaptNetworkFixedFlockingGain(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError,
-      neuronsAdaptingToBackPropedFlockingError)
-    flockingOnlyMeasureAndStoreAllNeuralResponsesFixedFlockingGain(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError,
-                                                                   neuronsAdaptingToBackPropedFlockingError)
-
-    (neuronsAdaptingToLocalFlockingError + neuronsAdaptingToBackPropedFlockingError).each { |aNeuron| aNeuron.addAccumulationToWeight }
-    dPrimes = recenterEachNeuronsClusters(neuronsCreatingFlockingError)
-    mse = logNetworksResponses(neuronsCreatingFlockingError)
-    [mse, dPrimes]
-  end
-
-  def flockingOnlyMeasureAndStoreAllNeuralResponsesFixedFlockingGain(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError, neuronsAdaptingToBackPropedFlockingError)
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated } # TODO some redundancy here -- particularly when placed immediately after "to prior output error adapting code
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures } # TODO some redundancy here --particularly when placed immediately after "to prior output error adapting code
-
-    numberOfExamples.times do |exampleNumber|
-      allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-      neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
-      outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
-      (outputLayer - neuronsCreatingFlockingError).each { |aNeuron| aNeuron.recordResponsesForExample }
-
-      neuronsCreatingFlockingError.each do |aNeuron|
-        dataRecorded = aNeuron.recordResponsesForExample
-        localFlockingError = aNeuron.calcLocalFlockingError
-        dataRecorded[:localFlockingError] = localFlockingError
-        aNeuron.recordResponsesForExampleToDB(dataRecorded)
-      end
-
-      unless (neuronsAdaptingToLocalFlockingError.empty?)
-        neuronsAdaptingToLocalFlockingError.each { |aNeuron| aNeuron.calcDeltaWsAndAccumulate { |errorFromUpperLayers, localFlockError| aNeuron.layerGain * aNeuron.flockingGain * localFlockError } }
-      else
-        neuronsCreatingFlockingError.each { |aNeuron| aNeuron.backPropagate { |errorFromUpperLayers, localFlockError| localFlockError } }
-        neuronsAdaptingToBackPropedFlockingError.each { |aNeuron| aNeuron.backPropagate } # TODO So far, we are temporarily assuming that bp-flocking error only has to be bp to immediately preceding layer!!
-        neuronsAdaptingToBackPropedFlockingError.each { |aNeuron| aNeuron.calcDeltaWsAndAccumulate }
-      end
-    end
-  end
-
-
-  #def flockingOnlyMeasureAndStoreAllNeuralResponses(neuronsCreatingFlockingError,
-  #    neuronsAdaptingToLocalFlockingError, neuronsAdaptingToBackPropedFlockingError)
-  #  neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }     # TODO some redundancy here -- to prior output error adapting code
-  #  neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }   # TODO some redundancy here -- to prior output error adapting code
+  #def flockingOnlyAdaptNetworkFixedFlockingGain(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError,
+  #    neuronsAdaptingToBackPropedFlockingError)
+  #  flockingOnlyMeasureAndStoreAllNeuralResponsesFixedFlockingGain(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError,
+  #                                                                 neuronsAdaptingToBackPropedFlockingError)
+  #
+  #  (neuronsAdaptingToLocalFlockingError + neuronsAdaptingToBackPropedFlockingError).each { |aNeuron| aNeuron.addAccumulationToWeight }
+  #  dPrimes = recenterEachNeuronsClusters(neuronsCreatingFlockingError)
+  #  mse = logNetworksResponses(neuronsCreatingFlockingError)
+  #  [mse, dPrimes]
+  #end
+  #
+  #def flockingOnlyMeasureAndStoreAllNeuralResponsesFixedFlockingGain(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError, neuronsAdaptingToBackPropedFlockingError)
+  #  neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated } # TODO some redundancy here -- particularly when placed immediately after "to prior output error adapting code
+  #  neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures } # TODO some redundancy here --particularly when placed immediately after "to prior output error adapting code
   #
   #  numberOfExamples.times do |exampleNumber|
   #    allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
@@ -462,7 +366,7 @@ class SimpleAdjustableLearningRateTrainerMultiFlockIterations < SimplestNetworkT
   #    end
   #
   #    unless (neuronsAdaptingToLocalFlockingError.empty?)
-  #      neuronsAdaptingToLocalFlockingError.each { |aNeuron| aNeuron.calcDeltaWsAndAccumulate { |errorFromUpperLayers, localFlockError| localFlockError } }
+  #      neuronsAdaptingToLocalFlockingError.each { |aNeuron| aNeuron.calcDeltaWsAndAccumulate { |errorFromUpperLayers, localFlockError| aNeuron.layerGain * aNeuron.flockingGain * localFlockError } }
   #    else
   #      neuronsCreatingFlockingError.each { |aNeuron| aNeuron.backPropagate { |errorFromUpperLayers, localFlockError| localFlockError } }
   #      neuronsAdaptingToBackPropedFlockingError.each { |aNeuron| aNeuron.backPropagate } # TODO So far, we are temporarily assuming that bp-flocking error only has to be bp to immediately preceding layer!!
@@ -470,6 +374,21 @@ class SimpleAdjustableLearningRateTrainerMultiFlockIterations < SimplestNetworkT
   #    end
   #  end
   #end
+
+  def step1NameTrainingGroupsAndLearningRates
+    # PHASE 1   -----   Adaption to OUTPUT Error  ------
+    self.neuronsWithInputLinks = outputLayer
+    setUniversalNeuronGroupNames
+    self.neuronsToAdaptToOutputError = outputLayer
+    self.learningRateNoFlockPhase1 = args[:learningRateNoFlockPhase1]
+
+    # PHASE 2 -----   Adaption to FLOCKING Error  -------
+    self.neuronsCreatingFlockingError = outputLayer
+    self.neuronsAdaptingToLocalFlockingError = outputLayer
+    self.neuronsAdaptingToBackPropedFlockingError = []
+    self.neuronsWhoseClustersNeedToBeSeeded = neuronsCreatingFlockingError
+    self.learningRateFlockPhase2 = args[:learningRateLocalFlockPhase2]
+  end
 
   def stepLearning(examples)
     distributeSetOfExamples(examples)
@@ -483,26 +402,12 @@ class SimpleAdjustableLearningRateTrainerMultiFlockIterations < SimplestNetworkT
       case trainingSequence.status
         when :inPhase1
           mse = noFlockingAdaptNetworkTuned
-          dPrimes = recenterEachNeuronsClusters(neuronsCreatingFlockingError)
+          dPrimes = recenterEachNeuronsClusters(neuronsCreatingFlockingError) # TODO this recenter is largely redundant to that in the 'flockingOnlyAdaptNetworkTuned' routine
           mse, dPrimes = flockingOnlyAdaptNetworkTuned(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError, neuronsAdaptingToBackPropedFlockingError)
-        #std("mse=\t", mse)
-        #std("dPrimes=\t", dPrimes)
-
         when :inPhase2
-          # @dPrimesOld = nil if (trainingSequence.atStartOfPhase2)
-
-          (neuronsAdaptingToLocalFlockingError + neuronsAdaptingToBackPropedFlockingError).each { |neuron| neuron.learningRate = learningRateFlockPhase2 }
-
-          # TODO NEED TO RESOLVE THIS... QUESTION BELOW
-          ###------------   Adaption to FLOCKING Error  ------------------------------
-          dPrimes = recenterEachNeuronsClusters(neuronsCreatingFlockingError) ## TODO WOW, why does this statement "cause" such a drop in dPrimes in 2nd hidden layer in Analogy, but not Simplest main??
-          mse, dPrimes = flockingOnlyAdaptNetworkFixedFlockingGain(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError, neuronsAdaptingToBackPropedFlockingError)
-
-          deltaDPrimeRatios = deltaDPrimes(dPrimes)
-          puts "epochs=\t#{trainingSequence.epochs}\tdeltaDPrimeRatios=\t#{deltaDPrimeRatios}\tmse, dPrimes= \t #{mse}\t#{dPrimes}"
-        # trainingSequence.dPrimesHaveNotChangedMuch if (deltaDPrimeRatios.max < 0.01)
+          STDERR.puts "Error: executing 'inPhase2' code!  NO phase 2 for this version of the algorithm"
         else
-          STDERR.puts "status of training sequencer is not understood"
+          STDERR.puts "Error: Status of training sequencer is incorrect!!"
       end
       trainingSequence.nextEpoch
     end
@@ -510,7 +415,6 @@ class SimpleAdjustableLearningRateTrainerMultiFlockIterations < SimplestNetworkT
   end
 
 end
-
 
 class CircleTrainer < AbstractTrainer
   attr_accessor :learningRateNoFlockPhase1, :neuronsCreatingFlockingError, :neuronsAdaptingToLocalFlockingError,
@@ -793,34 +697,36 @@ class TrainerAnalogy4ClassNoBPofFlockError < AbstractTrainer
 end # Used for main: "Analogy4Class.rb"
 
 class TunedTrainerAnalogy4ClassNoBPofFlockError < TrainerAnalogy4ClassNoBPofFlockError
+  attr_accessor :layerTuners, :numberOfLayersWithInputLinks
+
   def postInitialize
-    @inputLayer = network.inputLayer
-    @hiddenLayer1 = network.hiddenLayer1
-    @hiddenLayer2 = network.hiddenLayer2
-    @hiddenLayer3 = network.hiddenLayer3
-    @outputLayer = network.outputLayer
-    @theBiasNeuron = network.theBiasNeuron
-    @learningRateTuner = LearningRateTuner.new(hiddenLayer1)
+    super
+    arrayOfLayersForTuning = []
+    arrayOfLayersForTuning << hiddenLayer1 << hiddenLayer2 << hiddenLayer3 << outputLayer
+    @layerTuners = arrayOfLayersForTuning.collect { |aLayerToTune| LearningAndFlockingTuner.new(aLayerToTune, args) }
   end
 
-  def noFlockingAdaptNetwork
-    noFlockingMeasureAndStoreAllNeuralResponses
-    neuronsAdaptingToLocalFlockingError.each { |aNeuron| aNeuron.saveDeltaWAccumulated }
-    neuronsAdaptingOnlyToBPOutputError.each { |aNeuron| aNeuron.addAccumulationToWeight }
-    mse = logNetworksResponses(outputLayer)
-    [mse, dPrimes]
+  def simpleLearningWithFlocking(examples, arrayOfNeuronsToPlot)
+    step1NameTrainingGroupsAndLearningRates
+    mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
+
+    trainingSequence.nextStep
+    step2NameTrainingGroupsAndLearningRates
+    mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
+
+    4.times do |doubleStepNumber| # 800
+      trainingSequence.nextStep
+      step3NameTrainingGroupsAndLearningRates
+      mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
+
+      trainingSequence.nextStep
+      step4NameTrainingGroupsAndLearningRates
+      mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
+    end
+
+    return trainingSequence.epochs, mse, dPrimes
   end
 
-  def flockingOnlyAdaptNetwork(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError, neuronsAdaptingToBackPropedFlockingError)
-    flockingOnlyMeasureAndStoreAllNeuralResponses(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError, neuronsAdaptingToBackPropedFlockingError)
-    #learningRateTuner.printInfo
-    learningRateTuner.tune
-
-    (neuronsAdaptingToLocalFlockingError + neuronsAdaptingToBackPropedFlockingError).each { |aNeuron| aNeuron.addAccumulationToWeight }
-    dPrimes = recenterEachNeuronsClusters(neuronsCreatingFlockingError)
-    mse = logNetworksResponses(neuronsCreatingFlockingError)
-    [mse, dPrimes]
-  end
 
   def step1NameTrainingGroupsAndLearningRates
     # PHASE 1   -----   Adaption to OUTPUT Error  ------
@@ -899,6 +805,50 @@ class TunedTrainerAnalogy4ClassNoBPofFlockError < TrainerAnalogy4ClassNoBPofFloc
     #self.neuronsWhoseClustersNeedToBeSeeded = neuronsCreatingFlockingError
     self.learningRateFlockPhase2 = args[:learningRateLocalFlockPhase2]
   end
+
+
+  def stepLearning(examples)
+    distributeSetOfExamples(examples)
+    mse = 99999.0
+    dPrimes = nil
+    @dPrimesOld = nil
+
+    neuronsWithInputLinks.each { |neuron| neuron.learningRate = 1.0 }
+    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO How often and where do we need to do this?
+    while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
+      case trainingSequence.status
+        when :inPhase1
+          mse = noFlockingAdaptNetworkTuned
+          dPrimes = recenterEachNeuronsClusters(neuronsCreatingFlockingError) # TODO this recenter is largely redundant to that in the 'flockingOnlyAdaptNetworkTuned' routine
+          mse, dPrimes = flockingOnlyAdaptNetworkTuned(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError, neuronsAdaptingToBackPropedFlockingError)
+        when :inPhase2
+          STDERR.puts "Error: executing 'inPhase2' code!  NO phase 2 for this version of the algorithm"
+        else
+          STDERR.puts "Error: Status of training sequencer is incorrect!!"
+      end
+      trainingSequence.nextEpoch
+    end
+    return mse, dPrimes
+  end
+
+  def noFlockingAdaptNetworkTuned
+    noFlockingMeasureAndStoreAllNeuralResponsesNoDB
+    neuronsToAdaptToOutputError.each { |aNeuron| aNeuron.saveDeltaWAccumulated }
+    mse = logNetworksResponses(outputLayer)
+  end
+
+  def flockingOnlyAdaptNetworkTuned(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError,
+      neuronsAdaptingToBackPropedFlockingError)
+    flockingOnlyMeasureAndStoreAllNeuralResponses(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError,
+                                                  neuronsAdaptingToBackPropedFlockingError)
+    learningRateTuner.printInfo
+    learningRateTuner.tune
+
+    (neuronsAdaptingToLocalFlockingError + neuronsAdaptingToBackPropedFlockingError).each { |aNeuron| aNeuron.addAccumulationToWeight }
+    dPrimes = recenterEachNeuronsClusters(neuronsCreatingFlockingError) # TODO this recenter is largely redundant to that in the 'stepLearning' routine
+    mse = logNetworksResponses(neuronsCreatingFlockingError)
+    [mse, dPrimes]
+  end
 end
 
 ##
@@ -932,9 +882,7 @@ class FlockingGainTuner
     neuron.flockingGain = flockingFactor * ratioOfOutputErrorToFlockingError
   end
 
-
   private
-
 
   def estimateBestSearchRange
     if (pastFlockingFactors.length >= nSamples)
@@ -951,67 +899,9 @@ class FlockingGainTuner
       proposedSmallestAlgebraic = bestFlockingFactor * sqrtSearchRangeRatio
 
       smallestAlgebraic = if (proposedSmallestAlgebraic < -1.5)
-                                  -1.5
-                                else
-                                  proposedSmallestAlgebraic
-                                end
-
-
-      newSearchRange = (smallestAlgebraic..largestAlgebraic)
-      puts "newSearchRange = #{newSearchRange}"
-      return newSearchRange
-    else
-      return searchRange
-    end
-  end
-
-
-  def estimateBestSearchRangeOLD
-    if (pastFlockingFactors.length >= nSamples)
-      puts "pastFlockingFactors = #{pastFlockingFactors}"
-      puts "pastDispersions = #{pastDPrimes}"
-      bestDPrime = pastDPrimes.max
-      puts "bestDPrime = #{bestDPrime}"
-
-      theIndex = pastDPrimes.index(bestDPrime)
-      bestFlockingFactor = pastFlockingFactors[theIndex]
-
-      puts "bestFlockingFactor = #{bestFlockingFactor}"
-
-      largestAlgebraic = bestFlockingFactor / 2.0 # bestNFlockingFactors.max # best / 2.0
-      smallestAlgebraic = if ((bestFlockingFactor * 2.0) < -1.5)
                             -1.5
                           else
-                            bestFlockingFactor * 2.0
-                          end
-
-
-      newSearchRange = (smallestAlgebraic..largestAlgebraic)
-      puts "newSearchRange = #{newSearchRange}"
-      return newSearchRange
-    else
-      return searchRange
-    end
-  end
-
-  def estimateBestSearchRangeORIGINAL
-    if (pastFlockingFactors.length >= nSamples)
-      puts "pastFlockingFactors = #{pastFlockingFactors}"
-      puts "pastDispersions = #{pastDPrimes}"
-      bestNSampleDispersions = pastDPrimes.sort[0...nSamples]
-      puts "bestNSampleDispersions = #{bestNSampleDispersions}"
-      bestNFlockingFactors = bestNSampleDispersions.collect do |aDispersion|
-        theIndex = pastDPrimes.index(aDispersion)
-        pastFlockingFactors[theIndex]
-      end
-      puts "bestNFlockingFactors = #{bestNFlockingFactors}"
-      best = bestNFlockingFactors[0]
-
-      largestAlgebraic = best / 2.0 # bestNFlockingFactors.max # best / 2.0
-      smallestAlgebraic = if ((best * 2.0) < -1.5)
-                            -1.5
-                          else
-                            best * 2.0
+                            proposedSmallestAlgebraic
                           end
 
 
