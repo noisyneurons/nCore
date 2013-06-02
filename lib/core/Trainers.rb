@@ -976,7 +976,7 @@ class LearningAndFlockingTuner
 end
 
 
-##
+###
 
 class TrainingSequence
   attr_accessor :network, :args, :epochs, :epochsInPhase1, :epochsInPhase2, :numberOfEpochsInCycle,
