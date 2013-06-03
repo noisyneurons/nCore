@@ -899,13 +899,13 @@ class FlockingGainTuner
     unless (flockingFactor.nil?)
       self.pastFlockingFactors << flockingFactor
 
-      self.pastDPrimes << if (balanceOfdPrimeVsDispersion > 0.0)
+      self.pastDPrimes << if true # (balanceOfdPrimeVsDispersion > 0.0)
                             neuron.dPrime
                           else
                             nil
                           end
 
-      self.pastDispersions << if (balanceOfdPrimeVsDispersion < 1.0)
+      self.pastDispersions << if true # (balanceOfdPrimeVsDispersion < 1.0)
                                 neuron.clusterer.dispersionOfInputsForDPrimeCalculation(neuron.metricRecorder.vectorizeEpochMeasures)
                               else
                                 nil
