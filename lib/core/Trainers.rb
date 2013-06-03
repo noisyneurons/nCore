@@ -853,31 +853,70 @@ end
 
 ##
 
+class LearningAndFlockingTuner
+  attr_accessor :layer, :weightChangeNormalizer, :flockingGainTuners
+
+  def initialize(layer, args)
+    @layer = layer
+    @weightChangeNormalizer = WeightChangeNormalizer.new(layer, args)
+    @flockingGainTuners = layer.collect { |neuron| FlockingGainTuner.new(neuron, args) }
+  end
+
+  def tune
+    flockingGainTuners.each do |aFlockingTuner|
+      aFlockingTuner.collectData
+      aFlockingTuner.setFlockingGain
+    end
+    layer.each { |neuron| neuron.inputLinks.each { |aLink| aLink.combineWeightChangesDueToOutputErrorAndFlocking } }
+    weightChangeNormalizer.normalizeWeightChanges
+  end
+
+  def printInfo
+  end
+end
+
+
 class FlockingGainTuner
-  attr_accessor :neuron, :rng, :searchRange, :sqrtSearchRangeRatio, :flockingFactor, :pastFlockingFactors, :pastDPrimes, :maxHistory, :nSamples
+  attr_accessor :neuron, :rng, :searchRange, :sqrtSearchRangeRatio, :flockingFactor,
+                :pastFlockingFactors, :pastDPrimes, :pastDispersions, :maxHistory,
+                :nSamples, :balanceOfdPrimeVsDispersion
 
   def initialize(neuron, args)
     @neuron = neuron
     @rng = args[:rng]
     @nSamples = 5
     @maxHistory = args[:maxHistory]
+    @balanceOfdPrimeVsDispersion = args[:balanceOfdPrimeVsDispersion]
     @sqrtSearchRangeRatio = Math.sqrt(args[:searchRangeRatio])
     @searchRange = (-1.5..-0.5)
     @flockingFactor = nil
     @pastFlockingFactors = []
     @pastDPrimes = []
+    @pastDispersions = []
   end
 
   def collectData
     unless (flockingFactor.nil?)
       self.pastFlockingFactors << flockingFactor
-      self.pastDPrimes << neuron.dPrime
+
+      self.pastDPrimes << if (balanceOfdPrimeVsDispersion > 0.0)
+                            neuron.dPrime
+                          else
+                            nil
+                          end
+
+      self.pastDispersions << if (balanceOfdPrimeVsDispersion < 1.0)
+                                neuron.clusterer.dispersionOfInputsForDPrimeCalculation(neuron.metricRecorder.vectorizeEpochMeasures)
+                              else
+                                nil
+                              end
     end
   end
 
   def setFlockingGain
     trimHistoryIfNecessary()
     self.searchRange = estimateBestSearchRange()
+    puts "searchRange = #{searchRange}"
     self.flockingFactor = rng.rand(searchRange)
     neuron.flockingGain = flockingFactor * ratioOfOutputErrorToFlockingError
   end
@@ -886,31 +925,55 @@ class FlockingGainTuner
 
   def estimateBestSearchRange
     if (pastFlockingFactors.length >= nSamples)
-      puts "pastFlockingFactors = #{pastFlockingFactors}"
-      puts "pastDPrimes = #{pastDPrimes}"
-      bestDPrime = pastDPrimes.max
-      puts "bestDPrime = #{bestDPrime}"
-      theIndexOfTheBest = pastDPrimes.index(bestDPrime)
-      bestFlockingFactor = pastFlockingFactors[theIndexOfTheBest]
 
+      bestFlockingFactor = findBestBalanceOf_dPrimeAndDispersion()
       puts "bestFlockingFactor = #{bestFlockingFactor}"
 
       largestAlgebraic = bestFlockingFactor / sqrtSearchRangeRatio
       proposedSmallestAlgebraic = bestFlockingFactor * sqrtSearchRangeRatio
-
       smallestAlgebraic = if (proposedSmallestAlgebraic < -1.5)
                             -1.5
                           else
                             proposedSmallestAlgebraic
                           end
 
-
-      newSearchRange = (smallestAlgebraic..largestAlgebraic)
-      puts "newSearchRange = #{newSearchRange}"
-      return newSearchRange
+      return (smallestAlgebraic..largestAlgebraic)
     else
       return searchRange
     end
+  end
+
+  def findBestBalanceOf_dPrimeAndDispersion()
+
+    puts "pastFlockingFactors = #{pastFlockingFactors}"
+    puts "pastDPrimes = #{pastDPrimes}"
+    puts "pastDispersions = #{pastDispersions}"
+
+    index = 0
+    pastAggregatedMeasuresForOptimization = pastDPrimes.collect do |dPrime|
+
+      weighted_dPrime = unless (dPrime.nil?)
+                          balanceOfdPrimeVsDispersion * dPrime
+                        else
+                          0.0
+                        end
+
+      pastDispersion = pastDispersions[index]
+      weightedPastDispersions = unless (pastDispersion.nil?)
+                                  (1.0 - balanceOfdPrimeVsDispersion) * (1.0/ pastDispersion)
+                                else
+                                  0.0
+                                end
+      index += 1
+      (weighted_dPrime + weightedPastDispersions)
+    end
+
+    bestPastAggregatedMeasuresForOptimization = pastAggregatedMeasuresForOptimization.max
+
+    puts "bestPastAggregatedMeasuresForOptimization = #{bestPastAggregatedMeasuresForOptimization}"
+
+    theIndexOfTheBest = pastAggregatedMeasuresForOptimization.index(bestPastAggregatedMeasuresForOptimization)
+    return pastFlockingFactors[theIndexOfTheBest]
   end
 
   def ratioOfOutputErrorToFlockingError
@@ -925,6 +988,7 @@ class FlockingGainTuner
     if (pastFlockingFactors.length > maxHistory)
       pastFlockingFactors.shift
       pastDPrimes.shift
+      pastDispersions.shift
     end
   end
 end
@@ -950,28 +1014,6 @@ class WeightChangeNormalizer
       accumulatedDeltaWsAbs.max
     end
     return acrossLayerMaxValues.max
-  end
-end
-
-class LearningAndFlockingTuner
-  attr_accessor :layer, :weightChangeNormalizer, :flockingGainTuners
-
-  def initialize(layer, args)
-    @layer = layer
-    @weightChangeNormalizer = WeightChangeNormalizer.new(layer, args)
-    @flockingGainTuners = layer.collect { |neuron| FlockingGainTuner.new(neuron, args) }
-  end
-
-  def tune
-    flockingGainTuners.each do |aFlockingTuner|
-      aFlockingTuner.collectData
-      aFlockingTuner.setFlockingGain
-    end
-    layer.each { |neuron| neuron.inputLinks.each { |aLink| aLink.combineWeightChangesDueToOutputErrorAndFlocking } }
-    weightChangeNormalizer.normalizeWeightChanges
-  end
-
-  def printInfo
   end
 end
 

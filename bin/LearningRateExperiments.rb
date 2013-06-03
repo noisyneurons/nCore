@@ -80,6 +80,7 @@ def setParameters(descriptionOfExperiment)
       :learningRateNoFlockPhase1 => 1.0,
       :learningRateLocalFlockPhase2 => 1.0,
       :maxHistory => 8,
+      :balanceOfdPrimeVsDispersion => 0.0,
       :searchRangeRatio => 2.0,
 
       :phase1Epochs => 100,
