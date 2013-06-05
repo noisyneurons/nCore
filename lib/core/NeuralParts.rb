@@ -28,11 +28,11 @@ module CommonNeuronCalculations
   end
 
   def learningRate=(aLearningRate)
-    inputLinks.each {|aLink| aLink.learningRate = aLearningRate}
+    inputLinks.each { |aLink| aLink.learningRate = aLearningRate }
   end
 
   def randomizeLinkWeights
-  inputLinks.each {|anInputLink| anInputLink.randomizeWeightWithinTheRange(anInputLink.weightRange)}
+    inputLinks.each { |anInputLink| anInputLink.randomizeWeightWithinTheRange(anInputLink.weightRange) }
   end
 
   protected
@@ -273,7 +273,7 @@ class Link
   def initialize(inputNeuron, outputNeuron, args)
     @inputNeuron = inputNeuron
     @outputNeuron = outputNeuron
-    @learningRate = args[:learningRate]
+    @learningRate = args[:learningRate] || 1.0
     @weightRange = args[:weightRange]
     randomizeWeightWithinTheRange(weightRange)
     @deltaW = 0.0
