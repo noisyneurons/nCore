@@ -641,9 +641,9 @@ class TunedTrainerAnalogy4ClassNoBPofFlockError < AbstractTrainer
     step1NameTrainingGroupsAndLearningRates
     mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
 
-    #trainingSequence.nextStep
-    #step2NameTrainingGroupsAndLearningRates
-    #mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
+    trainingSequence.nextStep
+    step2NameTrainingGroupsAndLearningRates
+    mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
     #
     #4.times do |doubleStepNumber| # 800
     #  trainingSequence.nextStep
@@ -687,20 +687,20 @@ class TunedTrainerAnalogy4ClassNoBPofFlockError < AbstractTrainer
     outputLayer.each { |aNeuron| aNeuron.randomizeLinkWeights }
 
     # PHASE 1   -----   Adaption to OUTPUT Error  ------
-    self.neuronsWithInputLinks = hiddenLayer1 + hiddenLayer2 + outputLayer
-    setUniversalNeuronGroupNames
-    self.neuronsAdaptingOnlyToBPOutputError = outputLayer
-    self.neuronsToAdaptToOutputError = hiddenLayer2 + outputLayer
-    self.learningRateNoFlockPhase1 = args[:learningRateNoFlockPhase1]
+    self.layersWithInputLinks = [hiddenLayer1, hiddenLayer2, outputLayer]
+    self.layersToAdaptToOutputError = [hiddenLayer2, outputLayer]
 
     # PHASE 2 -----   Adaption to FLOCKING Error  -------
     # self.neuronsCreatingLocalFlockingErrorAndAdaptingToSame = hiddenLayer2
-    self.neuronsCreatingFlockingError = hiddenLayer2
-    self.neuronsAdaptingToLocalFlockingError = hiddenLayer2
-    learningRateTuner.layer = hiddenLayer2
-    self.neuronsAdaptingToBackPropedFlockingError = []
-    self.neuronsWhoseClustersNeedToBeSeeded = neuronsCreatingFlockingError
-    self.learningRateFlockPhase2 = args[:learningRateLocalFlockPhase2]
+    self.layersCreatingFlockingError = [hiddenLayer2, outputLayer]
+    self.layersAdaptingToLocalFlockingError = [hiddenLayer2, outputLayer]
+    self.layersWhoseClustersNeedToBeSeeded = [hiddenLayer2, outputLayer]
+
+    outputLayerTuner = LearningAndFlockingTuner.new(outputLayer, args, true, 0.08)
+    hiddenLayer2Tuner = LearningAndFlockingTuner.new(hiddenLayer2, args, false, 0.08)
+
+    self.layerTuners = [outputLayerTuner, hiddenLayer2Tuner]
+    setUniversalNeuronGroupNames
   end
 
   def step3NameTrainingGroupsAndLearningRates

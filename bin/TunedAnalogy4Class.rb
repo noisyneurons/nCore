@@ -116,8 +116,8 @@ def setParameters(descriptionOfExperiment)
       :phase2Epochs => 0,
 
       # Stop training parameters
-      :minMSE => 0.0000001,
-      :maxNumEpochs => 8e2, # 4.0e1,
+      :minMSE => 0.0001,
+      :maxNumEpochs => 16e1, # 4.0e1,
 
       # Network Architecture and initial weights
       :numberOfInputNeurons => 2,
