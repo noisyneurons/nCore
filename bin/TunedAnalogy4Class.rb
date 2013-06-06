@@ -91,19 +91,29 @@ end
 
 def setParameters(descriptionOfExperiment)
   numberOfExamples = 16
+  randomNumberSeed = 0
   args = {
       :descriptionOfExperiment => descriptionOfExperiment,
 
+      :rng => Random.new(randomNumberSeed),
+
+      :maxHistory => 8,
+      :balanceOfdPrimeVsDispersion => 1.0, # a value of 1.0 indicates that dPrime is
+      # to be the sole metric. a value of 0.0 indicates Dispersion is the sole metric
+      :multiplyToEmphasizeFlocking => 1.0, # if value = 0.0 only output error
+      # is used to determine weight changes.  If value >> 1.0, then flocking error will
+      # be dominant in prescribing weight changes.
+      :searchRangeRatio => 2.0,
+
       # parameters that impact learning dynamics:
-      :learningRate => 'Not Used!', #1.0,
+      #:learningRate => 1.0,
+      #:learningRateNoFlockPhase1 => 3.0,
+      #:learningRateLocalFlockPhase2 => -0.005,
+      #:learningRateForBackPropedFlockingErrorPhase2 => -0.005,
+      #:learningRateBPOutputErrorPhase2 => 0.5,
 
-      :learningRateNoFlockPhase1 => 3.0,
-      :learningRateLocalFlockPhase2 => -0.005,
-      :learningRateForBackPropedFlockingErrorPhase2 => -0.005,
-      :learningRateBPOutputErrorPhase2 => 0.5,
-
-      :phase1Epochs => 1,
-      :phase2Epochs => 1,
+      :phase1Epochs => 80,
+      :phase2Epochs => 0,
 
       # Stop training parameters
       :minMSE => 0.0000001,
@@ -163,7 +173,8 @@ trainingSequence = TrainingSequence.create(network, args)
 
 theTrainer = TunedTrainerAnalogy4ClassNoBPofFlockError.new(trainingSequence, network, args)
 
-arrayOfNeuronsForIOPlots = [network.hiddenLayer1[0], network.hiddenLayer1[1], network.hiddenLayer2[0], network.hiddenLayer2[1], network.outputLayer[0], network.outputLayer[1]]
+# arrayOfNeuronsForIOPlots = [network.hiddenLayer1[0], network.hiddenLayer1[1], network.hiddenLayer2[0], network.hiddenLayer2[1], network.outputLayer[0], network.outputLayer[1]]
+arrayOfNeuronsForIOPlots = []
 lastEpoch, lastTrainingMSE, dPrimes = theTrainer.simpleLearningWithFlocking(examples, arrayOfNeuronsForIOPlots)
 
 theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE=nil, dPrimes)

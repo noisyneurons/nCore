@@ -241,6 +241,10 @@ class FlockingLink < Link
 
   end
 
+  def onlyUseOutputErrorAccumulatedDeltaWs
+    self.deltaWAccumulated = previousDeltaWAccumulated
+  end
+
   def addAccumulationToWeight
     self.weight = weight - deltaWAccumulated
   end
