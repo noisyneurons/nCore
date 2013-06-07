@@ -644,16 +644,18 @@ class TunedTrainerAnalogy4ClassNoBPofFlockError < AbstractTrainer
     trainingSequence.nextStep
     step2NameTrainingGroupsAndLearningRates
     mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
-    #
-    #4.times do |doubleStepNumber| # 800
-    #  trainingSequence.nextStep
-    #  step3NameTrainingGroupsAndLearningRates
-    #  mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
-    #
-    #  trainingSequence.nextStep
-    #  step4NameTrainingGroupsAndLearningRates
-    #  mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
-    #end
+
+    40.times do |doubleStepNumber| # 800
+      trainingSequence.nextStep
+      step3NameTrainingGroupsAndLearningRates
+      # mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
+      mse, dPrimes = stepLearning(examples)
+
+      trainingSequence.nextStep
+      step4NameTrainingGroupsAndLearningRates
+      # mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
+      mse, dPrimes = stepLearning(examples)
+    end
 
     return trainingSequence.epochs, mse, dPrimes
   end
@@ -686,12 +688,11 @@ class TunedTrainerAnalogy4ClassNoBPofFlockError < AbstractTrainer
     # Because a layer has been added, succeeding layers weights should be reinitialized with random weights.
     outputLayer.each { |aNeuron| aNeuron.randomizeLinkWeights }
 
-    # PHASE 1   -----   Adaption to OUTPUT Error  ------
+    # -----   Adaption to OUTPUT Error  ------
     self.layersWithInputLinks = [hiddenLayer1, hiddenLayer2, outputLayer]
     self.layersToAdaptToOutputError = [hiddenLayer2, outputLayer]
 
-    # PHASE 2 -----   Adaption to FLOCKING Error  -------
-    # self.neuronsCreatingLocalFlockingErrorAndAdaptingToSame = hiddenLayer2
+    # -----   Adaption to FLOCKING Error  -------
     self.layersCreatingFlockingError = [hiddenLayer2, outputLayer]
     self.layersAdaptingToLocalFlockingError = [hiddenLayer2, outputLayer]
     self.layersWhoseClustersNeedToBeSeeded = [hiddenLayer2, outputLayer]
@@ -704,82 +705,38 @@ class TunedTrainerAnalogy4ClassNoBPofFlockError < AbstractTrainer
   end
 
   def step3NameTrainingGroupsAndLearningRates
-    # PHASE 1   -----   Adaption to OUTPUT Error  ------
-    self.neuronsWithInputLinks = hiddenLayer1 + hiddenLayer2 + outputLayer
-    setUniversalNeuronGroupNames
-    self.neuronsAdaptingOnlyToBPOutputError = outputLayer
-    self.neuronsToAdaptToOutputError = hiddenLayer1 + outputLayer
-    self.learningRateNoFlockPhase1 = 2.0 * args[:learningRateNoFlockPhase1]
+        # -----   Adaption to OUTPUT Error  ------
+    self.layersWithInputLinks = [hiddenLayer1, hiddenLayer2, outputLayer]
+    self.layersToAdaptToOutputError = [hiddenLayer1, outputLayer]
 
-    # PHASE 2 -----   Adaption to FLOCKING Error  -------
-    self.neuronsCreatingFlockingError = hiddenLayer1
-    self.neuronsAdaptingToLocalFlockingError = hiddenLayer1
-    learningRateTuner.layer = hiddenLayer1
-    self.neuronsAdaptingToBackPropedFlockingError = []
-    #self.neuronsWhoseClustersNeedToBeSeeded = neuronsCreatingFlockingError
-    self.learningRateFlockPhase2 = 0.00001 * args[:learningRateLocalFlockPhase2]
+       # -----   Adaption to FLOCKING Error  -------
+    self.layersCreatingFlockingError = [hiddenLayer1]
+    self.layersAdaptingToLocalFlockingError = [hiddenLayer1]
+    #self.layersWhoseClustersNeedToBeSeeded = [hiddenLayer1]
+
+    outputLayerTuner = LearningAndFlockingTuner.new(outputLayer, args, noFlock = true, 0.08)
+    hiddenLayer1Tuner = LearningAndFlockingTuner.new(hiddenLayer1, args, noFlock = false, 0.08)
+
+    self.layerTuners = [outputLayerTuner, hiddenLayer1Tuner]
+    setUniversalNeuronGroupNames
   end
 
   def step4NameTrainingGroupsAndLearningRates
-    # PHASE 1   -----   Adaption to OUTPUT Error  ------
-    self.neuronsWithInputLinks = hiddenLayer1 + hiddenLayer2 + outputLayer
+        # -----   Adaption to OUTPUT Error  ------
+    self.layersWithInputLinks = [hiddenLayer1, hiddenLayer2, outputLayer]
+    self.layersToAdaptToOutputError = [hiddenLayer2, outputLayer]
+
+       # -----   Adaption to FLOCKING Error  -------
+    self.layersCreatingFlockingError = [hiddenLayer2]
+    self.layersAdaptingToLocalFlockingError = [hiddenLayer2]
+    #self.layersWhoseClustersNeedToBeSeeded = [hiddenLayer2]
+
+    outputLayerTuner = LearningAndFlockingTuner.new(outputLayer, args, noFlock = true, 0.08)
+    hiddenLayer2Tuner = LearningAndFlockingTuner.new(hiddenLayer2, args, noFlock = false, 0.08)
+
+    self.layerTuners = [outputLayerTuner, hiddenLayer2Tuner]
     setUniversalNeuronGroupNames
-    self.neuronsAdaptingOnlyToBPOutputError = outputLayer
-    self.neuronsToAdaptToOutputError = hiddenLayer2 + outputLayer
-    self.learningRateNoFlockPhase1 = args[:learningRateNoFlockPhase1]
-
-    # PHASE 2 -----   Adaption to FLOCKING Error  -------
-    self.neuronsCreatingFlockingError = hiddenLayer2
-    self.neuronsAdaptingToLocalFlockingError = hiddenLayer2
-    learningRateTuner.layer = hiddenLayer2
-    self.neuronsAdaptingToBackPropedFlockingError = []
-    #self.neuronsWhoseClustersNeedToBeSeeded = neuronsCreatingFlockingError
-    self.learningRateFlockPhase2 = args[:learningRateLocalFlockPhase2]
   end
-
-
-  #def stepLearning(examples)
-  #  distributeSetOfExamples(examples)
-  #  mse = 99999.0
-  #  dPrimes = nil
-  #  @dPrimesOld = nil
-  #
-  #  neuronsWithInputLinks.each { |neuron| neuron.learningRate = 1.0 }
-  #  seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO How often and where do we need to do this?
-  #  while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
-  #    case trainingSequence.status
-  #      when :inPhase1
-  #        mse = noFlockingAdaptNetworkTuned
-  #        dPrimes = recenterEachNeuronsClusters(neuronsCreatingFlockingError) # TODO this recenter is largely redundant to that in the 'flockingOnlyAdaptNetworkTuned' routine
-  #        mse, dPrimes = flockingOnlyAdaptNetworkTuned(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError, neuronsAdaptingToBackPropedFlockingError)
-  #      when :inPhase2
-  #        STDERR.puts "Error: executing 'inPhase2' code!  NO phase 2 for this version of the algorithm"
-  #      else
-  #        STDERR.puts "Error: Status of training sequencer is incorrect!!"
-  #    end
-  #    trainingSequence.nextEpoch
-  #  end
-  #  return mse, dPrimes
-  #end
-  #
-  #def noFlockingAdaptNetworkTuned
-  #  outputErrorOnlyMeasureAndStoreAllNeuralResponsesNoDB
-  #  neuronsToAdaptToOutputError.each { |aNeuron| aNeuron.saveDeltaWAccumulated }
-  #  mse = logNetworksResponses(outputLayer)
-  #end
-  #
-  #def flockingOnlyAdaptNetworkTuned(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError,
-  #    neuronsAdaptingToBackPropedFlockingError)
-  #  flockingOnlyMeasureAndStoreAllNeuralResponses(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError,
-  #                                                neuronsAdaptingToBackPropedFlockingError)
-  #  learningRateTuner.printInfo
-  #  learningRateTuner.tune
-  #
-  #  (neuronsAdaptingToLocalFlockingError + neuronsAdaptingToBackPropedFlockingError).each { |aNeuron| aNeuron.addAccumulationToWeight }
-  #  dPrimes = recenterEachNeuronsClusters(neuronsCreatingFlockingError) # TODO this recenter is largely redundant to that in the 'stepLearning' routine
-  #  mse = logNetworksResponses(neuronsCreatingFlockingError)
-  #  [mse, dPrimes]
-  #end
 end
 
 ##
@@ -842,13 +799,13 @@ class FlockingGainTuner
     unless (flockingFactor.nil?)
       self.pastFlockingFactors << flockingFactor
 
-      self.pastDPrimes << if true # (balanceOfdPrimeVsDispersion > 0.0)
+      self.pastDPrimes << if (balanceOfdPrimeVsDispersion > 0.0)
                             neuron.dPrime
                           else
                             nil
                           end
 
-      self.pastDispersions << if true # (balanceOfdPrimeVsDispersion < 1.0)
+      self.pastDispersions << if (balanceOfdPrimeVsDispersion < 1.0)
                                 neuron.clusterer.dispersionOfInputsForDPrimeCalculation(neuron.metricRecorder.vectorizeEpochMeasures)
                               else
                                 nil

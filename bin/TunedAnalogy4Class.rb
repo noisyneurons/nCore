@@ -117,7 +117,7 @@ def setParameters(descriptionOfExperiment)
 
       # Stop training parameters
       :minMSE => 0.0001,
-      :maxNumEpochs => 16e1, # 4.0e1,
+      :maxNumEpochs => 80, # 4.0e1,
 
       # Network Architecture and initial weights
       :numberOfInputNeurons => 2,
@@ -133,7 +133,7 @@ def setParameters(descriptionOfExperiment)
       :rightShiftUpper2Classes => 0.5, # 0.5,
 
       # Recording and database parameters
-      :numberOfEpochsBetweenStoringDBRecords => 10,
+      :numberOfEpochsBetweenStoringDBRecords => 500,
 
       # Flocking Parameters...
       :typeOfClusterer => DynamicClusterer,
@@ -173,8 +173,8 @@ trainingSequence = TrainingSequence.create(network, args)
 
 theTrainer = TunedTrainerAnalogy4ClassNoBPofFlockError.new(trainingSequence, network, args)
 
-# arrayOfNeuronsForIOPlots = [network.hiddenLayer1[0], network.hiddenLayer1[1], network.hiddenLayer2[0], network.hiddenLayer2[1], network.outputLayer[0], network.outputLayer[1]]
-arrayOfNeuronsForIOPlots = []
+arrayOfNeuronsForIOPlots = [network.hiddenLayer1[0], network.hiddenLayer1[1], network.hiddenLayer2[0], network.hiddenLayer2[1], network.outputLayer[0], network.outputLayer[1]]
+# arrayOfNeuronsForIOPlots = []
 lastEpoch, lastTrainingMSE, dPrimes = theTrainer.simpleLearningWithFlocking(examples, arrayOfNeuronsForIOPlots)
 
 theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE=nil, dPrimes)
