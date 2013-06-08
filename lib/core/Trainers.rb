@@ -648,13 +648,13 @@ class TunedTrainerAnalogy4ClassNoBPofFlockError < AbstractTrainer
     40.times do |doubleStepNumber| # 800
       trainingSequence.nextStep
       step3NameTrainingGroupsAndLearningRates
-      # mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
-      mse, dPrimes = stepLearning(examples)
+      mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
+      # mse, dPrimes = stepLearning(examples)
 
       trainingSequence.nextStep
       step4NameTrainingGroupsAndLearningRates
-      # mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
-      mse, dPrimes = stepLearning(examples)
+      mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
+      # mse, dPrimes = stepLearning(examples)
     end
 
     return trainingSequence.epochs, mse, dPrimes

@@ -5,8 +5,6 @@ require_relative  '../core/Utilities'
 require_relative '../../../rgplot/lib/gnuplotMOD'
 
 
-
-
 # NOTES:
 
 # POINT SIZE AND TYPE
@@ -48,6 +46,9 @@ end
 ############ ORIGINAL Plotting Section (uses a specialized library) #########################
 class Plotter
   attr_accessor :xMax, :xMin, :yMax, :yMin, :zMax, :zMin
+
+  include OS
+
 
   def initialize(title="an XY Plot", xLabel="x", yLabel="y", plotOutputFilenameBase = "#{Dir.pwd}/../../plots/xyPlot",
       deviceSetup="png font arial 18 size 1024,768 xffffff x000000 x404040 xff0000 xffa500 x66cdaa xcdb5cd xadd8e6 x0000ff xdda0dd x9500d3",
@@ -348,21 +349,21 @@ class Plotter
     createImageFile()
   end
 
-  def createImageFileWindows
-    currentDirectory = "/home/mark/Code/Ruby/NN2012"
-    Dir.chdir(currentDirectory) do
-      ENV['RB_GNUPLOT'] = "#{currentDirectory}/gnuplot/bin/wgnuplot_pipes.exe"
-      plotProgramToRun = "#{currentDirectory}/gnuplot/bin/wgnuplot_pipes.exe"
-      system("#{plotProgramToRun} #{@plotFilename}")
-    end
-    return @plotImageFilename
-  end
+  #def createImageFileWindows
+  #  currentDirectory = "/home/mark/Code/Ruby/NN2012"
+  #  Dir.chdir(currentDirectory) do
+  #    ENV['RB_GNUPLOT'] = "#{currentDirectory}/gnuplot/bin/wgnuplot_pipes.exe"
+  #    plotProgramToRun = "#{currentDirectory}/gnuplot/bin/wgnuplot_pipes.exe"
+  #    system("#{plotProgramToRun} #{@plotFilename}")
+  #  end
+  #  return @plotImageFilename
+  #end
 
   def createImageFile
     baseDirectory =  "#{Dir.pwd}/../../"
     Dir.chdir(baseDirectory) do
-      plotProgramToRun = "#{baseDirectory}/gnuplot/bin/wgnuplot_pipes.exe"  # For Windows
-      # plotProgramToRun = "gnuplot"  # For Linux
+      plotProgramToRun = "#{baseDirectory}/gnuplot/bin/wgnuplot_pipes.exe"  if(OS.windows?)
+      plotProgramToRun = "gnuplot" if(OS.linux?)
       system("#{plotProgramToRun} #{@plotFilename}")
     end
     return @plotImageFilename
@@ -752,3 +753,5 @@ class Plotter
   end
 
 end
+
+
