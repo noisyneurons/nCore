@@ -142,11 +142,12 @@ class AbstractTrainer
   def adaptNetworkAfterOneEpoch(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError,
       neuronsAdaptingToBackPropedFlockingError)
     outputErrorOnlyMeasureAndStoreAllNeuralResponsesNoDB
+    layerTuners.each { |aLearningRateTuner| aLearningRateTuner.normalizeWeightChanges }
     neuronsToAdaptToOutputError.each { |aNeuron| aNeuron.saveDeltaWAccumulated }
     recenterEachNeuronsClusters(neuronsCreatingFlockingError)
     flockingOnlyMeasureAndStoreAllNeuralResponses(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError,
                                                   neuronsAdaptingToBackPropedFlockingError)
-    layerTuners.each { |aLearningRateTuner| aLearningRateTuner.tune }
+    layerTuners.each { |aLearningRateTuner| aLearningRateTuner.tuneFlockingRate }
     (neuronsAdaptingToLocalFlockingError + neuronsAdaptingToBackPropedFlockingError).each { |aNeuron| aNeuron.addAccumulationToWeight }
     mse = logNetworksResponses(neuronsCreatingFlockingError)
   end
@@ -327,7 +328,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     self.layersAdaptingToBackPropedFlockingError = []
     self.layersWhoseClustersNeedToBeSeeded = [outputLayer]
 
-    self.layerTuners = [LearningAndFlockingTuner.new(outputLayer, args)]
+    self.layerTuners = [LearningAndFlockingTuner.new(outputLayer, args, noFlocking = false, weightChangeSetPoint = 0.08)]
     setUniversalNeuronGroupNames
   end
 
@@ -654,7 +655,7 @@ class TunedTrainerAnalogy4ClassNoBPofFlockError < AbstractTrainer
       trainingSequence.nextStep
       step4NameTrainingGroupsAndLearningRates
       mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
-      # mse, dPrimes = stepLearning(examples)
+                                   # mse, dPrimes = stepLearning(examples)
     end
 
     return trainingSequence.epochs, mse, dPrimes
@@ -705,11 +706,11 @@ class TunedTrainerAnalogy4ClassNoBPofFlockError < AbstractTrainer
   end
 
   def step3NameTrainingGroupsAndLearningRates
-        # -----   Adaption to OUTPUT Error  ------
+    # -----   Adaption to OUTPUT Error  ------
     self.layersWithInputLinks = [hiddenLayer1, hiddenLayer2, outputLayer]
     self.layersToAdaptToOutputError = [hiddenLayer1, outputLayer]
 
-       # -----   Adaption to FLOCKING Error  -------
+    # -----   Adaption to FLOCKING Error  -------
     self.layersCreatingFlockingError = [hiddenLayer1]
     self.layersAdaptingToLocalFlockingError = [hiddenLayer1]
     #self.layersWhoseClustersNeedToBeSeeded = [hiddenLayer1]
@@ -722,11 +723,11 @@ class TunedTrainerAnalogy4ClassNoBPofFlockError < AbstractTrainer
   end
 
   def step4NameTrainingGroupsAndLearningRates
-        # -----   Adaption to OUTPUT Error  ------
+    # -----   Adaption to OUTPUT Error  ------
     self.layersWithInputLinks = [hiddenLayer1, hiddenLayer2, outputLayer]
     self.layersToAdaptToOutputError = [hiddenLayer2, outputLayer]
 
-       # -----   Adaption to FLOCKING Error  -------
+    # -----   Adaption to FLOCKING Error  -------
     self.layersCreatingFlockingError = [hiddenLayer2]
     self.layersAdaptingToLocalFlockingError = [hiddenLayer2]
     #self.layersWhoseClustersNeedToBeSeeded = [hiddenLayer2]
@@ -751,14 +752,16 @@ class LearningAndFlockingTuner
     @flockingGainTuners = layer.collect { |neuron| FlockingGainTuner.new(neuron, args) } unless (noFlocking)
   end
 
-  def tune
-    printInfo
-
-    determineFlockingGainForEachNeuronAndCombineWeightChangesDueToBothOutputAndFlockingError() unless noFlocking
-    layer.each { |neuron| neuron.inputLinks.each { |aLink| aLink.onlyUseOutputErrorAccumulatedDeltaWs } } if noFlocking
-
+  def normalizeWeightChanges
     weightChangeNormalizer.normalizeWeightChanges
   end
+
+  def tuneFlockingRate
+    determineFlockingGainForEachNeuronAndCombineWeightChangesDueToBothOutputAndFlockingError() unless noFlocking
+    layer.each { |neuron| neuron.inputLinks.each { |aLink| aLink.onlyUseOutputErrorAccumulatedDeltaWs } } if noFlocking
+  end
+
+  private
 
   def determineFlockingGainForEachNeuronAndCombineWeightChangesDueToBothOutputAndFlockingError
     flockingGainTuners.each do |aFlockingTuner|
@@ -768,10 +771,6 @@ class LearningAndFlockingTuner
     layer.each { |neuron| neuron.inputLinks.each { |aLink| aLink.combineWeightChangesDueToOutputErrorAndFlocking } }
   end
 
-  private
-
-  def printInfo
-  end
 end
 
 class FlockingGainTuner
@@ -782,7 +781,7 @@ class FlockingGainTuner
   def initialize(neuron, args)
     @neuron = neuron
     @rng = args[:rng]
-    @nSamples = 5
+    @nSamples = 3
     @maxHistory = args[:maxHistory]
     @balanceOfdPrimeVsDispersion = args[:balanceOfdPrimeVsDispersion]
     @multiplyToEmphasizeFlocking = args[:multiplyToEmphasizeFlocking]
@@ -827,7 +826,7 @@ class FlockingGainTuner
     if (pastFlockingFactors.length >= nSamples)
 
       bestFlockingFactor = findBestBalanceOf_dPrimeAndDispersion()
-      #x puts "bestFlockingFactor = #{bestFlockingFactor}"
+      puts "bestFlockingFactor = #{bestFlockingFactor}"
 
       proposedLargestAlgebraic = bestFlockingFactor / sqrtSearchRangeRatio
       largestAlgebraic = limiter(proposedLargestAlgebraic)

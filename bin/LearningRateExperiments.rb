@@ -78,15 +78,15 @@ def setParameters(descriptionOfExperiment)
       :rng => Random.new(randomNumberSeed),
 
       :maxHistory => 8,
-      :balanceOfdPrimeVsDispersion => 1.0, # a value of 1.0 indicates that dPrime is
+      :balanceOfdPrimeVsDispersion => 0.0, # a value of 1.0 indicates that dPrime is
       # to be the sole metric. a value of 0.0 indicates Dispersion is the sole metric
-      :multiplyToEmphasizeFlocking => 1.0, # if value = 0.0 only output error
+      :multiplyToEmphasizeFlocking => 2.0, # if value = 0.0 only output error
       # is used to determine weight changes.  If value >> 1.0, then flocking error will
       # be dominant in prescribing weight changes.
       :searchRangeRatio => 2.0,
 
       :phase1Epochs => 100,
-      :phase2Epochs => 0, #2,
+      :phase2Epochs => 0,
 
       # Stop training parameters
       :minMSE => 0.001,
