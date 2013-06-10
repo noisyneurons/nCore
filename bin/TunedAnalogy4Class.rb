@@ -100,7 +100,7 @@ def setParameters(descriptionOfExperiment)
       :maxHistory => 8,
       :balanceOfdPrimeVsDispersion => 1.0, # a value of 1.0 indicates that dPrime is
       # to be the sole metric. a value of 0.0 indicates Dispersion is the sole metric
-      :multiplyToEmphasizeFlocking => 1.0, # if value = 0.0 only output error
+      :multiplyToEmphasizeFlocking => 0.5, # if value = 0.0 only output error
       # is used to determine weight changes.  If value >> 1.0, then flocking error will
       # be dominant in prescribing weight changes.
       :searchRangeRatio => 2.0,

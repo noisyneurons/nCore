@@ -498,120 +498,120 @@ class Trainer4Class < AbstractTrainer
   end
 end
 
-class TrainerAnalogy4ClassNoBPofFlockError < AbstractTrainer
-  def initialize(trainingSequence, network, args)
-    @trainingSequence = trainingSequence
-    @network = network
-    @args = args
-    @dataStoreManager = SimulationDataStoreManager.instance
-    @allNeuronLayers = network.createSimpleLearningANN
-    @startTime = Time.now
-    @elapsedTime = nil
-    @minMSE = args[:minMSE]
-    postInitialize
-  end
-
-  def postInitialize
-    @inputLayer = network.inputLayer
-    @hiddenLayer1 = network.hiddenLayer1
-    @hiddenLayer2 = network.hiddenLayer2
-    @hiddenLayer3 = network.hiddenLayer3
-    @outputLayer = network.outputLayer
-    @theBiasNeuron = network.theBiasNeuron
-  end
-
-  def simpleLearningWithFlocking(examples, arrayOfNeuronsToPlot)
-    step1NameTrainingGroupsAndLearningRates
-    mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
-
-    trainingSequence.nextStep
-    step2NameTrainingGroupsAndLearningRates
-    mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
-
-    4.times do |doubleStepNumber| # 800
-      trainingSequence.nextStep
-      step3NameTrainingGroupsAndLearningRates
-      mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
-
-      trainingSequence.nextStep
-      step4NameTrainingGroupsAndLearningRates
-      mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
-    end
-
-    return trainingSequence.epochs, mse, dPrimes
-  end
-
-  def step1NameTrainingGroupsAndLearningRates
-    # PHASE 1   -----   Adaption to OUTPUT Error  ------
-    self.neuronsWithInputLinks = hiddenLayer1 + outputLayer
-    setUniversalNeuronGroupNames
-    self.neuronsToAdaptToOutputError = hiddenLayer1 + outputLayer
-    self.learningRateNoFlockPhase1 = args[:learningRateNoFlockPhase1]
-
-    # PHASE 2 -----   Adaption to FLOCKING Error  -------
-    self.neuronsCreatingFlockingError = hiddenLayer1
-    self.neuronsAdaptingToLocalFlockingError = hiddenLayer1
-    self.neuronsAdaptingToBackPropedFlockingError = []
-    self.neuronsWhoseClustersNeedToBeSeeded = neuronsCreatingFlockingError
-    self.learningRateFlockPhase2 = args[:learningRateLocalFlockPhase2]
-  end
-
-  def step2NameTrainingGroupsAndLearningRates
-    # Expanding Network to 2 Hidden Layers
-    disconnect_one_layer_from_another(hiddenLayer1, outputLayer)
-    disconnect_one_layer_from_another([theBiasNeuron], outputLayer)
-    connect_layer_to_another(hiddenLayer2, outputLayer, args)
-    connect_layer_to_another([theBiasNeuron], outputLayer, args)
-
-    # Because a layer has been added, succeeding layers weights should be reinitialized with random weights.
-    outputLayer.each { |aNeuron| aNeuron.randomizeLinkWeights }
-
-    # PHASE 1   -----   Adaption to OUTPUT Error  ------
-    self.neuronsWithInputLinks = hiddenLayer1 + hiddenLayer2 + outputLayer
-    setUniversalNeuronGroupNames
-    self.neuronsToAdaptToOutputError = hiddenLayer2 + outputLayer
-    self.learningRateNoFlockPhase1 = args[:learningRateNoFlockPhase1]
-
-    # PHASE 2 -----   Adaption to FLOCKING Error  -------
-    # self.neuronsCreatingLocalFlockingErrorAndAdaptingToSame = hiddenLayer2
-    self.neuronsCreatingFlockingError = hiddenLayer2
-    self.neuronsAdaptingToLocalFlockingError = hiddenLayer2
-    self.neuronsAdaptingToBackPropedFlockingError = []
-    self.neuronsWhoseClustersNeedToBeSeeded = neuronsCreatingFlockingError
-    self.learningRateFlockPhase2 = args[:learningRateLocalFlockPhase2]
-  end
-
-  def step3NameTrainingGroupsAndLearningRates
-    # PHASE 1   -----   Adaption to OUTPUT Error  ------
-    self.neuronsWithInputLinks = hiddenLayer1 + hiddenLayer2 + outputLayer
-    setUniversalNeuronGroupNames
-    self.neuronsToAdaptToOutputError = hiddenLayer1 + outputLayer
-    self.learningRateNoFlockPhase1 = 2.0 * args[:learningRateNoFlockPhase1]
-
-    # PHASE 2 -----   Adaption to FLOCKING Error  -------
-    self.neuronsCreatingFlockingError = hiddenLayer1
-    self.neuronsAdaptingToLocalFlockingError = hiddenLayer1
-    self.neuronsAdaptingToBackPropedFlockingError = []
-    #self.neuronsWhoseClustersNeedToBeSeeded = neuronsCreatingFlockingError
-    self.learningRateFlockPhase2 = 0.00001 * args[:learningRateLocalFlockPhase2]
-  end
-
-  def step4NameTrainingGroupsAndLearningRates
-    # PHASE 1   -----   Adaption to OUTPUT Error  ------
-    self.neuronsWithInputLinks = hiddenLayer1 + hiddenLayer2 + outputLayer
-    setUniversalNeuronGroupNames
-    self.neuronsToAdaptToOutputError = hiddenLayer2 + outputLayer
-    self.learningRateNoFlockPhase1 = args[:learningRateNoFlockPhase1]
-
-    # PHASE 2 -----   Adaption to FLOCKING Error  -------
-    self.neuronsCreatingFlockingError = hiddenLayer2
-    self.neuronsAdaptingToLocalFlockingError = hiddenLayer2
-    self.neuronsAdaptingToBackPropedFlockingError = []
-    #self.neuronsWhoseClustersNeedToBeSeeded = neuronsCreatingFlockingError
-    self.learningRateFlockPhase2 = args[:learningRateLocalFlockPhase2]
-  end
-
-end # Used for main: "Analogy4Class.rb"
+#class TrainerAnalogy4ClassNoBPofFlockError < AbstractTrainer
+#  def initialize(trainingSequence, network, args)
+#    @trainingSequence = trainingSequence
+#    @network = network
+#    @args = args
+#    @dataStoreManager = SimulationDataStoreManager.instance
+#    @allNeuronLayers = network.createSimpleLearningANN
+#    @startTime = Time.now
+#    @elapsedTime = nil
+#    @minMSE = args[:minMSE]
+#    postInitialize
+#  end
+#
+#  def postInitialize
+#    @inputLayer = network.inputLayer
+#    @hiddenLayer1 = network.hiddenLayer1
+#    @hiddenLayer2 = network.hiddenLayer2
+#    @hiddenLayer3 = network.hiddenLayer3
+#    @outputLayer = network.outputLayer
+#    @theBiasNeuron = network.theBiasNeuron
+#  end
+#
+#  def simpleLearningWithFlocking(examples, arrayOfNeuronsToPlot)
+#    step1NameTrainingGroupsAndLearningRates
+#    mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
+#
+#    trainingSequence.nextStep
+#    step2NameTrainingGroupsAndLearningRates
+#    mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
+#
+#    4.times do |doubleStepNumber| # 800
+#      trainingSequence.nextStep
+#      step3NameTrainingGroupsAndLearningRates
+#      mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
+#
+#      trainingSequence.nextStep
+#      step4NameTrainingGroupsAndLearningRates
+#      mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
+#    end
+#
+#    return trainingSequence.epochs, mse, dPrimes
+#  end
+#
+#  def step1NameTrainingGroupsAndLearningRates
+#    # PHASE 1   -----   Adaption to OUTPUT Error  ------
+#    self.neuronsWithInputLinks = hiddenLayer1 + outputLayer
+#    setUniversalNeuronGroupNames
+#    self.neuronsToAdaptToOutputError = hiddenLayer1 + outputLayer
+#    self.learningRateNoFlockPhase1 = args[:learningRateNoFlockPhase1]
+#
+#    # PHASE 2 -----   Adaption to FLOCKING Error  -------
+#    self.neuronsCreatingFlockingError = hiddenLayer1
+#    self.neuronsAdaptingToLocalFlockingError = hiddenLayer1
+#    self.neuronsAdaptingToBackPropedFlockingError = []
+#    self.neuronsWhoseClustersNeedToBeSeeded = neuronsCreatingFlockingError
+#    self.learningRateFlockPhase2 = args[:learningRateLocalFlockPhase2]
+#  end
+#
+#  def step2NameTrainingGroupsAndLearningRates
+#    # Expanding Network to 2 Hidden Layers
+#    disconnect_one_layer_from_another(hiddenLayer1, outputLayer)
+#    disconnect_one_layer_from_another([theBiasNeuron], outputLayer)
+#    connect_layer_to_another(hiddenLayer2, outputLayer, args)
+#    connect_layer_to_another([theBiasNeuron], outputLayer, args)
+#
+#    # Because a layer has been added, succeeding layers weights should be reinitialized with random weights.
+#    outputLayer.each { |aNeuron| aNeuron.randomizeLinkWeights }
+#
+#    # PHASE 1   -----   Adaption to OUTPUT Error  ------
+#    self.neuronsWithInputLinks = hiddenLayer1 + hiddenLayer2 + outputLayer
+#    setUniversalNeuronGroupNames
+#    self.neuronsToAdaptToOutputError = hiddenLayer2 + outputLayer
+#    self.learningRateNoFlockPhase1 = args[:learningRateNoFlockPhase1]
+#
+#    # PHASE 2 -----   Adaption to FLOCKING Error  -------
+#    # self.neuronsCreatingLocalFlockingErrorAndAdaptingToSame = hiddenLayer2
+#    self.neuronsCreatingFlockingError = hiddenLayer2
+#    self.neuronsAdaptingToLocalFlockingError = hiddenLayer2
+#    self.neuronsAdaptingToBackPropedFlockingError = []
+#    self.neuronsWhoseClustersNeedToBeSeeded = neuronsCreatingFlockingError
+#    self.learningRateFlockPhase2 = args[:learningRateLocalFlockPhase2]
+#  end
+#
+#  def step3NameTrainingGroupsAndLearningRates
+#    # PHASE 1   -----   Adaption to OUTPUT Error  ------
+#    self.neuronsWithInputLinks = hiddenLayer1 + hiddenLayer2 + outputLayer
+#    setUniversalNeuronGroupNames
+#    self.neuronsToAdaptToOutputError = hiddenLayer1 + outputLayer
+#    self.learningRateNoFlockPhase1 = 2.0 * args[:learningRateNoFlockPhase1]
+#
+#    # PHASE 2 -----   Adaption to FLOCKING Error  -------
+#    self.neuronsCreatingFlockingError = hiddenLayer1
+#    self.neuronsAdaptingToLocalFlockingError = hiddenLayer1
+#    self.neuronsAdaptingToBackPropedFlockingError = []
+#    #self.neuronsWhoseClustersNeedToBeSeeded = neuronsCreatingFlockingError
+#    self.learningRateFlockPhase2 = 0.00001 * args[:learningRateLocalFlockPhase2]
+#  end
+#
+#  def step4NameTrainingGroupsAndLearningRates
+#    # PHASE 1   -----   Adaption to OUTPUT Error  ------
+#    self.neuronsWithInputLinks = hiddenLayer1 + hiddenLayer2 + outputLayer
+#    setUniversalNeuronGroupNames
+#    self.neuronsToAdaptToOutputError = hiddenLayer2 + outputLayer
+#    self.learningRateNoFlockPhase1 = args[:learningRateNoFlockPhase1]
+#
+#    # PHASE 2 -----   Adaption to FLOCKING Error  -------
+#    self.neuronsCreatingFlockingError = hiddenLayer2
+#    self.neuronsAdaptingToLocalFlockingError = hiddenLayer2
+#    self.neuronsAdaptingToBackPropedFlockingError = []
+#    #self.neuronsWhoseClustersNeedToBeSeeded = neuronsCreatingFlockingError
+#    self.learningRateFlockPhase2 = args[:learningRateLocalFlockPhase2]
+#  end
+#
+#end # Used for main: "Analogy4Class.rb"
 
 class TunedTrainerAnalogy4ClassNoBPofFlockError < AbstractTrainer
   attr_accessor :layerTuners, :numberOfLayersWithInputLinks
@@ -816,7 +816,7 @@ class FlockingGainTuner
   def setFlockingGain
     trimHistoryIfNecessary()
     self.searchRange = estimateBestSearchRange()
-    puts "searchRange = #{searchRange}"
+    #x puts "searchRange = #{searchRange}"
     self.flockingFactor = rng.rand(searchRange)
     neuron.flockingGain = flockingFactor * (multiplyToEmphasizeFlocking * ratioOfOutputErrorToFlockingError)
   end
@@ -827,7 +827,7 @@ class FlockingGainTuner
     if (pastFlockingFactors.length >= nSamples)
 
       bestFlockingFactor = findBestBalanceOf_dPrimeAndDispersion()
-      puts "bestFlockingFactor = #{bestFlockingFactor}"
+      #x puts "bestFlockingFactor = #{bestFlockingFactor}"
 
       proposedLargestAlgebraic = bestFlockingFactor / sqrtSearchRangeRatio
       largestAlgebraic = limiter(proposedLargestAlgebraic)
@@ -850,9 +850,9 @@ class FlockingGainTuner
 
   def findBestBalanceOf_dPrimeAndDispersion()
 
-    puts "pastFlockingFactors = #{pastFlockingFactors}"
-    puts "pastDPrimes = #{pastDPrimes}"
-    puts "pastDispersions = #{pastDispersions}"
+    #x puts "pastFlockingFactors = #{pastFlockingFactors}"
+    #x puts "pastDPrimes = #{pastDPrimes}"
+    #x puts "pastDispersions = #{pastDispersions}"
 
     index = 0
     pastAggregatedMeasuresForOptimization = pastDPrimes.collect do |dPrime|
@@ -875,7 +875,7 @@ class FlockingGainTuner
 
     bestPastAggregatedMeasuresForOptimization = pastAggregatedMeasuresForOptimization.max
 
-    puts "bestPastAggregatedMeasuresForOptimization = #{bestPastAggregatedMeasuresForOptimization}"
+    #x puts "bestPastAggregatedMeasuresForOptimization = #{bestPastAggregatedMeasuresForOptimization}"
 
     theIndexOfTheBest = pastAggregatedMeasuresForOptimization.index(bestPastAggregatedMeasuresForOptimization)
     return pastFlockingFactors[theIndexOfTheBest]

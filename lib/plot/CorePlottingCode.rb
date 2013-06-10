@@ -51,7 +51,8 @@ class Plotter
 
 
   def initialize(title="an XY Plot", xLabel="x", yLabel="y", plotOutputFilenameBase = "#{Dir.pwd}/../../plots/xyPlot",
-      deviceSetup="png font arial 18 size 1024,768 xffffff x000000 x404040 xff0000 xffa500 x66cdaa xcdb5cd xadd8e6 x0000ff xdda0dd x9500d3",
+      #deviceSetup="png font arial 18 size 1024,768 xffffff x000000 x404040 xff0000 xffa500 x66cdaa xcdb5cd xadd8e6 x0000ff xdda0dd x9500d3",
+      deviceSetup="png font arial 18 size 1024,768 #ffffff #000000 #404040 #ff0000 #ffa500 #66cdaa #cdb5cd #add8e6 #0000ff #dda0dd #9500d3",
       subTitle="", parameterLabel="")
     @title = title
     @xLabel = xLabel
