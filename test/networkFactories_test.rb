@@ -6,9 +6,9 @@ require 'test/unit'
 require 'minitest/reporters'
 MiniTest::Reporters.use!
 
-require_relative  '../lib/core/NetworkFactories'
+require_relative '../lib/core/NetworkFactories'
 
-class Link  # only need this class modification to test 'default' for create_link
+class Link # only need this class modification to test 'default' for create_link
   attr_accessor :args
 
   def initialize(inputNeuron, outputNeuron, args)
@@ -79,11 +79,12 @@ class TestNeuronToNeuronConnection < MiniTest::Unit::TestCase
       @outputNeuron = outputNeuron
       @args = args
     end
+
     def to_s
       super
     end
   end
-##--------------------------------------------------------
+  ##--------------------------------------------------------
   def setup
     srand(0)
     @args = {:testValue => 122.0}
@@ -332,7 +333,7 @@ class TestLearningNetwork2 < MiniTest::Unit::TestCase
     }
     @aLearningNetwork = LearningNetwork.new(nil, @args)
     @allNeuronLayers = @aLearningNetwork.createSimpleLearningANN
-   end
+  end
 
   def test_createSimpleLearningANN1
     expected = 3
@@ -377,10 +378,10 @@ class TestLearningNetwork2 < MiniTest::Unit::TestCase
   end
 
   def test_calcNetworksMeanSquareError1
-    @aLearningNetwork.allNeuronLayers =  [[OutputNeuron.new(nil), OutputNeuron.new(nil)]]
+    @aLearningNetwork.allNeuronLayers = [[OutputNeuron.new(nil), OutputNeuron.new(nil)]]
     @aLearningNetwork.numberOfExamples = 2
     expected = (1.11 + 1.11)/(2 * 2)
-    actual =  @aLearningNetwork.calcNetworksMeanSquareError
+    actual = @aLearningNetwork.calcNetworksMeanSquareError
     assert_equal(expected, actual, "Mean Square Error incorrectly calculated")
   end
 

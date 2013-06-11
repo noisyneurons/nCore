@@ -110,7 +110,7 @@ class SimulationDataStoreManager
 
   def storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, dPrimes, elapsedTime)
     @endOfTrainingResultsDataSet = @db[:endOfTrainingResultsForAllExperiments]
-    dPrimes = dPrimes[0]   if(dPrimes.present?)
+    dPrimes = dPrimes[0] if (dPrimes.present?)
     endOfTrainingResultsDataSet.insert(:experimentNumber => theNumberOfTheCurrentExperiment,
                                        :lastEpoch => lastEpoch, :lastTrainingMSE => lastTrainingMSE,
                                        :lastTestingMSE => lastTestingMSE, :dPrimes => dPrimes,

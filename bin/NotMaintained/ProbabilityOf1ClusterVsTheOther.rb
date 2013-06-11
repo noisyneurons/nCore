@@ -5,11 +5,11 @@
 demoToPerform = "flockingWithNOSupervision"
 # Choices are:  flockingWithNOSupervision, flockingWithMomentum, withMomentumAndFocusedFlocking
 
-require_relative  '../lib/core/DataSet'
-require_relative  '../lib/core/NeuralParts'
-require_relative  '../lib/core/NeuralPartsExtended'
-require_relative  '../lib/core/NetworkFactories'
-require_relative  '../lib/plot/CorePlottingCode'
+require_relative '../lib/core/DataSet'
+require_relative '../lib/core/NeuralParts'
+require_relative '../lib/core/NeuralPartsExtended'
+require_relative '../lib/core/NetworkFactories'
+require_relative '../lib/plot/CorePlottingCode'
 
 #  SIMPLEST DATASET --> One input dimension training set with 2 unit separation between nearest exemplars of the 2 classes
 def createTrainingSet(numberOfExamples, separationBetweenDataPoints)

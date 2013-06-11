@@ -141,20 +141,20 @@ testingExampleList = generateExamplesOnConcentricCircles(firstExamplesAngleToXAx
 specification = NNSpecification.new
 specification.plotSubdirectory = "DemoCircleFlock"
 specification.exampleList = exampleList
-specification.weightRange = 1.0                       #
-specification.stoppingErrorCriteria = 0.01            #
-specification.maxNumberOfEpochs = 50000               #
-specification.randomSeed = 1                          #
-specification.numberOfClusters = 2                    #
-specification.numberOfEpochsBetweenMeasures = 200     #
-specification.m = 2.0                                 #
-specification.numExamples = 24                        #
-specification.exampleVectorLength = 2                 #
+specification.weightRange = 1.0 #
+specification.stoppingErrorCriteria = 0.01 #
+specification.maxNumberOfEpochs = 50000 #
+specification.randomSeed = 1 #
+specification.numberOfClusters = 2 #
+specification.numberOfEpochsBetweenMeasures = 200 #
+specification.m = 2.0 #
+specification.numExamples = 24 #
+specification.exampleVectorLength = 2 #
 
 
 if (flockFlag == true)
   specification.experimentName = "DemoCircleWithSoftFlocking"
-  specification.learningRate = 0.03                    #
+  specification.learningRate = 0.03 #
   specification.flockLearningRate = -0.001 # -0.01     #
   specification.numberOfFlockingIterations = 10 # 10   #
 else

@@ -175,7 +175,7 @@ def setParameters(descriptionOfExperiment)
 
       :learningRateNoFlockPhase1 => 3.0,
       :learningRateLocalFlockPhase2 => -0.005,
-      :learningRateBPOutputErrorPhase2  => 0.5,
+      :learningRateBPOutputErrorPhase2 => 0.5,
 
       :phase1Epochs => 10,
       :phase2Epochs => 10,

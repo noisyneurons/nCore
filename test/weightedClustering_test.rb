@@ -150,7 +150,6 @@ class TestClusterDispersion3 < MiniTest::Unit::TestCase
 end
 
 
-
 class TestDynamicClustering < MiniTest::Unit::TestCase
   def setup
     srand(0.0)

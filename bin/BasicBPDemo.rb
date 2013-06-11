@@ -3,14 +3,14 @@
 ## Simple backprop demo. For XOR, and given parameters, requires 2080 epochs to converge.
 ##                       For OR, and given parameters, requires 166 epochs to converge.
 
-require_relative  '../lib/core/DataSet'
-require_relative  '../lib/core/NeuralParts'
-require_relative  '../lib/core/NetworkFactories'
-require_relative  '../lib/plot/CorePlottingCode'
+require_relative '../lib/core/DataSet'
+require_relative '../lib/core/NeuralParts'
+require_relative '../lib/core/NetworkFactories'
+require_relative '../lib/plot/CorePlottingCode'
 
 include ExampleDistribution
 
-srand(0)  # For a '0' argument normally takes 6053 epochs to reach error criteria of 0.01
+srand(0) # For a '0' argument normally takes 6053 epochs to reach error criteria of 0.01
 
 # add the training examples...
 examples = []

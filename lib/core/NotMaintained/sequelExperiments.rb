@@ -101,9 +101,8 @@ puts "examples count: #{exR.count}"
 puts "The average neuron number is: #{exR.avg(:neuronID)}"
 
 
-
-
 exF = simDataStoreManager.exampleFeatureDataSet
+
 def createMultiClassTrainingSet(numberOfExamples, rightShiftUpper2Classes = 0.0)
 
   xStart = [-1.0+rightShiftUpper2Classes, 1.0+rightShiftUpper2Classes, 1.0, -1.0] # assumes clockwise numbering of classes, from 10:30 being class 0
@@ -138,6 +137,7 @@ def createMultiClassTrainingSet(numberOfExamples, rightShiftUpper2Classes = 0.0)
   STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
   examples
 end
+
 examples = createMultiClassTrainingSet(numberOfExamples=16)
 examples.each do |anExample|
   exF.insert(:exampleNumber => anExample[:exampleNumber], :class => anExample[:class])

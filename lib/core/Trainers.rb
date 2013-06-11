@@ -152,18 +152,6 @@ class AbstractTrainer
     mse = logNetworksResponses(neuronsCreatingFlockingError)
   end
 
-  ###------------   Adaption to OUTPUT Error  ------------------------------
-  #def noFlockingMeasureAndStoreAllNeuralResponses
-  #  neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
-  #  neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
-  #  numberOfExamples.times do |exampleNumber|
-  #    allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-  #    neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
-  #    outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
-  #    neuronsToAdaptToOutputError.each { |aNeuron| aNeuron.recordResponsesForExampleToDB(aNeuron.recordResponsesForExample) }
-  #    neuronsToAdaptToOutputError.each { |neuron| neuron.calcDeltaWsAndAccumulate }
-  #  end
-  #end
 
   def outputErrorOnlyMeasureAndStoreAllNeuralResponsesNoDB
     neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
@@ -187,13 +175,13 @@ class AbstractTrainer
       allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
       neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
       outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
-      (outputLayer - neuronsCreatingFlockingError).each { |aNeuron| aNeuron.recordResponsesForExample }
+      #(outputLayer - neuronsCreatingFlockingError).each { |aNeuron| aNeuron.recordResponsesForExample }
 
       neuronsCreatingFlockingError.each do |aNeuron|
         dataRecorded = aNeuron.recordResponsesForExample
         localFlockingError = aNeuron.calcLocalFlockingError
         dataRecorded[:localFlockingError] = localFlockingError
-        aNeuron.recordResponsesForExampleToDB(dataRecorded)
+        #aNeuron.recordResponsesForExampleToDB(dataRecorded)
       end
 
       unless (neuronsAdaptingToLocalFlockingError.empty?)
@@ -851,7 +839,8 @@ class FlockingGainTuner
 
     #x puts "pastFlockingFactors = #{pastFlockingFactors}"
     #x puts "pastDPrimes = #{pastDPrimes}"
-    #x puts "pastDispersions = #{pastDispersions}"
+    puts "Dispersion = #{pastDispersions[0]}"
+
 
     index = 0
     pastAggregatedMeasuresForOptimization = pastDPrimes.collect do |dPrime|
@@ -900,7 +889,7 @@ end
 class WeightChangeNormalizer
   attr_accessor :layer, :weightChangeSetPoint
 
-  def initialize(layer, args, weightChangeSetPoint = 0.01)
+  def initialize(layer, args, weightChangeSetPoint = 0.08)
     @layer = layer
     @weightChangeSetPoint = weightChangeSetPoint
   end

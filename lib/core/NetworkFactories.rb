@@ -80,7 +80,7 @@ class LearningNetwork
   attr_accessor :dataStoreManager, :args, :allNeuronLayers, :theBiasNeuron, :mse,
                 :allNeuronsInOneArray, :inputLayer, :hiddenLayer, :outputLayer,
                 :hiddenLayer1, :hiddenLayer2, :hiddenLayer3, :allHiddenLayers,
-                :neuronsWithInputLinks,:neuronsWithInputLinksInReverseOrder,
+                :neuronsWithInputLinks, :neuronsWithInputLinksInReverseOrder,
                 :numberOfExamples, :epochNumber,
                 :networkMeanSquaredError, :networkRecorder
 
@@ -154,7 +154,7 @@ class LearningNetwork
   end
 
   def connectAllNeuronsToBiasNeuronExceptForThe(inputNeurons)
-  addLinksFromBiasNeuronToHiddenAndOutputNeurons(allNeuronLayers.flatten - inputNeurons)
+    addLinksFromBiasNeuronToHiddenAndOutputNeurons(allNeuronLayers.flatten - inputNeurons)
   end
 
   def addLinksFromBiasNeuronToHiddenAndOutputNeurons(singleArrayOfAllNeuronsToReceiveBiasInput)

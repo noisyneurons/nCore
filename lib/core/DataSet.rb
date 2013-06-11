@@ -1,7 +1,7 @@
 ### VERSION "nCore"
 ## ../nCore/lib/core/DataSet.rb
 
-require_relative  'Utilities'
+require_relative 'Utilities'
 
 module ExampleDistribution
 

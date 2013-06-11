@@ -7,9 +7,9 @@ require 'test/unit'
 require 'minitest/reporters'
 MiniTest::Reporters.use!
 
-require_relative  '../lib/core/DataSet'
-require_relative  '../lib/core/NeuralParts'
-require_relative  '../lib/core/NetworkFactories'
+require_relative '../lib/core/DataSet'
+require_relative '../lib/core/NeuralParts'
+require_relative '../lib/core/NetworkFactories'
 
 Tolerance = 0.00001
 include CommonNeuronCalculations
@@ -18,10 +18,10 @@ class FunctionNetworkFactoriesTest < MiniTest::Unit::TestCase
   def setup
     srand(0)
     @args = {:learningRate => 1.0,
-            :weightRange => 1.0,
-            :numberOfInputNeurons => 2,
-            :numberOfHiddenNeurons => 3,
-            :numberOfOutputNeurons => 1
+             :weightRange => 1.0,
+             :numberOfInputNeurons => 2,
+             :numberOfHiddenNeurons => 3,
+             :numberOfOutputNeurons => 1
     }
     @aLearningNetwork = LearningNetwork.new(nil, @args)
     @aCreatedLearningNetwork = LearningNetwork.new(nil, @args)
@@ -51,7 +51,7 @@ class FunctionNetworkFactoriesTest < MiniTest::Unit::TestCase
   end
 
   def test_createSimpleLearningANN1c
-     assert_equal(3, @allNeuronLayers[1].length, "wrong number of neurons in second layer")
+    assert_equal(3, @allNeuronLayers[1].length, "wrong number of neurons in second layer")
   end
 
   def test_createSimpleLearningANN1cType
@@ -61,7 +61,7 @@ class FunctionNetworkFactoriesTest < MiniTest::Unit::TestCase
   end
 
   def test_createSimpleLearningANN1d
-     assert_equal(1, @allNeuronLayers[2].length, "wrong number of neurons in third layer")
+    assert_equal(1, @allNeuronLayers[2].length, "wrong number of neurons in third layer")
   end
 
   def test_createSimpleLearningANN1dType
@@ -69,7 +69,7 @@ class FunctionNetworkFactoriesTest < MiniTest::Unit::TestCase
   end
 
   def test_biasNeuronLinkage
-     assert_equal(4, @aCreatedLearningNetwork.theBiasNeuron.outputLinks.length, "wrong number of links from THE BIAS NEURON")
+    assert_equal(4, @aCreatedLearningNetwork.theBiasNeuron.outputLinks.length, "wrong number of links from THE BIAS NEURON")
   end
 
   def test_properNeuronIDs
@@ -85,10 +85,10 @@ class FunctionNetworkFactoriesTest2 < MiniTest::Unit::TestCase
   def setup
     srand(0)
     @args = {:learningRate => 1.0,
-            :weightRange => 1.0,
-            :numberOfInputNeurons => 2,
-            :numberOfHiddenNeurons => 3,
-            :numberOfOutputNeurons => 1
+             :weightRange => 1.0,
+             :numberOfInputNeurons => 2,
+             :numberOfHiddenNeurons => 3,
+             :numberOfOutputNeurons => 1
     }
 
     @aCreatedLearningNetwork = LearningNetwork.new(nil, @args)
@@ -161,11 +161,11 @@ class FunctionNetworkFactoriesTest3 < MiniTest::Unit::TestCase
     numberOfExamples = examples.length
 
     @args = {:learningRate => 1.0,
-            :weightRange => 1.0,
-            :numberOfInputNeurons => 1,
-            :numberOfHiddenNeurons => 1,
-            :numberOfOutputNeurons => 1,
-            :numberOfExamples => numberOfExamples
+             :weightRange => 1.0,
+             :numberOfInputNeurons => 1,
+             :numberOfHiddenNeurons => 1,
+             :numberOfOutputNeurons => 1,
+             :numberOfExamples => numberOfExamples
     }
 
     @aCreatedLearningNetwork = LearningNetwork.new(nil, @args)
@@ -184,14 +184,14 @@ class FunctionNetworkFactoriesTest3 < MiniTest::Unit::TestCase
     @inputNeuron0.propagate(3)
     actual = @inputNeuron0.output
     expected = 0.9
-    assert_equal(expected,actual, "wrong input registered at output of input neuron")
+    assert_equal(expected, actual, "wrong input registered at output of input neuron")
   end
 
   def test_propagate2
     @inputNeuron0.propagate(0)
     actual = @inputNeuron0.output
     expected = 0.1
-    assert_equal(expected,actual, "wrong input registered at output of input neuron")
+    assert_equal(expected, actual, "wrong input registered at output of input neuron")
   end
 
   def test_propagate3
@@ -206,13 +206,13 @@ class FunctionNetworkFactoriesTest3 < MiniTest::Unit::TestCase
     actual = @outputNeuron0.target
     expected = 0.1
     assert_equal(expected, actual, "wrong target registered for output neuron")
-   # puts @outputNeuron0
+    # puts @outputNeuron0
   end
 
   def test_propagate5
     @outputNeuron0.propagate(3)
     actual = @outputNeuron0.output
-    expected = ioFunction((@hiddenNeuron0.output * @linkToOutputNeuron0.weight) +  @linkFromBiasNeuronToOutputNeuron0.weight)
+    expected = ioFunction((@hiddenNeuron0.output * @linkToOutputNeuron0.weight) + @linkFromBiasNeuronToOutputNeuron0.weight)
     assert_equal(expected, actual, "wrong output for output neuron")
   end
 
@@ -220,7 +220,7 @@ class FunctionNetworkFactoriesTest3 < MiniTest::Unit::TestCase
     @outputNeuron0.propagate(0)
     # puts @aCreatedLearningNetwork
     actual = @outputNeuron0.output
-    expected = ioFunction((@hiddenNeuron0.output * @linkToOutputNeuron0.weight) +  @linkFromBiasNeuronToOutputNeuron0.weight)
+    expected = ioFunction((@hiddenNeuron0.output * @linkToOutputNeuron0.weight) + @linkFromBiasNeuronToOutputNeuron0.weight)
     assert_equal(expected, actual, "wrong output for output neuron")
   end
 

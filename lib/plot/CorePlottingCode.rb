@@ -1,7 +1,7 @@
 ### VERSION "nCore"
 ## ../nCore/lib/plot/CorePlottingCode.rb
 
-require_relative  '../core/Utilities'
+require_relative '../core/Utilities'
 require_relative '../../../rgplot/lib/gnuplotMOD'
 
 
@@ -361,15 +361,14 @@ class Plotter
   #end
 
   def createImageFile
-    baseDirectory =  "#{Dir.pwd}/../../"
+    baseDirectory = "#{Dir.pwd}/../../"
     Dir.chdir(baseDirectory) do
-      plotProgramToRun = "#{baseDirectory}/gnuplot/bin/wgnuplot_pipes.exe"  if(OS.windows?)
-      plotProgramToRun = "gnuplot" if(OS.linux?)
+      plotProgramToRun = "#{baseDirectory}/gnuplot/bin/wgnuplot_pipes.exe" if (OS.windows?)
+      plotProgramToRun = "gnuplot" if (OS.linux?)
       system("#{plotProgramToRun} #{@plotFilename}")
     end
     return @plotImageFilename
   end
-
 
 
   def createAnimatedGnuplotFile(arrayOfXArrays, arrayOfYArrays, arrayOfdeltaxArrays=nil, arrayOfdeltayArrays=nil)

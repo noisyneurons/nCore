@@ -6,7 +6,7 @@ require 'mocha/setup'
 require 'minitest/reporters'
 MiniTest::Reporters.use!
 
-require_relative  '../lib/core/NeuralParts'
+require_relative '../lib/core/NeuralParts'
 
 Tolerance = 0.00001
 

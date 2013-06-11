@@ -8,7 +8,7 @@ require 'test/unit'
 require 'minitest/unit'
 require 'minitest/mock'
 
-require_relative  '../lib/core/NeuralPartsExtended'
+require_relative '../lib/core/NeuralPartsExtended'
 
 Tolerance = 0.00001
 ############################################################      N
@@ -170,7 +170,7 @@ class Test2OfFlockingNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
     clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsLocationFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
     expectedFlockingError = clustersApproximationOfLocationOfExamplesNetInput - actualNetInput
 
-    @aFlockingNeuron.calcLocalFlockingError{}
+    @aFlockingNeuron.calcLocalFlockingError {}
     assert_equal(expectedFlockingError, @aFlockingNeuron.localFlockingError, "flocking error for given example and neuron are incorrect")
 
     @metricRecorder.verify
@@ -188,7 +188,7 @@ class Test2OfFlockingNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
       clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsLocationFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
       expectedFlockingError = clustersApproximationOfLocationOfExamplesNetInput - actualNetInput
 
-      @aFlockingNeuron.calcLocalFlockingError{}
+      @aFlockingNeuron.calcLocalFlockingError {}
 
       assert_equal(expectedFlockingError, @aFlockingNeuron.localFlockingError, "flocking error for given example and neuron are incorrect")
       @metricRecorder.verify
@@ -356,7 +356,7 @@ class Test2OfFlockingOutputNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
     clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsLocationFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
     expectedFlockingError = clustersApproximationOfLocationOfExamplesNetInput - actualNetInput
 
-    @aFlockingNeuron.calcLocalFlockingError{}
+    @aFlockingNeuron.calcLocalFlockingError {}
     assert_equal(expectedFlockingError, @aFlockingNeuron.localFlockingError, "flocking error for given example and neuron are incorrect")
 
     @metricRecorder.verify
@@ -374,7 +374,7 @@ class Test2OfFlockingOutputNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
       clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsLocationFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
       expectedFlockingError = clustersApproximationOfLocationOfExamplesNetInput - actualNetInput
 
-      @aFlockingNeuron.calcLocalFlockingError{}
+      @aFlockingNeuron.calcLocalFlockingError {}
 
       assert_equal(expectedFlockingError, @aFlockingNeuron.localFlockingError, "flocking error for given example and neuron are incorrect")
       @metricRecorder.verify

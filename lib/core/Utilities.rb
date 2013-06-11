@@ -112,7 +112,6 @@ def createRotationMatrix(angleInDegrees) # for CLOCKWISE Rotations!!
 end
 
 
-
 #TODO Subclass Vector and add these methods to the subclass
 class Vector
   # Calculates the distance to Point p
