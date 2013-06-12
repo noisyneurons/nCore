@@ -97,7 +97,7 @@ class Trainer
         aNeuron.recordResponsesForExampleToDB(dataRecorded)
       end
 
-      # neuronsAdaptingToLocalFlockingError.each { |aNeuron| aNeuron.calcDeltaWsAndAccumulate { |errorFromUpperLayers, localFlockError| errorFromUpperLayers - localFlockError } }
+      # adaptingNeurons.each { |aNeuron| aNeuron.calcDeltaWsAndAccumulate { |errorFromUpperLayers, localFlockError| errorFromUpperLayers - localFlockError } }
       neuronsAdaptingToLocalFlockingError.each do |aNeuron|
         aNeuron.calcDeltaWsAndAccumulate do |errorFromUpperLayers, localFlockError|
           aNeuron.upperErAry << errorFromUpperLayers.abs

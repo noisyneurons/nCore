@@ -83,9 +83,9 @@ end
 #class Trainer4Class
 #  def designateNeuronGroups
 #    neuronsCreatingFlockingError = hiddenLayer
-#    neuronsAdaptingToLocalFlockingError = hiddenLayer
+#    adaptingNeurons = hiddenLayer
 #    neuronsAdaptingToBackPropedFlockingError = []
-#    return neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError, neuronsAdaptingToBackPropedFlockingError
+#    return neuronsCreatingFlockingError, adaptingNeurons, neuronsAdaptingToBackPropedFlockingError
 #  end
 #end
 
