@@ -6,7 +6,8 @@ require_relative 'Utilities'
 class AbstractTrainer
   attr_accessor :trainingSequence, :minMSE, :maxNumEpochs, :examples, :dataArray, :args,
                 :numberOfExamples, :dataStoreManager,
-                :lastEpoch, :lastTrainingMSE, :lastTestingMSE, :dPrimes, :startTime, :elapsedTime,
+                :lastEpoch, :lastTrainingMSE, :lastTestingMSE, :startTime, :elapsedTime,
+                :dPrimes, :dPrimesOld, :dispersions, :dispersionsOld,
 
                 :network, :allNeuronLayers,
                 :allNeuronsInOneArray, :inputLayer, :hiddenLayer, :outputLayer, :theBiasNeuron,
@@ -25,7 +26,7 @@ class AbstractTrainer
                 :learningRateNoFlockPhase1, :learningRateLocalFlockPhase2, :learningRateBPOutputErrorPhase2,
                 :learningRateNoFlockPhase1, :learningRateForBackPropedFlockingErrorPhase2, :learningRateFlockPhase2,
 
-                :layerTuners
+                :layerTuners, :flockingHasConverged, :adaptingLayers, :adaptingNeurons
 
   include ExampleDistribution
   include NeuronToNeuronConnection
@@ -121,22 +122,40 @@ class AbstractTrainer
     [mse, dPrimes]
   end
 
-  def stepLearning(examples)
-    distributeSetOfExamples(examples)
-    mse = 99999.0
-    dPrimes = nil
-    @dPrimesOld = nil
+  #def stepLearningOLD(examples)
+  #  distributeSetOfExamples(examples)
+  #  mse = 99999.0
+  #  dPrimes = nil
+  #  @dPrimesOld = nil
+  #
+  #  seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)
+  #  while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
+  #    STDERR.puts "Error: Status of training sequencer is incorrect!!" unless (trainingSequence.status == :inPhase1)
+  #    mse = adaptNetworkWeightsAfterOneEpoch(neuronsCreatingFlockingError, adaptingNeurons,
+  #                                           neuronsAdaptingToBackPropedFlockingError)
+  #    trainingSequence.nextEpoch
+  #  end
+  #  dPrimes = recenterEachNeuronsClusters(neuronsCreatingFlockingError)
+  #  return mse, dPrimes
+  #end
 
-    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)
+  def stepLearning(examples)
+    self.dPrimes = nil
+    self.dPrimesOld = nil
+    self.flockingHasConverged = true
+
+    mse = 99999.0
+    distributeSetOfExamples(examples)
+    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO is this always needed? -- except for the 'first' step?
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
-      STDERR.puts "Error: Status of training sequencer is incorrect!!" unless (trainingSequence.status == :inPhase1)
-      mse = adaptNetworkWeightsAfterOneEpoch(neuronsCreatingFlockingError, adaptingNeurons,
-                                             neuronsAdaptingToBackPropedFlockingError)
+      STDERR.puts "Error: Status of training sequencer is incorrect!!" unless (trainingSequence.status == :inPhase1)  # TODO delete this if/after multiphase eliminated
+      mse = adaptNetworkWeightsAfterOneEpoch
       trainingSequence.nextEpoch
     end
     dPrimes = recenterEachNeuronsClusters(neuronsCreatingFlockingError)
     return mse, dPrimes
   end
+
 
   ###------------   Adapt to Both Output AND Flocking Error  ------------------------------
   def adaptNetworkWeightsAfterOneEpoch(neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError,
@@ -307,50 +326,73 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   end
 
   def stepLearning(examples)
-    distributeSetOfExamples(examples)
+
+    self.flockingHasConverged = true
+
     mse = 99999.0
-    dPrimes = nil
-    @dPrimesOld = nil
-    self.flockingConverged = nil
-    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)
+    distributeSetOfExamples(examples)
+    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO is this always needed? -- except for the 'first' step?
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
-      STDERR.puts "Error: Status of training sequencer is incorrect!!" unless (trainingSequence.status == :inPhase1)
+      STDERR.puts "Error: Status of training sequencer is incorrect!!" unless (trainingSequence.status == :inPhase1)  # TODO delete this if/after multiphase eliminated
       mse = adaptNetworkWeightsAfterOneEpoch
       trainingSequence.nextEpoch
     end
-    dPrimes = recenterEachNeuronsClusters(neuronsCreatingFlockingError)
-    return mse, dPrimes
+    self.dispersions = recenterEachNeuronsClusters(neuronsCreatingFlockingError)
+    return mse, dispersions
   end
 
 
   ###------------   Adapt to Both Output AND Flocking Error  ------------------------------
   def adaptNetworkWeightsAfterOneEpoch
-    if (flockingConverged || flockingConverged.nil?)
-      outputErrorDeltaWsAccumulated
+    if (flockingHasConverged)
+      accumulateOutputErrorDeltaWs
       layerTuners.each { |aLearningRateTuner| aLearningRateTuner.normalizeWeightChanges }
       adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-      recenterEachNeuronsClusters(adaptingNeurons)
-      self.flockingConverged = false
+      self.dispersions = recenterEachNeuronsClusters(adaptingNeurons)
+      self.dispersionsOld = nil
     end
 
-    self.flockingConverged = haveFlockDispersionsBeenMinimized?
+    self.flockingHasConverged = haveFlockDispersionsBeenMinimized?
 
-    unless (flockingCoverged)
-      flockingErrorDeltaWsAccumulated
-      layerTuners.each { |aLearningRateTuner| aLearningRateTuner.tuneFlockLearningRate }
+    unless (flockingHasConverged)
+      accumulateFlockingErrorDeltaWs
+      layerTuners.each { |aLearningRateTuner| aLearningRateTuner.tuneFlockingRate }
       adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+      self.dispersions = recenterEachNeuronsClusters(adaptingNeurons)
     end
 
     mse = logNetworksResponses(adaptingNeurons)
   end
 
+  def haveFlockDispersionsBeenMinimized?
 
-  def outputErrorDeltaWsAccumulated
-    accumulateDeltaWs {|aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate}
+  end
+
+  def recenterEachNeuronsClusters(neuronsCreatingFlockingError)
+    dispersions = neuronsCreatingFlockingError.collect { |aNeuron| aNeuron.clusterAllResponses } # TODO Perhaps we might only need to clusterAllResponses every K epochs?
+  end
+
+  def deltaDispersions(dispersions)
+    unless (dispersionsOld.nil?)
+      index = -1
+      relativeChanges = dispersions.collect do | aDispersion |
+        index += 1
+        relativeChange = (aDispersion - dispersionsOld[index]) / ((aDispersion + dispersionsOld[index])/2.0)
+      end
+    else
+      relativeChanges = Array.new(dispersions.length) { 1.0 }
+    end
+    # puts "epochs=\t#{trainingSequence.epochs}\tdPrimes=\t#{dPrimes}\tOldDPrimes=\t#{@dPrimesOld}" if (trainingSequence.epochs > 30)
+    self.dispersionsOld = dispersions
+    return relativeChanges
   end
 
 
-  def flockingErrorDeltaWsAccumulated
+  def accumulateOutputErrorDeltaWs
+    accumulateDeltaWs {|aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate}
+  end
+
+  def accumulateFlockingErrorDeltaWs
     accumulateDeltaWs do |aNeuron, dataRecord|
       dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError
       aNeuron.calcDeltaWsAndAccumulate { |errorFromUpperLayers, localFlockError| localFlockError }
@@ -375,44 +417,22 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
 
   def step1NameTrainingGroupsAndLearningRates
     self.layersWithInputLinks = [outputLayer]
-    self.layersAdaptingOnlyToBPOutputError = []
-    self.layersToAdaptToOutputError = [outputLayer]
-
-    self.layersAdaptingToLocalFlockingError = [outputLayer]
+    self.adaptingLayers = [outputLayer]
     self.layersWhoseClustersNeedToBeSeeded = [outputLayer]
 
     self.layerTuners = [LearningAndFlockingTuner.new(outputLayer, args, noFlocking = false, weightChangeSetPoint = 0.08)]
     setUniversalNeuronGroupNames
   end
 
-  #def outputErrorDeltaWsAccumulatedOLD
-  #  neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
-  #  neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
-  #  numberOfExamples.times do |exampleNumber|
-  #    allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-  #    neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
-  #    outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
-  #    adaptingNeurons.each do |aNeuron|
-  #      dataRecorded = aNeuron.recordResponsesForExample
-  #      aNeuron.calcDeltaWsAndAccumulate
-  #    end
-  #  end
-  #end
-  #
-  #def flockingErrorDeltaWsAccumulatedOLD
-  #  neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
-  #  neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
-  #  numberOfExamples.times do |exampleNumber|
-  #    allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-  #    neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
-  #    outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
-  #    adaptingNeurons.each do |aNeuron|
-  #      dataRecorded = aNeuron.recordResponsesForExample
-  #      dataRecorded[:localFlockingError] = aNeuron.calcLocalFlockingError
-  #      aNeuron.calcDeltaWsAndAccumulate { |errorFromUpperLayers, localFlockError| localFlockError }
-  #    end
-  #  end
-  #end
+
+  def setUniversalNeuronGroupNames
+    self.neuronsWithInputLinks = layersWithInputLinks.flatten
+    self.neuronsWithInputLinksInReverseOrder = neuronsWithInputLinks.reverse
+    self.allNeuronsInOneArray = inputLayer + neuronsWithInputLinks
+
+    self.adaptingNeurons = adaptingLayers.flatten unless (adaptingLayers.nil?)
+    self.neuronsWhoseClustersNeedToBeSeeded = layersWhoseClustersNeedToBeSeeded.flatten unless (layersWhoseClustersNeedToBeSeeded.nil?)
+  end
 end
 
 class CircleTrainer < AbstractTrainer

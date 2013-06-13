@@ -74,7 +74,8 @@ module CommonClusteringCode
   def clusterAllResponses
     arrayOfVectorsRepresentingPointsInSpace = metricRecorder.vectorizeEpochMeasures
     dummy, iterationNumber = clusterer.clusterData(arrayOfVectorsRepresentingPointsInSpace)
-    self.dPrime = calc_dPrime(arrayOfVectorsRepresentingPointsInSpace)
+    #self.dPrime = calc_dPrime(arrayOfVectorsRepresentingPointsInSpace)
+    calc_dispersion(arrayOfVectorsRepresentingPointsInSpace)
   end
 
   #std("arrayOfVectorsRepresentingPointsInSpace.first=\t",arrayOfVectorsRepresentingPointsInSpace.first) #puts "iterationNumber=\t#{iterationNumber}"
@@ -107,6 +108,11 @@ module CommonClusteringCode
                                                            #puts "distanceBetween2ClustersForDimension0=\t#{clusterer.distanceBetween2ClustersForDimension0}"
     return (clusterer.distanceBetween2ClustersForDimension0 / clusterer.dispersionOfInputsForDPrimeCalculation(arrayOfVectorsRepresentingPointsInSpace)).abs
   end
+
+  def calc_dispersion(arrayOfVectorsRepresentingPointsInSpace)  # very inexact for small numbers of samples... need to use F-st...
+    return clusterer.dispersionOfInputsForDPrimeCalculation(arrayOfVectorsRepresentingPointsInSpace)
+  end
+
 
   private ############################ PRIVATE METHODS BELOW ###########################
 
