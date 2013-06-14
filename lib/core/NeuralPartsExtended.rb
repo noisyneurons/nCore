@@ -78,12 +78,16 @@ module CommonClusteringCode
     calc_dispersion(arrayOfVectorsRepresentingPointsInSpace)
   end
 
+
+
   #std("arrayOfVectorsRepresentingPointsInSpace.first=\t",arrayOfVectorsRepresentingPointsInSpace.first) #puts "iterationNumber=\t#{iterationNumber}"
 
   # *** This function should not be called before an entire batch has been processed by the clusterer ***
   def calcLocalFlockingError
     distanceToClusterersApproximationOfLocationOfExample = (args[:leadingFactor] * clusterersApproximationOfLocationOfExample) - actualLocationOfExample # TODO "clusterersApproximationOfLocationOfExample" should only need to call this on the first flocking iteration for each example ('memoize' this)      #centerOfDominantClusterForExample
     self.localFlockingError = 1.0 * distanceToClusterersApproximationOfLocationOfExample # TODO weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter))  # TODO Should 'membershipInFlock(examplesNetInput)' be included?  # If included, it reduces the importance of examples with small io derivatives  # TODO Should 'membershipInFlock(examplesNetInput)' be included -- This term, if included, reduces the importance of examples with small io derivatives  ## TODO Should 'weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter)' be included?
+    self.accumulatedAbsoluteFlockingError += localFlockingError.abs
+    return localFlockingError
   end
 
   def saveDeltaWAccumulated
@@ -148,8 +152,8 @@ end
 ############################################################
 
 class FlockingNeuron < Neuron
-  attr_accessor :localFlockingError, :higherLayerError,
-                :errorToBackPropToLowerLayer,
+  attr_accessor :localFlockingError, :accumulatedAbsoluteFlockingError,
+                :higherLayerError, :errorToBackPropToLowerLayer,
                 :clusterer, :store, :dPrime, :trainingSequence,
                 :flockingGain, :layerGain
   include CombiningFlockingAndSupervisedErrorCode
@@ -180,10 +184,9 @@ class FlockingNeuron < Neuron
 end
 
 class FlockingOutputNeuron < OutputNeuron
-  attr_accessor :netInput, :localFlockingError, :higherLayerError,
-                :errorToBackPropToLowerLayer, :clusterer,
-                :store, :dPrime, :trainingSequence,
-                :flockingGain, :layerGain
+  attr_accessor :netInput, :localFlockingError, :accumulatedAbsoluteFlockingError,
+                :higherLayerError, :errorToBackPropToLowerLayer, :clusterer,
+                :store, :dPrime, :trainingSequence, :flockingGain, :layerGain
   include CombiningFlockingAndSupervisedErrorCode
   include CommonClusteringCode
 
