@@ -143,11 +143,11 @@ trainingSequence = TrainingSequence.create(network, args)
 theTrainer = SimpleAdjustableLearningRateTrainer.new(trainingSequence, network, args)
 
 arrayOfNeuronsForIOPlots = nil
-lastEpoch, lastTrainingMSE, dPrimes = theTrainer.simpleLearningWithFlocking(examples, arrayOfNeuronsForIOPlots)
+lastEpoch, lastTrainingMSE, dispersions = theTrainer.simpleLearningWithFlocking(examples, arrayOfNeuronsForIOPlots)
 
 lastTestingMSE = nil
-theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, dPrimes)
+theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, dispersions)
 
-displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch, lastTestingMSE,
+displayAndPlotResults(args, dispersions, dataStoreManager, lastEpoch, lastTestingMSE,
                       lastTrainingMSE, network, theTrainer, trainingSequence)
 

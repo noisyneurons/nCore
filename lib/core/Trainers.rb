@@ -323,6 +323,8 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     @inputLayer = network.inputLayer
     @outputLayer = network.outputLayer
     @theBiasNeuron = network.theBiasNeuron
+
+    @rotatingAry = [1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18,0]
   end
 
   def stepLearning(examples)
@@ -334,10 +336,10 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO is this always needed? -- except for the 'first' step?
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
       STDERR.puts "Error: Status of training sequencer is incorrect!!" unless (trainingSequence.status == :inPhase1)  # TODO delete this if/after multiphase eliminated
-      mse = adaptNetworkWeightsAfterOneEpoch
+      mse, self.dispersions = adaptNetworkWeightsAfterOneEpoch
       trainingSequence.nextEpoch
     end
-    self.dispersions = recenterEachNeuronsClusters(neuronsCreatingFlockingError)
+    #self.dispersions = recenterEachNeuronsClusters(adaptingNeurons)
     return mse, dispersions
   end
 
@@ -354,18 +356,26 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
 
     self.flockingHasConverged = haveFlockDispersionsBeenMinimized?
 
+
     unless (flockingHasConverged)
+      adaptingNeurons.each { |aNeuron| aNeuron.learningRate = -0.005 }
       accumulateFlockingErrorDeltaWs
-      layerTuners.each { |aLearningRateTuner| aLearningRateTuner.tuneFlockingRate }
+      #layerTuners.each { |aLearningRateTuner| aLearningRateTuner.tuneFlockingRate }
       adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
       self.dispersions = recenterEachNeuronsClusters(adaptingNeurons)
+      puts "dispersions =\t#{dispersions}"
+      adaptingNeurons.each { |aNeuron| aNeuron.learningRate = 1.0 }
     end
 
     mse = logNetworksResponses(adaptingNeurons)
+    return [mse, dispersions]
   end
 
   def haveFlockDispersionsBeenMinimized?
-
+    value = (@rotatingAry.rotate!)[0]
+    return true if( value == 0 )
+    puts "value = #{value} "
+    return false
   end
 
   def recenterEachNeuronsClusters(neuronsCreatingFlockingError)
