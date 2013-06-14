@@ -270,8 +270,8 @@ class AbstractTrainer
     distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
   end
 
-  def recenterEachNeuronsClusters(neuronsCreatingFlockingError)
-    dPrimes = neuronsCreatingFlockingError.collect { |aNeuron| aNeuron.clusterAllResponses } # TODO Perhaps we might only need to clusterAllResponses every K epochs?
+  def recenterEachNeuronsClusters(adaptingNeurons)
+    dPrimes = adaptingNeurons.collect { |aNeuron| aNeuron.clusterAllResponses } # TODO Perhaps we might only need to clusterAllResponses every K epochs?
   end
 
   def seedClustersInFlockingNeurons(neuronsCreatingFlockingError)
@@ -325,6 +325,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     @theBiasNeuron = network.theBiasNeuron
 
     @rotatingAry = [1,2,3,4,5,6,7,8,9,10,12,13,14,15,16,17,18,0]
+    #@rotatingAry = [1,2,3,4,5,0]
   end
 
   def stepLearning(examples)
@@ -356,15 +357,11 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
 
     self.flockingHasConverged = haveFlockDispersionsBeenMinimized?
 
-
     unless (flockingHasConverged)
-      adaptingNeurons.each { |aNeuron| aNeuron.learningRate = -0.005 }
-      accumulateFlockingErrorDeltaWs
+      self.dispersions = accumulateFlockingErrorDeltaWs
+      puts "dispersions =\t#{dispersions}"
       #layerTuners.each { |aLearningRateTuner| aLearningRateTuner.tuneFlockingRate }
       adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-      self.dispersions = recenterEachNeuronsClusters(adaptingNeurons)
-      puts "dispersions =\t#{dispersions}"
-      adaptingNeurons.each { |aNeuron| aNeuron.learningRate = 1.0 }
     end
 
     mse = logNetworksResponses(adaptingNeurons)
@@ -399,18 +396,22 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
 
 
   def accumulateOutputErrorDeltaWs
-    accumulateDeltaWs {|aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate}
+    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = 1.0 }
+    accumulateDeltaWsAcrossExamples {|aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate}
   end
 
   def accumulateFlockingErrorDeltaWs
-    accumulateDeltaWs do |aNeuron, dataRecord|
+    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = -0.003 }
+    adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
+    accumulateDeltaWsAcrossExamples do |aNeuron, dataRecord|
       dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError
       aNeuron.calcDeltaWsAndAccumulate { |errorFromUpperLayers, localFlockError| localFlockError }
     end
+    return adaptingNeurons.collect {|aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
   end
 
 
-  def accumulateDeltaWs
+  def accumulateDeltaWsAcrossExamples
     neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
     neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
     numberOfExamples.times do |exampleNumber|
@@ -856,7 +857,7 @@ end
 class LearningAndFlockingTuner
   attr_accessor :layer, :weightChangeNormalizer, :flockingGainTuners, :noFlocking
 
-  def initialize(layer, args, noFlocking = false, weightChangeSetPoint = 0.01)
+  def initialize(layer, args, noFlocking = false, weightChangeSetPoint = 0.08)
     @layer = layer
     @noFlocking = noFlocking
     @weightChangeNormalizer = WeightChangeNormalizer.new(layer, args, weightChangeSetPoint)
