@@ -75,7 +75,8 @@ module CommonClusteringCode
     arrayOfVectorsRepresentingPointsInSpace = metricRecorder.vectorizeEpochMeasures
     dummy, iterationNumber = clusterer.clusterData(arrayOfVectorsRepresentingPointsInSpace)
     #self.dPrime = calc_dPrime(arrayOfVectorsRepresentingPointsInSpace)
-    calc_dispersion(arrayOfVectorsRepresentingPointsInSpace)
+    #calc_dispersion(arrayOfVectorsRepresentingPointsInSpace)
+    return iterationNumber
   end
 
 
