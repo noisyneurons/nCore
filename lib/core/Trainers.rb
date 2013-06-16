@@ -325,14 +325,14 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     @theBiasNeuron = network.theBiasNeuron
 
     @rotatingAry = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 0]
-    # @rotatingAry = [1,2,3,4,5,0]
+    @rotatingAry = [1,2,3,4,5,0]
   end
 
   def stepLearning(examples)
 
-    @relativeChanges = nil
+    #@relativeChanges = nil
     self.flockingHasConverged = true
-    self.absFlockingErrors = nil
+    self.absFlockingErrors = []
     mse = 99999.0
 
     distributeSetOfExamples(examples)
@@ -371,14 +371,15 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
 
   def haveFlockDispersionsBeenMinimized?
 
-    puts "absFlockingErrors, absFlockingErrorsOld, relativeChanges =\t#{absFlockingErrors}\t#{absFlockingErrorsOld}\t#{@relativeChanges} "
-
-    @relativeChanges = deltaDispersions(absFlockingErrors)
+    temp = absFlockingErrorsOld.deep_clone unless(absFlockingErrorsOld.nil?)
+    relativeChanges = deltaDispersions(absFlockingErrors)
+    puts "absFlockingErrorsOld, absFlockingErrors, relativeChanges, mse =\t#{temp}\t#{absFlockingErrors}\t#{relativeChanges}\t#{logNetworksResponses(adaptingNeurons)} "
 
     value = (@rotatingAry.rotate!)[0]
     if (value == 0)
-      self.absFlockingErrors = nil
-      self.absFlockingErrorsOld = nil
+      self.absFlockingErrors = []
+      self.absFlockingErrorsOld = []
+
       return true
     end
     return false
@@ -386,7 +387,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
 
 
   def deltaDispersions(absFlockingErrors)
-    unless (absFlockingErrors.nil? || absFlockingErrorsOld.nil?)
+    unless (absFlockingErrors.nil? || absFlockingErrorsOld.nil? || absFlockingErrorsOld.empty?)
       index = -1
       relativeChanges = absFlockingErrors.collect do |anAbsFlockingError|
         index += 1
