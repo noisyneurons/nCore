@@ -316,6 +316,9 @@ class AbstractTrainer
   # end
 end
 
+
+
+
 class SimpleAdjustableLearningRateTrainer < AbstractTrainer
 
   def postInitialize
@@ -325,7 +328,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     @theBiasNeuron = network.theBiasNeuron
 
     @rotatingAry = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 0]
-    @rotatingAry = [1,2,3,4,5,0]
+    #@rotatingAry = [1,2,3,4,5,0]
   end
 
   def stepLearning(examples)
@@ -346,8 +349,6 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     return mse, absFlockingErrors
   end
 
-
-  ###------------   Adapt to Both Output AND Flocking Error  ------------------------------
   def adaptNetworkWeightsAfterOneEpoch
     if (flockingHasConverged)
 
@@ -385,7 +386,6 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     return false
   end
 
-
   def deltaDispersions(absFlockingErrors)
     unless (absFlockingErrors.nil? || absFlockingErrorsOld.nil? || absFlockingErrorsOld.empty?)
       index = -1
@@ -400,24 +400,28 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     return relativeChanges
   end
 
-
   def accumulateOutputErrorDeltaWs
     adaptingNeurons.each { |aNeuron| aNeuron.learningRate = 1.0 }
-    accumulateDeltaWsAcrossExamples { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
+    acrossExamplesAccumulateDeltaWs { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
   end
 
   def accumulateFlockingErrorDeltaWs
     adaptingNeurons.each { |aNeuron| aNeuron.learningRate = -0.002 }
     adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
-    accumulateDeltaWsAcrossExamples do |aNeuron, dataRecord|
-      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError
+    puts if(trainingSequence.epochs > 3950)
+    acrossExamplesAccumulateDeltaWs do |aNeuron, dataRecord|
+      localFlockingError = aNeuron.calcLocalFlockingError
+
+      puts "For an Example, Flocking Error=\t#{localFlockingError}" if(trainingSequence.epochs > 3950)
+
+      dataRecord[:localFlockingError] = localFlockingError
       aNeuron.calcDeltaWsAndAccumulate { |errorFromUpperLayers, localFlockError| localFlockError }
     end
+    puts if(trainingSequence.epochs > 3950)
     return adaptingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
   end
 
-
-  def accumulateDeltaWsAcrossExamples
+  def acrossExamplesAccumulateDeltaWs
     neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
     neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
     numberOfExamples.times do |exampleNumber|
@@ -431,7 +435,6 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     end
   end
 
-
   def step1NameTrainingGroupsAndLearningRates
     self.layersWithInputLinks = [outputLayer]
     self.adaptingLayers = [outputLayer]
@@ -440,7 +443,6 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     self.layerTuners = [LearningAndFlockingTuner.new(outputLayer, args, noFlocking = false, weightChangeSetPoint = 0.02)]
     setUniversalNeuronGroupNames
   end
-
 
   def setUniversalNeuronGroupNames
     self.neuronsWithInputLinks = layersWithInputLinks.flatten
@@ -451,6 +453,9 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     self.neuronsWhoseClustersNeedToBeSeeded = layersWhoseClustersNeedToBeSeeded.flatten unless (layersWhoseClustersNeedToBeSeeded.nil?)
   end
 end
+
+
+
 
 class CircleTrainer < AbstractTrainer
   attr_accessor :learningRateNoFlockPhase1, :neuronsCreatingFlockingError, :neuronsAdaptingToLocalFlockingError,
