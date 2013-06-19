@@ -167,7 +167,7 @@ class Test2OfFlockingNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
     @aFlockingNeuron.exampleNumber = exampleNumber
     actualNetInput = (@vectorizedTestData[exampleNumber])[0]
 
-    clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsLocationFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
+    clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
     expectedFlockingError = clustersApproximationOfLocationOfExamplesNetInput - actualNetInput
 
     @aFlockingNeuron.calcLocalFlockingError {}
@@ -185,7 +185,7 @@ class Test2OfFlockingNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
 
       @aFlockingNeuron.exampleNumber = exampleNumber
       actualNetInput = (@vectorizedTestData[exampleNumber])[0]
-      clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsLocationFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
+      clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
       expectedFlockingError = clustersApproximationOfLocationOfExamplesNetInput - actualNetInput
 
       @aFlockingNeuron.calcLocalFlockingError {}
@@ -353,7 +353,7 @@ class Test2OfFlockingOutputNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
     @aFlockingNeuron.exampleNumber = exampleNumber
     actualNetInput = (@vectorizedTestData[exampleNumber])[0]
 
-    clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsLocationFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
+    clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
     expectedFlockingError = clustersApproximationOfLocationOfExamplesNetInput - actualNetInput
 
     @aFlockingNeuron.calcLocalFlockingError {}
@@ -371,7 +371,7 @@ class Test2OfFlockingOutputNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
 
       @aFlockingNeuron.exampleNumber = exampleNumber
       actualNetInput = (@vectorizedTestData[exampleNumber])[0]
-      clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsLocationFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
+      clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
       expectedFlockingError = clustersApproximationOfLocationOfExamplesNetInput - actualNetInput
 
       @aFlockingNeuron.calcLocalFlockingError {}

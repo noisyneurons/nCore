@@ -79,16 +79,21 @@ module CommonClusteringCode
     return iterationNumber
   end
 
-
-
   #std("arrayOfVectorsRepresentingPointsInSpace.first=\t",arrayOfVectorsRepresentingPointsInSpace.first) #puts "iterationNumber=\t#{iterationNumber}"
 
   # *** This function should not be called before an entire batch has been processed by the clusterer ***
   def calcLocalFlockingError
-    distanceToClusterersApproximationOfLocationOfExample = (args[:leadingFactor] * clusterersApproximationOfLocationOfExample) - actualLocationOfExample # TODO "clusterersApproximationOfLocationOfExample" should only need to call this on the first flocking iteration for each example ('memoize' this)      #centerOfDominantClusterForExample
-    self.localFlockingError = 1.0 * distanceToClusterersApproximationOfLocationOfExample # TODO weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter))  # TODO Should 'membershipInFlock(examplesNetInput)' be included?  # If included, it reduces the importance of examples with small io derivatives  # TODO Should 'membershipInFlock(examplesNetInput)' be included -- This term, if included, reduces the importance of examples with small io derivatives  ## TODO Should 'weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter)' be included?
+    distanceToWeightedExamplesCenter = (args[:leadingFactor] * weightedExamplesCenter) - actualLocationOfExample # TODO "weightedClustersCenter" should only need to call this on the first flocking iteration for each example ('memoize' this)      #centerOfDominantClusterForExample
+    self.localFlockingError = 1.0 * distanceToWeightedExamplesCenter # TODO weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter))  # TODO Should 'membershipInFlock(examplesNetInput)' be included?  # If included, it reduces the importance of examples with small io derivatives  # TODO Should 'membershipInFlock(examplesNetInput)' be included -- This term, if included, reduces the importance of examples with small io derivatives  ## TODO Should 'weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter)' be included?
     self.accumulatedAbsoluteFlockingError += localFlockingError.abs
-    return localFlockingError
+
+    #epochs = TrainingSequence.instance.epochs
+    #puts "Epochs=\t#{epochs}\tCenter=\t#{weightedClustersCenter}\tC0=\t#{clusterer.clusters[0].center[0]}\tC1=\t#{clusterer.clusters[1].center[0]}\texLocation=\t#{actualLocationOfExample}\tFlocking Error=\t#{localFlockingError}" if(epochs < 1000)
+
+    augError = augmentFlockingErrorUsingMomentum(localFlockingError, alpha=0.8, exampleNumber)
+    puts "localFlockingError=\t#{localFlockingError}\taugError=\t#{augError}"
+    self.localFlockingError = augError
+    return augError
   end
 
   def saveDeltaWAccumulated
@@ -100,7 +105,7 @@ module CommonClusteringCode
     membershipForExampleInCluster1 =(clusterer.clusters[1]).exampleMembershipWeightsForCluster[exampleNumber]
     dataForReport = {:neuronID => self.id,
                      :localFlockingError => self.localFlockingError,
-                     :clusterersApproximationOfLocationOfExample => clusterersApproximationOfLocationOfExample,
+                     :weightedExamplesCenter => weightedExamplesCenter,
                      :actualLocationOfExample => actualLocationOfExample,
                      :membershipForExampleInCluster0 => membershipForExampleInCluster0,
                      :membershipForExampleInCluster1 => membershipForExampleInCluster1
@@ -128,8 +133,8 @@ module CommonClusteringCode
 
   # This is only used for reporting purposes
 
-  def clusterersApproximationOfLocationOfExample # TODO should only need to this on the first flocking iteration for each example ('memoize' this)
-    clusterer.estimatePointsLocationFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
+  def weightedExamplesCenter # TODO should only need to this on the first flocking iteration for each example ('memoize' this)
+    clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
   end
 
   def actualLocationOfExampleORIGINAL!
@@ -172,7 +177,6 @@ class FlockingNeuron < Neuron
     @exampleNumber = nil
     typeOfClusterer = args[:typeOfClusterer]
     @clusterer = typeOfClusterer.new(args)
-    @store = {}
     @dPrime = 0.0
     @trainingSequence = TrainingSequence.instance
   end
@@ -204,7 +208,6 @@ class FlockingOutputNeuron < OutputNeuron
     @metricRecorder= FlockingOutputNeuronRecorder.new(self, args)
     typeOfClusterer = args[:typeOfClusterer]
     @clusterer = typeOfClusterer.new(args)
-    @store = {}
     @dPrime = 0.0
     @trainingSequence = TrainingSequence.instance
   end

@@ -53,7 +53,7 @@ class DynamicClusterer
   end
 
   # The following routine is unique to the fuzzy clustering algo.
-  def estimatePointsLocationFromItsFractionalMembershipToEachCluster(pointNumber)
+  def estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(pointNumber)
     theExamplesFractionalMembershipInEachCluster = examplesFractionalMembershipInEachCluster(pointNumber)
     weightedClusterCentersSum = Vector.elements(Array.new(exampleVectorLength) { 0.0 })
     weightingSum = 0.0
@@ -130,7 +130,13 @@ class DynamicClusterer
       ratioToAPower = ratio**power
       sumOfRatios += ratioToAPower
     end
-    membershipForThisPointForThisArbitraryCluster = 1.0 / sumOfRatios
+    membershipForThisPointForThisArbitraryCluster = membershipSimplificationFunction(1.0 / sumOfRatios)
+  end
+
+  def membershipSimplificationFunction(value)
+    #return 1.0 if value > 0.95
+    #return 0.0 if value < 0.05
+    return value
   end
 
   def recenterClusters(points)
@@ -144,15 +150,33 @@ class DynamicClusterer
     distanceBetween2ClustersOnNetInputDimension = (clusters[1].center[0] - clusters[0].center[0])
     cluster1IsToTheRightOfCluster0 = (distanceBetween2ClustersOnNetInputDimension >= 0.0)
     symmetricalOffset = distanceBetween2ClustersOnNetInputDimension.abs / 2.0
-    if cluster1IsToTheRightOfCluster0
-      clusters[1].center = Vector[symmetricalOffset, clusters[1].center[1]]
-      clusters[0].center = Vector[(-1.0 * symmetricalOffset), clusters[0].center[1]]
-    else
-      clusters[0].center = Vector[symmetricalOffset, clusters[0].center[1]]
-      clusters[1].center = Vector[(-1.0 * symmetricalOffset), clusters[1].center[1]]
+
+    case exampleVectorLength
+
+      when 1
+        if cluster1IsToTheRightOfCluster0
+          clusters[1].center = Vector[symmetricalOffset]
+          clusters[0].center = Vector[(-1.0 * symmetricalOffset)]
+        else
+          clusters[0].center = Vector[symmetricalOffset]
+          clusters[1].center = Vector[(-1.0 * symmetricalOffset)]
+        end
+
+
+      when 2
+        if cluster1IsToTheRightOfCluster0
+          clusters[1].center = Vector[symmetricalOffset, clusters[1].center[1]]
+          clusters[0].center = Vector[(-1.0 * symmetricalOffset), clusters[0].center[1]]
+        else
+          clusters[0].center = Vector[symmetricalOffset, clusters[0].center[1]]
+          clusters[1].center = Vector[(-1.0 * symmetricalOffset), clusters[1].center[1]]
+        end
+
+
+      else
+        STDERR.puts "error: Example Vector Lenght incorrectly specified"
     end
   end
-
 end
 
 

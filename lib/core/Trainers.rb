@@ -111,6 +111,7 @@ class AbstractTrainer
   end
 
   def oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
+    adaptingNeurons.each {|aNeuron| aNeuron.store = Array.new(args[:numberOfExamples]) {nil} }
     mse, dPrimes = stepLearning(examples)
     puts network
     if arrayOfNeuronsToPlot.present?
@@ -274,15 +275,15 @@ class AbstractTrainer
     dispersions = adaptingNeurons.collect { |aNeuron| aNeuron.clusterAllResponses } # TODO Perhaps we might only need to clusterAllResponses every K epochs?
   end
 
-  def seedClustersInFlockingNeurons(neuronsCreatingFlockingError)
+  def seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)
     neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
     numberOfExamples.times do |exampleNumber|
       allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
       neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
       neuronsWithInputLinks.each { |aNeuron| aNeuron.recordResponsesForExample }
     end
-    neuronsCreatingFlockingError.each { |aNeuron| aNeuron.initializeClusterCenters } # TODO is there any case where system should be reinitialized in this manner?
-    recenterEachNeuronsClusters(neuronsCreatingFlockingError)
+    neuronsWhoseClustersNeedToBeSeeded.each { |aNeuron| aNeuron.initializeClusterCenters } # TODO is there any case where system should be reinitialized in this manner?
+    recenterEachNeuronsClusters(neuronsWhoseClustersNeedToBeSeeded)
   end
 
   def deltaDPrimes(dPrimes)
@@ -328,7 +329,8 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     @theBiasNeuron = network.theBiasNeuron
 
     @rotatingAry = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 0]
-    #@rotatingAry = [1,2,3,4,5,0]
+    @rotatingAry = [1,2,3,4,5,0]
+    @rotatingAry = [1,2,0]
   end
 
   def stepLearning(examples)
@@ -412,7 +414,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     acrossExamplesAccumulateDeltaWs do |aNeuron, dataRecord|
       localFlockingError = aNeuron.calcLocalFlockingError
 
-      puts "For an Example, Flocking Error=\t#{localFlockingError}" if(trainingSequence.epochs > 3950)
+      #puts "For an Example, Flocking Error=\t#{localFlockingError}" if(trainingSequence.epochs > 3950)
 
       dataRecord[:localFlockingError] = localFlockingError
       aNeuron.calcDeltaWsAndAccumulate { |errorFromUpperLayers, localFlockError| localFlockError }

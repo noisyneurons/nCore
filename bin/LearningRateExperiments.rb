@@ -113,12 +113,11 @@ def setParameters(descriptionOfExperiment)
       :exampleVectorLength => 2,
       :delta => 1e-3,
       :maxNumberOfClusteringIterations => 100,
-      :symmetricalCenters => false, # if true, speed is negatively affected
+      :symmetricalCenters => true, # if true, speed is negatively affected
       :leadingFactor => 1.0, # 1.02, #   1.0
 
       # Inner Numeric Constraints
       :minDistanceAllowed => 1e-30
-
   }
 end
 

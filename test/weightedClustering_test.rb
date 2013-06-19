@@ -325,8 +325,8 @@ class TestDynamicClusteringB < MiniTest::Unit::TestCase
   end
 
   def test_calcPointsLocationAsEstimatedFromWeightedClusterCenters
-    actual = @aClusterer.estimatePointsLocationFromItsFractionalMembershipToEachCluster(1)
-    assert_equal(Vector[0.0, 0.0], actual, "Error in estimatePointsLocationFromItsFractionalMembershipToEachCluster")
+    actual = @aClusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(1)
+    assert_equal(Vector[0.0, 0.0], actual, "Error in estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster")
   end
 end
 
@@ -370,8 +370,8 @@ class TestDynamicClusteringC < MiniTest::Unit::TestCase
   end
 
   def test_calcPointsLocationAsEstimatedFromWeightedClusterCenters
-    actual = @aClusterer.estimatePointsLocationFromItsFractionalMembershipToEachCluster(1)
-    assert_equal(Vector[0.25, 0.0], actual, "Error in estimatePointsLocationFromItsFractionalMembershipToEachCluster")
+    actual = @aClusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(1)
+    assert_equal(Vector[0.25, 0.0], actual, "Error in estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster")
   end
 end
 
@@ -414,8 +414,8 @@ class TestDynamicClusteringD < MiniTest::Unit::TestCase
   end
 
   def test_calcPointsLocationAsEstimatedFromWeightedClusterCenters
-    actual = @aClusterer.estimatePointsLocationFromItsFractionalMembershipToEachCluster(1)
-    assert_equal(Vector[0.0, 0.0], actual, "Error in estimatePointsLocationFromItsFractionalMembershipToEachCluster")
+    actual = @aClusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(1)
+    assert_equal(Vector[0.0, 0.0], actual, "Error in estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster")
   end
 end
 
