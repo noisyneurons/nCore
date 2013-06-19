@@ -174,7 +174,7 @@ class DynamicClusterer
 
 
       else
-        STDERR.puts "error: Example Vector Lenght incorrectly specified"
+        STDERR.puts "error: Example Vector Length incorrectly specified"
     end
   end
 end
