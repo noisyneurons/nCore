@@ -329,12 +329,12 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
 
     @rotatingAry = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 0]
     @rotatingAry = [1, 2, 3, 4, 5, 0]
-    @rotatingAry = [1, 2, 0]
+    #@rotatingAry = [1, 2, 0]
   end
 
   def stepLearning(examples)
     adaptingNeurons.each { |aNeuron| aNeuron.store = Array.new(numberOfExamples) { nil } }
-    adaptingNeurons.each { |aNeuron| aNeuron.inputLinks {|aLink| aLink.store = Array.new(numberOfExamples) { nil } } }
+    adaptingNeurons.each { |aNeuron| aNeuron.inputLinks.each {|aLink| aLink.store = 0.0 } }
     self.flockingHasConverged = true
     self.absFlockingErrors = []
     mse = 99999.0
@@ -351,7 +351,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   def adaptNetworkWeightsAfterOneEpoch
     if (flockingHasConverged)
       accumulateOutputErrorDeltaWs
-      layerTuners.each { |aLearningRateTuner| aLearningRateTuner.normalizeWeightChanges }
+      #layerTuners.each { |aLearningRateTuner| aLearningRateTuner.normalizeWeightChanges }
       adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
       recenterEachNeuronsClusters(adaptingNeurons)
     end
@@ -398,7 +398,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   end
 
   def accumulateOutputErrorDeltaWs
-    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = 1.0 }
+    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.01 }
     acrossExamplesAccumulateDeltaWs { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForOutputError }
   end
 

@@ -51,7 +51,7 @@ module CombiningFlockingAndSupervisedErrorCode
   end
 
   def calcAccumDeltaWsForLocalFlocking
-    inputLinks.each { |inputLink| inputLink.calcAccumDeltaWsForLocalFlocking(localFlockingError, exampleNumber) }
+    inputLinks.each { |inputLink| inputLink.calcAccumDeltaWsForLocalFlocking(localFlockingError) }
   end
 
   private ############################ PRIVATE METHODS BELOW ###########################
@@ -89,8 +89,8 @@ module CommonClusteringCode
     #puts "Epochs=\t#{epochs}\tCenter=\t#{weightedClustersCenter}\tC0=\t#{clusterer.clusters[0].center[0]}\tC1=\t#{clusterer.clusters[1].center[0]}\texLocation=\t#{actualLocationOfExample}\tFlocking Error=\t#{localFlockingError}" if(epochs < 1000)
 
     ## TODO Would it be a lot smarter to use momentum in the links!!?
-    augError = augmentFlockingErrorUsingMomentum(localFlockingError, alpha=0.8, exampleNumber)
-    puts "localFlockingError=\t#{localFlockingError}\taugError=\t#{augError}"
+    augError = augmentFlockingErrorUsingMomentum(localFlockingError, alpha=0.0, exampleNumber)
+    # puts "localFlockingError=\t#{localFlockingError}\taugError=\t#{augError}"
     self.localFlockingError = augError
     return augError
   end
@@ -231,30 +231,24 @@ end
 class FlockingLink < Link
   attr_accessor :previousDeltaWAccumulated, :store
 
-  #def calcDeltaWAndAccumulateFrom(aggregatedErrorsForLocalAdaptation)
-  #  self.deltaW = learningRate * aggregatedErrorsForLocalAdaptation * inputNeuron.output
-  #  self.deltaWAccumulated += deltaW
-  #end
-
   def calcAccumDeltaWsForOutputError(higherLayerError)
-    self.deltaW = learningRate * higherLayerError * inputNeuron.output
-    self.deltaWAccumulated += deltaW
+    calcAccumDeltaW(higherLayerError, alpha= 0.7)
   end
 
-  def calcAccumDeltaWsForLocalFlocking(localFlockingError, exampleNumber)
-    self.deltaW = learningRate * localFlockingError * inputNeuron.output
-    augDeltaW = augmentFlockingErrorUsingMomentum(deltaW, alpha=0.8, exampleNumber)
+  def calcAccumDeltaWsForLocalFlocking(localFlockingError)
+    calcAccumDeltaW(localFlockingError, alpha= 0.7)
+  end
+
+  def calcAccumDeltaW(anError, alpha)
+    self.deltaW = learningRate * anError * inputNeuron.output
+    augDeltaW = augmentChangeUsingMomentum(deltaW, alpha)
     self.deltaWAccumulated += augDeltaW
   end
 
-  def augmentFlockingErrorUsingMomentum(aFlockingError, alpha, exampleNumber)
-    std("exampleNumber\t", exampleNumber)
-    std("store\t", store)
-    self.store[exampleNumber] = 0.0 if (store[exampleNumber].nil?)
-    oldAugmentedFlockingError = store[exampleNumber]
-    augmentedFlockingError = aFlockingError + (alpha * oldAugmentedFlockingError)
-    self.store[exampleNumber] = augmentedFlockingError
-    return augmentedFlockingError
+  def augmentChangeUsingMomentum(change, alpha)
+    oldAugmentedChange = store
+    augmentedChange = change + (alpha * oldAugmentedChange)
+    self.store = augmentedChange
   end
 
   def backPropagate
