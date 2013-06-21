@@ -333,8 +333,8 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   end
 
   def stepLearning(examples)
-    adaptingNeurons.each { |aNeuron| aNeuron.store = Array.new(numberOfExamples) { nil } }
-    adaptingNeurons.each { |aNeuron| aNeuron.inputLinks.each {|aLink| aLink.store = 0.0 } }
+    adaptingNeurons.each { |aNeuron| aNeuron.store = Array.new(numberOfExamples) { nil } } # TODO deprecate this?
+    adaptingNeurons.each { |aNeuron| aNeuron.inputLinks.each { |aLink| aLink.store = 0.0 } }
     self.flockingHasConverged = true
     self.absFlockingErrors = []
     mse = 99999.0
@@ -349,21 +349,28 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   end
 
   def adaptNetworkWeightsAfterOneEpoch
-    if (flockingHasConverged)
-      accumulateOutputErrorDeltaWs
-      #layerTuners.each { |aLearningRateTuner| aLearningRateTuner.normalizeWeightChanges }
-      adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-      recenterEachNeuronsClusters(adaptingNeurons)
+    case flockingHasConverged
+
+      when true
+        accumulateOutputErrorDeltaWs
+        #layerTuners.each { |aLearningRateTuner| aLearningRateTuner.normalizeWeightChanges }
+        adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+        recenterEachNeuronsClusters(adaptingNeurons)
+        #measuredAccumDeltaWs = (adaptingNeurons.collect { |aNeuron| aNeuron.inputLinks.collect { |aLink| aLink.deltaWAccumulated } })[0] # TODO this a quick and dirty measurement...
+        #puts "measuredAccumDeltaWs=\t#{measuredAccumDeltaWs}"
+        puts "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
+
+      when false
+        self.absFlockingErrors = accumulateFlockingErrorDeltaWs
+        adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+
     end
 
     self.flockingHasConverged = haveFlockDispersionsBeenMinimized?
 
-    unless (flockingHasConverged)
-      self.absFlockingErrors = accumulateFlockingErrorDeltaWs
-      adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-    end
-
     mse = logNetworksResponses(adaptingNeurons)
+
+
     return [mse, absFlockingErrors]
   end
 
@@ -371,7 +378,10 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
 
     temp = absFlockingErrorsOld.deep_clone unless (absFlockingErrorsOld.nil?)
     relativeChanges = deltaDispersions(absFlockingErrors)
-    puts "absFlockingErrorsOld, absFlockingErrors, relativeChanges, mse =\t#{temp}\t#{absFlockingErrors}\t#{relativeChanges}\t#{logNetworksResponses(adaptingNeurons)} "
+    measuredAccumDeltaWs = (adaptingNeurons.collect { |aNeuron| aNeuron.inputLinks.collect { |aLink| aLink.deltaWAccumulated } })[0] # TODO this a quick and dirty measurement...
+
+    puts "absFlockingErrorsOld=\t#{temp}\tabsFlockingErrors=\t#{absFlockingErrors}\trelativeChanges=\t#{relativeChanges}\tLinkO=\t#{measuredAccumDeltaWs[0]}\tLink1=\t#{measuredAccumDeltaWs[1]}\tmse=\t#{network.calcNetworksMeanSquareError} "
+                                                                                                                                     #puts "mse=\t#{network.calcNetworksMeanSquareError} "
 
     value = (@rotatingAry.rotate!)[0]
     if (value == 0)
@@ -405,12 +415,10 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   def accumulateFlockingErrorDeltaWs
     adaptingNeurons.each { |aNeuron| aNeuron.learningRate = -0.002 }
     adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
-    puts if (trainingSequence.epochs > 3950)
     acrossExamplesAccumulateDeltaWs do |aNeuron, dataRecord|
       dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError
       aNeuron.calcAccumDeltaWsForLocalFlocking
     end
-    puts if (trainingSequence.epochs > 3950)
     return adaptingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
   end
 
@@ -445,6 +453,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     self.adaptingNeurons = adaptingLayers.flatten unless (adaptingLayers.nil?)
     self.neuronsWhoseClustersNeedToBeSeeded = layersWhoseClustersNeedToBeSeeded.flatten unless (layersWhoseClustersNeedToBeSeeded.nil?)
   end
+
 end
 
 

@@ -56,9 +56,9 @@ module CombiningFlockingAndSupervisedErrorCode
 
   private ############################ PRIVATE METHODS BELOW ###########################
 
-  def calcDeltaWsAndAccumulateFROM(errorForLocalWeightAdaptation)
-    inputLinks.each { |inputLink| inputLink.calcDeltaWAndAccumulateFrom(errorForLocalWeightAdaptation) }
-  end
+  #def calcDeltaWsAndAccumulateFROM(errorForLocalWeightAdaptation)
+  #  inputLinks.each { |inputLink| inputLink.calcDeltaWAndAccumulateFrom(errorForLocalWeightAdaptation) }
+  #end
 end
 
 module CommonClusteringCode
@@ -241,6 +241,7 @@ class FlockingLink < Link
 
   def calcAccumDeltaW(anError, alpha)
     self.deltaW = learningRate * anError * inputNeuron.output
+
     augDeltaW = augmentChangeUsingMomentum(deltaW, alpha)
     self.deltaWAccumulated += augDeltaW
   end

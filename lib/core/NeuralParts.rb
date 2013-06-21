@@ -268,11 +268,12 @@ end
 
 class Link
   attr_accessor :inputNeuron, :outputNeuron, :weight, :weightAtBeginningOfTraining,
-                :learningRate, :deltaWAccumulated, :deltaW, :weightRange
+                :learningRate, :deltaWAccumulated, :deltaW, :weightRange, :args
 
   def initialize(inputNeuron, outputNeuron, args)
     @inputNeuron = inputNeuron
     @outputNeuron = outputNeuron
+    @args = args
     @learningRate = args[:learningRate] || 1.0
     @weightRange = args[:weightRange]
     randomizeWeightWithinTheRange(weightRange)
