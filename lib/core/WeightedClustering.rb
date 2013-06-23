@@ -122,35 +122,7 @@ class DynamicClusterer
   end
 
   def calcThisPointsFractionalMembershipToThisCluster(thePoint, arbitraryCluster, power) # TODO this code is doubly redundant.  It repeats the same calculations for each cluster.  Will be particularly inefficient for more than 2  clusters.
-    case exampleVectorLength
-      when 1
-        forVectorLengthEq1(arbitraryCluster, power, thePoint)
-      else
-        forVectorLengthGT1(arbitraryCluster, power, thePoint)
-    end
-  end
-
-
-  def forVectorLengthEq1(arbitraryCluster, power, thePoint)
-
-    case arbitraryCluster.center[0] >= 0.0
-      when true # cluster's center is on positive side
-        arbitraryDistance = arbitraryCluster.center[0] - thePoint[0]
-        return 1.0 if (arbitraryDistance < 0.0)
-        return pointsMembershipToArbitraryCluster(arbitraryDistance, power, thePoint)
-      when false # cluster's center is on negative side
-        arbitraryDistance = thePoint[0] - arbitraryCluster.center[0]
-        return 1.0 if (arbitraryDistance < 0.0)
-        return pointsMembershipToArbitraryCluster(arbitraryDistance, power, thePoint)
-    end
-  end
-
-  def forVectorLengthGT1(arbitraryCluster, power, thePoint)
     arbitraryDistance = arbitraryCluster.center.dist_to(thePoint)
-    pointsMembershipToArbitraryCluster(arbitraryDistance, power, thePoint)
-  end
-
-  def pointsMembershipToArbitraryCluster(arbitraryDistance, power, thePoint)
     sumOfRatios = 0.0
     clusters.each do |comparisonCluster|
       comparisonDistance = comparisonCluster.center.dist_to(thePoint)
@@ -161,6 +133,48 @@ class DynamicClusterer
     end
     membershipForThisPointForThisArbitraryCluster = membershipSimplificationFunction(1.0 / sumOfRatios)
   end
+
+
+  #def calcThisPointsFractionalMembershipToThisCluster(thePoint, arbitraryCluster, power) # TODO this code is doubly redundant.  It repeats the same calculations for each cluster.  Will be particularly inefficient for more than 2  clusters.
+  #  case exampleVectorLength
+  #    when 1
+  #      forVectorLengthEq1(arbitraryCluster, power, thePoint)
+  #    else
+  #      forVectorLengthGT1(arbitraryCluster, power, thePoint)
+  #  end
+  #end
+  #
+  #def forVectorLengthEq1(arbitraryCluster, power, thePoint)
+  #
+  #  case arbitraryCluster.center[0] >= 0.0
+  #    when true # cluster's center is on positive side
+  #      arbitraryDistance = arbitraryCluster.center[0] - thePoint[0]
+  #      return 1.0 if (arbitraryDistance < 0.0)
+  #      return pointsMembershipToArbitraryCluster(arbitraryDistance, power, thePoint)
+  #    when false # cluster's center is on negative side
+  #      arbitraryDistance = thePoint[0] - arbitraryCluster.center[0]
+  #      return 1.0 if (arbitraryDistance < 0.0)
+  #      return pointsMembershipToArbitraryCluster(arbitraryDistance, power, thePoint)
+  #  end
+  #end
+  #
+  #
+  #def forVectorLengthGT1(arbitraryCluster, power, thePoint)
+  #  arbitraryDistance = arbitraryCluster.center.dist_to(thePoint)
+  #  pointsMembershipToArbitraryCluster(arbitraryDistance, power, thePoint)
+  #end
+  #
+  #def pointsMembershipToArbitraryCluster(arbitraryDistance, power, thePoint)
+  #  sumOfRatios = 0.0
+  #  clusters.each do |comparisonCluster|
+  #    comparisonDistance = comparisonCluster.center.dist_to(thePoint)
+  #    comparisonDistance = [comparisonDistance, minDistanceAllowed].max # puts floor on comparison distance to avoid "divide by zero"
+  #    ratio = arbitraryDistance/comparisonDistance
+  #    ratioToAPower = ratio**power
+  #    sumOfRatios += ratioToAPower
+  #  end
+  #  membershipForThisPointForThisArbitraryCluster = membershipSimplificationFunction(1.0 / sumOfRatios)
+  #end
 
   def membershipSimplificationFunction(value)
     #return 1.0 if value > 0.95

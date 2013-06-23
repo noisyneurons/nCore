@@ -310,12 +310,6 @@ class AbstractTrainer
     mse
   end
 
-  #def logNetworksResponsesNoDB(neuronsCreatingFlockingError)
-  #   neuronsCreatingFlockingError.each { |aNeuron| aNeuron.recordResponsesForEpoch } if (neuronsCreatingFlockingError.present?)
-  #   mse = network.calcNetworksMeanSquareError
-  #   network.recordResponses
-  #   mse
-  # end
 end
 
 
@@ -329,7 +323,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
 
     @rotatingAry = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 0]
     @rotatingAry = [1, 2, 3, 4, 5, 0]
-    #@rotatingAry = [1, 2, 0]
+    #@rotatingAry = [1, 2, 3, 4, 0]
   end
 
   def stepLearning(examples)
@@ -363,7 +357,6 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
       when false
         self.absFlockingErrors = accumulateFlockingErrorDeltaWs
         adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-
     end
 
     self.flockingHasConverged = haveFlockDispersionsBeenMinimized?
@@ -380,7 +373,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     relativeChanges = deltaDispersions(absFlockingErrors)
     measuredAccumDeltaWs = (adaptingNeurons.collect { |aNeuron| aNeuron.inputLinks.collect { |aLink| aLink.deltaWAccumulated } })[0] # TODO this a quick and dirty measurement...
 
-    puts "absFlockingErrorsOld=\t#{temp}\tabsFlockingErrors=\t#{absFlockingErrors}\trelativeChanges=\t#{relativeChanges}\tLinkO=\t#{measuredAccumDeltaWs[0]}\tLink1=\t#{measuredAccumDeltaWs[1]}\tmse=\t#{network.calcNetworksMeanSquareError} "
+    puts "absFlockingErrorsOld=\t#{temp}\tabsFlockingErrors=\t#{absFlockingErrors}\tfractionalChanges=\t#{relativeChanges}\tLinkO=\t#{measuredAccumDeltaWs[0]}\tLink1=\t#{measuredAccumDeltaWs[1]}\tPREVIOUS mse=\t#{network.calcNetworksMeanSquareError} "
                                                                                                                                      #puts "mse=\t#{network.calcNetworksMeanSquareError} "
 
     value = (@rotatingAry.rotate!)[0]
@@ -396,19 +389,20 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   def deltaDispersions(absFlockingErrors)
     unless (absFlockingErrors.nil? || absFlockingErrorsOld.nil? || absFlockingErrorsOld.empty?)
       index = -1
-      relativeChanges = absFlockingErrors.collect do |anAbsFlockingError|
+    fractionalChanges = absFlockingErrors.collect do |anAbsFlockingError|
         index += 1
-        relativeChange = (anAbsFlockingError - absFlockingErrorsOld[index]) / ((anAbsFlockingError + absFlockingErrorsOld[index])/2.0)
+        # relativeChange = (anAbsFlockingError - absFlockingErrorsOld[index]) / ((anAbsFlockingError + absFlockingErrorsOld[index])/2.0)
+        fractionalChange = anAbsFlockingError / absFlockingErrorsOld[index]
       end
     else
-      relativeChanges = Array.new(adaptingNeurons.length) { 1.0 }
+      fractionalChanges = Array.new(adaptingNeurons.length) { nil }
     end
     self.absFlockingErrorsOld = absFlockingErrors
-    return relativeChanges
+    return fractionalChanges
   end
 
   def accumulateOutputErrorDeltaWs
-    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.01 }
+    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.02 }
     acrossExamplesAccumulateDeltaWs { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForOutputError }
   end
 
