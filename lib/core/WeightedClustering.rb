@@ -46,12 +46,13 @@ class DynamicClusterer
   end
 
   def clusterData(points)
+    largestEuclidianDistanceMoved = 0.0
     maxNumberOfClusteringIterations.times do |iterationNumber|
       forEachExampleDetermineItsFractionalMembershipInEachCluster(points)
-      finished = recenterClusters(points)
-      return [clusters, iterationNumber] if (finished) # We are finished when the maximum change in any cluster's center was less that 'delta'
+      largestEuclidianDistanceMoved = recenterClusters(points)
+      return [clusters, iterationNumber, largestEuclidianDistanceMoved] if (largestEuclidianDistanceMoved < delta) # We are finished when the maximum change in any cluster's center was less that 'delta'
     end
-    return [clusters, maxNumberOfClusteringIterations]
+    return [clusters, maxNumberOfClusteringIterations, largestEuclidianDistanceMoved]
   end
 
   # The following routine is unique to the fuzzy clustering algo.
@@ -184,9 +185,9 @@ class DynamicClusterer
 
   def recenterClusters(points)
     arrayOfDistancesMoved = clusters.collect { |aCluster| aCluster.recenter!(points) }
-    keepCentersSymmetrical if (args[:symmetricalCenters])
+    keepCentersSymmetrical if (args[:symmetricalCenters])   # TODO may want to include this in the calculation of largest largestEuclidianDistanceMoved
     largestEuclidianDistanceMoved = arrayOfDistancesMoved.max
-    return largestEuclidianDistanceMoved < delta #  determine if there was very little change in all the clusters' centers
+    return largestEuclidianDistanceMoved  #  < delta #  determine if there was very little change in all the clusters' centers
   end
 
   def keepCentersSymmetrical

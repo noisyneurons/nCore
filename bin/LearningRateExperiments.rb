@@ -111,8 +111,8 @@ def setParameters(descriptionOfExperiment)
       :m => 2.0,
       :numExamples => numberOfExamples,
       :exampleVectorLength => 1,
-      :delta => 1e-3,
-      :maxNumberOfClusteringIterations => 100,
+      :delta => 1e-1,
+      :maxNumberOfClusteringIterations => 10,
       :symmetricalCenters => true, # if true, speed is negatively affected
       :leadingFactor => 1.0, # 1.02, #   1.0
 

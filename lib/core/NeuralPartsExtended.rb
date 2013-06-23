@@ -71,7 +71,9 @@ module CommonClusteringCode
 
   def clusterAllResponses
     arrayOfVectorsRepresentingPointsInSpace = metricRecorder.vectorizeEpochMeasures
-    dummy, iterationNumber = clusterer.clusterData(arrayOfVectorsRepresentingPointsInSpace)
+    dummy, iterationNumber, largestEuclidianDistanceMoved = clusterer.clusterData(arrayOfVectorsRepresentingPointsInSpace)
+    #STDERR.puts "exceeded max number of clustering iterations.  Maximum number=  #{maxNumberOfClusteringIterations}" if (iterationNumber > maxNumberOfClusteringIterations)
+    STDERR.puts "too big a 'move'. The move was=  #{largestEuclidianDistanceMoved}" if (largestEuclidianDistanceMoved > 0.01)
     #self.dPrime = calc_dPrime(arrayOfVectorsRepresentingPointsInSpace)
     #calc_dispersion(arrayOfVectorsRepresentingPointsInSpace)
     return iterationNumber
@@ -126,19 +128,27 @@ module CommonClusteringCode
 
   private ############################ PRIVATE METHODS BELOW ###########################
 
+
+  #def weightedExamplesCenter # TODO should only need to this on the first flocking iteration for each example ('memoize' this)
+  #  clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
+  #end
+
+  def weightedExamplesCenter # TODO should only need to this on the first flocking iteration for each example ('memoize' this)
+    if (TrainingSequence.instance.epochs < 100)
+      clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
+    else
+      centerOfDominantClusterForExample
+    end
+  end
+
   def centerOfDominantClusterForExample
     dominantCluster = clusterer.determineClusterAssociatedWithExample(exampleNumber)
     return dominantCluster.center[0]
   end
 
-  # This is only used for reporting purposes
-
-  def weightedExamplesCenter # TODO should only need to this on the first flocking iteration for each example ('memoize' this)
-    clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
-  end
 
   def actualLocationOfExampleORIGINAL!
-    return netInput # TODO Only using "NetInput to neuron"!? However, during clustering I use both NetInput and BP ERROR for determining clusters.
+    return netInput # TODO Only using "NetInput to neuron"!? However, during clustering I MAY? use both NetInput and BPOutputError for determining clusters.
   end
 
   def actualLocationOfExample
@@ -161,7 +171,7 @@ class FlockingNeuron < Neuron
   attr_accessor :localFlockingError, :accumulatedAbsoluteFlockingError,
                 :higherLayerError, :errorToBackPropToLowerLayer,
                 :clusterer, :store, :dPrime, :trainingSequence,
-                :flockingGain, :layerGain
+                :flockingGain, :layerGain, :maxNumberOfClusteringIterations
   include CombiningFlockingAndSupervisedErrorCode
   include CommonClusteringCode
 
@@ -175,6 +185,7 @@ class FlockingNeuron < Neuron
     @localFlockingError = 0.0
     @metricRecorder= FlockingNeuronRecorder.new(self, args)
     @exampleNumber = nil
+    @maxNumberOfClusteringIterations = args[:maxNumberOfClusteringIterations]
     typeOfClusterer = args[:typeOfClusterer]
     @clusterer = typeOfClusterer.new(args)
     @dPrime = 0.0
@@ -191,7 +202,7 @@ end
 class FlockingOutputNeuron < OutputNeuron
   attr_accessor :netInput, :localFlockingError, :accumulatedAbsoluteFlockingError,
                 :higherLayerError, :errorToBackPropToLowerLayer, :clusterer,
-                :store, :dPrime, :trainingSequence, :flockingGain, :layerGain
+                :store, :dPrime, :trainingSequence, :flockingGain, :layerGain, :maxNumberOfClusteringIterations
   include CombiningFlockingAndSupervisedErrorCode
   include CommonClusteringCode
 
@@ -207,6 +218,7 @@ class FlockingOutputNeuron < OutputNeuron
     @exampleNumber = nil
     @metricRecorder= FlockingOutputNeuronRecorder.new(self, args)
     typeOfClusterer = args[:typeOfClusterer]
+    @maxNumberOfClusteringIterations = args[:maxNumberOfClusteringIterations]
     @clusterer = typeOfClusterer.new(args)
     @dPrime = 0.0
     @trainingSequence = TrainingSequence.instance
