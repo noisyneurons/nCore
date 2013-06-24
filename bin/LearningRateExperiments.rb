@@ -89,8 +89,8 @@ def setParameters(descriptionOfExperiment)
       :phase2Epochs => 0,
 
       # Stop training parameters
-      :minMSE => 0.001,
-      :maxNumEpochs => 4e3,
+      :minMSE => 0.0001,
+      :maxNumEpochs => (4e3 + 2),
 
       # Network Architecture
       :numberOfInputNeurons => 2,
@@ -111,7 +111,7 @@ def setParameters(descriptionOfExperiment)
       :m => 2.0,
       :numExamples => numberOfExamples,
       :exampleVectorLength => 1,
-      :delta => 1e-1,
+      :delta => 1e-2,
       :maxNumberOfClusteringIterations => 10,
       :symmetricalCenters => true, # if true, speed is negatively affected
       :leadingFactor => 1.0, # 1.02, #   1.0

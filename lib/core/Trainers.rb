@@ -399,7 +399,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     puts "absFlockingErrorsOld=\t#{temp}\tabsFlockingErrors=\t#{absFlockingErrors}\tfractionalChanges=\t#{relativeChanges}\tLinkO=\t#{measuredAccumDeltaWs[0]}\tLink1=\t#{measuredAccumDeltaWs[1]}\tLink2=\t#{measuredAccumDeltaWs[2]}\tPREVIOUS mse=\t#{network.calcNetworksMeanSquareError} "
 
     epochs = trainingSequence.epochs
-    maxFlockCount = 10
+    maxFlockCount = 2000
     maxFlockCount = 0 if(epochs < 500)                                                                                                                                 #puts "mse=\t#{network.calcNetworksMeanSquareError} "
                                                                                                                                   #epochs = trainingSequence.epochs
     return false if(relativeChanges[0].nil?)
