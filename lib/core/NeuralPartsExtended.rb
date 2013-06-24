@@ -134,7 +134,7 @@ module CommonClusteringCode
   #end
 
   def weightedExamplesCenter # TODO should only need to this on the first flocking iteration for each example ('memoize' this)
-    if (TrainingSequence.instance.epochs < 100)
+    if (TrainingSequence.instance.epochs < 10000)     # TODO not sure how useful it is to short circuit 'estimatePoints...'
       clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
     else
       centerOfDominantClusterForExample

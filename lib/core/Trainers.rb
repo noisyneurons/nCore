@@ -320,10 +320,11 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     @inputLayer = network.inputLayer
     @outputLayer = network.outputLayer
     @theBiasNeuron = network.theBiasNeuron
+    @flockCount = 0
 
-    @rotatingAry = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 0]
-    @rotatingAry = [1, 2, 3, 4, 5, 0]
-    #@rotatingAry = [1, 2, 3, 4, 0]
+    @rotatingAry0 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 17, 18, 0]
+    @rotatingAry1 = [1, 2, 3, 4, 5, 0]
+    @rotatingAry2 = [1, 2, 3, 4, 0]
   end
 
   def stepLearning(examples)
@@ -367,29 +368,58 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     return [mse, absFlockingErrors]
   end
 
-  def haveFlockDispersionsBeenMinimized?
+  #def haveFlockDispersionsBeenMinimized?
+  #
+  #  temp = absFlockingErrorsOld.deep_clone unless (absFlockingErrorsOld.nil?)
+  #  relativeChanges = deltaDispersions(absFlockingErrors)
+  #  measuredAccumDeltaWs = (adaptingNeurons.collect { |aNeuron| aNeuron.inputLinks.collect { |aLink| aLink.deltaWAccumulated } })[0] # TODO this a quick and dirty measurement...
+  #
+  #  puts "absFlockingErrorsOld=\t#{temp}\tabsFlockingErrors=\t#{absFlockingErrors}\tfractionalChanges=\t#{relativeChanges}\tLinkO=\t#{measuredAccumDeltaWs[0]}\tLink1=\t#{measuredAccumDeltaWs[1]}\tLink2=\t#{measuredAccumDeltaWs[2]}\tPREVIOUS mse=\t#{network.calcNetworksMeanSquareError} "
+  #                                                                                                                                   #puts "mse=\t#{network.calcNetworksMeanSquareError} "
+  #  epochs = trainingSequence.epochs
+  #  rotary = @rotatingAry0
+  #  rotary = @rotatingAry1 if(epochs < 5000)
+  #
+  #
+  #  value = (rotary.rotate!)[0]
+  #  if (value == 0)
+  #    self.absFlockingErrors = []
+  #    self.absFlockingErrorsOld = []
+  #
+  #    return true
+  #  end
+  #  return false
+  #end
 
+  def haveFlockDispersionsBeenMinimized?
     temp = absFlockingErrorsOld.deep_clone unless (absFlockingErrorsOld.nil?)
     relativeChanges = deltaDispersions(absFlockingErrors)
     measuredAccumDeltaWs = (adaptingNeurons.collect { |aNeuron| aNeuron.inputLinks.collect { |aLink| aLink.deltaWAccumulated } })[0] # TODO this a quick and dirty measurement...
 
-    puts "absFlockingErrorsOld=\t#{temp}\tabsFlockingErrors=\t#{absFlockingErrors}\tfractionalChanges=\t#{relativeChanges}\tLinkO=\t#{measuredAccumDeltaWs[0]}\tLink1=\t#{measuredAccumDeltaWs[1]}\tPREVIOUS mse=\t#{network.calcNetworksMeanSquareError} "
-                                                                                                                                     #puts "mse=\t#{network.calcNetworksMeanSquareError} "
+    puts "absFlockingErrorsOld=\t#{temp}\tabsFlockingErrors=\t#{absFlockingErrors}\tfractionalChanges=\t#{relativeChanges}\tLinkO=\t#{measuredAccumDeltaWs[0]}\tLink1=\t#{measuredAccumDeltaWs[1]}\tLink2=\t#{measuredAccumDeltaWs[2]}\tPREVIOUS mse=\t#{network.calcNetworksMeanSquareError} "
 
-    value = (@rotatingAry.rotate!)[0]
-    if (value == 0)
+    epochs = trainingSequence.epochs
+    maxFlockCount = 10
+    maxFlockCount = 0 if(epochs < 500)                                                                                                                                 #puts "mse=\t#{network.calcNetworksMeanSquareError} "
+                                                                                                                                  #epochs = trainingSequence.epochs
+    return false if(relativeChanges[0].nil?)
+    if (absFlockingErrors.max > 0.04 && @flockCount < maxFlockCount)
+
+      @flockCount += 1
+      return false
+
+    else
       self.absFlockingErrors = []
       self.absFlockingErrorsOld = []
-
+      @flockCount = 0
       return true
     end
-    return false
   end
 
   def deltaDispersions(absFlockingErrors)
     unless (absFlockingErrors.nil? || absFlockingErrorsOld.nil? || absFlockingErrorsOld.empty?)
       index = -1
-    fractionalChanges = absFlockingErrors.collect do |anAbsFlockingError|
+      fractionalChanges = absFlockingErrors.collect do |anAbsFlockingError|
         index += 1
         # relativeChange = (anAbsFlockingError - absFlockingErrorsOld[index]) / ((anAbsFlockingError + absFlockingErrorsOld[index])/2.0)
         fractionalChange = anAbsFlockingError / absFlockingErrorsOld[index]

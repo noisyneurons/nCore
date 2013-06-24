@@ -85,7 +85,7 @@ def setParameters(descriptionOfExperiment)
       # be dominant in prescribing weight changes.
       :searchRangeRatio => 2.0,
 
-      :phase1Epochs => 100,
+      :phase1Epochs => 10000,
       :phase2Epochs => 0,
 
       # Stop training parameters
