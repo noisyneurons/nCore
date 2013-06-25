@@ -376,8 +376,8 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     maxFlockCount = 0 if (epochs < 200) #puts "mse=\t#{network.calcNetworksMeanSquareError} "
 
     needToReduceFlockingError = absFlockingErrors.empty? || (absFlockingErrors.max > 0.04)
-    stillEnoughTime = @flockCount < maxFlockCount
-    if (needToReduceFlockingError && stillEnoughTime)
+    stillEnoughTimeToFlock = @flockCount < maxFlockCount
+    if (needToReduceFlockingError && stillEnoughTimeToFlock)
       @flockCount += 1
       return false
     else
