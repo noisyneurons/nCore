@@ -348,11 +348,8 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
 
       when true
         accumulateOutputErrorDeltaWs
-        #layerTuners.each { |aLearningRateTuner| aLearningRateTuner.normalizeWeightChanges }
         adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
         recenterEachNeuronsClusters(adaptingNeurons)
-        #measuredAccumDeltaWs = (adaptingNeurons.collect { |aNeuron| aNeuron.inputLinks.collect { |aLink| aLink.deltaWAccumulated } })[0] # TODO this a quick and dirty measurement...
-        #puts "measuredAccumDeltaWs=\t#{measuredAccumDeltaWs}"
         puts "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
 
       when false
@@ -363,51 +360,26 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     self.flockingHasConverged = haveFlockDispersionsBeenMinimized?
 
     mse = logNetworksResponses(adaptingNeurons)
-
-
     return [mse, absFlockingErrors]
   end
 
-  #def haveFlockDispersionsBeenMinimized?
-  #
-  #  temp = absFlockingErrorsOld.deep_clone unless (absFlockingErrorsOld.nil?)
-  #  relativeChanges = deltaDispersions(absFlockingErrors)
-  #  measuredAccumDeltaWs = (adaptingNeurons.collect { |aNeuron| aNeuron.inputLinks.collect { |aLink| aLink.deltaWAccumulated } })[0] # TODO this a quick and dirty measurement...
-  #
-  #  puts "absFlockingErrorsOld=\t#{temp}\tabsFlockingErrors=\t#{absFlockingErrors}\tfractionalChanges=\t#{relativeChanges}\tLinkO=\t#{measuredAccumDeltaWs[0]}\tLink1=\t#{measuredAccumDeltaWs[1]}\tLink2=\t#{measuredAccumDeltaWs[2]}\tPREVIOUS mse=\t#{network.calcNetworksMeanSquareError} "
-  #                                                                                                                                   #puts "mse=\t#{network.calcNetworksMeanSquareError} "
-  #  epochs = trainingSequence.epochs
-  #  rotary = @rotatingAry0
-  #  rotary = @rotatingAry1 if(epochs < 5000)
-  #
-  #
-  #  value = (rotary.rotate!)[0]
-  #  if (value == 0)
-  #    self.absFlockingErrors = []
-  #    self.absFlockingErrorsOld = []
-  #
-  #    return true
-  #  end
-  #  return false
-  #end
 
   def haveFlockDispersionsBeenMinimized?
     temp = absFlockingErrorsOld.deep_clone unless (absFlockingErrorsOld.nil?)
     relativeChanges = deltaDispersions(absFlockingErrors)
     measuredAccumDeltaWs = (adaptingNeurons.collect { |aNeuron| aNeuron.inputLinks.collect { |aLink| aLink.deltaWAccumulated } })[0] # TODO this a quick and dirty measurement...
-
     puts "absFlockingErrorsOld=\t#{temp}\tabsFlockingErrors=\t#{absFlockingErrors}\tfractionalChanges=\t#{relativeChanges}\tLinkO=\t#{measuredAccumDeltaWs[0]}\tLink1=\t#{measuredAccumDeltaWs[1]}\tLink2=\t#{measuredAccumDeltaWs[2]}\tPREVIOUS mse=\t#{network.calcNetworksMeanSquareError} "
+
 
     epochs = trainingSequence.epochs
     maxFlockCount = 2000
-    maxFlockCount = 0 if(epochs < 500)                                                                                                                                 #puts "mse=\t#{network.calcNetworksMeanSquareError} "
-                                                                                                                                  #epochs = trainingSequence.epochs
-    return false if(relativeChanges[0].nil?)
-    if (absFlockingErrors.max > 0.04 && @flockCount < maxFlockCount)
+    maxFlockCount = 0 if (epochs < 200) #puts "mse=\t#{network.calcNetworksMeanSquareError} "
 
+    needToReduceFlockingError = absFlockingErrors.empty? || (absFlockingErrors.max > 0.04)
+    stillEnoughTime = @flockCount < maxFlockCount
+    if (needToReduceFlockingError && stillEnoughTime)
       @flockCount += 1
       return false
-
     else
       self.absFlockingErrors = []
       self.absFlockingErrorsOld = []

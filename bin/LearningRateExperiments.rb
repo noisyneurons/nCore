@@ -90,7 +90,7 @@ def setParameters(descriptionOfExperiment)
 
       # Stop training parameters
       :minMSE => 0.0001,
-      :maxNumEpochs => (4e3 + 2),
+      :maxNumEpochs => (4e3),
 
       # Network Architecture
       :numberOfInputNeurons => 2,
