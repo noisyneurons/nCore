@@ -77,14 +77,6 @@ def setParameters(descriptionOfExperiment)
       :descriptionOfExperiment => descriptionOfExperiment,
       :rng => Random.new(randomNumberSeed),
 
-      :maxHistory => 8,
-      :balanceOfdPrimeVsDispersion => 0.0, # a value of 1.0 indicates that dPrime is
-      # to be the sole metric. a value of 0.0 indicates Dispersion is the sole metric
-      :multiplyToEmphasizeFlocking => 2.0, # if value = 0.0 only output error
-      # is used to determine weight changes.  If value >> 1.0, then flocking error will
-      # be dominant in prescribing weight changes.
-      :searchRangeRatio => 2.0,
-
       :phase1Epochs => 10000,
       :phase2Epochs => 0,
 
@@ -106,6 +98,9 @@ def setParameters(descriptionOfExperiment)
       :numberOfEpochsBetweenStoringDBRecords => 100,
 
       # Flocking Parameters...
+      :maxFlockingIterationsCount => 2000,
+
+
       :typeOfClusterer => DynamicClusterer,
       :numberOfClusters => 2,
       :m => 2.0,
@@ -116,7 +111,7 @@ def setParameters(descriptionOfExperiment)
       :symmetricalCenters => true, # if true, speed is negatively affected
       :leadingFactor => 1.0, # 1.02, #   1.0
 
-      # Inner Numeric Constraints
+      # Inner Numeric Constraints -- used to floating point under or overflow
       :minDistanceAllowed => 1e-30
   }
 end

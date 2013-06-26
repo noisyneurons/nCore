@@ -185,9 +185,9 @@ class DynamicClusterer
 
   def recenterClusters(points)
     arrayOfDistancesMoved = clusters.collect { |aCluster| aCluster.recenter!(points) }
-    keepCentersSymmetrical if (args[:symmetricalCenters])   # TODO may want to include this in the calculation of largest largestEuclidianDistanceMoved
+    keepCentersSymmetrical if (args[:symmetricalCenters]) # TODO may want to include this in the calculation of largest largestEuclidianDistanceMoved
     largestEuclidianDistanceMoved = arrayOfDistancesMoved.max
-    return largestEuclidianDistanceMoved  #  < delta #  determine if there was very little change in all the clusters' centers
+    return largestEuclidianDistanceMoved #  < delta #  determine if there was very little change in all the clusters' centers
   end
 
   def keepCentersSymmetrical

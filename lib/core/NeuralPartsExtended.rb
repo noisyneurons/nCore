@@ -40,12 +40,6 @@ end
 
 module CombiningFlockingAndSupervisedErrorCode
 
-  #def calcDeltaWsAndAccumulate(&block)
-  #  errorForLocalWeightAdaptation = higherLayerError
-  #  errorForLocalWeightAdaptation = yield(higherLayerError, localFlockingError) if (block.present?)
-  #  calcDeltaWsAndAccumulateFROM(errorForLocalWeightAdaptation)
-  #end
-
   def calcAccumDeltaWsForOutputError
     inputLinks.each { |inputLink| inputLink.calcAccumDeltaWsForOutputError(higherLayerError) }
   end
@@ -53,16 +47,14 @@ module CombiningFlockingAndSupervisedErrorCode
   def calcAccumDeltaWsForLocalFlocking
     inputLinks.each { |inputLink| inputLink.calcAccumDeltaWsForLocalFlocking(localFlockingError) }
   end
-
-  private ############################ PRIVATE METHODS BELOW ###########################
-
-  #def calcDeltaWsAndAccumulateFROM(errorForLocalWeightAdaptation)
-  #  inputLinks.each { |inputLink| inputLink.calcDeltaWAndAccumulateFrom(errorForLocalWeightAdaptation) }
-  #end
 end
 
 module CommonClusteringCode
   include DistanceTransforms
+
+  def clusters
+    clusterer.clusters
+  end
 
   def initializeClusterCenters
     arrayOfVectorsRepresentingPointsInSpace = metricRecorder.vectorizeEpochMeasures
@@ -79,28 +71,25 @@ module CommonClusteringCode
     return iterationNumber
   end
 
-  #std("arrayOfVectorsRepresentingPointsInSpace.first=\t",arrayOfVectorsRepresentingPointsInSpace.first) #puts "iterationNumber=\t#{iterationNumber}"
-
   # *** This function should not be called before an entire batch has been processed by the clusterer ***
   def calcLocalFlockingError
-    distanceToWeightedExamplesCenter = (args[:leadingFactor] * weightedExamplesCenter) - actualLocationOfExample # TODO "weightedClustersCenter" should only need to call this on the first flocking iteration for each example ('memoize' this)      #centerOfDominantClusterForExample
+    examplesCenter = yield
+    distanceToWeightedExamplesCenter = (args[:leadingFactor] * examplesCenter) - actualLocationOfExample # TODO "weightedClustersCenter" should only need to call this on the first flocking iteration for each example ('memoize' this)      #centerOfDominantClusterForExample
     self.localFlockingError = 1.0 * distanceToWeightedExamplesCenter # TODO weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter))  # TODO Should 'membershipInFlock(examplesNetInput)' be included?  # If included, it reduces the importance of examples with small io derivatives  # TODO Should 'membershipInFlock(examplesNetInput)' be included -- This term, if included, reduces the importance of examples with small io derivatives  ## TODO Should 'weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter)' be included?
     self.accumulatedAbsoluteFlockingError += localFlockingError.abs
-
-    #epochs = TrainingSequence.instance.epochs
-    #puts "Epochs=\t#{epochs}\tCenter=\t#{weightedClustersCenter}\tC0=\t#{clusterer.clusters[0].center[0]}\tC1=\t#{clusterer.clusters[1].center[0]}\texLocation=\t#{actualLocationOfExample}\tFlocking Error=\t#{localFlockingError}" if(epochs < 1000)
-
-    ### TODO Would it not be a lot smarter to use momentum in the links!!?  YES
-    #augError = augmentFlockingErrorUsingMomentum(localFlockingError, alpha=0.0, exampleNumber)
-    ## puts "localFlockingError=\t#{localFlockingError}\taugError=\t#{augError}"
-    #self.localFlockingError = augError
     return localFlockingError
   end
 
-
-  def saveDeltaWAccumulated
-    inputLinks.each { |inputLink| inputLink.saveDeltaWAccumulated }
+  def weightedExamplesCenter # TODO should only need to this on the first flocking iteration for each example ('memoize' this)
+    clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
   end
+
+  def centerOfDominantClusterForExample
+    dominantCluster = clusterer.determineClusterAssociatedWithExample(exampleNumber)
+    return dominantCluster.center[0]
+  end
+
+  ## ---------------- Reporting methods ------------------------------
 
   def reportFlockingInformation
     membershipForExampleInCluster0 =(clusterer.clusters[0]).exampleMembershipWeightsForCluster[exampleNumber]
@@ -127,25 +116,6 @@ module CommonClusteringCode
 
 
   private ############################ PRIVATE METHODS BELOW ###########################
-
-
-  #def weightedExamplesCenter # TODO should only need to this on the first flocking iteration for each example ('memoize' this)
-  #  clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
-  #end
-
-  def weightedExamplesCenter # TODO should only need to this on the first flocking iteration for each example ('memoize' this)
-    if (TrainingSequence.instance.epochs < 200)     # TODO not sure how useful it is to short circuit 'estimatePoints...'
-      clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
-    else
-      centerOfDominantClusterForExample
-    end
-  end
-
-  def centerOfDominantClusterForExample
-    dominantCluster = clusterer.determineClusterAssociatedWithExample(exampleNumber)
-    return dominantCluster.center[0]
-  end
-
 
   def actualLocationOfExampleORIGINAL!
     return netInput # TODO Only using "NetInput to neuron"!? However, during clustering I MAY? use both NetInput and BPOutputError for determining clusters.
@@ -232,6 +202,7 @@ class FlockingOutputNeuron < OutputNeuron
 end
 
 ############################################################
+
 class FlockingLink < Link
   attr_accessor :previousDeltaWAccumulated, :store
 
@@ -301,8 +272,8 @@ class FlockingLink < Link
   end
 end
 
-
 ############################################################
+
 class NeuronRecorder
   attr_accessor :trainingSequence, :exampleDataSet, :epochDataSet, :dataStoreManager
 
@@ -405,10 +376,3 @@ class FlockingOutputNeuronRecorder < FlockingNeuronRecorder # TODO Need to separ
     return exampleDataToRecord
   end
 end
-
-
-
-
-
-
-
