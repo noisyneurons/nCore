@@ -27,7 +27,7 @@ class FlockingNeuronRecorder ##  TODO temporary
   end
 
   def quickReportOfExampleWeightings(epochDataToRecord)
-    neuron.clusterer.clusters.each_with_index do |cluster, numberOfCluster|
+    neuron.clusters.each_with_index do |cluster, numberOfCluster|
       cluster.exampleMembershipWeightsForCluster.each { |exampleWeight| puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
       puts
       puts "NumExamples=\t#{cluster.numExamples}\tNum Membership Weights=\t#{cluster.exampleMembershipWeightsForCluster.length}"

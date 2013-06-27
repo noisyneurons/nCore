@@ -64,23 +64,21 @@ module CommonClusteringCode
   def clusterAllResponses
     arrayOfVectorsRepresentingPointsInSpace = metricRecorder.vectorizeEpochMeasures
     dummy, iterationNumber, largestEuclidianDistanceMoved = clusterer.clusterData(arrayOfVectorsRepresentingPointsInSpace)
-    #STDERR.puts "exceeded max number of clustering iterations.  Maximum number=  #{maxNumberOfClusteringIterations}" if (iterationNumber > maxNumberOfClusteringIterations)
+    STDERR.puts "exceeded max number of clustering iterations.  Maximum number=  #{maxNumberOfClusteringIterations}" if (iterationNumber > maxNumberOfClusteringIterations)
     STDERR.puts "too big a 'move'. The move was=  #{largestEuclidianDistanceMoved}" if (largestEuclidianDistanceMoved > 0.01)
-    #self.dPrime = calc_dPrime(arrayOfVectorsRepresentingPointsInSpace)
-    #calc_dispersion(arrayOfVectorsRepresentingPointsInSpace)
     return iterationNumber
   end
 
   # *** This function should not be called before an entire batch has been processed by the clusterer ***
   def calcLocalFlockingError
     examplesCenter = yield
-    distanceToWeightedExamplesCenter = (args[:leadingFactor] * examplesCenter) - actualLocationOfExample # TODO "weightedClustersCenter" should only need to call this on the first flocking iteration for each example ('memoize' this)      #centerOfDominantClusterForExample
+    distanceToWeightedExamplesCenter = (args[:leadingFactor] * examplesCenter) - actualLocationOfExample
     self.localFlockingError = 1.0 * distanceToWeightedExamplesCenter # TODO weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter))  # TODO Should 'membershipInFlock(examplesNetInput)' be included?  # If included, it reduces the importance of examples with small io derivatives  # TODO Should 'membershipInFlock(examplesNetInput)' be included -- This term, if included, reduces the importance of examples with small io derivatives  ## TODO Should 'weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter)' be included?
     self.accumulatedAbsoluteFlockingError += localFlockingError.abs
     return localFlockingError
   end
 
-  def weightedExamplesCenter # TODO should only need to this on the first flocking iteration for each example ('memoize' this)
+  def weightedExamplesCenter # TODO !! should only need to this on the first flocking iteration for each example ('memoize' this??)
     clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
   end
 
@@ -140,7 +138,7 @@ end
 class FlockingNeuron < Neuron
   attr_accessor :localFlockingError, :accumulatedAbsoluteFlockingError,
                 :higherLayerError, :errorToBackPropToLowerLayer,
-                :clusterer, :store, :dPrime, :trainingSequence,
+                :clusterer, :dPrime, :trainingSequence,
                 :flockingGain, :layerGain, :maxNumberOfClusteringIterations
   include CombiningFlockingAndSupervisedErrorCode
   include CommonClusteringCode
@@ -172,7 +170,7 @@ end
 class FlockingOutputNeuron < OutputNeuron
   attr_accessor :netInput, :localFlockingError, :accumulatedAbsoluteFlockingError,
                 :higherLayerError, :errorToBackPropToLowerLayer, :clusterer,
-                :store, :dPrime, :trainingSequence, :flockingGain, :layerGain, :maxNumberOfClusteringIterations
+                :dPrime, :trainingSequence, :flockingGain, :layerGain, :maxNumberOfClusteringIterations
   include CombiningFlockingAndSupervisedErrorCode
   include CommonClusteringCode
 
@@ -206,10 +204,6 @@ end
 class FlockingLink < Link
   attr_accessor :previousDeltaWAccumulated, :store
 
-  #def calcAccumDeltaWsForOutputError(higherLayerError)
-  #  calcAccumDeltaW(higherLayerError, alpha= 0.7)
-  #end
-
   def calcAccumDeltaWsForOutputError(higherLayerError)
     self.store = 0.0
     self.deltaW = learningRate * higherLayerError * inputNeuron.output
@@ -236,39 +230,13 @@ class FlockingLink < Link
     return outputNeuron.errorToBackPropToLowerLayer * weight
   end
 
-  def saveDeltaWAccumulated
-    self.previousDeltaWAccumulated = deltaWAccumulated
-    deltaWAccumulated = 0.0
-  end
-
-  def combineWeightChanges(gain)
-    self.deltaWAccumulated = (gain * deltaWAccumulated) + previousDeltaWAccumulated
-  end
-
-  def combineWeightChangesWithNorm(gain, multiplier)
-    self.deltaWAccumulated = multiplier * ((gain * deltaWAccumulated) + previousDeltaWAccumulated)
-  end
-
-  def combineWeightChangesAndNormalize
-    self.deltaWAccumulated = outputNeuron.layerGain * ((outputNeuron.flockingGain * deltaWAccumulated) + previousDeltaWAccumulated)
-  end
-
-  def combineWeightChangesDueToOutputErrorAndFlocking
-    self.deltaWAccumulated = (outputNeuron.flockingGain * deltaWAccumulated) + previousDeltaWAccumulated
-
-  end
-
-  def onlyUseOutputErrorAccumulatedDeltaWs
-    self.deltaWAccumulated = previousDeltaWAccumulated
-  end
-
   def addAccumulationToWeight
     self.weight = weight - deltaWAccumulated
   end
 
   def calcDeltaW
     STDERR.puts " ERROR Link.calcDeltaW called"
-    self.deltaW = learningRate * outputNeuron.error * inputNeuron.output
+    # self.deltaW = learningRate * outputNeuron.error * inputNeuron.output
   end
 end
 
@@ -333,10 +301,10 @@ class FlockingNeuronRecorder < NeuronRecorder # TODO Need to separate into 2 cla
   end
 
   def determineCentersOfClusters
-    cluster0 = neuron.clusterer.clusters[0]
+    cluster0 = neuron.clusters[0]
     if (cluster0.center.present?)
       @cluster0Center = cluster0.center[0]
-      cluster1 = neuron.clusterer.clusters[1]
+      cluster1 = neuron.clusters[1]
       @cluster1Center = cluster1.center[0]
     else
       cluster0Center = 0.0

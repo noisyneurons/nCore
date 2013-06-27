@@ -27,7 +27,7 @@ class FlockingNeuronRecorder ##  TODO temporary
   end
 
   def quickReportOfExampleWeightings(epochDataToRecord)
-    neuron.clusterer.clusters.each_with_index do |cluster, numberOfCluster|
+    neuron.clusters.each_with_index do |cluster, numberOfCluster|
       cluster.exampleMembershipWeightsForCluster.each { |exampleWeight| puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
       puts
       puts "NumExamples=\t#{cluster.numExamples}\tNum Membership Weights=\t#{cluster.exampleMembershipWeightsForCluster.length}"
@@ -67,12 +67,10 @@ def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
 end
 
 def setParameters(descriptionOfExperiment)
-  # You can greatly speed things up (but with a penalty of poorer flocking) by increasing
-  # bpLearningRate and flockLearningRate by 100.  Then 'correcting' flockLearningRate by
-  # reducing it by 5-10
 
   numberOfExamples = 8
   randomNumberSeed = 0
+
   args = {
       :descriptionOfExperiment => descriptionOfExperiment,
       :rng => Random.new(randomNumberSeed),
@@ -80,7 +78,8 @@ def setParameters(descriptionOfExperiment)
       :phase1Epochs => 10000,
       :phase2Epochs => 0,
 
-      # Stop training parameters
+      # training parameters re. Output Error
+      :outputErrorLearningRate => 0.02,
       :minMSE => 0.0001,
       :maxNumEpochs => (4e3),
 
@@ -98,8 +97,9 @@ def setParameters(descriptionOfExperiment)
       :numberOfEpochsBetweenStoringDBRecords => 100,
 
       # Flocking Parameters...
+      :flockingLearningRate => -0.002,
       :maxFlockingIterationsCount => 2000,
-
+      :maxAbsFlockingErrorsPerExample => 0.005,   # 0.04 / numberOfExamples = 0.005
 
       :typeOfClusterer => DynamicClusterer,
       :numberOfClusters => 2,

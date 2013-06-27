@@ -5,29 +5,17 @@
 # http://sites.google.com/site/dataclusteringalgorithms/fuzzy-c-means-clustering-algorithm
 
 
-##  ??? TODO Do we want to use the following routine i.e., do we want to create symmetry via flocking and such a method?
-#def keepCentersSymmetrical # simple method to cause the two clusters centers to be exactly equal distances
-#                           # from the origin (but opposite directions!)
-#  distanceBetweenCenters = clusters[1].center[0] - clusters[0].center[0]
-#  symmetricClusterCenter =  distanceBetweenCenters/2.0
-#  clusters[1].center = Vector[symmetricClusterCenter,clusters[1].center[1]]
-#  clusters[0].center = Vector[(-1.0 * symmetricClusterCenter),clusters[0].center[1]]
-#end
-
 require_relative 'Utilities'
 
 # Globals, Constants
 INFINITY = 1.0/0
 
 class DynamicClusterer
-  attr_accessor :clusters
-
   private
   attr_reader :args, :numberOfClusters, :m, :delta, :maxNumberOfClusteringIterations,
               :numExamples, :exampleVectorLength, :minDistanceAllowed
-
-
   public
+  attr_reader :clusters
 
   def initialize(args)
     @args = args
@@ -55,7 +43,6 @@ class DynamicClusterer
     return [clusters, maxNumberOfClusteringIterations, largestEuclidianDistanceMoved]
   end
 
-  # The following routine is unique to the fuzzy clustering algo.
   def estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(pointNumber)
     theExamplesFractionalMembershipInEachCluster = examplesFractionalMembershipInEachCluster(pointNumber)
     weightedClusterCentersSum = Vector.elements(Array.new(exampleVectorLength) { 0.0 })
@@ -135,7 +122,7 @@ class DynamicClusterer
     membershipForThisPointForThisArbitraryCluster = membershipSimplificationFunction(1.0 / sumOfRatios)
   end
 
-
+  ## SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE
   #def calcThisPointsFractionalMembershipToThisCluster(thePoint, arbitraryCluster, power) # TODO this code is doubly redundant.  It repeats the same calculations for each cluster.  Will be particularly inefficient for more than 2  clusters.
   #  case exampleVectorLength
   #    when 1
@@ -215,7 +202,6 @@ class DynamicClusterer
           clusters[0].center = Vector[symmetricalOffset, clusters[0].center[1]]
           clusters[1].center = Vector[(-1.0 * symmetricalOffset), clusters[1].center[1]]
         end
-
 
       else
         STDERR.puts "error: Example Vector Length incorrectly specified"
