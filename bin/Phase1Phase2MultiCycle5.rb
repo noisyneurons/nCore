@@ -105,7 +105,7 @@ class FlockingNeuronRecorder ##  TODO temporary
 
   def quickReportOfExampleWeightings(epochDataToRecord)
     neuron.clusters.each_with_index do |cluster, numberOfCluster|
-      cluster.exampleMembershipWeightsForCluster.each { |exampleWeight| puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
+      cluster.membershipWeightForEachExample.each { |exampleWeight| puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
       puts
     end
   end
@@ -208,7 +208,7 @@ def setParameters(descriptionOfExperiment)
       :symmetricalCenters => false, # if true, speed is negatively affected
 
       # Inner Numeric Constraints
-      :minDistanceAllowed => 1.0e-30,
+      :floorToPreventOverflow => 1.0e-30,
       :leadingFactor => 1.0 # 1.02,
   }
 end

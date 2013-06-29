@@ -36,21 +36,21 @@ class TestCluster < MiniTest::Unit::TestCase
   end
 
   def test_calcCenter
-    @aCluster.exampleMembershipWeightsForCluster = Array.new(@data.length, 1.0)
+    @aCluster.membershipWeightForEachExample = Array.new(@data.length, 1.0)
     center = @aCluster.calcCenterInVectorSpace(@data)
     assert_equal(Vector[0.0, 0.0], center, "Error1: center was not calculated properly")
     3.times do |i|
-      @aCluster.exampleMembershipWeightsForCluster[i]= 0.0
+      @aCluster.membershipWeightForEachExample[i]= 0.0
     end
     center = @aCluster.calcCenterInVectorSpace(@data)
     assert_equal(Vector[1.5, 1.5], center, "Error2: center was not calculated properly")
   end
 
   def test_recenter
-    @aCluster.exampleMembershipWeightsForCluster = Array.new(@data.length, 1.0)
+    @aCluster.membershipWeightForEachExample = Array.new(@data.length, 1.0)
     @aCluster.calcCenterInVectorSpace(@data)
     3.times do |i|
-      @aCluster.exampleMembershipWeightsForCluster[i]= 0.0
+      @aCluster.membershipWeightForEachExample[i]= 0.0
     end
     expected = (Vector[1.5, 1.5]).r
     delta = expected * Tolerance
@@ -72,7 +72,7 @@ class TestClusterDispersion1 < MiniTest::Unit::TestCase
     @data = []
     @data << Vector[-3.0, 0.0] << Vector[-2.0, 0.0] << Vector[-1.0, 0.0] << Vector[0.0, 0.0] << Vector[1.0, 0.0]
     @aCluster = Cluster.new(2.0, 5, 2)
-    @aCluster.exampleMembershipWeightsForCluster = Array.new(@data.length, 1.0)
+    @aCluster.membershipWeightForEachExample = Array.new(@data.length, 1.0)
     @aCluster.calcCenterInVectorSpace(@data)
   end
 
@@ -98,9 +98,9 @@ class TestClusterDispersion2 < MiniTest::Unit::TestCase
     @data = []
     @data << Vector[-3.0, 0.0] << Vector[-2.0, 0.0] << Vector[-1.0, 0.0] << Vector[0.0, 0.0] << Vector[1.0, 0.0]
     @aCluster = Cluster.new(2.0, 5, 2)
-    @aCluster.exampleMembershipWeightsForCluster = Array.new(@data.length, 1.0)
-    @aCluster.exampleMembershipWeightsForCluster[3] = 0.0
-    @aCluster.exampleMembershipWeightsForCluster[4] = 0.0
+    @aCluster.membershipWeightForEachExample = Array.new(@data.length, 1.0)
+    @aCluster.membershipWeightForEachExample[3] = 0.0
+    @aCluster.membershipWeightForEachExample[4] = 0.0
     @center = @aCluster.calcCenterInVectorSpace(@data)
   end
 
@@ -126,7 +126,7 @@ class TestClusterDispersion3 < MiniTest::Unit::TestCase
     @a = a
     @data << Vector[-3.0 * a, -3.0 * a] << Vector[-2.0 * a, -2.0 * a] << Vector[-1.0 * a, -1.0 * a] << Vector[0.0, 0.0] << Vector[a, a]
     @aCluster = Cluster.new(2.0, 5, 2)
-    @aCluster.exampleMembershipWeightsForCluster = Array.new(@data.length, 1.0)
+    @aCluster.membershipWeightForEachExample = Array.new(@data.length, 1.0)
     @aCluster.calcCenterInVectorSpace(@data)
   end
 
@@ -186,9 +186,9 @@ class TestDynamicClustering < MiniTest::Unit::TestCase
     @cluster1.center = @scaleFactor * Vector[-3.000001, 0.0]
     @aClusterer.forEachExampleDetermineItsFractionalMembershipInEachCluster(@points)
     expected = [6.249996876748005e-14, 0.100000119999984, 0.5, 0.8999998800000161, 0.9999999999999376]
-    assert_equal(expected, @cluster0.exampleMembershipWeightsForCluster, "Error1: example weightings for cluster 0 were not calculated correctly")
+    assert_equal(expected, @cluster0.membershipWeightForEachExample, "Error1: example weightings for cluster 0 were not calculated correctly")
     expected = [0.9999999999999376, 0.899999880000016, 0.5, 0.10000011999998398, 6.249996873972448e-14]
-    assert_equal(expected, @cluster1.exampleMembershipWeightsForCluster, "Error2: example weightings for cluster 1 were not calculated correctly")
+    assert_equal(expected, @cluster1.membershipWeightForEachExample, "Error2: example weightings for cluster 1 were not calculated correctly")
   end
 
   def test_recenterClusters
@@ -223,9 +223,9 @@ class TestDynamicClustering < MiniTest::Unit::TestCase
     assert_in_delta(0.0, distanceBetweenActualAndExpected, delta, "Error: Cluster 1 center too far away from expected position")
     @aClusterer.forEachExampleDetermineItsFractionalMembershipInEachCluster(@points)
     expected = [0.035941326907624534, 0.021975439959311133, 0.4999999999999778, 0.9780245600406804, 0.9640586730923806]
-    assert_equal(expected, @cluster0.exampleMembershipWeightsForCluster, "Error1: example weightings for cluster 0 were not calculated correctly")
+    assert_equal(expected, @cluster0.membershipWeightForEachExample, "Error1: example weightings for cluster 0 were not calculated correctly")
     expected = [0.9640586730923754, 0.9780245600406889, 0.5000000000000222, 0.021975439959319554, 0.035941326907619336]
-    assert_equal(expected, @cluster1.exampleMembershipWeightsForCluster, "Error2: example weightings for cluster 1 were not calculated correctly")
+    assert_equal(expected, @cluster1.membershipWeightForEachExample, "Error2: example weightings for cluster 1 were not calculated correctly")
   end
 
   def test_clusterData
@@ -261,7 +261,7 @@ class TestDynamicClustering < MiniTest::Unit::TestCase
     actual = aCluster
     expected = @cluster0
     assert_equal(expected, actual, "Error: Wrong Cluster Chosen")
-    actual = @cluster0.exampleMembershipWeightsForCluster[exampleNumber] > @cluster1.exampleMembershipWeightsForCluster[exampleNumber]
+    actual = @cluster0.membershipWeightForEachExample[exampleNumber] > @cluster1.membershipWeightForEachExample[exampleNumber]
     expected = true
     assert_equal(expected, actual, "Error: Wrong Cluster Chosen")
 
@@ -270,7 +270,7 @@ class TestDynamicClustering < MiniTest::Unit::TestCase
     actual = aCluster
     expected = @cluster1
     assert_equal(expected, actual, "Error: Wrong Cluster Chosen")
-    actual = @cluster1.exampleMembershipWeightsForCluster[exampleNumber] > @cluster0.exampleMembershipWeightsForCluster[exampleNumber]
+    actual = @cluster1.membershipWeightForEachExample[exampleNumber] > @cluster0.membershipWeightForEachExample[exampleNumber]
     expected = true
     assert_equal(expected, actual, "Error: Wrong Cluster Chosen")
 
@@ -279,7 +279,7 @@ class TestDynamicClustering < MiniTest::Unit::TestCase
     actual = aCluster
     expected = @cluster0
     assert_equal(expected, actual, "Error: Wrong Cluster Chosen")
-    actual = @cluster0.exampleMembershipWeightsForCluster[exampleNumber] > @cluster1.exampleMembershipWeightsForCluster[exampleNumber]
+    actual = @cluster0.membershipWeightForEachExample[exampleNumber] > @cluster1.membershipWeightForEachExample[exampleNumber]
     expected = true
     assert_equal(expected, actual, "Error: Wrong Cluster Chosen")
   end

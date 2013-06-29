@@ -387,7 +387,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   end
 
   def useFuzzyClusters?
-    exampleWeightings = adaptingNeurons.first.clusters[0].exampleMembershipWeightsForCluster
+    exampleWeightings = adaptingNeurons.first.clusters[0].membershipWeightForEachExample
     criteria0 = 0.2
     criteria1 = 1.0 - criteria0
     count = 0

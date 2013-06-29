@@ -115,7 +115,7 @@ def setParameters(descriptionOfExperiment)
       :symmetricalCenters => false, # if true, speed is negatively affected
 
       # Inner Numeric Constraints
-      :minDistanceAllowed => 1.0e-30,
+      :floorToPreventOverflow => 1.0e-30,
       :leadingFactor => 1.0
   }
 end

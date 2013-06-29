@@ -90,8 +90,8 @@ module CommonClusteringCode
   ## ---------------- Reporting methods ------------------------------
 
   def reportFlockingInformation
-    membershipForExampleInCluster0 =(clusterer.clusters[0]).exampleMembershipWeightsForCluster[exampleNumber]
-    membershipForExampleInCluster1 =(clusterer.clusters[1]).exampleMembershipWeightsForCluster[exampleNumber]
+    membershipForExampleInCluster0 =(clusterer.clusters[0]).membershipWeightForEachExample[exampleNumber]
+    membershipForExampleInCluster1 =(clusterer.clusters[1]).membershipWeightForEachExample[exampleNumber]
     dataForReport = {:neuronID => self.id,
                      :localFlockingError => self.localFlockingError,
                      :weightedExamplesCenter => weightedExamplesCenter,

@@ -13,13 +13,13 @@ INFINITY = 1.0/0
 class DynamicClusterer
   private
   attr_reader :args, :numberOfClusters, :m, :delta, :maxNumberOfClusteringIterations,
-              :numExamples, :exampleVectorLength, :minDistanceAllowed
+              :numExamples, :exampleVectorLength, :floorToPreventOverflow
   public
   attr_reader :clusters
 
   def initialize(args)
     @args = args
-    @minDistanceAllowed = args[:minDistanceAllowed] ||= 1.0e-10
+    @floorToPreventOverflow = args[:floorToPreventOverflow] ||= 1.0e-10
     @numberOfClusters = args[:numberOfClusters]
     @m = args[:m]
     @numExamples = args[:numExamples]
@@ -89,10 +89,10 @@ class DynamicClusterer
 
   ############################ PRIVATE METHODS BELOW ###########################
 
-  private
+  protected
 
   def examplesFractionalMembershipInEachCluster(pointNumber) # recall routine.. The work has already been done...
-    return @clusters.collect { |aCluster| aCluster.exampleMembershipWeightsForCluster[pointNumber] }
+    return @clusters.collect { |aCluster| aCluster.membershipWeightForEachExample[pointNumber] }
   end
 
   def forEachExampleDetermineItsFractionalMembershipInEachCluster(points)
@@ -105,21 +105,21 @@ class DynamicClusterer
   def determineThePointsFractionalMembershipInEachCluster(thePoint, indexToPoint, power)
     clusters.each do |aCluster|
       membershipForThisPointForThisCluster = calcThisPointsFractionalMembershipToThisCluster(thePoint, aCluster, power)
-      aCluster.exampleMembershipWeightsForCluster[indexToPoint] = membershipForThisPointForThisCluster
+      aCluster.membershipWeightForEachExample[indexToPoint] = membershipForThisPointForThisCluster
     end
   end
 
-  def calcThisPointsFractionalMembershipToThisCluster(thePoint, arbitraryCluster, power) # TODO this code is doubly redundant.  It repeats the same calculations for each cluster.  Will be particularly inefficient for more than 2  clusters.
-    arbitraryDistance = arbitraryCluster.center.dist_to(thePoint)
+  def calcThisPointsFractionalMembershipToThisCluster(thePoint, selectedCluster, power) # TODO this code is doubly redundant.  It repeats the same calculations for each cluster.  Will be particularly inefficient for more than 2  clusters.
+    distanceToSelectedCluster = selectedCluster.center.dist_to(thePoint)
     sumOfRatios = 0.0
-    clusters.each do |comparisonCluster|
-      comparisonDistance = comparisonCluster.center.dist_to(thePoint)
-      comparisonDistance = [comparisonDistance, minDistanceAllowed].max # puts floor on comparison distance to avoid "divide by zero"
-      ratio = arbitraryDistance/comparisonDistance
+    clusters.each do |otherCluster|
+      distanceToOtherCluster = otherCluster.center.dist_to(thePoint)
+      distanceToOtherCluster = [distanceToOtherCluster, floorToPreventOverflow].max # puts floor on comparison distance to avoid "divide by zero"
+      ratio = distanceToSelectedCluster/distanceToOtherCluster
       ratioToAPower = ratio**power
       sumOfRatios += ratioToAPower
     end
-    membershipForThisPointForThisArbitraryCluster = membershipSimplificationFunction(1.0 / sumOfRatios)
+    membershipForThisPointForThisArbitraryCluster = 1.0 / sumOfRatios
   end
 
   ## SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE
@@ -164,12 +164,6 @@ class DynamicClusterer
   #  membershipForThisPointForThisArbitraryCluster = membershipSimplificationFunction(1.0 / sumOfRatios)
   #end
 
-  def membershipSimplificationFunction(value)
-    #return 1.0 if value > 0.95
-    #return 0.0 if value < 0.05
-    return value
-  end
-
   def recenterClusters(points)
     arrayOfDistancesMoved = clusters.collect { |aCluster| aCluster.recenter!(points) }
     keepCentersSymmetrical if (args[:symmetricalCenters]) # TODO may want to include this in the calculation of largest largestEuclidianDistanceMoved
@@ -210,10 +204,15 @@ class DynamicClusterer
 end
 
 
+class FuzzyClustererOfExamplesOfDifferingImportance  < DynamicClusterer
+
+end
+
+
 # Fuzzy Cluster class, represents a cluster of points, weighted by their membership in the cluster; m is an exponent
 class Cluster
   attr_reader :m, :numExamples, :examplesVectorLength, :clusterNumber, :dispersion
-  attr_accessor :center, :exampleMembershipWeightsForCluster
+  attr_accessor :center, :membershipWeightForEachExample
 
   def initialize(m, numExamples, examplesVectorLength, clusterNumber=0)
     @m = m
@@ -224,7 +223,7 @@ class Cluster
   end
 
   def randomlyInitializeExampleMembershipWeights # is this the place for this initialization?
-    self.exampleMembershipWeightsForCluster = Array.new(numExamples) { rand**m } # TODO is it useful to use **m here?  # TODO Alternative:a you could randomly pick an example to be the initial center for the cluster.  Would do this "above the cluster class."
+    self.membershipWeightForEachExample = Array.new(numExamples) { rand**m } # TODO is it useful to use **m here?  # TODO Alternative:a you could randomly pick an example to be the initial center for the cluster.  Would do this "above the cluster class."
   end
 
   # Recenters the cluster
@@ -237,7 +236,7 @@ class Cluster
 
   def calcCenterInVectorSpace(examples)
     sumOfWeightedExamples = sumUpExamplesWeightedByMembershipInThisCluster(examples)
-    sumOfWeights = exampleMembershipWeightsForCluster.inject { |sum, value| sum + (value**m) }
+    sumOfWeights = membershipWeightForEachExample.inject { |sum, value| sum + (value**m) }
     self.center = sumOfWeightedExamples / sumOfWeights
   end
 
@@ -245,7 +244,7 @@ class Cluster
     return nil if (examples.size < 2)
     sumOfWeightedDistancesSquared = 0.0
     sumOfWeights = 0.0
-    exampleMembershipWeightsForCluster.each_with_index do |theExamplesWeighting, indexToExample|
+    membershipWeightForEachExample.each_with_index do |theExamplesWeighting, indexToExample|
       adjustedWeight = theExamplesWeighting**m # TODO 'AdjustedWeight' comes from the 'theory' behind fuzzy c-means clustering.  Need to double check my understanding of the appropriateness of this construct 'AdjustedWeight**m'
       distanceBetweenCenterAndExample = (examples[indexToExample] - center).r
       sumOfWeightedDistancesSquared += adjustedWeight * distanceBetweenCenterAndExample**2.0
@@ -261,7 +260,7 @@ class Cluster
     return nil if (examplesWithJustInputComponent.size < 2)
     sumOfWeightedDistancesSquared = 0.0
     sumOfWeights = 0.0
-    exampleMembershipWeightsForCluster.each_with_index do |theExamplesWeighting, indexToExample|
+    membershipWeightForEachExample.each_with_index do |theExamplesWeighting, indexToExample|
       adjustedWeight = theExamplesWeighting**m
       distanceBetweenCenterAndExample = (examplesWithJustInputComponent[indexToExample] - Vector[@center[0]]).r
       sumOfWeightedDistancesSquared += adjustedWeight * distanceBetweenCenterAndExample**2.0
@@ -281,19 +280,53 @@ class Cluster
 
   def to_s
     description = "\t\tcenter=\t#{@center}\n"
-    exampleMembershipWeightsForCluster.each_with_index do |exampleWeight, pointNumber|
+    membershipWeightForEachExample.each_with_index do |exampleWeight, pointNumber|
       description += "\t\tExample Number: #{pointNumber}\tWeight: #{exampleWeight}"
     end
     return description
   end
 
-  private
+  protected
 
   def sumUpExamplesWeightedByMembershipInThisCluster(examples)
     sumOfWeightedExamples = Vector.elements(Array.new(examplesVectorLength, 0.0), copy=false)
-    exampleMembershipWeightsForCluster.each_with_index do |anExampleWeight, indexToExample|
+    membershipWeightForEachExample.each_with_index do |anExampleWeight, indexToExample|
       sumOfWeightedExamples += (examples[indexToExample] * anExampleWeight**m)
     end
     return sumOfWeightedExamples
   end
 end
+
+
+class ClusterWithExamplesOfDifferingImportance  < Cluster
+
+  def calcCenterInVectorSpace(examples)
+    sumOfWeightedExamples = sumUpExamplesWeightedByMembershipInThisCluster(examples)
+    sumOfExampleMembershipWeightsTimesExampleImportance = sumTheExampleWeightsTimesTheExamplesImportance(examples)
+    self.center = sumOfWeightedExamples / sumOfWeights
+  end
+
+  def sumUpExamplesWeightedByMembershipInThisCluster(examples)
+    sumOfWeightedExamples = Vector.elements(Array.new(examplesVectorLength, 0.0), copy=false)
+    membershipWeightForEachExample.each_with_index do |anExampleWeight, indexToExample|
+      example = examples[indexToExample]
+      sumOfWeightedExamples = (example * (anExampleWeight**m) * examplesImportance(example))
+    end
+    return sumOfWeightedExamples
+  end
+
+  def sumTheExampleWeightsTimesTheExamplesImportance(examples)
+    sumOfExampleMembershipWeightsTimesExampleImportance = 0.0
+    membershipWeightForEachExample.each_with_index do |anExampleWeight, indexToExample|
+      example = examples[indexToExample]
+      sumOfExampleMembershipWeightsTimesExampleImportance += (anExampleWeight**m * examplesImportance(example))
+    end
+    return sumOfExampleMembershipWeightsTimesExampleImportance
+  end
+
+  def examplesImportance(example)
+    netInput = example[0]
+    ioDerivativeFromNetInput(netInput)
+  end
+end
+

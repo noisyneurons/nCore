@@ -54,7 +54,7 @@ class TestOfFlockingNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
     puts "#{@metricRecorder.vectorizeEpochMeasures}"
     @aFlockingNeuron.clusterer.clusters.each_with_index do |aCluster, clusterNumber|
       puts "Cluster #{clusterNumber} center= #{aCluster.center};  dispersion= #{aCluster.dispersion(@vectorizedTestData)}"
-      puts "\t\t\tCluster Weightings= #{aCluster.exampleMembershipWeightsForCluster}"
+      puts "\t\t\tCluster Weightings= #{aCluster.membershipWeightForEachExample}"
     end
   end
 
@@ -127,7 +127,7 @@ class Test2OfFlockingNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
     puts "#{@metricRecorder.vectorizeEpochMeasures}"
     @aFlockingNeuron.clusterer.clusters.each_with_index do |aCluster, clusterNumber|
       puts "Cluster #{clusterNumber} center= #{aCluster.center};  dispersion= #{aCluster.dispersion(@vectorizedTestData)}"
-      puts "\t\t\tCluster Weightings= #{aCluster.exampleMembershipWeightsForCluster}"
+      puts "\t\t\tCluster Weightings= #{aCluster.membershipWeightForEachExample}"
     end
   end
 
@@ -240,7 +240,7 @@ class TestOfFlockingOutputNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
     puts "#{@metricRecorder.vectorizeEpochMeasures}"
     @aFlockingNeuron.clusterer.clusters.each_with_index do |aCluster, clusterNumber|
       puts "Cluster #{clusterNumber} center= #{aCluster.center};  dispersion= #{aCluster.dispersion(@vectorizedTestData)}"
-      puts "\t\t\tCluster Weightings= #{aCluster.exampleMembershipWeightsForCluster}"
+      puts "\t\t\tCluster Weightings= #{aCluster.membershipWeightForEachExample}"
     end
   end
 
@@ -313,7 +313,7 @@ class Test2OfFlockingOutputNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
     puts "#{@metricRecorder.vectorizeEpochMeasures}"
     @aFlockingNeuron.clusterer.clusters.each_with_index do |aCluster, clusterNumber|
       puts "Cluster #{clusterNumber} center= #{aCluster.center};  dispersion= #{aCluster.dispersion(@vectorizedTestData)}"
-      puts "\t\t\tCluster Weightings= #{aCluster.exampleMembershipWeightsForCluster}"
+      puts "\t\t\tCluster Weightings= #{aCluster.membershipWeightForEachExample}"
     end
   end
 
