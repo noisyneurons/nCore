@@ -11,7 +11,7 @@ require_relative 'Utilities'
 INFINITY = 1.0/0
 
 class DynamicClusterer
-  private
+  protected
   attr_reader :args, :numberOfClusters, :m, :delta, :maxNumberOfClusteringIterations,
               :numExamples, :exampleVectorLength, :floorToPreventOverflow
   public
@@ -205,11 +205,21 @@ end
 
 
 class FuzzyClustererOfExamplesOfDifferingImportance  < DynamicClusterer
-
+  def initialize(args)
+    @args = args
+    @floorToPreventOverflow = args[:floorToPreventOverflow] ||= 1.0e-10
+    @numberOfClusters = args[:numberOfClusters]
+    @m = args[:m]
+    @numExamples = args[:numExamples]
+    @exampleVectorLength = args[:exampleVectorLength]
+    @delta = args[:delta] # clustering is finished if we don't have to move any cluster more than a distance of delta (Euclidian distance measure or?)
+    @maxNumberOfClusteringIterations = args[:maxNumberOfClusteringIterations]
+    @clusters = Array.new(numberOfClusters) { |clusterNumber| ClusterWithExamplesOfDifferingImportance.new(m, numExamples, exampleVectorLength, clusterNumber) }
+  end
 end
 
 
-# Fuzzy Cluster class, represents a cluster of points, weighted by their membership in the cluster; m is an exponent
+# Fuzzy Cluster class
 class Cluster
   attr_reader :m, :numExamples, :examplesVectorLength, :clusterNumber, :dispersion
   attr_accessor :center, :membershipWeightForEachExample
@@ -223,7 +233,7 @@ class Cluster
   end
 
   def randomlyInitializeExampleMembershipWeights # is this the place for this initialization?
-    self.membershipWeightForEachExample = Array.new(numExamples) { rand**m } # TODO is it useful to use **m here?  # TODO Alternative:a you could randomly pick an example to be the initial center for the cluster.  Would do this "above the cluster class."
+    self.membershipWeightForEachExample = Array.new(numExamples) { rand**m } # { rand }  # TODO is it useful to use **m here?  # TODO Alternative:a you could randomly pick an example to be the initial center for the cluster.  Would do this "above the cluster class."
   end
 
   # Recenters the cluster
@@ -298,30 +308,30 @@ class Cluster
 end
 
 
-class ClusterWithExamplesOfDifferingImportance  < Cluster
+class ClusterWithExamplesOfDifferingImportance  < Cluster   # TODO still do not understand the small difference in outcome for these two versions of Cluster!
+  include CommonNeuronCalculations
 
   def calcCenterInVectorSpace(examples)
     sumOfWeightedExamples = sumUpExamplesWeightedByMembershipInThisCluster(examples)
-    sumOfExampleMembershipWeightsTimesExampleImportance = sumTheExampleWeightsTimesTheExamplesImportance(examples)
-    self.center = sumOfWeightedExamples / sumOfWeights
+    self.center = sumOfWeightedExamples / sumTheWeightsTimesTheExamplesImportance(examples)
   end
 
   def sumUpExamplesWeightedByMembershipInThisCluster(examples)
-    sumOfWeightedExamples = Vector.elements(Array.new(examplesVectorLength, 0.0), copy=false)
+    sum = Vector.elements(Array.new(examplesVectorLength, 0.0), copy=false)
     membershipWeightForEachExample.each_with_index do |anExampleWeight, indexToExample|
       example = examples[indexToExample]
-      sumOfWeightedExamples = (example * (anExampleWeight**m) * examplesImportance(example))
+      sum += ( examplesImportance(example) * anExampleWeight**m  * example )
     end
-    return sumOfWeightedExamples
+    return sum
   end
 
-  def sumTheExampleWeightsTimesTheExamplesImportance(examples)
-    sumOfExampleMembershipWeightsTimesExampleImportance = 0.0
+  def sumTheWeightsTimesTheExamplesImportance(examples)
+    sum = 0.0
     membershipWeightForEachExample.each_with_index do |anExampleWeight, indexToExample|
       example = examples[indexToExample]
-      sumOfExampleMembershipWeightsTimesExampleImportance += (anExampleWeight**m * examplesImportance(example))
+      sum += ( examplesImportance(example) * anExampleWeight**m )
     end
-    return sumOfExampleMembershipWeightsTimesExampleImportance
+    return sum
   end
 
   def examplesImportance(example)

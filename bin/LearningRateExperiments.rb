@@ -101,7 +101,7 @@ def setParameters(descriptionOfExperiment)
       :maxFlockingIterationsCount => 2000,
       :maxAbsFlockingErrorsPerExample => 0.005,   # 0.04 / numberOfExamples = 0.005
 
-      :typeOfClusterer => DynamicClusterer,
+      :typeOfClusterer => FuzzyClustererOfExamplesOfDifferingImportance, # DynamicClusterer,
       :numberOfClusters => 2,
       :m => 2.0,
       :numExamples => numberOfExamples,
@@ -109,7 +109,7 @@ def setParameters(descriptionOfExperiment)
       :delta => 1e-2,
       :maxNumberOfClusteringIterations => 10,
       :symmetricalCenters => true, # if true, speed is negatively affected
-      :leadingFactor => 1.0, # 1.02, #   1.0
+      :leadingFactor => 1.0, # 1.02,
 
       # Inner Numeric Constraints -- used to floating point under or overflow
       :floorToPreventOverflow => 1e-30
