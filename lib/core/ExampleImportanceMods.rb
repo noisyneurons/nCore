@@ -3,10 +3,15 @@
 # This code modifies the WeightedClustering.rb and NeuralPartsExtended.rb code in order to incorporate a simple
 # form of example importance processing
 
-
 require_relative 'Utilities'
 
-class Cluster   # TODO still do not understand the small difference in outcome for these two versions of Cluster!
+module CommonNeuronCalculations
+  def examplesImportance(netInput)
+    ioDerivativeFromNetInput(netInput)
+  end
+end
+
+class Cluster # Mods for calculation of cluster's center, given each examples importance.
   include CommonNeuronCalculations
 
   def calcCenterInVectorSpace(examples)
@@ -18,7 +23,7 @@ class Cluster   # TODO still do not understand the small difference in outcome f
     sum = Vector.elements(Array.new(examplesVectorLength, 0.0), copy=false)
     membershipWeightForEachExample.each_with_index do |anExampleWeight, indexToExample|
       example = examples[indexToExample]
-      sum += ( examplesImportance(example) * anExampleWeight**m  * example )
+      sum += (examplesImportance(example[0]) * anExampleWeight**m * example)
     end
     return sum
   end
@@ -27,19 +32,17 @@ class Cluster   # TODO still do not understand the small difference in outcome f
     sum = 0.0
     membershipWeightForEachExample.each_with_index do |anExampleWeight, indexToExample|
       example = examples[indexToExample]
-      sum += ( examplesImportance(example) * anExampleWeight**m )
+      sum += (examplesImportance(example[0]) * anExampleWeight**m)
     end
     return sum
   end
 
-  def examplesImportance(example)
-    netInput = example[0]
-    ioDerivativeFromNetInput(netInput)
-  end
 end
 
 module CommonClusteringCode
-   # *** This function should not be called before an entire batch has been processed by the clusterer ***
+  include CommonNeuronCalculations
+
+  # *** This function should not be called before an entire batch has been processed by the clusterer ***
   def calcLocalFlockingError
     clusters_center_virtual_or_exact = yield
     distanceToWeightedExamplesCenter = (clusters_center_virtual_or_exact - locationOfExample) * exampleImportanceCorrectionFactor(clusters_center_virtual_or_exact, locationOfExample)
@@ -49,6 +52,6 @@ module CommonClusteringCode
   end
 
   def exampleImportanceCorrectionFactor(clustersCenter, locationOfExample)
-    factor = ioDerivativeFromNetInput(locationOfExample) / ioDerivativeFromNetInput(clustersCenter)
+    factor = examplesImportance(locationOfExample) / examplesImportance(clustersCenter)
   end
 end
