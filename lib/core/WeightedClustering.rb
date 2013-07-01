@@ -4,7 +4,6 @@
 # see Fuzzy C-means clustering write-ups; for example, see:
 # http://sites.google.com/site/dataclusteringalgorithms/fuzzy-c-means-clustering-algorithm
 
-
 require_relative 'Utilities'
 
 # Globals, Constants
@@ -204,21 +203,6 @@ class DynamicClusterer
 end
 
 
-class FuzzyClustererOfExamplesOfDifferingImportance  < DynamicClusterer
-  def initialize(args)
-    @args = args
-    @floorToPreventOverflow = args[:floorToPreventOverflow] ||= 1.0e-10
-    @numberOfClusters = args[:numberOfClusters]
-    @m = args[:m]
-    @numExamples = args[:numExamples]
-    @exampleVectorLength = args[:exampleVectorLength]
-    @delta = args[:delta] # clustering is finished if we don't have to move any cluster more than a distance of delta (Euclidian distance measure or?)
-    @maxNumberOfClusteringIterations = args[:maxNumberOfClusteringIterations]
-    @clusters = Array.new(numberOfClusters) { |clusterNumber| ClusterWithExamplesOfDifferingImportance.new(m, numExamples, exampleVectorLength, clusterNumber) }
-  end
-end
-
-
 # Fuzzy Cluster class
 class Cluster
   attr_reader :m, :numExamples, :examplesVectorLength, :clusterNumber, :dispersion
@@ -308,35 +292,52 @@ class Cluster
 end
 
 
-class ClusterWithExamplesOfDifferingImportance  < Cluster   # TODO still do not understand the small difference in outcome for these two versions of Cluster!
-  include CommonNeuronCalculations
 
-  def calcCenterInVectorSpace(examples)
-    sumOfWeightedExamples = sumUpExamplesWeightedByMembershipInThisCluster(examples)
-    self.center = sumOfWeightedExamples / sumTheWeightsTimesTheExamplesImportance(examples)
-  end
 
-  def sumUpExamplesWeightedByMembershipInThisCluster(examples)
-    sum = Vector.elements(Array.new(examplesVectorLength, 0.0), copy=false)
-    membershipWeightForEachExample.each_with_index do |anExampleWeight, indexToExample|
-      example = examples[indexToExample]
-      sum += ( examplesImportance(example) * anExampleWeight**m  * example )
-    end
-    return sum
-  end
+#class FuzzyClustererOfExamplesOfDifferingImportance  < DynamicClusterer
+#  def initialize(args)
+#    @args = args
+#    @floorToPreventOverflow = args[:floorToPreventOverflow] ||= 1.0e-10
+#    @numberOfClusters = args[:numberOfClusters]
+#    @m = args[:m]
+#    @numExamples = args[:numExamples]
+#    @exampleVectorLength = args[:exampleVectorLength]
+#    @delta = args[:delta] # clustering is finished if we don't have to move any cluster more than a distance of delta (Euclidian distance measure or?)
+#    @maxNumberOfClusteringIterations = args[:maxNumberOfClusteringIterations]
+#    @clusters = Array.new(numberOfClusters) { |clusterNumber| ClusterWithExamplesOfDifferingImportance.new(m, numExamples, exampleVectorLength, clusterNumber) }
+#  end
+#end
 
-  def sumTheWeightsTimesTheExamplesImportance(examples)
-    sum = 0.0
-    membershipWeightForEachExample.each_with_index do |anExampleWeight, indexToExample|
-      example = examples[indexToExample]
-      sum += ( examplesImportance(example) * anExampleWeight**m )
-    end
-    return sum
-  end
 
-  def examplesImportance(example)
-    netInput = example[0]
-    ioDerivativeFromNetInput(netInput)
-  end
-end
-
+#class ClusterWithExamplesOfDifferingImportance  < Cluster   # TODO still do not understand the small difference in outcome for these two versions of Cluster!
+#  include CommonNeuronCalculations
+#
+#  def calcCenterInVectorSpace(examples)
+#    sumOfWeightedExamples = sumUpExamplesWeightedByMembershipInThisCluster(examples)
+#    self.center = sumOfWeightedExamples / sumTheWeightsTimesTheExamplesImportance(examples)
+#  end
+#
+#  def sumUpExamplesWeightedByMembershipInThisCluster(examples)
+#    sum = Vector.elements(Array.new(examplesVectorLength, 0.0), copy=false)
+#    membershipWeightForEachExample.each_with_index do |anExampleWeight, indexToExample|
+#      example = examples[indexToExample]
+#      sum += ( examplesImportance(example) * anExampleWeight**m  * example )
+#    end
+#    return sum
+#  end
+#
+#  def sumTheWeightsTimesTheExamplesImportance(examples)
+#    sum = 0.0
+#    membershipWeightForEachExample.each_with_index do |anExampleWeight, indexToExample|
+#      example = examples[indexToExample]
+#      sum += ( examplesImportance(example) * anExampleWeight**m )
+#    end
+#    return sum
+#  end
+#
+#  def examplesImportance(example)
+#    netInput = example[0]
+#    ioDerivativeFromNetInput(netInput)
+#  end
+#end
+#

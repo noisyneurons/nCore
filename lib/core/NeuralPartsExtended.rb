@@ -5,23 +5,6 @@ require_relative 'Utilities'
 require_relative 'NeuralParts'
 require_relative 'WeightedClustering'
 
-module DistanceTransforms
-  def mySigmoid(aNetInput)
-    return 1.0/(1.0 + Math.exp(-1.0 * aNetInput))
-  end
-
-#def flockingDistanceTransform(netInputDistance)
-#  transformedDistance = 2.0 * (mySigmoid(netInputDistance) - 0.5)
-#end
-
-  def inverseOfDerivativeOfFlockingDistanceTransform(transformedInputDistance) # TODO
-    return correctionDerivative = 1.0 # dummy for now
-  end
-
-  def flockingDistanceTransform(netInputDistance)
-    return netInputDistance
-  end
-end
 
 ############################################################
 module CommonNeuronCalculations
@@ -50,7 +33,7 @@ module CombiningFlockingAndSupervisedErrorCode
 end
 
 module CommonClusteringCode
-  include DistanceTransforms
+#  include DistanceTransforms
 
   def clusters
     clusterer.clusters
@@ -71,12 +54,13 @@ module CommonClusteringCode
 
   # *** This function should not be called before an entire batch has been processed by the clusterer ***
   def calcLocalFlockingError
-    examplesCenter = yield
-    distanceToWeightedExamplesCenter = (args[:leadingFactor] * examplesCenter) - actualLocationOfExample
+    clusters_center_virtual_or_exact = yield
+    distanceToWeightedExamplesCenter = (clusters_center_virtual_or_exact - locationOfExample)
     self.localFlockingError = 1.0 * distanceToWeightedExamplesCenter # TODO weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter))  # TODO Should 'membershipInFlock(examplesNetInput)' be included?  # If included, it reduces the importance of examples with small io derivatives  # TODO Should 'membershipInFlock(examplesNetInput)' be included -- This term, if included, reduces the importance of examples with small io derivatives  ## TODO Should 'weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter)' be included?
     self.accumulatedAbsoluteFlockingError += localFlockingError.abs
     return localFlockingError
   end
+
 
   def weightedExamplesCenter # TODO !! should only need to this on the first flocking iteration for each example ('memoize' this??)
     clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
@@ -95,7 +79,7 @@ module CommonClusteringCode
     dataForReport = {:neuronID => self.id,
                      :localFlockingError => self.localFlockingError,
                      :weightedExamplesCenter => weightedExamplesCenter,
-                     :actualLocationOfExample => actualLocationOfExample,
+                     :locationOfExample => locationOfExample,
                      :membershipForExampleInCluster0 => membershipForExampleInCluster0,
                      :membershipForExampleInCluster1 => membershipForExampleInCluster1
     }
@@ -115,21 +99,8 @@ module CommonClusteringCode
 
   private ############################ PRIVATE METHODS BELOW ###########################
 
-  def actualLocationOfExampleORIGINAL!
-    return netInput # TODO Only using "NetInput to neuron"!? However, during clustering I MAY? use both NetInput and BPOutputError for determining clusters.
-  end
-
-  def actualLocationOfExample
-    transformedNetInputDistance = flockingDistanceTransform(netInput)
-    return transformedNetInputDistance # TODO Only using "NetInput to neuron"!? However, during clustering I use both NetInput and BP ERROR for determining clusters.
-  end
-
-  def weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter) ## TODO This function is currently unused -- but may be useful: See previous notes in earlier code!!
-    return algebraicDistanceToFlocksCenter.abs
-  end
-
-  def membershipInFlock(aNetInput) ## TODO This function is currently unused -- but may be useful: See previous notes in earlier code!!
-    return ioDerivative(aNetInput)
+  def locationOfExample
+    return netInput
   end
 end
 
@@ -262,7 +233,6 @@ end
 
 class FlockingNeuronRecorder < NeuronRecorder # TODO Need to separate into 2 classes the two concerns currently handled by this class: reporting vs. getting info for 'clusterAllResponses'
   attr_accessor :trainingSequence, :exampleDataSet, :epochDataSet, :dataStoreManager, :exampleVectorLength
-  include DistanceTransforms
 
   def initialize(neuron, args)
     @neuron = neuron
@@ -321,12 +291,11 @@ class FlockingNeuronRecorder < NeuronRecorder # TODO Need to separate into 2 cla
   def convertEachHashToAVector(anArray)
     return anArrayOfVectors = anArray.collect do |measuresForAnExample|
       netInputDistance = measuresForAnExample[:netInput]
-      transformedNetInputDistance = flockingDistanceTransform(netInputDistance)
       case exampleVectorLength
         when 1
-          Vector[transformedNetInputDistance]
+          Vector[netInputDistance]
         when 2
-          Vector[transformedNetInputDistance, (measuresForAnExample[:higherLayerError])]
+          Vector[netInputDistance, (measuresForAnExample[:higherLayerError])]
       end
     end
   end
