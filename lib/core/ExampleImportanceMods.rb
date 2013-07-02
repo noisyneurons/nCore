@@ -45,8 +45,9 @@ module CommonClusteringCode
   # *** This function should not be called before an entire batch has been processed by the clusterer ***
   def calcLocalFlockingError
     clusters_center_virtual_or_exact = yield
-    distanceToWeightedExamplesCenter = (clusters_center_virtual_or_exact - locationOfExample) * exampleImportanceCorrectionFactor(clusters_center_virtual_or_exact, locationOfExample)
-    self.localFlockingError = 1.0 * distanceToWeightedExamplesCenter # TODO weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter))  # TODO Should 'membershipInFlock(examplesNetInput)' be included?  # If included, it reduces the importance of examples with small io derivatives  # TODO Should 'membershipInFlock(examplesNetInput)' be included -- This term, if included, reduces the importance of examples with small io derivatives  ## TODO Should 'weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter)' be included?
+    distanceToWeightedExamplesCenter = clusters_center_virtual_or_exact - locationOfExample
+    exampleImportanceFactor = exampleImportanceCorrectionFactor(clusters_center_virtual_or_exact, locationOfExample)
+    self.localFlockingError = exampleImportanceFactor * distanceToWeightedExamplesCenter
     self.accumulatedAbsoluteFlockingError += localFlockingError.abs
     return localFlockingError
   end

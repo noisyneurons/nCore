@@ -314,7 +314,7 @@ end
 
 
 class SimpleAdjustableLearningRateTrainer < AbstractTrainer
-  attr_accessor :maxFlockingIterationsCount, :flockingIterationsCount
+  attr_accessor :maxFlockingIterationsCount, :flockingIterationsCount, :accumulatedExampleImportanceFactors
 
   def postInitialize
     @allNeuronsInOneArray = network.allNeuronsInOneArray
@@ -323,6 +323,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     @theBiasNeuron = network.theBiasNeuron
     @flockingIterationsCount = 0
     @maxFlockingIterationsCount = args[:maxFlockingIterationsCount]
+    @accumulatedExampleImportanceFactors = nil
   end
 
   def stepLearning(examples)
@@ -341,6 +342,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   end
 
   def adaptNetworkWeightsAfterOneEpoch
+    weightedAverageOfAbsoluteFlockingErrors = []
     case flockingHasConverged
 
       when true
@@ -352,7 +354,6 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
       when false
         self.absFlockingErrors = accumulateFlockingErrorDeltaWs
         adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-
     end
 
     self.flockingHasConverged = haveFlockDispersionsBeenMinimized?
@@ -382,7 +383,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   end
 
   def shouldFlock?
-    return false if(trainingSequence.epochs < 200)
+    return false if (trainingSequence.epochs < 200)
     return true
   end
 
@@ -391,10 +392,10 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     criteria0 = 0.2
     criteria1 = 1.0 - criteria0
     count = 0
-    exampleWeightings.each {|aWeight| count += 1 if(aWeight <= criteria0)}
-    exampleWeightings.each {|aWeight| count += 1 if(aWeight > criteria1)}
+    exampleWeightings.each { |aWeight| count += 1 if (aWeight <= criteria0) }
+    exampleWeightings.each { |aWeight| count += 1 if (aWeight > criteria1) }
     # puts "count=\t #{count}"
-    return true if(count < numberOfExamples)
+    return true if (count < numberOfExamples)
     return false
   end
 
@@ -421,19 +422,19 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   end
 
   def accumulateOutputErrorDeltaWs
-    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate]}
+    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
     acrossExamplesAccumulateDeltaWs { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForOutputError }
   end
 
   def accumulateFlockingErrorDeltaWs
-    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate]}
+    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate] }
     adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
     acrossExamplesAccumulateDeltaWs do |aNeuron, dataRecord|
-      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError{aNeuron.weightedExamplesCenter} if(useFuzzyClusters?)
-      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError{aNeuron.centerOfDominantClusterForExample} unless(useFuzzyClusters?)
+      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
+      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
       aNeuron.calcAccumDeltaWsForLocalFlocking
     end
-    return adaptingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
+    adaptingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
   end
 
   def acrossExamplesAccumulateDeltaWs

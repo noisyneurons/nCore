@@ -61,7 +61,6 @@ module CommonClusteringCode
     return localFlockingError
   end
 
-
   def weightedExamplesCenter # TODO !! should only need to this on the first flocking iteration for each example ('memoize' this??)
     clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
   end
