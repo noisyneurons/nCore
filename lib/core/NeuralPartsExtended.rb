@@ -39,6 +39,10 @@ module CommonClusteringCode
     clusterer.clusters
   end
 
+  def clustersCenter
+    clusters[0].center
+  end
+
   def initializeClusterCenters
     arrayOfVectorsRepresentingPointsInSpace = metricRecorder.vectorizeEpochMeasures
     clusterer.initializationOfClusterCenters(arrayOfVectorsRepresentingPointsInSpace)

@@ -7,7 +7,7 @@ class AbstractTrainer
   attr_accessor :trainingSequence, :minMSE, :maxNumEpochs, :examples, :dataArray, :args,
                 :numberOfExamples, :dataStoreManager,
                 :lastEpoch, :lastTrainingMSE, :lastTestingMSE, :startTime, :elapsedTime,
-                :dPrimes, :dPrimesOld, :absFlockingErrors, :absFlockingErrorsOld,
+                :dPrimes, :dPrimesOld, :accumulatedAbsoluteFlockingErrors, :absFlockingErrorsOld,
 
                 :network, :allNeuronLayers,
                 :allNeuronsInOneArray, :inputLayer, :hiddenLayer, :outputLayer, :theBiasNeuron,
@@ -329,16 +329,16 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   def stepLearning(examples)
     adaptingNeurons.each { |aNeuron| aNeuron.inputLinks.each { |aLink| aLink.store = 0.0 } }
     self.flockingHasConverged = true
-    self.absFlockingErrors = []
+    self.accumulatedAbsoluteFlockingErrors = []
     mse = Float::MAX
 
     distributeSetOfExamples(examples)
     seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO is this always needed? -- except for the 'first' step?
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
-      mse, self.absFlockingErrors = adaptNetworkWeightsAfterOneEpoch
+      mse, self.accumulatedAbsoluteFlockingErrors = adaptNetworkWeightsAfterOneEpoch
       trainingSequence.nextEpoch
     end
-    return mse, absFlockingErrors
+    return mse, accumulatedAbsoluteFlockingErrors
   end
 
   def adaptNetworkWeightsAfterOneEpoch
@@ -352,14 +352,14 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
         puts "<---------->"
 
       when false
-        self.absFlockingErrors = accumulateFlockingErrorDeltaWs
+        self.accumulatedAbsoluteFlockingErrors = accumulateFlockingErrorDeltaWs
         adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
     end
 
     self.flockingHasConverged = haveFlockDispersionsBeenMinimized?
 
     mse = logNetworksResponses(adaptingNeurons)
-    return [mse, absFlockingErrors]
+    return [mse, accumulatedAbsoluteFlockingErrors]
   end
 
 
@@ -367,15 +367,15 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     displayFlockingErrorAndDeltaWInformation()
 
     maxIterCount = 0
-    maxIterCount = maxFlockingIterationsCount if(shouldFlock?)
+    maxIterCount = maxFlockingIterationsCount if (shouldFlock?)
 
-    needToReduceFlockingError = absFlockingErrors.empty? || ( (absFlockingErrors.max / numberOfExamples) > args[:maxAbsFlockingErrorsPerExample])
+    needToReduceFlockingError = accumulatedAbsoluteFlockingErrors.empty? || ((accumulatedAbsoluteFlockingErrors.max / numberOfExamples) > args[:maxAbsFlockingErrorsPerExample])
     stillEnoughIterationsToFlock = flockingIterationsCount < maxIterCount
     if (needToReduceFlockingError && stillEnoughIterationsToFlock)
       self.flockingIterationsCount += 1
       return false
     else
-      self.absFlockingErrors = []
+      self.accumulatedAbsoluteFlockingErrors = []
       self.absFlockingErrorsOld = []
       self.flockingIterationsCount = 0
       return true
@@ -401,9 +401,9 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
 
   def displayFlockingErrorAndDeltaWInformation
     temp = absFlockingErrorsOld.deep_clone unless (absFlockingErrorsOld.nil?) # for display purposes only
-    relativeChanges = deltaDispersions(absFlockingErrors)
+    relativeChanges = deltaDispersions(accumulatedAbsoluteFlockingErrors)
     measuredAccumDeltaWs = (adaptingNeurons.collect { |aNeuron| aNeuron.inputLinks.collect { |aLink| aLink.deltaWAccumulated } })[0] # TODO this a quick and dirty measurement...
-    puts "absFlockingErrorsOld=\t#{temp}\tabsFlockingErrors=\t#{absFlockingErrors}\tfractionalChanges=\t#{relativeChanges}\tLinkO=\t#{measuredAccumDeltaWs[0]}\tLink1=\t#{measuredAccumDeltaWs[1]}\tLink2=\t#{measuredAccumDeltaWs[2]}\tPREVIOUS mse=\t#{network.calcNetworksMeanSquareError} "
+    puts "absFlockingErrorsOld=\t#{temp}\tabsFlockingErrors=\t#{accumulatedAbsoluteFlockingErrors}\tfractionalChanges=\t#{relativeChanges}\tLinkO=\t#{measuredAccumDeltaWs[0]}\tLink1=\t#{measuredAccumDeltaWs[1]}\tLink2=\t#{measuredAccumDeltaWs[2]}\tPREVIOUS mse=\t#{network.calcNetworksMeanSquareError} "
   end
 
   def deltaDispersions(absFlockingErrors)

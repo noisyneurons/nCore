@@ -7,11 +7,15 @@ require 'yaml'
 require_relative '../lib/core/DataSet'
 require_relative '../lib/core/NeuralParts'
 require_relative '../lib/core/NeuralPartsExtended'
+
 require_relative '../lib/core/ExampleImportanceMods'
+
 require_relative '../lib/core/NetworkFactories'
 require_relative '../lib/plot/CorePlottingCode'
 require_relative '../lib/core/SimulationDataStore'
 require_relative '../lib/core/Trainers.rb'
+
+require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 
 ################################ Mods for reporting
 class FlockingNeuronRecorder ##  TODO temporary
@@ -100,7 +104,7 @@ def setParameters(descriptionOfExperiment)
       # Flocking Parameters...
       :flockingLearningRate => -0.002,
       :maxFlockingIterationsCount => 2000,
-      :maxAbsFlockingErrorsPerExample => 0.005,   # 0.04 / numberOfExamples = 0.005
+      :maxAbsFlockingErrorsPerExample => 0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
 
       :typeOfClusterer => DynamicClusterer,
       :numberOfClusters => 2,

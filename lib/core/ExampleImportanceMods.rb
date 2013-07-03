@@ -15,11 +15,11 @@ class Cluster # Mods for calculation of cluster's center, given each examples im
   include CommonNeuronCalculations
 
   def calcCenterInVectorSpace(examples)
-    sumOfWeightedExamples = sumUpExamplesWeightedByMembershipInThisCluster(examples)
+    sumOfWeightedExamples = sumUpExamplesWeightedByMembershipAndImportanceInThisCluster(examples)
     self.center = sumOfWeightedExamples / sumTheWeightsTimesTheExamplesImportance(examples)
   end
 
-  def sumUpExamplesWeightedByMembershipInThisCluster(examples)
+  def sumUpExamplesWeightedByMembershipAndImportanceInThisCluster(examples)
     sum = Vector.elements(Array.new(examplesVectorLength, 0.0), copy=false)
     membershipWeightForEachExample.each_with_index do |anExampleWeight, indexToExample|
       example = examples[indexToExample]
