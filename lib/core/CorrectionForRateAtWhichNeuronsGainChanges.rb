@@ -1,11 +1,19 @@
 ### VERSION "nCore"
 ## ../nCore/lib/core/CorrectionForRateAtWhichNeuronsGainChanges.rb
+
+# Implements a method that corrects for: "how the Ratio of Neural-Gains changes with the magnitudes of the example netInputs"
+
 # This code modifies the Trainer.rb and NeuralPartsExtended.rb code in order to incorporate a
-# correction or 'normalization' or the rate at which neural gain changes as learning progresses.  In the
-# beginning of training, the 'neural gains' for different examples (with correspondingly different netInputs)
-# will all be very similar because all the netInputs are not far from netInput = 0.  However, by the time
-# in learning that the netInputs become larger than 1.0 - 3.0, the ratio between any of two of the 'neural gains'
-# can become quite large.  Above 3.0 the ratio-differences in these neural gains do NOT increase much at all.
+# correction or 'normalization' for the rate at which neural gain changes as learning progresses. I.E. The neural gains
+# are different because the netInputs are different.
+# In the beginning of training, the 'neural gains' for different examples
+# will be similar because all the netInputs are not far from a 0.0 netInput. -- because in this netInput region the neural
+# gains change with very little as the netInput is changed.
+#
+# However, by the time the average netInputs become larger (as they often will as learning progresses) the ratio between any
+# of two of the 'neural gains' can become quite large, e.g. for netInputs > 1.0 - 2.0.
+# For netInputs above 3.0 the average ratio of gains is relatively large but does the average
+# ration does NOT change!  See function implementing this equation below:  "Rate of Change of the Ratio of 2 typical Neural-Gains"
 
 
 require_relative 'Utilities'
@@ -31,6 +39,9 @@ class SimpleAdjustableLearningRateTrainer
     adaptingNeurons.collect { |aNeuron| (aNeuron.accumulatedAbsoluteFlockingError * correctionFactorForRateAtWhichNeuronsGainChanges(aNeuron.clustersCenter)) }
   end
 
+
+  # Function:
+  #  Implements a method that corrects for: "how the Ratio of Neural-Gains changes with the magnitudes of the example netInputs"
   def correctionFactorForRateAtWhichNeuronsGainChanges(clustersCenter, correctionFactorsFloor = 0.1)
     c = clustersCenter[0]
     m = (exp(-c) + 1)
