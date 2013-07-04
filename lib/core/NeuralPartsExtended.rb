@@ -2,9 +2,11 @@
 ## ../nCore/lib/core/NeuralPartsExtended.rb
 
 require_relative 'Utilities'
+require 'redis'
+#require_relative '../lib/plot/DataStore'
 require_relative 'NeuralParts'
 require_relative 'WeightedClustering'
-
+$redis = Redis.new
 
 ############################################################
 module CommonNeuronCalculations
