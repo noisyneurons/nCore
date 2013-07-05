@@ -352,7 +352,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
         puts "<---------->"
 
       when false
-        self.accumulatedAbsoluteFlockingErrors = accumulateFlockingErrorDeltaWs
+        self.accumulatedAbsoluteFlockingErrors = accumulateFlockingErrorDeltaWs()
         adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
     end
 
@@ -361,7 +361,6 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     mse = logNetworksResponses(adaptingNeurons)
     return [mse, accumulatedAbsoluteFlockingErrors]
   end
-
 
   def haveFlockDispersionsBeenMinimized?
     displayFlockingErrorAndDeltaWInformation()
