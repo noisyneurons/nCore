@@ -9,11 +9,34 @@ require 'yaml'
 
 
 redis = Redis.new # (:host => "192.168.1.131", :port => 8765)
-anArray = [1,2,3,4]
-puts "try=\t#{YAML.load(YAML.dump(anArray))}"
+def pushData(key, data, redis)
+  $redis.rpush(key,YAML.dump(data))
+end
+
+def retrieveAllData(key, redis)
+  veryLargeInteger = 999999999999
+  aListOfData = $redis.lrange(key, 0, veryLargeInteger)
+  aListOfData.collect {|aDataItem| YAML.load( aDataItem )}
+end
 
 
-puts "********** LIST **********"
+anArray = [1,2]
+key = "myData"
+data = anArray
+pushData(key, data, redis)
+data << 5
+pushData(key, data, redis)
+
+
+puts "\n\nLet's see..."
+puts "Call to retrieveAllData #{retrieveAllData(key, redis)}"
+
+
+
+#puts "try=\t#{YAML.load(YAML.dump(anArray))}"
+
+
+puts "\n\n********** LIST **********"
 anArray = [1,2,3]
 x1 = YAML.dump(anArray)
 puts "x1=\t#{x1}"
@@ -30,8 +53,12 @@ puts "valueReturned=\t#{YAML.load(redis.lpop("dataList"))}"
 puts "*****************************"
 
 
-def storeData(key,data)
+def storeData(key, data, redis)
+  redis.lpush(key,YAML.dump(data))
+end
 
+def retrieveData(key, redis)
+  data = YAML.load(redis.lpop(key))
 end
 
 

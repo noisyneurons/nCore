@@ -2,6 +2,20 @@
 
 require 'mathn'
 require 'matrix'
+require 'redis'
+require 'yaml'
+
+$redis = Redis.new
+
+def pushData(key, data)
+  $redis.rpush(key,YAML.dump(data))
+end
+
+def retrieveAllData(key)
+  veryLargeInteger = 999999999999
+  aListOfData = $redis.lrange(key, 0, veryLargeInteger)
+  aListOfData.collect {|aDataItem| YAML.load( aDataItem )}
+end
 
 
 module OS
