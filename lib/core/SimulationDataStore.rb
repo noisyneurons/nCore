@@ -2,6 +2,92 @@
 ## ../nCore/lib/core/SimulationDataStore.rb
 
 require 'rubygems'
+
+require_relative 'Utilities'
+require 'relix'
+require 'yaml'
+
+$redis = Redis.new
+# $redis.flushdb
+$redis.setnx("experimentNumber",0)
+
+class Experiment
+  attr_reader :experimentNumber, :descriptionOfExperiment, :args
+
+  def initialize(experimentDescription)
+    @experimentNumber = $redis.get("experimentNumber").to_i
+    $redis.incr("experimentNumber")
+    @descriptionOfExperiment = descriptionOfExperiment
+  end
+
+  def setParameters
+    STDERR.puts "Abstract method called"
+  end
+end
+
+
+#puts "Experiment.new.experimentNumber=\t#{Experiment.new("hi").experimentNumber}"
+
+
+
+class FlockData
+  include Relix
+  attr_accessor :experimentNumber, :id, :epochs, :neuron, :exampleNumber, :netInput, :flockError
+
+  relix do
+    primary_key :flockDataKey
+    #ordered :epochs
+    multi :epochs, order: :neuron
+    multi :netInputs, order: :flockErrors
+    # multi :neuron, order: :epochs
+
+    multi :epochs, index_values: true
+    multi :neuron, index_values: true
+    multi :netInputs, index_values: true
+    multi :flockErrors, index_values: true
+  end
+
+
+  @@ID = 0
+
+  def initialize(experimentNumber, epochs, neuron, netInputs=1, flockErrors=1)
+    @id = @@ID
+    @@ID += 1
+    @experimentNumber = experimentNumber
+    @epochs = epochs
+    @neuron = neuron
+    @netInputs = netInputs
+    @flockErrors = flockErrors
+    index!
+  end
+
+  def flockDataKey
+    "#{experimentNumber}.#{id}"
+  end
+
+  def FlockData.values(key)
+    redisKey = "FlockData:values:#{key}"
+    $redis.hgetall(redisKey)
+    # $redis.keys("*")
+  end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 require 'sequel'
 
 class SimulationDataStoreManager
@@ -142,6 +228,5 @@ exampleFeatures NATURAL JOIN epochs NATURAL JOIN tags ORDER BY neuronID ASC, epo
                       :recordedNeuronIDs => recordedNeuronIDs, :arrayForShoes => arrayForShoes}
     open('../../data/neuronData', 'w') { |f| YAML.dump(hashToTransfer, f) }
   end
-
 end
 

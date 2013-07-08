@@ -72,59 +72,63 @@ def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
   dataStoreManager.transferDataSetToVisualizer(dataSetFromJoin, args)
 end
 
-def setParameters(descriptionOfExperiment)
 
-  numberOfExamples = 8
-  randomNumberSeed = 0
+class NewExperiment < Experiment
 
-  args = {
-      :descriptionOfExperiment => descriptionOfExperiment,
-      :rng => Random.new(randomNumberSeed),
+  def setParameters
 
-      :phase1Epochs => 10000,
-      :phase2Epochs => 0,
+    numberOfExamples = 8
+    randomNumberSeed = 0
 
-      # training parameters re. Output Error
-      :outputErrorLearningRate => 0.02,
-      :minMSE => 0.0001,
-      :maxNumEpochs => (4e3),
+    @args = {
+        :descriptionOfExperiment => descriptionOfExperiment,
+        :rng => Random.new(randomNumberSeed),
 
-      # Network Architecture
-      :numberOfInputNeurons => 2,
-      :numberOfHiddenNeurons => 0,
-      :numberOfOutputNeurons => 1,
-      :weightRange => 1.0,
-      :typeOfLink => FlockingLink,
+        :phase1Epochs => 10000,
+        :phase2Epochs => 0,
 
-      # Training Set parameters
-      :numberOfExamples => numberOfExamples,
+        # training parameters re. Output Error
+        :outputErrorLearningRate => 0.02,
+        :minMSE => 0.0001,
+        :maxNumEpochs => 4e3,
 
-      # Recording and database parameters
-      :numberOfEpochsBetweenStoringDBRecords => 100,
+        # Network Architecture
+        :numberOfInputNeurons => 2,
+        :numberOfHiddenNeurons => 0,
+        :numberOfOutputNeurons => 1,
+        :weightRange => 1.0,
+        :typeOfLink => FlockingLink,
 
-      # Flocking Parameters...
-      :flockingLearningRate => -0.002,
-      :maxFlockingIterationsCount => 2000,
-      :maxAbsFlockingErrorsPerExample => 0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
+        # Training Set parameters
+        :numberOfExamples => numberOfExamples,
 
-      :typeOfClusterer => DynamicClusterer,
-      :numberOfClusters => 2,
-      :m => 2.0,
-      :numExamples => numberOfExamples,
-      :exampleVectorLength => 1,
-      :delta => 1e-2,
-      :maxNumberOfClusteringIterations => 10,
-      :symmetricalCenters => true, # if true, speed is negatively affected
+        # Recording and database parameters
+        :numberOfEpochsBetweenStoringDBRecords => 100,
 
-      # Inner Numeric Constraints -- used to floating point under or overflow
-      :floorToPreventOverflow => 1e-30
-  }
+        # Flocking Parameters...
+        :flockingLearningRate => -0.002,
+        :maxFlockingIterationsCount => 2000,
+        :maxAbsFlockingErrorsPerExample => 0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
+
+        :typeOfClusterer => DynamicClusterer,
+        :numberOfClusters => 2,
+        :m => 2.0,
+        :numExamples => numberOfExamples,
+        :exampleVectorLength => 1,
+        :delta => 1e-2,
+        :maxNumberOfClusteringIterations => 10,
+        :symmetricalCenters => true, # if true, speed is negatively affected
+
+        # Inner Numeric Constraints -- used to floating point under or overflow
+        :floorToPreventOverflow => 1e-30
+    }
+  end
 end
 
 ###################################### Start of Main ##########################################
 srand(0)
 descriptionOfExperiment = "SimpleAdjustableLearningRateTrainerMultiFlockIterations Reference Run"
-args = setParameters(descriptionOfExperiment)
+args = NewExperiment.new(descriptionOfExperiment).setParameters
 
 ############################### create training set...
 examples = createTrainingSet(args)
