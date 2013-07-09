@@ -402,7 +402,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     temp = absFlockingErrorsOld.deep_clone unless (absFlockingErrorsOld.nil?) # for display purposes only
     relativeChanges = deltaDispersions(accumulatedAbsoluteFlockingErrors)
     measuredAccumDeltaWs = (adaptingNeurons.collect { |aNeuron| aNeuron.inputLinks.collect { |aLink| aLink.deltaWAccumulated } })[0] # TODO this a quick and dirty measurement...
-    puts "absFlockingErrorsOld=\t#{temp}\tabsFlockingErrors=\t#{accumulatedAbsoluteFlockingErrors}\tfractionalChanges=\t#{relativeChanges}\tLinkO=\t#{measuredAccumDeltaWs[0]}\tLink1=\t#{measuredAccumDeltaWs[1]}\tLink2=\t#{measuredAccumDeltaWs[2]}\tPREVIOUS mse=\t#{network.calcNetworksMeanSquareError} "
+    # puts "absFlockingErrorsOld=\t#{temp}\tabsFlockingErrors=\t#{accumulatedAbsoluteFlockingErrors}\tfractionalChanges=\t#{relativeChanges}\tLinkO=\t#{measuredAccumDeltaWs[0]}\tLink1=\t#{measuredAccumDeltaWs[1]}\tLink2=\t#{measuredAccumDeltaWs[2]}\tPREVIOUS mse=\t#{network.calcNetworksMeanSquareError} "
   end
 
   def deltaDispersions(absFlockingErrors)
@@ -445,7 +445,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
       outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
       adaptingNeurons.each do |aNeuron|
         dataRecord = aNeuron.recordResponsesForExample
-        yield(aNeuron, dataRecord)
+        yield(aNeuron, dataRecord, exampleNumber)
       end
     end
   end

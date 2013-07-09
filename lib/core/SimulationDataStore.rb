@@ -7,15 +7,20 @@ require_relative 'Utilities'
 require 'relix'
 require 'yaml'
 
-$redis = Redis.new
-# $redis.flushdb
-$redis.setnx("experimentNumber",0)
 
 class Experiment
-  attr_reader :experimentNumber, :descriptionOfExperiment, :args
+  attr_reader :descriptionOfExperiment, :args
+
+  $redis = Redis.new
+  $redis.flushdb
+  $redis.setnx("experimentNumber",0)
+  @@number = $redis.get("experimentNumber")
+
+  def Experiment.number
+    @@number
+  end
 
   def initialize(experimentDescription)
-    @experimentNumber = $redis.get("experimentNumber").to_i
     $redis.incr("experimentNumber")
     @descriptionOfExperiment = descriptionOfExperiment
   end
@@ -29,35 +34,39 @@ end
 #puts "Experiment.new.experimentNumber=\t#{Experiment.new("hi").experimentNumber}"
 
 
-
 class FlockData
   include Relix
-  attr_accessor :experimentNumber, :id, :epochs, :neuron, :exampleNumber, :netInput, :flockError
+  attr_accessor :id, :experimentNumber, :epochs, :neuron, :exampleNumber, :netInputs, :flockErrors
 
   relix do
     primary_key :flockDataKey
-    #ordered :epochs
-    multi :epochs, order: :neuron
-    multi :netInputs, order: :flockErrors
-    # multi :neuron, order: :epochs
+    # ordered :experimentNumber
+    # ordered :epochs
+    # multi :epochs, order: :neuron, order: :exampleNumber
+    # multi :netInputs, order: :flockErrors
+    # multi :experimentNumber_epochs_neuron_exampleNumber, on: %w(experimentNumber epochs neuron exampleNumber)
+    multi :experimentNumber_epochs_neuron, on: %w(experimentNumber epochs neuron)
 
-    multi :epochs, index_values: true
-    multi :neuron, index_values: true
-    multi :netInputs, index_values: true
-    multi :flockErrors, index_values: true
+
+    multi :experimentNumber, index_values: true
+    #multi :epochs, index_values: true
+    # multi :neuron, index_values: true
+    # multi :netInputs, index_values: true
+    # multi :flockErrors, index_values: true
+    # multi :exampleNumber, index_values: true
   end
-
 
   @@ID = 0
 
-  def initialize(experimentNumber, epochs, neuron, netInputs=1, flockErrors=1)
+  def initialize(epochs, neuron, exampleNumber, netInputs=1, flockErrors=1)
     @id = @@ID
     @@ID += 1
-    @experimentNumber = experimentNumber
+    @experimentNumber = Experiment.number
     @epochs = epochs
     @neuron = neuron
     @netInputs = netInputs
     @flockErrors = flockErrors
+    @exampleNumber = exampleNumber
     index!
   end
 
@@ -68,22 +77,8 @@ class FlockData
   def FlockData.values(key)
     redisKey = "FlockData:values:#{key}"
     $redis.hgetall(redisKey)
-    # $redis.keys("*")
   end
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

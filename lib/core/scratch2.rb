@@ -46,7 +46,6 @@ class FlockData
   def FlockData.values(key)
     redisKey = "FlockData:values:#{key}"
     $redis.hgetall(redisKey)
-    # $redis.keys("*")
   end
 end
 

@@ -31,14 +31,15 @@ class SimpleAdjustableLearningRateTrainer
   def accumulateFlockingErrorDeltaWs
     adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate] }
     adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
-    print "Net Input, Flocking Error=\t"
-    acrossExamplesAccumulateDeltaWs do |aNeuron, dataRecord|
+    # print "Net Input, Flocking Error=\t"
+    acrossExamplesAccumulateDeltaWs do |aNeuron, dataRecord, exampleNumber|
       dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
       dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
-      print "#{dataRecord[:netInput]},\t#{dataRecord[:localFlockingError]};\t"
+      FlockData.new(TrainingSequence.instance.epochs, aNeuron.id, exampleNumber, dataRecord[:netInput], dataRecord[:localFlockingError])
+      # print "#{dataRecord[:netInput]},\t#{dataRecord[:localFlockingError]};\t"
       aNeuron.calcAccumDeltaWsForLocalFlocking
     end
-    puts
+    # puts
     adaptingNeurons.collect { |aNeuron| (aNeuron.accumulatedAbsoluteFlockingError * correctionFactorForRateAtWhichNeuronsGainChanges(aNeuron.clustersCenter)) }
   end
 

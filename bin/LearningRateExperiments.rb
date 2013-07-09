@@ -81,6 +81,7 @@ class NewExperiment < Experiment
     randomNumberSeed = 0
 
     @args = {
+        :experimentNumber => Experiment.number,
         :descriptionOfExperiment => descriptionOfExperiment,
         :rng => Random.new(randomNumberSeed),
 
@@ -90,7 +91,7 @@ class NewExperiment < Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.02,
         :minMSE => 0.0001,
-        :maxNumEpochs => 4e3,
+        :maxNumEpochs => 4e2,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
@@ -153,4 +154,36 @@ theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE
 
 displayAndPlotResults(args, dispersions, dataStoreManager, lastEpoch, lastTestingMSE,
                       lastTrainingMSE, network, theTrainer, trainingSequence)
+
+puts "############ Include Example Numbers #############"
+
+
+aryOfExperimentNumbers = FlockData.lookup_values(:experimentNumber)
+lastExperiment = (aryOfExperimentNumbers.sort[-1])
+puts aryOfExperimentNumbers
+#puts "lastExperiment=\t#{lastExperiment}"
+#aryOfExampleNumbers = FlockData.lookup_values(:exampleNumber)
+#p aryOfExampleNumbers
+
+#FlockData.lookup_values(:epochs).each do |aNumberOfEpochs|
+#  aryOfExampleNumbers.each do |exampleNumber|
+#    someData = FlockData.lookup { |q| q[:experimentNumber_epoch_neuron_exampleNumber].eq({experimentNumber: lastExperiment, epochs: aNumberOfEpochs,
+#                                                                                          neuron: 2, exampleNumber: exampleNumber}) }
+#
+#    someData.each { |item| puts item }
+#  end
+#end
+
+
+700.times do |aNumberOfEpochs|
+  epochNumber = "#{aNumberOfEpochs}"
+  someData = FlockData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: lastExperiment, epochs: epochNumber,
+                                                                          neuron: 2}) }
+
+  someData.each { |item| puts item }
+
+end
+
+puts "####################################"
+
 
