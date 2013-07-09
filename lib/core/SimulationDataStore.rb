@@ -67,6 +67,10 @@ class FlockData
     @netInputs = netInputs
     @flockErrors = flockErrors
     @exampleNumber = exampleNumber
+
+    $redis.hmset(flockDataKey, :experimentNumber, experimentNumber, :epochs, epochs, :neuron, neuron,
+                 :exampleNumber, exampleNumber, :netInputs, netInputs, :flockErrors, flockErrors)
+
     index!
   end
 
@@ -75,7 +79,7 @@ class FlockData
   end
 
   def FlockData.values(key)
-    redisKey = "FlockData:values:#{key}"
+    redisKey = key
     $redis.hgetall(redisKey)
   end
 end

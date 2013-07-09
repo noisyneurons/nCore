@@ -175,12 +175,12 @@ puts aryOfExperimentNumbers
 #end
 
 
-700.times do |aNumberOfEpochs|
-  epochNumber = "#{aNumberOfEpochs}"
+700.times do |epochNumber|
   someData = FlockData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: lastExperiment, epochs: epochNumber,
                                                                           neuron: 2}) }
+  puts "For epoch number=\t#{epochNumber}" unless(someData.empty?)
 
-  someData.each { |item| puts item }
+  someData.each { |itemKey| puts FlockData.values(itemKey) } unless(someData.empty?)
 
 end
 
