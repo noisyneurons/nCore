@@ -12,7 +12,7 @@ class Experiment
   attr_reader :descriptionOfExperiment, :args
 
   $redis = Redis.new
-  $redis.flushdb
+  # $redis.flushdb
   $redis.setnx("experimentNumber",0)
   @@number = $redis.get("experimentNumber")
 

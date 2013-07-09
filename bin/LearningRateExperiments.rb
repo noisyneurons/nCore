@@ -91,7 +91,7 @@ class NewExperiment < Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.02,
         :minMSE => 0.0001,
-        :maxNumEpochs => 4e2,
+        :maxNumEpochs => 4e3,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
@@ -152,8 +152,7 @@ lastEpoch, lastTrainingMSE, dispersions = theTrainer.simpleLearningWithFlocking(
 lastTestingMSE = nil
 theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, dispersions)
 
-displayAndPlotResults(args, dispersions, dataStoreManager, lastEpoch, lastTestingMSE,
-                      lastTrainingMSE, network, theTrainer, trainingSequence)
+
 
 puts "############ Include Example Numbers #############"
 
@@ -175,7 +174,7 @@ puts aryOfExperimentNumbers
 #end
 
 
-700.times do |epochNumber|
+4000.times do |epochNumber|
   someData = FlockData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: lastExperiment, epochs: epochNumber,
                                                                           neuron: 2}) }
   puts "For epoch number=\t#{epochNumber}" unless(someData.empty?)
@@ -186,4 +185,5 @@ end
 
 puts "####################################"
 
-
+displayAndPlotResults(args, dispersions, dataStoreManager, lastEpoch, lastTestingMSE,
+                      lastTrainingMSE, network, theTrainer, trainingSequence)
