@@ -4,7 +4,62 @@
 require 'rubygems'
 require_relative 'Utilities'
 require 'relix'
-require 'yaml'
+# require 'yaml'
+
+class SnapShotData
+  include Relix
+  attr_accessor :id, :experimentNumber, :experimentDescription, :network, :time, :epochs, :trainMSE, :testMSE
+
+  relix do
+    primary_key :dataKey
+    ordered :experimentNumber
+    multi :experimentNumber_epochs, on: %w(experimentNumber epochs)
+    multi :experimentNumber, index_values: true
+  end
+
+  @@ID = 0
+
+  def SnapShotData.deleteTable
+    ary = $redis.keys("SSD*")
+    ary.each { |item| $redis.del(item) }
+    ary = $redis.keys("SnapShotData*")
+    ary.each { |item| $redis.del(item) }
+  end
+
+
+  def initialize(experimentDescription, network, time, epochs, trainMSE, testMSE = 0.0)
+    @id = @@ID
+    @@ID += 1
+    @experimentNumber = Experiment.number
+
+    @experimentDescription = experimentDescription
+    @network = network
+    @time = time
+    @epochs = epochs
+    @trainMSE = trainMSE
+    @testMSE = testMSE
+
+    aHash = {:experimentNumber => experimentNumber, :experimentDescription => experimentDescription,
+             :network => network,
+             :time => time,
+             :epochs => epochs,
+             :trainMSE => trainMSE,
+             :testMSE => testMSE
+    }
+
+    $redis.set(dataKey, aHash)
+    index!
+  end
+
+  def dataKey
+    "SSD#{experimentNumber}.#{id}"
+  end
+
+  def SnapShotData.values(key)
+    $redis.get(key)
+  end
+end
+
 
 class FlockData
   include Relix
@@ -40,7 +95,7 @@ class FlockData
     @exampleNumber = exampleNumber
 
     aHash = {:experimentNumber => experimentNumber, :epochs => epochs, :neuron => neuron,
-             :exampleNumber => exampleNumber, :netInputs => netInputs, :flockErrors =>  flockErrors}
+             :exampleNumber => exampleNumber, :netInputs => netInputs, :flockErrors => flockErrors}
 
     $redis.set(flockDataKey, aHash)
 

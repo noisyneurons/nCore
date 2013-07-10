@@ -190,6 +190,12 @@ puts "####################################"
 displayAndPlotResults(args, dispersions, dataStoreManager, lastEpoch, lastTestingMSE,
                       lastTrainingMSE, network, theTrainer, trainingSequence)
 
+SnapShotData.new(descriptionOfExperiment, network, Time.now, lastEpoch, lastTrainingMSE, lastTestingMSE)
+
+
+selectedData = SnapShotData.lookup {|q| q[:experimentNumber_epochs].eq({experimentNumber: Experiment.number, epochs: lastEpoch})}
+selectedData.each { |itemKey| puts SnapShotData.values(itemKey) } unless(selectedData.empty?)
+
 
 FlockData.deleteTable
 experiment.save
