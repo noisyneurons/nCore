@@ -2,37 +2,9 @@
 ## ../nCore/lib/core/SimulationDataStore.rb
 
 require 'rubygems'
-
 require_relative 'Utilities'
 require 'relix'
 require 'yaml'
-
-
-class Experiment
-  attr_reader :descriptionOfExperiment, :args
-
-  $redis = Redis.new
-  # $redis.flushdb
-  $redis.setnx("experimentNumber",0)
-  @@number = $redis.get("experimentNumber")
-
-  def Experiment.number
-    @@number
-  end
-
-  def initialize(experimentDescription)
-    $redis.incr("experimentNumber")
-    @descriptionOfExperiment = descriptionOfExperiment
-  end
-
-  def setParameters
-    STDERR.puts "Abstract method called"
-  end
-end
-
-
-#puts "Experiment.new.experimentNumber=\t#{Experiment.new("hi").experimentNumber}"
-
 
 class FlockData
   include Relix
@@ -40,23 +12,22 @@ class FlockData
 
   relix do
     primary_key :flockDataKey
-    # ordered :experimentNumber
     # ordered :epochs
     # multi :epochs, order: :neuron, order: :exampleNumber
-    # multi :netInputs, order: :flockErrors
-    # multi :experimentNumber_epochs_neuron_exampleNumber, on: %w(experimentNumber epochs neuron exampleNumber)
     multi :experimentNumber_epochs_neuron, on: %w(experimentNumber epochs neuron)
 
-
     multi :experimentNumber, index_values: true
-    #multi :epochs, index_values: true
-    # multi :neuron, index_values: true
-    # multi :netInputs, index_values: true
-    # multi :flockErrors, index_values: true
-    # multi :exampleNumber, index_values: true
   end
 
   @@ID = 0
+
+  def FlockData.deleteTable
+    ary = $redis.keys("FD*")
+    ary.each { |item| $redis.del(item) }
+    ary = $redis.keys("FlockData*")
+    ary.each { |item| $redis.del(item) }
+  end
+
 
   def initialize(epochs, neuron, exampleNumber, netInputs=1, flockErrors=1)
     @id = @@ID
@@ -68,23 +39,24 @@ class FlockData
     @flockErrors = flockErrors
     @exampleNumber = exampleNumber
 
-    $redis.hmset(flockDataKey, :experimentNumber, experimentNumber, :epochs, epochs, :neuron, neuron,
-                 :exampleNumber, exampleNumber, :netInputs, netInputs, :flockErrors, flockErrors)
+    aHash = {:experimentNumber => experimentNumber, :epochs => epochs, :neuron => neuron,
+             :exampleNumber => exampleNumber, :netInputs => netInputs, :flockErrors =>  flockErrors}
+
+    $redis.set(flockDataKey, aHash)
 
     index!
   end
 
   def flockDataKey
-    "#{experimentNumber}.#{id}"
+    "FD#{experimentNumber}.#{id}"
   end
 
   def FlockData.values(key)
     redisKey = key
-    $redis.hgetall(redisKey)
+    # $redis.hgetall(redisKey)
+    $redis.get(redisKey)
   end
 end
-
-
 
 
 require 'sequel'

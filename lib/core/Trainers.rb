@@ -1,7 +1,40 @@
 ### VERSION "nCore"
 ## ../nCore/lib/core/Trainers.rb
 
+require 'rubygems'
+
 require_relative 'Utilities'
+require 'relix'
+
+
+class Experiment
+  attr_reader :descriptionOfExperiment, :args
+
+  $redis = Redis.new
+  # $redis.flushdb
+  $redis.setnx("experimentNumber", 0)
+  @@number = $redis.get("experimentNumber")
+
+  def Experiment.number
+    @@number
+  end
+
+  #def Experiment.deleteTable
+  #  $redis.del("experimentNumber")
+  #end
+
+  def initialize(experimentDescription)
+    $redis.incr("experimentNumber")
+    @descriptionOfExperiment = descriptionOfExperiment
+  end
+
+  def save
+    $redis.save
+  end
+end
+
+
+
 
 class AbstractTrainer
   attr_accessor :trainingSequence, :minMSE, :maxNumEpochs, :examples, :dataArray, :args,

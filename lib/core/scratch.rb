@@ -9,9 +9,8 @@ $redis = Redis.new
 ary = $redis.keys("*")
 ary.each { |item| p item }
 
-p "############ckjlkjfdlks"
+$redis.shutdown
 
-p $redis.type("FlockData:values:0.356")
 
-#p $redis.zrevrangebyscore("FlockData:values:0.356","-inf","+inf")
+
 

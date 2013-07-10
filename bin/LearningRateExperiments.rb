@@ -73,7 +73,7 @@ def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
 end
 
 
-class NewExperiment < Experiment
+class Experiment
 
   def setParameters
 
@@ -129,7 +129,8 @@ end
 ###################################### Start of Main ##########################################
 srand(0)
 descriptionOfExperiment = "SimpleAdjustableLearningRateTrainerMultiFlockIterations Reference Run"
-args = NewExperiment.new(descriptionOfExperiment).setParameters
+experiment = Experiment.new(descriptionOfExperiment)
+args =  experiment.setParameters
 
 ############################### create training set...
 examples = createTrainingSet(args)
@@ -157,9 +158,9 @@ theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE
 puts "############ Include Example Numbers #############"
 
 
-aryOfExperimentNumbers = FlockData.lookup_values(:experimentNumber)
-lastExperiment = (aryOfExperimentNumbers.sort[-1])
-puts aryOfExperimentNumbers
+#aryOfExperimentNumbers = FlockData.lookup_values(:experimentNumber)
+#lastExperiment = (aryOfExperimentNumbers.sort[-1])
+#puts aryOfExperimentNumbers
 #puts "lastExperiment=\t#{lastExperiment}"
 #aryOfExampleNumbers = FlockData.lookup_values(:exampleNumber)
 #p aryOfExampleNumbers
@@ -174,12 +175,13 @@ puts aryOfExperimentNumbers
 #end
 
 
-4000.times do |epochNumber|
-  someData = FlockData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: lastExperiment, epochs: epochNumber,
-                                                                          neuron: 2}) }
-  puts "For epoch number=\t#{epochNumber}" unless(someData.empty?)
 
-  someData.each { |itemKey| puts FlockData.values(itemKey) } unless(someData.empty?)
+4000.times do |epochNumber|
+  selectedData = FlockData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber,
+                                                                          neuron: 2}) }
+  puts "For epoch number=\t#{epochNumber}" unless(selectedData.empty?)
+
+  selectedData.each { |itemKey| puts FlockData.values(itemKey) } unless(selectedData.empty?)
 
 end
 
@@ -187,3 +189,7 @@ puts "####################################"
 
 displayAndPlotResults(args, dispersions, dataStoreManager, lastEpoch, lastTestingMSE,
                       lastTrainingMSE, network, theTrainer, trainingSequence)
+
+
+FlockData.deleteTable
+experiment.save
