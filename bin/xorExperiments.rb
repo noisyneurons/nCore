@@ -49,7 +49,9 @@ def createTrainingSet(args)
   examples << {:inputs => [1.0, -1.0], :targets => [1.0], :exampleNumber => 1, :class => 1}
   examples << {:inputs => [-1.0, -1.0], :targets => [0.0], :exampleNumber => 2, :class => 0}
   examples << {:inputs => [-1.0, 1.0], :targets => [1.0], :exampleNumber => 3, :class => 1}
-  STDERR.puts "****************Incorrect Number of Examples Specified!! ************************" if(args[:numberOfExamples] != examples.length)
+  if (args[:numberOfExamples] != examples.length)
+    STDERR.puts "****************Incorrect Number of Examples Specified!! ************************"
+  end
   examples
 end
 
@@ -106,7 +108,7 @@ class Experiment
         # Flocking Parameters (set used for Simplest)...
         :flockingLearningRate => -0.002,
         :maxFlockingIterationsCount => 2000,
-        :maxAbsFlockingErrorsPerExample =>  0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
+        :maxAbsFlockingErrorsPerExample => 0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
 
         # Flocking Parameters (set used for XOR)...
         :flockingLearningRate => -0.002, # -0.002,

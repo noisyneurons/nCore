@@ -367,22 +367,27 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
 
     distributeSetOfExamples(examples)
     seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO is this always needed? -- except for the 'first' step?
+    @countOfConverges = 0
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
       mse, self.accumulatedAbsoluteFlockingErrors = adaptNetworkWeightsAfterOneEpoch
       trainingSequence.nextEpoch
     end
+
+    puts "Count Of Convergences = \t #{@countOfConverges}"
     return mse, accumulatedAbsoluteFlockingErrors
   end
 
   def adaptNetworkWeightsAfterOneEpoch
     #weightedAverageOfAbsoluteFlockingErrors = []
+
     case flockingHasConverged
 
       when true
         accumulateOutputErrorDeltaWs
         adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
         recenterEachNeuronsClusters(adaptingNeurons)
-
+        puts "when flockingHasConverged converged, -----------------------------------------------------------------------------------------------------------------epoch # =\t#{trainingSequence.epochs}"
+        @countOfConverges += 1
       when false
         self.accumulatedAbsoluteFlockingErrors = accumulateFlockingErrorDeltaWs()
         adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
@@ -499,8 +504,6 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   end
 
 end
-
-
 
 class XORTrainer <  SimpleAdjustableLearningRateTrainer
 

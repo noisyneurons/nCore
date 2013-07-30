@@ -109,8 +109,8 @@ class Experiment
 
         # Flocking Parameters...
         :flockingLearningRate => -0.002,
-        :maxFlockingIterationsCount => 2000,
-        :maxAbsFlockingErrorsPerExample => 0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
+        :maxFlockingIterationsCount => 3800, # 2000,
+        :maxAbsFlockingErrorsPerExample => 0.00000000000001, # 0.002, #0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
 
         :typeOfClusterer => DynamicClusterer,
         :numberOfClusters => 2,
