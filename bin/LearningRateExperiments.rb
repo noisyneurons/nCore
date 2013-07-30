@@ -53,6 +53,7 @@ def createTrainingSet(args)
   examples << {:inputs => [-1.0, -2.0], :targets => [0.0], :exampleNumber => 5, :class => 0}
   examples << {:inputs => [-1.0, -3.0], :targets => [0.0], :exampleNumber => 6, :class => 0}
   examples << {:inputs => [-1.0, -4.0], :targets => [0.0], :exampleNumber => 7, :class => 0}
+  STDERR.puts "****************Incorrect Number of Examples Specified!! ************************" if(args[:numberOfExamples] != examples.length)
   examples
 end
 
@@ -128,9 +129,9 @@ end
 
 ###################################### Start of Main ##########################################
 srand(0)
-descriptionOfExperiment = "SimpleAdjustableLearningRateTrainerMultiFlockIterations Reference Run"
+descriptionOfExperiment = "SimpleAdjustableLearningRateTrainerMultiFlockIterations Reference Run NUMBER 2"
 experiment = Experiment.new(descriptionOfExperiment)
-args =  experiment.setParameters
+args = experiment.setParameters
 
 ############################### create training set...
 examples = createTrainingSet(args)
@@ -154,7 +155,6 @@ lastTestingMSE = nil
 theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, dispersions)
 
 
-
 puts "############ Include Example Numbers #############"
 
 
@@ -175,13 +175,12 @@ puts "############ Include Example Numbers #############"
 #end
 
 
-
 4000.times do |epochNumber|
   selectedData = FlockData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber,
-                                                                          neuron: 2}) }
-  puts "For epoch number=\t#{epochNumber}" unless(selectedData.empty?)
+                                                                               neuron: 2}) }
+  puts "For epoch number=\t#{epochNumber}" unless (selectedData.empty?)
 
-  selectedData.each { |itemKey| puts FlockData.values(itemKey) } unless(selectedData.empty?)
+  selectedData.each { |itemKey| puts FlockData.values(itemKey) } unless (selectedData.empty?)
 
 end
 
@@ -193,9 +192,18 @@ displayAndPlotResults(args, dispersions, dataStoreManager, lastEpoch, lastTestin
 SnapShotData.new(descriptionOfExperiment, network, Time.now, lastEpoch, lastTrainingMSE, lastTestingMSE)
 
 
-selectedData = SnapShotData.lookup {|q| q[:experimentNumber_epochs].eq({experimentNumber: Experiment.number, epochs: lastEpoch})}
-selectedData.each { |itemKey| puts SnapShotData.values(itemKey) } unless(selectedData.empty?)
+selectedData = SnapShotData.lookup { |q| q[:experimentNumber_epochs].eq({experimentNumber: Experiment.number, epochs: lastEpoch}) }
 
+
+selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
+unless (selectedData.empty?)
+  puts
+  puts "Number\tDescription\tLastEpoch\tTrainMSE\tTestMSE\tTime"
+  selectedData.each do |aSelectedExperiment|
+    aHash = SnapShotData.values(aSelectedExperiment)
+    puts "#{aHash[:experimentNumber]}\t#{aHash[:descriptionOfExperiment]}\t#{aHash[:epochs]}\t#{aHash[:trainMSE]}\t#{aHash[:testMSE]}\t#{aHash[:time]}"
+  end
+end
 
 FlockData.deleteTable
 experiment.save

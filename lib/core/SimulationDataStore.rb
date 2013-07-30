@@ -4,17 +4,17 @@
 require 'rubygems'
 require_relative 'Utilities'
 require 'relix'
-# require 'yaml'
+require 'yaml'
 
 class SnapShotData
   include Relix
-  attr_accessor :id, :experimentNumber, :experimentDescription, :network, :time, :epochs, :trainMSE, :testMSE
+  attr_accessor :id, :experimentNumber, :descriptionOfExperiment, :network, :time, :epochs, :trainMSE, :testMSE
 
   relix do
     primary_key :dataKey
     ordered :experimentNumber
     multi :experimentNumber_epochs, on: %w(experimentNumber epochs)
-    multi :experimentNumber, index_values: true
+    # multi :experimentNumber, index_values: true
   end
 
   @@ID = 0
@@ -27,27 +27,27 @@ class SnapShotData
   end
 
 
-  def initialize(experimentDescription, network, time, epochs, trainMSE, testMSE = 0.0)
+  def initialize(descriptionOfExperiment, network, time, epochs, trainMSE, testMSE = 0.0)
     @id = @@ID
     @@ID += 1
     @experimentNumber = Experiment.number
 
-    @experimentDescription = experimentDescription
-    @network = network
+    @descriptionOfExperiment = descriptionOfExperiment
+    @network = network.to_s
     @time = time
     @epochs = epochs
     @trainMSE = trainMSE
     @testMSE = testMSE
 
-    aHash = {:experimentNumber => experimentNumber, :experimentDescription => experimentDescription,
-             :network => network,
+    snapShotHash = {:experimentNumber => experimentNumber, :descriptionOfExperiment => descriptionOfExperiment,
+             :network => network.to_s,
              :time => time,
              :epochs => epochs,
              :trainMSE => trainMSE,
              :testMSE => testMSE
     }
 
-    $redis.set(dataKey, aHash)
+    $redis.set(dataKey, YAML.dump(snapShotHash))
     index!
   end
 
@@ -56,10 +56,9 @@ class SnapShotData
   end
 
   def SnapShotData.values(key)
-    $redis.get(key)
+    YAML.load($redis.get(key))
   end
 end
-
 
 class FlockData
   include Relix
@@ -82,7 +81,6 @@ class FlockData
     ary = $redis.keys("FlockData*")
     ary.each { |item| $redis.del(item) }
   end
-
 
   def initialize(epochs, neuron, exampleNumber, netInputs=1, flockErrors=1)
     @id = @@ID
@@ -112,7 +110,6 @@ class FlockData
     $redis.get(redisKey)
   end
 end
-
 
 require 'sequel'
 

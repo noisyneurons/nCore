@@ -375,14 +375,13 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   end
 
   def adaptNetworkWeightsAfterOneEpoch
-    weightedAverageOfAbsoluteFlockingErrors = []
+    #weightedAverageOfAbsoluteFlockingErrors = []
     case flockingHasConverged
 
       when true
         accumulateOutputErrorDeltaWs
         adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
         recenterEachNeuronsClusters(adaptingNeurons)
-        puts "<---------->"
 
       when false
         self.accumulatedAbsoluteFlockingErrors = accumulateFlockingErrorDeltaWs()
@@ -499,6 +498,23 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     self.neuronsWhoseClustersNeedToBeSeeded = layersWhoseClustersNeedToBeSeeded.flatten unless (layersWhoseClustersNeedToBeSeeded.nil?)
   end
 
+end
+
+
+
+class XORTrainer <  SimpleAdjustableLearningRateTrainer
+
+  def postInitialize
+    super
+    @hiddenLayer1 = network.hiddenLayer1
+  end
+
+  def step1NameTrainingGroupsAndLearningRates
+    self.layersWithInputLinks = [hiddenLayer1 + outputLayer]
+    self.adaptingLayers = layersWithInputLinks
+    self.layersWhoseClustersNeedToBeSeeded = layersWithInputLinks
+    setUniversalNeuronGroupNames
+  end
 end
 
 
@@ -1089,7 +1105,6 @@ class WeightChangeNormalizer
     return acrossLayerMaxValues.max
   end
 end
-
 
 ##
 

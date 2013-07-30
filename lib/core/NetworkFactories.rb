@@ -180,6 +180,29 @@ class SimpleFlockingNeuronNetwork < LearningNetwork
 
 end # Used for main: "SimplestFlockingDemo2.rb"
 
+class XORNeuronNetwork < LearningNetwork
+
+  def createAllLayersOfNeurons
+    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
+    self.allNeuronLayers << inputLayer
+
+    self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron= FlockingNeuron, args[:hiddenLayer1NumberOfNeurons])
+    self.allNeuronLayers << hiddenLayer1
+
+    self.outputLayer = createAndConnectLayer(hiddenLayer1, typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
+    self.allNeuronLayers << outputLayer
+
+    self.allNeuronsInOneArray = allNeuronLayers.flatten
+    self.neuronsWithInputLinks = hiddenLayer1 + outputLayer
+    self.neuronsWithInputLinksInReverseOrder = neuronsWithInputLinks.reverse
+
+    return allNeuronLayers
+  end
+
+end # Used for main: "xorExperiments.rb"
+
+
+
 class AnalogyNetwork < LearningNetwork
 
   def createAllLayersOfNeurons
