@@ -66,10 +66,7 @@ class FlockData
 
   relix do
     primary_key :flockDataKey
-    # ordered :epochs
-    # multi :epochs, order: :neuron, order: :exampleNumber
     multi :experimentNumber_epochs_neuron, on: %w(experimentNumber epochs neuron)
-
     multi :experimentNumber, index_values: true
   end
 
@@ -106,7 +103,6 @@ class FlockData
 
   def FlockData.values(key)
     redisKey = key
-    # $redis.hgetall(redisKey)
     $redis.get(redisKey)
   end
 end
