@@ -35,7 +35,7 @@ class Experiment
 end
 #### Redis and database stuff -- should be moved to more appropriate place
 
-module RecordingAndPlottingTrainingRoutines
+module RecordingAndPlottingRoutines
 
   def storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, dPrimes)
     self.elapsedTime = Time.now - startTime
@@ -133,7 +133,7 @@ class AbstractTrainer
   attr_accessor :trainingSequence, :minMSE, :maxNumEpochs, :examples, :dataArray, :args,
                 :numberOfExamples, :dataStoreManager,
                 :lastEpoch, :lastTrainingMSE, :lastTestingMSE, :startTime, :elapsedTime,
-                :dPrimes, :dPrimesOld, :accumulatedAbsoluteFlockingErrors, :absFlockingErrorsOld,
+                :dPrimes, :dPrimesOld,
 
                 :network, :allNeuronLayers,
                 :allNeuronsInOneArray, :inputLayer, :hiddenLayer, :outputLayer, :theBiasNeuron,
@@ -156,7 +156,7 @@ class AbstractTrainer
 
   include ExampleDistribution
   include NeuronToNeuronConnection
-  include RecordingAndPlottingTrainingRoutines
+  include RecordingAndPlottingRoutines
 
   def initialize(trainingSequence, network, args)
     @trainingSequence = trainingSequence
@@ -164,26 +164,17 @@ class AbstractTrainer
     @args = args
     @numberOfExamples = args[:numberOfExamples]
     @dataStoreManager = SimulationDataStoreManager.instance
+
     @allNeuronLayers = network.createSimpleLearningANN
+    @allNeuronsInOneArray = network.allNeuronsInOneArray
+    @inputLayer = network.inputLayer
+    @outputLayer = network.outputLayer
+    @theBiasNeuron = network.theBiasNeuron
+
     @startTime = Time.now
     @elapsedTime = nil
     @minMSE = args[:minMSE]
     postInitialize()
-  end
-
-  def simpleLearningWithFlocking(examples, arrayOfNeuronsToPlot)
-    step1NameTrainingGroupsAndLearningRates
-    mse, dPrimes = oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
-    return trainingSequence.epochs, mse, dPrimes
-  end
-
-  protected
-
-  def oneStepOfLearningAndDisplay(examples, arrayOfNeuronsToPlot)
-    mse, dPrimes = stepLearning(examples)
-    puts network
-    generatePlotForEachNeuron(arrayOfNeuronsToPlot) if arrayOfNeuronsToPlot.present?
-    [mse, dPrimes]
   end
 
 ###------------  Core Support Section ------------------------------
@@ -208,100 +199,87 @@ class AbstractTrainer
     neuronsWhoseClustersNeedToBeSeeded.each { |aNeuron| aNeuron.initializeClusterCenters } # TODO is there any case where system should be reinitialized in this manner?
     recenterEachNeuronsClusters(neuronsWhoseClustersNeedToBeSeeded)
   end
-
-  def deltaDPrimes(dPrimes)
-    deltaDPrimes = nil
-    unless (@dPrimesOld.nil?)
-      index = -1
-      deltaDPrimeRatios = dPrimes.collect do |dPrime|
-        index += 1
-        deltaDPrimeRatio = (dPrime - @dPrimesOld[index]) / ((dPrime + @dPrimesOld[index])/2.0)
-      end
-    else
-      deltaDPrimeRatios = Array.new(dPrimes.length) { 1.0 }
-    end
-    # puts "epochs=\t#{trainingSequence.epochs}\tdPrimes=\t#{dPrimes}\tOldDPrimes=\t#{@dPrimesOld}" if (trainingSequence.epochs > 30)
-    @dPrimesOld = dPrimes
-    return deltaDPrimeRatios
-  end
 end
 
-
 class SimpleAdjustableLearningRateTrainer < AbstractTrainer
-  attr_accessor :maxFlockingIterationsCount, :flockingIterationsCount, :accumulatedExampleImportanceFactors
+  attr_accessor :maxFlockingIterationsCount, :flockingIterationsCount, :accumulatedExampleImportanceFactors,
+                :absFlockingErrorsOld#,  :accumulatedAbsoluteFlockingErrors
 
   def postInitialize
-    @allNeuronsInOneArray = network.allNeuronsInOneArray
-    @inputLayer = network.inputLayer
-    @outputLayer = network.outputLayer
-    @theBiasNeuron = network.theBiasNeuron
     @flockingIterationsCount = 0
     @maxFlockingIterationsCount = args[:maxFlockingIterationsCount]
     @accumulatedExampleImportanceFactors = nil
   end
 
+  def simpleLearningWithFlocking(examples)
+    nameTrainingGroupsAndSetLearningRatesForStep1OfTraining
+    mse, accumulatedAbsoluteFlockingErrors = stepLearning(examples)
+    return trainingSequence.epochs, mse, accumulatedAbsoluteFlockingErrors
+  end
+
+  def displayTrainingResults(arrayOfNeuronsToPlot)
+    puts network
+    generatePlotForEachNeuron(arrayOfNeuronsToPlot) if arrayOfNeuronsToPlot.present?
+  end
+
   def stepLearning(examples)
-    adaptingNeurons.each { |aNeuron| aNeuron.inputLinks.each { |aLink| aLink.store = 0.0 } }
-    self.flockingHasConverged = true
-    self.accumulatedAbsoluteFlockingErrors = []
-    mse = Float::MAX
+    accumulatedAbsoluteFlockingErrors = nil
 
     distributeSetOfExamples(examples)
-    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO is this always needed? -- except for the 'first' step?
-    @countOfConverges = 0
+    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO  Except for the 'first' step, is this always needed?
+    adaptingNeurons.each { |aNeuron| aNeuron.inputLinks.each { |aLink| aLink.store = 0.0 } }
+
+    flockingHasConverged = true
+    mse = Float::MAX
+
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
-      mse, self.accumulatedAbsoluteFlockingErrors = adaptNetworkWeightsAfterOneEpoch
+      mse, accumulatedAbsoluteFlockingErrors = oneEpochOfAdaptingNetworkWeights(flockingHasConverged)
+      flockingHasConverged = shouldFlockingOccur?(accumulatedAbsoluteFlockingErrors)
       trainingSequence.nextEpoch
     end
 
-    puts "Count Of Convergences = \t #{@countOfConverges}"
     return mse, accumulatedAbsoluteFlockingErrors
   end
 
-  def adaptNetworkWeightsAfterOneEpoch
-    #weightedAverageOfAbsoluteFlockingErrors = []
+  def oneEpochOfAdaptingNetworkWeights(flockingHasConverged)
+    accumulatedAbsoluteFlockingErrors = nil
 
     case flockingHasConverged
-
       when true
         accumulateOutputErrorDeltaWs
         adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-        recenterEachNeuronsClusters(adaptingNeurons)
-        puts "when flockingHasConverged converged, -----------------------------------------------------------------------------------------------------------------epoch # =\t#{trainingSequence.epochs}"
-        @countOfConverges += 1
+        recenterEachNeuronsClusters(adaptingNeurons)    # necessary for later determining if clusters are still "tight-enough!"
+        accumulatedAbsoluteFlockingErrors = []
       when false
-        self.accumulatedAbsoluteFlockingErrors = accumulateFlockingErrorDeltaWs()
+        accumulatedAbsoluteFlockingErrors = accumulateFlockingErrorDeltaWs()
         adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
     end
 
-    self.flockingHasConverged = haveFlockDispersionsBeenMinimized?
-
     mse = logNetworksResponses(adaptingNeurons)
-    return [mse, accumulatedAbsoluteFlockingErrors]
+    return mse, accumulatedAbsoluteFlockingErrors
   end
 
-  def haveFlockDispersionsBeenMinimized?
-    displayFlockingErrorAndDeltaWInformation()
+  def shouldFlockingOccur?(accumulatedAbsoluteFlockingErrors)
+    displayFlockingErrorAndDeltaWInformation(accumulatedAbsoluteFlockingErrors)
 
-    maxIterCount = 0
-    maxIterCount = maxFlockingIterationsCount if (shouldFlock?)
+    maxIterCount = maxFlockingIterationsCount
+    maxIterCount = 0   if (tooEarlyToFlock?)
 
-    needToReduceFlockingError = accumulatedAbsoluteFlockingErrors.empty? || ((accumulatedAbsoluteFlockingErrors.max / numberOfExamples) > args[:maxAbsFlockingErrorsPerExample])
+    needToMeasureOrReduceFlockingError = accumulatedAbsoluteFlockingErrors.empty? || ((accumulatedAbsoluteFlockingErrors.max / numberOfExamples) > args[:maxAbsFlockingErrorsPerExample])
     stillEnoughIterationsToFlock = flockingIterationsCount < maxIterCount
-    if (needToReduceFlockingError && stillEnoughIterationsToFlock)
+    if (needToMeasureOrReduceFlockingError && stillEnoughIterationsToFlock)
       self.flockingIterationsCount += 1
       return false
     else
-      self.accumulatedAbsoluteFlockingErrors = []
       self.absFlockingErrorsOld = []
       self.flockingIterationsCount = 0
       return true
     end
   end
 
-  def shouldFlock?
-    return false if (trainingSequence.epochs < 200)
-    return true
+  def tooEarlyToFlock?
+    return true if (trainingSequence.epochs < 200)
+    return false
   end
 
   def useFuzzyClusters?
@@ -316,7 +294,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     return false
   end
 
-  def displayFlockingErrorAndDeltaWInformation
+  def displayFlockingErrorAndDeltaWInformation(accumulatedAbsoluteFlockingErrors)
     temp = absFlockingErrorsOld.deep_clone unless (absFlockingErrorsOld.nil?) # for display purposes only
     relativeChanges = deltaDispersions(accumulatedAbsoluteFlockingErrors)
     measuredAccumDeltaWs = (adaptingNeurons.collect { |aNeuron| aNeuron.inputLinks.collect { |aLink| aLink.deltaWAccumulated } })[0] # TODO this a quick and dirty measurement...
@@ -368,7 +346,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     end
   end
 
-  def step1NameTrainingGroupsAndLearningRates
+  def nameTrainingGroupsAndSetLearningRatesForStep1OfTraining
     self.layersWithInputLinks = [outputLayer]
     self.adaptingLayers = [outputLayer]
     self.layersWhoseClustersNeedToBeSeeded = [outputLayer]

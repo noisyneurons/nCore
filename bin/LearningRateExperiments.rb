@@ -148,11 +148,12 @@ puts network
 trainingSequence = TrainingSequence.create(network, args)
 theTrainer = SimpleAdjustableLearningRateTrainer.new(trainingSequence, network, args)
 
-arrayOfNeuronsForIOPlots = nil
-lastEpoch, lastTrainingMSE, dispersions = theTrainer.simpleLearningWithFlocking(examples, arrayOfNeuronsForIOPlots)
+arrayOfNeuronsToPlot = nil
+lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors = theTrainer.simpleLearningWithFlocking(examples)
+theTrainer.displayTrainingResults(arrayOfNeuronsToPlot)
 
 lastTestingMSE = nil
-theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, dispersions)
+theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, accumulatedAbsoluteFlockingErrors)
 
 
 puts "############ Include Example Numbers #############"
@@ -186,7 +187,7 @@ end
 
 puts "####################################"
 
-displayAndPlotResults(args, dispersions, dataStoreManager, lastEpoch, lastTestingMSE,
+displayAndPlotResults(args, accumulatedAbsoluteFlockingErrors, dataStoreManager, lastEpoch, lastTestingMSE,
                       lastTrainingMSE, network, theTrainer, trainingSequence)
 
 SnapShotData.new(descriptionOfExperiment, network, Time.now, lastEpoch, lastTrainingMSE, lastTestingMSE)
