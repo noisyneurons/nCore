@@ -8,13 +8,15 @@ require_relative '../lib/core/DataSet'
 require_relative '../lib/core/NeuralParts'
 require_relative '../lib/core/NeuralPartsExtended'
 
-# require_relative '../lib/core/ExampleImportanceMods'
+# require_relative '../lib/core/ExampleImportanceMods'    # TODO where should this go?
 
 require_relative '../lib/core/NetworkFactories'
 
 require_relative '../lib/plot/CorePlottingCode'
 require_relative '../lib/core/SimulationDataStore'
 require_relative '../lib/core/Trainers.rb'
+
+# require_relative '../lib/core/ExampleImportanceMods'    # TODO where should this go?
 
 require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 

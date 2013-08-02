@@ -165,8 +165,6 @@ module FlockingDecisionRoutines
   def tooEarlyToFlock?
     trainingSequence.epochs < 200
   end
-
-
 end
 
 class AbstractTrainer
@@ -287,8 +285,13 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
         accumulatedAbsoluteFlockingErrors = performLocalFlocking()
     end
 
-    mse = logNetworksResponses(adaptingNeurons)  # TODO have separate routines for (1) determining network's mse and (2) logging Network Responses
+    mse = logNetworksResponses(adaptingNeurons) # TODO have separate routines for (1) determining network's mse and (2) logging Network Responses
     return mse, accumulatedAbsoluteFlockingErrors
+  end
+
+  def performStandardBackPropTraining
+    accumulateOutputErrorDeltaWs
+    adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
   end
 
   def performLocalFlocking
@@ -297,19 +300,14 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     accumulatedAbsoluteFlockingErrors
   end
 
-  def performStandardBackPropTraining
-    accumulateOutputErrorDeltaWs
-    adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-  end
-
-  def useFuzzyClusters?
-    exampleWeightings = adaptingNeurons.first.clusters[0].membershipWeightForEachExample
+  def useFuzzyClusters? # TODO Would this be better put 'into each neuron'
+    exampleWeightings = adaptingNeurons.first.clusters[0].membershipWeightForEachExample # TODO Why is only the first neuron used for this determination?
     criteria0 = 0.2
     criteria1 = 1.0 - criteria0
     count = 0
     exampleWeightings.each { |aWeight| count += 1 if (aWeight <= criteria0) }
     exampleWeightings.each { |aWeight| count += 1 if (aWeight > criteria1) }
-    # puts "count=\t #{count}"
+                                                                                         # puts "count=\t #{count}"
     return true if (count < numberOfExamples)
     return false
   end
@@ -334,17 +332,6 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     acrossExamplesAccumulateDeltaWs { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForOutputError }
   end
 
-  def accumulateFlockingErrorDeltaWs
-    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate] }
-    adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
-    acrossExamplesAccumulateDeltaWs do |aNeuron, dataRecord|
-      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
-      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
-      aNeuron.calcAccumDeltaWsForLocalFlocking
-    end
-    adaptingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
-  end
-
   def acrossExamplesAccumulateDeltaWs
     neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
     neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
@@ -357,6 +344,17 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
         yield(aNeuron, dataRecord, exampleNumber)
       end
     end
+  end
+
+  def accumulateFlockingErrorDeltaWs
+    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate] }
+    adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
+    acrossExamplesAccumulateDeltaWs do |aNeuron, dataRecord|
+      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
+      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
+      aNeuron.calcAccumDeltaWsForLocalFlocking
+    end
+    adaptingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
   end
 
 ########### naming, grouping, specifying learning rates, and displaying data ####################
@@ -697,35 +695,8 @@ class TunedTrainerAnalogy4ClassNoBPofFlockError < AbstractTrainer
   end
 end
 
-######################################################################
+###########....
 
-### Currently unused...
-class WeightChangeNormalizer
-  attr_accessor :layer, :weightChangeSetPoint
-
-  def initialize(layer, args, weightChangeSetPoint = 0.08)
-    @layer = layer
-    @weightChangeSetPoint = weightChangeSetPoint
-  end
-
-  def normalizeWeightChanges
-    layerGain = weightChangeSetPoint / maxWeightChange
-    layer.each { |neuron| neuron.inputLinks.each { |aLink| aLink.deltaWAccumulated = layerGain * aLink.deltaWAccumulated } }
-  end
-
-  private
-
-  def maxWeightChange
-    acrossLayerMaxValues = layer.collect do |aNeuron|
-      accumulatedDeltaWsAbs = aNeuron.inputLinks.collect { |aLink| aLink.deltaWAccumulated.abs }
-      accumulatedDeltaWsAbs.max
-    end
-    return acrossLayerMaxValues.max
-  end
-end
-
-
-### Currently very complex for its current use cases
 class TrainingSequence
   attr_accessor :network, :args, :epochs, :epochsInPhase1, :epochsInPhase2, :numberOfEpochsInCycle,
                 :maxNumberOfEpochs, :epochsSinceBeginningOfCycle, :status,
@@ -751,12 +722,6 @@ class TrainingSequence
     @network = network
     @args = args
     @dataStoreManager = SimulationDataStoreManager.instance
-    @tagDataSet = dataStoreManager.tagDataSet
-    @epochDataSet = dataStoreManager.epochDataSet
-
-    @epochsInPhase1 = args[:phase1Epochs]
-    @epochsInPhase2 = args[:phase2Epochs]
-    @numberOfEpochsInCycle = epochsInPhase1 + epochsInPhase2
     @maxNumberOfEpochs = args[:maxNumEpochs]
     @numberOfEpochsBetweenStoringDBRecords = @args[:numberOfEpochsBetweenStoringDBRecords]
 
@@ -766,53 +731,21 @@ class TrainingSequence
     @afterFirstEpoch = false
     @stillMoreEpochs = true
     @lastEpoch = false
-    @status = :inPhase1
     nextEpoch
   end
 
-  def startAtBeginningOfCycle
-    @epochsSinceBeginningOfCycle = -1
-    @status = :inPhase1
-  end
-
-  def dPrimesAreLargeEnough
-    startAtBeginningOfCycle
-  end
-
   def nextEpoch
-    storeSequenceTagData
-
     self.epochs += 1
     self.atStartOfTraining = false if (epochs > 0)
     self.afterFirstEpoch = true unless (atStartOfTraining)
 
     self.epochsSinceBeginningOfCycle += 1
-    self.epochsSinceBeginningOfCycle = 0 if (epochsSinceBeginningOfCycle == numberOfEpochsInCycle)
-
-    self.atStartOfCycle = false
-    self.atStartOfPhase1 = false
-    if (epochsSinceBeginningOfCycle == 0)
-      self.atStartOfCycle = true
-      self.atStartOfPhase1 = true if (epochsInPhase1 > 0)
-    end
-
-    self.inPhase1 = false
-    self.inPhase1 = true if (epochsSinceBeginningOfCycle < epochsInPhase1)
-
-    self.atStartOfPhase2 = false
-    self.atStartOfPhase2 = true if ((epochsSinceBeginningOfCycle == epochsInPhase1) && (epochsInPhase2 > 0))
-
-    self.inPhase2 = false
-    self.inPhase2 = true if (epochsSinceBeginningOfCycle >= epochsInPhase1)
 
     self.lastEpoch = false
     self.lastEpoch = true if (epochs == (maxNumberOfEpochs - 1))
 
     self.stillMoreEpochs = true
     self.stillMoreEpochs = false if (epochs >= maxNumberOfEpochs)
-
-    self.status = :inPhase1 if (inPhase1 == true)
-    self.status = :inPhase2 if (inPhase2 == true)
 
     dataStoreManager.epochNumber = epochs
   end
@@ -823,39 +756,31 @@ class TrainingSequence
     record = true if ((epochs % numberOfEpochsBetweenStoringDBRecords) == 0)
     record = true if lastEpoch
     return record
+    end
+end
+
+### Currently unused...
+class WeightChangeNormalizer
+  attr_accessor :layer, :weightChangeSetPoint
+
+  def initialize(layer, args, weightChangeSetPoint = 0.08)
+    @layer = layer
+    @weightChangeSetPoint = weightChangeSetPoint
   end
 
-  def nextStep
-    self.maxNumberOfEpochs = epochs + args[:maxNumEpochs]
-    self.epochsSinceBeginningOfCycle = -1
-    self.atStartOfTraining = true
-    self.afterFirstEpoch = false
-    self.stillMoreEpochs = true
-    self.lastEpoch = false
-    self.status = :inPhase1
-    nextEpoch
-    self.atStartOfTraining = true # TODO this is a fudge...
-    self.afterFirstEpoch = true unless (atStartOfTraining)
+  def normalizeWeightChanges
+    layerGain = weightChangeSetPoint / maxWeightChange
+    layer.each { |neuron| neuron.inputLinks.each { |aLink| aLink.deltaWAccumulated = layerGain * aLink.deltaWAccumulated } }
   end
 
   private
 
-  def storeSequenceTagData
-    if (timeToRecordData)
-      epochsSinceBeginningOfPhase = nil
-      if (inPhase1)
-        learningPhase = 'phase1'
-        epochsSinceBeginningOfPhase = epochsSinceBeginningOfCycle
-      else
-        learningPhase = 'phase2'
-        epochsSinceBeginningOfPhase = epochsSinceBeginningOfCycle - epochsInPhase1
-      end
-      dataToStore = {:epochNumber => epochs, :experimentNumber => dataStoreManager.theNumberOfTheCurrentExperiment,
-                     :mse => network.mse, :learningPhase => learningPhase,
-                     :epochsSinceBeginningOfPhase => epochsSinceBeginningOfPhase,
-                     :epochsSinceBeginningOfCycle => epochsSinceBeginningOfCycle}
-      tagDataSet.insert(dataToStore)
+  def maxWeightChange
+    acrossLayerMaxValues = layer.collect do |aNeuron|
+      accumulatedDeltaWsAbs = aNeuron.inputLinks.collect { |aLink| aLink.deltaWAccumulated.abs }
+      accumulatedDeltaWsAbs.max
     end
+    return acrossLayerMaxValues.max
   end
 end
 

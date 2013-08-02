@@ -60,6 +60,57 @@ class SnapShotData
   end
 end
 
+
+class DataStore
+  include Relix
+  attr_accessor :id, :experimentNumber, :nameOfDataCollection
+
+  relix do
+    primary_key :flockDataKey
+    multi :experimentNumber_epochs_neuron, on: %w(experimentNumber epochs neuron)
+    multi :experimentNumber, index_values: true
+  end
+
+  @@ID = 0
+
+  def FlockData.deleteTable
+    ary = $redis.keys("FD*")
+    ary.each { |item| $redis.del(item) }
+    ary = $redis.keys("FlockData*")
+    ary.each { |item| $redis.del(item) }
+  end
+
+  def initialize(epochs, neuron, exampleNumber, netInputs=1, flockErrors=1)
+    @id = @@ID
+    @@ID += 1
+    @experimentNumber = Experiment.number
+    @epochs = epochs
+    @neuron = neuron
+    @netInputs = netInputs
+    @flockErrors = flockErrors
+    @exampleNumber = exampleNumber
+
+    aHash = {:experimentNumber => experimentNumber, :epochs => epochs, :neuron => neuron,
+             :exampleNumber => exampleNumber, :netInputs => netInputs, :flockErrors => flockErrors}
+
+    $redis.set(flockDataKey, aHash)
+
+    index!
+  end
+
+  def flockDataKey
+    "FD#{experimentNumber}.#{id}"
+  end
+
+  def FlockData.values(key)
+    redisKey = key
+    $redis.get(redisKey)
+  end
+end
+
+
+
+
 class FlockData
   include Relix
   attr_accessor :id, :experimentNumber, :epochs, :neuron, :exampleNumber, :netInputs, :flockErrors
