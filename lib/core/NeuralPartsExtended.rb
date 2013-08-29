@@ -161,8 +161,8 @@ class FlockingOutputNeuron < OutputNeuron
     @keyToExampleData = :targets
     @exampleNumber = nil
     @metricRecorder= FlockingOutputNeuronRecorder.new(self, args)
-    typeOfClusterer = args[:typeOfClusterer]
     @maxNumberOfClusteringIterations = args[:maxNumberOfClusteringIterations]
+    typeOfClusterer = args[:typeOfClusterer]
     @clusterer = typeOfClusterer.new(args)
     @dPrime = 0.0
     @trainingSequence = TrainingSequence.instance
@@ -231,9 +231,10 @@ class NeuronRecorder
     @withinEpochMeasures = []
   end
 
-  def recordResponsesForExampleToDB(exampleDataToRecord)
-    exampleDataSet.insert(exampleDataToRecord) if (trainingSequence.timeToRecordData)
+  def recordResponsesForExampleToDB(neuronDataToRecord)
+    NeuronData.new(neuronDataToRecord) if (trainingSequence.timeToRecordData)
   end
+
 end
 
 class FlockingNeuronRecorder < NeuronRecorder # TODO Need to separate into 2 classes the two concerns currently handled by this class: reporting vs. getting info for 'clusterAllResponses'
@@ -244,8 +245,6 @@ class FlockingNeuronRecorder < NeuronRecorder # TODO Need to separate into 2 cla
     @args = args
     @trainingSequence = TrainingSequence.instance
     @dataStoreManager = SimulationDataStoreManager.instance
-    @exampleDataSet = dataStoreManager.exampleDataSet
-    @epochDataSet = dataStoreManager.epochDataSet
     @withinEpochMeasures = []
     @exampleVectorLength = args[:exampleVectorLength]
   end
@@ -271,9 +270,19 @@ class FlockingNeuronRecorder < NeuronRecorder # TODO Need to separate into 2 cla
                             :wt1 => neuron.inputLinks[0].weight, :wt2 => neuron.inputLinks[1].weight,
                             :cluster0Center => @cluster0Center, :cluster1Center => @cluster1Center,
                             :dPrime => neuron.dPrime})
-      # epochDataSet.insert(epochDataToRecord)
+      quickReportOfExampleWeightings(epochDataToRecord)
+      NeuronData.new(epochDataToRecord)
     end
   end
+
+  def quickReportOfExampleWeightings(epochDataToRecord)
+    neuron.clusters.each_with_index do |cluster, numberOfCluster|
+      cluster.membershipWeightForEachExample.each { |exampleWeight| puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
+      puts
+      puts "NumExamples=\t#{cluster.numExamples}\tNum Membership Weights=\t#{cluster.membershipWeightForEachExample.length}"
+    end
+  end
+
 
   def determineCentersOfClusters
     cluster0 = neuron.clusters[0]

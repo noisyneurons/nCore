@@ -20,29 +20,6 @@ require_relative '../lib/core/Trainers.rb'
 
 require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 
-################################ Mods for reporting
-class FlockingNeuronRecorder ##  TODO temporary
-  def recordResponsesForEpoch
-    if (trainingSequence.timeToRecordData)
-      determineCentersOfClusters()
-      epochDataToRecord = ({:epochNumber => dataStoreManager.epochNumber, :neuronID => neuron.id,
-                            :wt1 => neuron.inputLinks[0].weight, :wt2 => neuron.inputLinks[1].weight,
-                            :cluster0Center => @cluster0Center, :cluster1Center => @cluster1Center,
-                            :dPrime => neuron.dPrime})
-      quickReportOfExampleWeightings(epochDataToRecord)
-      # epochDataSet.insert(epochDataToRecord)
-    end
-  end
-
-  def quickReportOfExampleWeightings(epochDataToRecord)
-    neuron.clusters.each_with_index do |cluster, numberOfCluster|
-      cluster.membershipWeightForEachExample.each { |exampleWeight| puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
-      puts
-      puts "NumExamples=\t#{cluster.numExamples}\tNum Membership Weights=\t#{cluster.membershipWeightForEachExample.length}"
-    end
-  end
-end
-####################### Mods for reporting
 
 def createTrainingSet(args)
   include ExampleDistribution
@@ -55,7 +32,7 @@ def createTrainingSet(args)
   examples << {:inputs => [-1.0, -2.0], :targets => [0.0], :exampleNumber => 5, :class => 0}
   examples << {:inputs => [-1.0, -3.0], :targets => [0.0], :exampleNumber => 6, :class => 0}
   examples << {:inputs => [-1.0, -4.0], :targets => [0.0], :exampleNumber => 7, :class => 0}
-  STDERR.puts "****************Incorrect Number of Examples Specified!! ************************" if(args[:numberOfExamples] != examples.length)
+  STDERR.puts "****************Incorrect Number of Examples Specified!! ************************" if (args[:numberOfExamples] != examples.length)
   examples
 end
 
@@ -70,9 +47,6 @@ def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
 
 #############################  plotting and visualization....
   plotMSEvsEpochNumber(network)
-
-  dataSetFromJoin = dataStoreManager.joinDataSets # joinForShoesDisplay
-  dataStoreManager.transferDataSetToVisualizer(dataSetFromJoin, args)
 end
 
 
@@ -140,7 +114,7 @@ examples = createTrainingSet(args)
 
 ######################## Specify data store and experiment description....
 databaseFilename = "acrossEpochsSequel" #  = ""
-dataStoreManager = SimulationDataStoreManager.create(databaseFilename, examples, args)
+dataStoreManager = SimulationDataStoreManager.create
 
 ######################## Create Network....
 network = SimpleFlockingNeuronNetwork.new(dataStoreManager, args)
@@ -155,7 +129,7 @@ lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors = theTrainer.simpl
 theTrainer.displayTrainingResults(arrayOfNeuronsToPlot)
 
 lastTestingMSE = nil
-theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, accumulatedAbsoluteFlockingErrors)
+# theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, accumulatedAbsoluteFlockingErrors)
 
 
 puts "############ Include Example Numbers #############"
