@@ -1,6 +1,15 @@
 require_relative '../lib/core/SimulationDataStore'
 
+#require 'redis'
+
+# Notes: PutLoveInYourHeart (:host => "192.168.1.128", :port => 8765)
+# Notes: MakeASadSongMuchBetter (:host => "192.168.1.127", :port => 8765) Wired
+# Notes: MakeASadSongMuchBetter (:host => "192.168.1.131", :port => 8765) Wireless
+
 redis = Redis.new # (:host => "192.168.1.131", :port => 8765)
+
+dataStore = SimulationDataStoreManager.create
+dataStore.deleteTemporaryTables
 
 experimentNumber =  redis.get("experimentNumber")
 puts "\nNext Experiment Number=\t #{experimentNumber}"
@@ -19,4 +28,4 @@ unless (selectedData.empty?)
 end
 
 arrayOfKeys = redis.keys("*")
-puts "Number of Keys in Redis database: #{arrayOfKeys.length}"
+puts "Remaining Keys in Redis database after selective deletion: #{arrayOfKeys}"

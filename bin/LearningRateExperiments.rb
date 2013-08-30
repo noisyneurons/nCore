@@ -167,10 +167,8 @@ displayAndPlotResults(args, accumulatedAbsoluteFlockingErrors, dataStoreManager,
                       lastTrainingMSE, network, theTrainer, trainingSequence)
 
 SnapShotData.new(descriptionOfExperiment, network, Time.now, lastEpoch, lastTrainingMSE, lastTestingMSE)
-
-
+                                                    Experiment.number
 selectedData = SnapShotData.lookup { |q| q[:experimentNumber_epochs].eq({experimentNumber: Experiment.number, epochs: lastEpoch}) }
-
 
 selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
 unless (selectedData.empty?)
@@ -182,5 +180,5 @@ unless (selectedData.empty?)
   end
 end
 
-FlockData.deleteTable
+FlockData.deleteTables
 experiment.save

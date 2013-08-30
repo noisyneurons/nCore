@@ -23,7 +23,7 @@ class SnapShotData
     YAML.load($redis.get(key))
   end
 
-  def SnapShotData.deleteTable
+  def SnapShotData.deleteTables
     ary = $redis.keys("SSD*")
     ary.each { |item| $redis.del(item) }
     ary = $redis.keys("SnapShotData*")
@@ -77,7 +77,7 @@ class FlockData
     $redis.get(redisKey)
   end
 
-  def FlockData.deleteTable
+  def FlockData.deleteTables
     ary = $redis.keys("FD*")
     ary.each { |item| $redis.del(item) }
     ary = $redis.keys("FlockData*")
@@ -124,7 +124,7 @@ class NeuronData
     $redis.get(key)
   end
 
-  def NeuronData.deleteTable
+  def NeuronData.deleteTables
     ary = $redis.keys("ND*")
     ary.each { |item| $redis.del(item) }
     ary = $redis.keys("NeuronData*")
@@ -168,6 +168,11 @@ class SimulationDataStoreManager
     STDERR.puts "ERROR:  SimulationDataStoreManager.new called MORE THAN ONE TIME!!!!!" unless (@@dataStoreManager.nil?)
     @epochNumber = nil
     @@dataStoreManager = self
+  end
+
+  def deleteTemporaryTables
+    FlockData.deleteTables
+    NeuronData.deleteTables
   end
 end
 
