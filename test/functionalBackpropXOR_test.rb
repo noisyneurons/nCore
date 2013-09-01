@@ -37,7 +37,7 @@ class FunctionalBackpropXORTest < MiniTest::Unit::TestCase
              :numberOfExamples => @numberOfExamples
     }
 
-    @aLearningNetwork = LearningNetwork.new(nil, @args)
+    @aLearningNetwork = BaseNetwork.new(nil, @args)
     @allNeuronLayers = @aLearningNetwork.createSimpleLearningANN
   end
 

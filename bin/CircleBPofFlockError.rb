@@ -90,7 +90,6 @@ def setParameters(descriptionOfExperiment)
       :maxNumEpochs => 1e6, # 1e5,
 
       # Network Architecture and initial weights
-
       :numberOfInputNeurons => 2,
       :numberOfHiddenNeurons => 10, # 20,
       :numberOfOutputNeurons => 1,

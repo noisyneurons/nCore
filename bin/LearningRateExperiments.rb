@@ -33,7 +33,7 @@ def createTrainingSet(args)
   examples << {:inputs => [-1.0, -3.0], :targets => [0.0], :exampleNumber => 6, :class => 0}
   examples << {:inputs => [-1.0, -4.0], :targets => [0.0], :exampleNumber => 7, :class => 0}
   STDERR.puts "****************Incorrect Number of Examples Specified!! ************************" if (args[:numberOfExamples] != examples.length)
-  examples
+  return examples
 end
 
 def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
@@ -49,9 +49,7 @@ def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
   plotMSEvsEpochNumber(network)
 end
 
-
 class Experiment
-
   def setParameters
 
     numberOfExamples = 8
@@ -113,7 +111,6 @@ args = experiment.setParameters
 examples = createTrainingSet(args)
 
 ######################## Specify data store and experiment description....
-databaseFilename = "acrossEpochsSequel" #  = ""
 dataStoreManager = SimulationDataStoreManager.create
 
 ######################## Create Network....
@@ -131,25 +128,7 @@ theTrainer.displayTrainingResults(arrayOfNeuronsToPlot)
 lastTestingMSE = nil
 # theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, accumulatedAbsoluteFlockingErrors)
 
-
 puts "############ Include Example Numbers #############"
-
-
-#aryOfExperimentNumbers = FlockData.lookup_values(:experimentNumber)
-#lastExperiment = (aryOfExperimentNumbers.sort[-1])
-#puts aryOfExperimentNumbers
-#puts "lastExperiment=\t#{lastExperiment}"
-#aryOfExampleNumbers = FlockData.lookup_values(:exampleNumber)
-#p aryOfExampleNumbers
-
-#FlockData.lookup_values(:epochs).each do |aNumberOfEpochs|
-#  aryOfExampleNumbers.each do |exampleNumber|
-#    someData = FlockData.lookup { |q| q[:experimentNumber_epoch_neuron_exampleNumber].eq({experimentNumber: lastExperiment, epochs: aNumberOfEpochs,
-#                                                                                          neuron: 2, exampleNumber: exampleNumber}) }
-#
-#    someData.each { |item| puts item }
-#  end
-#end
 
 
 4000.times do |epochNumber|
@@ -182,3 +161,4 @@ end
 
 FlockData.deleteTables
 experiment.save
+

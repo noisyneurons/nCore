@@ -76,7 +76,7 @@ module NeuronToNeuronConnection
 end
 
 ############################################################      N
-class LearningNetwork
+class BaseNetwork
   attr_accessor :dataStoreManager, :args, :allNeuronLayers, :theBiasNeuron, :mse,
                 :allNeuronsInOneArray, :inputLayer, :hiddenLayer, :outputLayer,
                 :hiddenLayer1, :hiddenLayer2, :hiddenLayer3, :allHiddenLayers,
@@ -132,21 +132,6 @@ class LearningNetwork
 
   include NeuronToNeuronConnection
 
-  #def createAllLayersOfNeurons
-  #  self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
-  #  self.allNeuronLayers << inputLayer
-  #
-  #  numberOfHiddenNeurons = args[:numberOfHiddenNeurons]
-  #  if (numberOfHiddenNeurons > 0)
-  #    self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron= Neuron, numberOfHiddenNeurons)
-  #    self.allNeuronLayers << hiddenLayer1
-  #  end
-  #
-  #  self.outputLayer = createAndConnectLayer(hiddenLayer1, typeOfNeuron = OutputNeuron, args[:numberOfOutputNeurons])
-  #  self.allNeuronLayers << outputLayer
-  #  return allNeuronLayers
-  #end
-
   def createAndConnectLayer(inputToLayer, typeOfNeuronInLayer, numberOfNeurons)
     layer = createArrayOfNeurons(typeOfNeuronInLayer, numberOfNeurons, args)
     connect_layer_to_another(inputToLayer, layer, args) unless (inputToLayer.nil?) # input neurons do not receive any inputs from other neurons
@@ -162,7 +147,8 @@ class LearningNetwork
   end
 end # Base network
 
-class SimpleFlockingNeuronNetwork < LearningNetwork
+
+class SimpleFlockingNeuronNetwork < BaseNetwork
 
   def createAllLayersOfNeurons
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
@@ -177,10 +163,31 @@ class SimpleFlockingNeuronNetwork < LearningNetwork
 
     return allNeuronLayers
   end
+end
 
-end # Used for main: "SimplestFlockingDemo2.rb"
 
-class XORNeuronNetwork < LearningNetwork
+class CircleFlockingNeuronNetwork < BaseNetwork
+
+  def createAllLayersOfNeurons
+    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
+    self.allNeuronLayers << inputLayer
+
+    self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron= FlockingNeuron, args[:hiddenLayer1NumberOfNeurons])
+    self.allNeuronLayers << hiddenLayer1
+
+    self.outputLayer = createAndConnectLayer(hiddenLayer1, typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
+    self.allNeuronLayers << outputLayer
+
+    self.allNeuronsInOneArray = allNeuronLayers.flatten
+    self.neuronsWithInputLinks = hiddenLayer1 + outputLayer
+    self.neuronsWithInputLinksInReverseOrder = neuronsWithInputLinks.reverse
+
+    return allNeuronLayers
+  end
+end
+
+
+class XORNeuronNetwork < BaseNetwork
 
   def createAllLayersOfNeurons
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
@@ -202,8 +209,7 @@ class XORNeuronNetwork < LearningNetwork
 end # Used for main: "xorExperiments.rb"
 
 
-
-class AnalogyNetwork < LearningNetwork
+class AnalogyNetwork < BaseNetwork
 
   def createAllLayersOfNeurons
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
@@ -237,6 +243,7 @@ class AnalogyNetwork < LearningNetwork
 
 end # Used for main: "Analogy4Class.rb"
 
+
 class AnalogyNetworkNoJumpLinks < AnalogyNetwork
   def createAllLayersOfNeurons
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
@@ -256,6 +263,7 @@ class AnalogyNetworkNoJumpLinks < AnalogyNetwork
     return allNeuronLayers
   end
 end # Used for a variation of main: "Analogy4Class.rb"
+
 
 ############################################################      N
 class NetworkRecorder

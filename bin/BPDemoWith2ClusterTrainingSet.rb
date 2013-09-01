@@ -32,7 +32,7 @@ args = {:learningRate => 0.3, #1.0,
         :numberOfExamples => numberOfExamples
 }
 
-aLearningNetwork = LearningNetwork.new(args)
+aLearningNetwork = BaseNetwork.new(args)
 allNeuronLayers = aLearningNetwork.createSimpleLearningANN
 
 puts "Bias Neuron output= #{aLearningNetwork.theBiasNeuron.output}"

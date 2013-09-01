@@ -129,8 +129,9 @@ module RecordingAndPlottingRoutines
   end
 end
 
-module FlockingDecisionRoutines
-  def shouldFlockingOccur?(accumulatedAbsoluteFlockingErrors)
+module FlockingDecisionRoutines # TODO If one neuron does NOT meet criteria, all flocking neurons to continue to flock. Why not just those neurons that have not met the criteria.
+
+  def flockingShouldOccur?(accumulatedAbsoluteFlockingErrors)
     return doNotFlock() if (tooEarlyToFlock?)
     displayFlockingErrorAndDeltaWInformation(accumulatedAbsoluteFlockingErrors)
     if (doWeNeedToFlockNOW?(accumulatedAbsoluteFlockingErrors))
@@ -165,6 +166,7 @@ module FlockingDecisionRoutines
   def tooEarlyToFlock?
     trainingSequence.epochs < 200
   end
+
 end
 
 class AbstractTrainer
@@ -257,36 +259,35 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   end
 
   def stepLearning(examples)
-    accumulatedAbsoluteFlockingErrors = nil
+    flockingShouldOccur = false
 
     distributeSetOfExamples(examples)
     seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO  Except for the 'first' step, is this always needed?
     adaptingNeurons.each { |aNeuron| aNeuron.inputLinks.each { |aLink| aLink.store = 0.0 } }
 
-    flockNOW = false
     mse = Float::MAX
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
-      mse, accumulatedAbsoluteFlockingErrors = oneEpochOfAdaptingNetworkWeights(flockNOW)
-      flockNOW = shouldFlockingOccur?(accumulatedAbsoluteFlockingErrors)
+      unless (flockingShouldOccur)
+        accumulatedAbsoluteFlockingErrors = adaptToBackPropError
+      else
+        accumulatedAbsoluteFlockingErrors = adaptToLocalFlockError
+      end
+      flockingShouldOccur = flockingShouldOccur?(accumulatedAbsoluteFlockingErrors)
+      mse = logNetworksResponses(adaptingNeurons) # TODO have separate routines for (1) determining network's mse and (2) logging Network Responses
       trainingSequence.nextEpoch
     end
     return mse, accumulatedAbsoluteFlockingErrors
   end
 
-  def oneEpochOfAdaptingNetworkWeights(flockNOW)
+  def adaptToLocalFlockError
     accumulatedAbsoluteFlockingErrors = nil
+    accumulatedAbsoluteFlockingErrors = performLocalFlocking()
+  end
 
-    case flockNOW
-      when false
-        performStandardBackPropTraining()
-        recenterEachNeuronsClusters(adaptingNeurons) # necessary for later determining if clusters are still "tight-enough!"
-        accumulatedAbsoluteFlockingErrors = []
-      when true
-        accumulatedAbsoluteFlockingErrors = performLocalFlocking()
-    end
-
-    mse = logNetworksResponses(adaptingNeurons) # TODO have separate routines for (1) determining network's mse and (2) logging Network Responses
-    return mse, accumulatedAbsoluteFlockingErrors
+  def adaptToBackPropError
+    performStandardBackPropTraining()
+    recenterEachNeuronsClusters(adaptingNeurons) # necessary for later determining if clusters are still "tight-enough!"
+    accumulatedAbsoluteFlockingErrors = []
   end
 
   def performStandardBackPropTraining
@@ -388,6 +389,23 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   end
 
 end
+
+
+class NewCircleTrainer < SimpleAdjustableLearningRateTrainer
+
+  def postInitialize
+    super
+    @hiddenLayer1 = network.hiddenLayer1
+  end
+
+  def nameTrainingGroupsAndSetLearningRatesForStep1OfTraining
+    self.layersWithInputLinks = [hiddenLayer1 + outputLayer]
+    self.adaptingLayers = [hiddenLayer1 + outputLayer]
+    self.layersWhoseClustersNeedToBeSeeded = [hiddenLayer1 + outputLayer]
+    setUniversalNeuronGroupNames
+  end
+end
+
 
 class XORTrainer < SimpleAdjustableLearningRateTrainer
 
@@ -756,7 +774,7 @@ class TrainingSequence
     record = true if ((epochs % numberOfEpochsBetweenStoringDBRecords) == 0)
     record = true if lastEpoch
     return record
-    end
+  end
 end
 
 ### Currently unused...

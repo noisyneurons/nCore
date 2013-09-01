@@ -228,7 +228,7 @@ class TestLearningNetwork1 < MiniTest::Unit::TestCase
   def setup
     srand(0)
     @args = {}
-    @aLearningNetwork = LearningNetwork.new(nil, @args)
+    @aLearningNetwork = BaseNetwork.new(nil, @args)
     a = nil
     @arrayOfNeurons = [Neuron.new(a), Neuron.new(a)]
     @aSecondArrayOfNeurons = [Neuron.new(a), Neuron.new(a), Neuron.new(a)]
@@ -331,7 +331,7 @@ class TestLearningNetwork2 < MiniTest::Unit::TestCase
              :numberOfOutputNeurons => 1,
              :numberOfExamples => 4
     }
-    @aLearningNetwork = LearningNetwork.new(nil, @args)
+    @aLearningNetwork = BaseNetwork.new(nil, @args)
     @allNeuronLayers = @aLearningNetwork.createSimpleLearningANN
   end
 

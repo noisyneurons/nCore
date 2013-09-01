@@ -23,8 +23,8 @@ class FunctionNetworkFactoriesTest < MiniTest::Unit::TestCase
              :numberOfHiddenNeurons => 3,
              :numberOfOutputNeurons => 1
     }
-    @aLearningNetwork = LearningNetwork.new(nil, @args)
-    @aCreatedLearningNetwork = LearningNetwork.new(nil, @args)
+    @aLearningNetwork = BaseNetwork.new(nil, @args)
+    @aCreatedLearningNetwork = BaseNetwork.new(nil, @args)
 
     @allNeuronLayers = @aCreatedLearningNetwork.createSimpleLearningANN
   end
@@ -91,7 +91,7 @@ class FunctionNetworkFactoriesTest2 < MiniTest::Unit::TestCase
              :numberOfOutputNeurons => 1
     }
 
-    @aCreatedLearningNetwork = LearningNetwork.new(nil, @args)
+    @aCreatedLearningNetwork = BaseNetwork.new(nil, @args)
 
     @allNeuronLayers = @aCreatedLearningNetwork.createSimpleLearningANN
     @inputNeuron0 = @allNeuronLayers[0][0]
@@ -168,7 +168,7 @@ class FunctionNetworkFactoriesTest3 < MiniTest::Unit::TestCase
              :numberOfExamples => numberOfExamples
     }
 
-    @aCreatedLearningNetwork = LearningNetwork.new(nil, @args)
+    @aCreatedLearningNetwork = BaseNetwork.new(nil, @args)
     @allNeuronLayers = @aCreatedLearningNetwork.createSimpleLearningANN
     distributeDataToInputAndOutputNeurons(examples, [@allNeuronLayers.first, @allNeuronLayers.last])
 
