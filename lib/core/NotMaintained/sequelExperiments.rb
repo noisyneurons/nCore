@@ -1,5 +1,5 @@
 require 'rubygems'
-require 'sequel'
+# require 'sequel'
 require 'singleton'
 
 

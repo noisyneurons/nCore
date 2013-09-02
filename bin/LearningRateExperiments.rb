@@ -101,7 +101,7 @@ class Experiment
   end
 end
 
-###################################### Start of Main ##########################################
+###################################### START of Main Learning  ##########################################
 srand(0)
 descriptionOfExperiment = "SimpleAdjustableLearningRateTrainerMultiFlockIterations Reference Run NUMBER 2"
 experiment = Experiment.new(descriptionOfExperiment)
@@ -128,9 +128,10 @@ theTrainer.displayTrainingResults(arrayOfNeuronsToPlot)
 lastTestingMSE = nil
 # theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, accumulatedAbsoluteFlockingErrors)
 
+###################################### END of Main Learning ##########################################
+
+
 puts "############ Include Example Numbers #############"
-
-
 4000.times do |epochNumber|
   selectedData = FlockData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber,
                                                                                neuron: 2}) }
@@ -139,7 +140,6 @@ puts "############ Include Example Numbers #############"
   selectedData.each { |itemKey| puts FlockData.values(itemKey) } unless (selectedData.empty?)
 
 end
-
 puts "####################################"
 
 displayAndPlotResults(args, accumulatedAbsoluteFlockingErrors, dataStoreManager, lastEpoch, lastTestingMSE,

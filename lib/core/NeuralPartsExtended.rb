@@ -181,7 +181,6 @@ class FlockingLink < Link
   attr_accessor :previousDeltaWAccumulated, :store
 
   def calcAccumDeltaWsForOutputError(higherLayerError)
-    self.store = 0.0
     self.deltaW = learningRate * higherLayerError * inputNeuron.output
     self.deltaWAccumulated += deltaW
   end

@@ -258,17 +258,19 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     return trainingSequence.epochs, mse, accumulatedAbsoluteFlockingErrors
   end
 
-  def stepLearning(examples)
-    flockingShouldOccur = false
 
+  #### Main Learning Loop....
+
+  def stepLearning(examples)
     distributeSetOfExamples(examples)
-    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO  Except for the 'first' step, is this always needed?
-    adaptingNeurons.each { |aNeuron| aNeuron.inputLinks.each { |aLink| aLink.store = 0.0 } }
+    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)
 
     mse = Float::MAX
+    flockingShouldOccur = false
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
       unless (flockingShouldOccur)
-        accumulatedAbsoluteFlockingErrors = adaptToBackPropError
+        performStandardBackPropTraining()
+        accumulatedAbsoluteFlockingErrors = prepareForRepeatedFlockingIterations()
       else
         accumulatedAbsoluteFlockingErrors = adaptToLocalFlockError
       end
@@ -279,27 +281,113 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     return mse, accumulatedAbsoluteFlockingErrors
   end
 
-  def adaptToLocalFlockError
-    accumulatedAbsoluteFlockingErrors = nil
-    accumulatedAbsoluteFlockingErrors = performLocalFlocking()
+  def prepareForRepeatedFlockingIterations
+    recenterEachNeuronsClusters(adaptingNeurons) # necessary for later determining if clusters are still "tight-enough!"
+    adaptingNeurons.each { |aNeuron| aNeuron.inputLinks.each { |aLink| aLink.store = 0.0 } }
+    return accumulatedAbsoluteFlockingErrors = []
   end
 
-  def adaptToBackPropError
-    performStandardBackPropTraining()
-    recenterEachNeuronsClusters(adaptingNeurons) # necessary for later determining if clusters are still "tight-enough!"
-    accumulatedAbsoluteFlockingErrors = []
-  end
+#### Standard Backprop of Output Errors
 
   def performStandardBackPropTraining
-    accumulateOutputErrorDeltaWs
+    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
+    acrossExamplesAccumulateDeltaWs { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForOutputError }
     adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
   end
 
-  def performLocalFlocking
-    accumulatedAbsoluteFlockingErrors = accumulateFlockingErrorDeltaWs()
+#### Local Flocking
+
+
+  #if (accumulatedAbsoluteFlockingErrors.empty?)
+  #  true
+  #else
+  #  largestAbsoluteFlockingErrorPerExample = accumulatedAbsoluteFlockingErrors.max / numberOfExamples
+  #  needToReduceFlockingError = largestAbsoluteFlockingErrorPerExample > args[:maxAbsFlockingErrorsPerExample]
+  #  stillEnoughIterationsToFlock = flockingIterationsCount < maxFlockingIterationsCount
+  #  (needToReduceFlockingError && stillEnoughIterationsToFlock)
+  #
+
+    def adaptToLocalFlockError
+    neuronsThatNeedFlocking = adaptingNeurons.select{|aNeuron| ( (aNeuron.accumulatedAbsoluteFlockingError / numberOfExamples ) > args[:maxAbsFlockingErrorsPerExample]) }
+
+    neuronsThatNeedFlocking.each do |aNeuron|
+      aNeuron.learningRate = args[:flockingLearningRate]
+      aNeuron.accumulatedAbsoluteFlockingError = 0.0
+    end
+
+
+    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate]  }
+    adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
+    acrossExamplesAccumulateFlockingErrorDeltaWs()
     adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-    accumulatedAbsoluteFlockingErrors
+    return adaptingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
   end
+
+
+
+  def adaptToLocalFlockError
+    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate] }
+    adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
+    acrossExamplesAccumulateFlockingErrorDeltaWs()
+    adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+    return adaptingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
+  end
+
+  def acrossExamplesAccumulateFlockingErrorDeltaWs(neuronsToAdapt)
+    acrossExamplesAccumulateDeltaWs(neuronsToAdapt) do |aNeuron, dataRecord|
+      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
+      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
+      aNeuron.calcAccumDeltaWsForLocalFlocking
+    end
+  end
+
+
+
+
+  def acrossExamplesAccumulateFlockingErrorDeltaWs
+    acrossExamplesAccumulateDeltaWs do |aNeuron, dataRecord|
+      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
+      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
+      aNeuron.calcAccumDeltaWsForLocalFlocking
+    end
+  end
+
+
+
+
+#### Used for BOTH Standard Backprop and Local Flocking
+
+  def acrossExamplesAccumulateDeltaWs(neuronsToAdapt)
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
+    numberOfExamples.times do |exampleNumber|
+      allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+      neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
+      outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
+      neuronsToAdapt.each do |aNeuron|
+        dataRecord = aNeuron.recordResponsesForExample
+        yield(aNeuron, dataRecord, exampleNumber)
+      end
+    end
+  end
+
+
+  def acrossExamplesAccumulateDeltaWs # Original
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
+    numberOfExamples.times do |exampleNumber|
+      allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+      neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
+      outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
+      adaptingNeurons.each do |aNeuron|
+        dataRecord = aNeuron.recordResponsesForExample
+        yield(aNeuron, dataRecord, exampleNumber)
+      end
+    end
+  end
+
+
+  #### Refinements and specialized control functions:
 
   def useFuzzyClusters? # TODO Would this be better put 'into each neuron'
     exampleWeightings = adaptingNeurons.first.clusters[0].membershipWeightForEachExample # TODO Why is only the first neuron used for this determination?
@@ -328,37 +416,8 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     return fractionalChanges
   end
 
-  def accumulateOutputErrorDeltaWs
-    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
-    acrossExamplesAccumulateDeltaWs { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForOutputError }
-  end
 
-  def acrossExamplesAccumulateDeltaWs
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
-    numberOfExamples.times do |exampleNumber|
-      allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-      neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
-      outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
-      adaptingNeurons.each do |aNeuron|
-        dataRecord = aNeuron.recordResponsesForExample
-        yield(aNeuron, dataRecord, exampleNumber)
-      end
-    end
-  end
-
-  def accumulateFlockingErrorDeltaWs
-    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate] }
-    adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
-    acrossExamplesAccumulateDeltaWs do |aNeuron, dataRecord|
-      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
-      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
-      aNeuron.calcAccumDeltaWsForLocalFlocking
-    end
-    adaptingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
-  end
-
-########### naming, grouping, specifying learning rates, and displaying data ####################
+########### MISC:  naming, grouping, specifying learning rates, and displaying data ####################
 
   def nameTrainingGroupsAndSetLearningRatesForStep1OfTraining
     self.layersWithInputLinks = [outputLayer]
