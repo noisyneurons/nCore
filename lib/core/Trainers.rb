@@ -133,7 +133,7 @@ module FlockingDecisionRoutines # TODO If one neuron does NOT meet criteria, all
 
   def flockingShouldOccur?(accumulatedAbsoluteFlockingErrors)
     return doNotFlock() if (tooEarlyToFlock?)
-    displayFlockingErrorAndDeltaWInformation(accumulatedAbsoluteFlockingErrors)
+    # displayFlockingErrorAndDeltaWInformation(accumulatedAbsoluteFlockingErrors)
     if (doWeNeedToFlockNOW?(accumulatedAbsoluteFlockingErrors))
       return yesDoFlock()
     else
@@ -297,34 +297,6 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
 
 #### Local Flocking
 
-
-  #if (accumulatedAbsoluteFlockingErrors.empty?)
-  #  true
-  #else
-  #  largestAbsoluteFlockingErrorPerExample = accumulatedAbsoluteFlockingErrors.max / numberOfExamples
-  #  needToReduceFlockingError = largestAbsoluteFlockingErrorPerExample > args[:maxAbsFlockingErrorsPerExample]
-  #  stillEnoughIterationsToFlock = flockingIterationsCount < maxFlockingIterationsCount
-  #  (needToReduceFlockingError && stillEnoughIterationsToFlock)
-  #
-
-    def adaptToLocalFlockError
-    neuronsThatNeedFlocking = adaptingNeurons.select{|aNeuron| ( (aNeuron.accumulatedAbsoluteFlockingError / numberOfExamples ) > args[:maxAbsFlockingErrorsPerExample]) }
-
-    neuronsThatNeedFlocking.each do |aNeuron|
-      aNeuron.learningRate = args[:flockingLearningRate]
-      aNeuron.accumulatedAbsoluteFlockingError = 0.0
-    end
-
-
-    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate]  }
-    adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
-    acrossExamplesAccumulateFlockingErrorDeltaWs()
-    adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-    return adaptingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
-  end
-
-
-
   def adaptToLocalFlockError
     adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate] }
     adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
@@ -332,17 +304,6 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
     return adaptingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
   end
-
-  def acrossExamplesAccumulateFlockingErrorDeltaWs(neuronsToAdapt)
-    acrossExamplesAccumulateDeltaWs(neuronsToAdapt) do |aNeuron, dataRecord|
-      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
-      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
-      aNeuron.calcAccumDeltaWsForLocalFlocking
-    end
-  end
-
-
-
 
   def acrossExamplesAccumulateFlockingErrorDeltaWs
     acrossExamplesAccumulateDeltaWs do |aNeuron, dataRecord|
@@ -352,27 +313,9 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     end
   end
 
-
-
-
 #### Used for BOTH Standard Backprop and Local Flocking
 
-  def acrossExamplesAccumulateDeltaWs(neuronsToAdapt)
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
-    numberOfExamples.times do |exampleNumber|
-      allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-      neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
-      outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
-      neuronsToAdapt.each do |aNeuron|
-        dataRecord = aNeuron.recordResponsesForExample
-        yield(aNeuron, dataRecord, exampleNumber)
-      end
-    end
-  end
-
-
-  def acrossExamplesAccumulateDeltaWs # Original
+  def acrossExamplesAccumulateDeltaWs
     neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
     neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
     numberOfExamples.times do |exampleNumber|
@@ -401,20 +344,21 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     return false
   end
 
-  def deltaDispersions(absFlockingErrors)
-    unless (absFlockingErrors.nil? || absFlockingErrorsOld.nil? || absFlockingErrorsOld.empty?)
-      index = -1
-      fractionalChanges = absFlockingErrors.collect do |anAbsFlockingError|
-        index += 1
-        # relativeChange = (anAbsFlockingError - absFlockingErrorsOld[index]) / ((anAbsFlockingError + absFlockingErrorsOld[index])/2.0)
-        fractionalChange = anAbsFlockingError / absFlockingErrorsOld[index]
-      end
-    else
-      fractionalChanges = Array.new(adaptingNeurons.length) { nil }
-    end
-    self.absFlockingErrorsOld = absFlockingErrors
-    return fractionalChanges
-  end
+  # SAVE
+  #def deltaDispersions(absFlockingErrors)
+  #  unless (absFlockingErrors.nil? || absFlockingErrorsOld.nil? || absFlockingErrorsOld.empty?)
+  #    index = -1
+  #    fractionalChanges = absFlockingErrors.collect do |anAbsFlockingError|
+  #      index += 1
+  #      # relativeChange = (anAbsFlockingError - absFlockingErrorsOld[index]) / ((anAbsFlockingError + absFlockingErrorsOld[index])/2.0)
+  #      fractionalChange = anAbsFlockingError / absFlockingErrorsOld[index]
+  #    end
+  #  else
+  #    fractionalChanges = Array.new(adaptingNeurons.length) { nil }
+  #  end
+  #  self.absFlockingErrorsOld = absFlockingErrors
+  #  return fractionalChanges
+  #end
 
 
 ########### MISC:  naming, grouping, specifying learning rates, and displaying data ####################
@@ -440,12 +384,13 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
     generatePlotForEachNeuron(arrayOfNeuronsToPlot) if arrayOfNeuronsToPlot.present?
   end
 
-  def displayFlockingErrorAndDeltaWInformation(accumulatedAbsoluteFlockingErrors)
-    temp = absFlockingErrorsOld.deep_clone unless (absFlockingErrorsOld.nil?) # for display purposes only
-    relativeChanges = deltaDispersions(accumulatedAbsoluteFlockingErrors)
-    measuredAccumDeltaWs = (adaptingNeurons.collect { |aNeuron| aNeuron.inputLinks.collect { |aLink| aLink.deltaWAccumulated } })[0] # TODO this a quick and dirty measurement...
-                                                                                                                                     # puts "absFlockingErrorsOld=\t#{temp}\tabsFlockingErrors=\t#{accumulatedAbsoluteFlockingErrors}\tfractionalChanges=\t#{relativeChanges}\tLinkO=\t#{measuredAccumDeltaWs[0]}\tLink1=\t#{measuredAccumDeltaWs[1]}\tLink2=\t#{measuredAccumDeltaWs[2]}\tPREVIOUS mse=\t#{network.calcNetworksMeanSquareError} "
-  end
+  # SAVE
+  #def displayFlockingErrorAndDeltaWInformation(accumulatedAbsoluteFlockingErrors)
+  #  temp = absFlockingErrorsOld.deep_clone unless (absFlockingErrorsOld.nil?) # for display purposes only
+  #  relativeChanges = deltaDispersions(accumulatedAbsoluteFlockingErrors)
+  #  measuredAccumDeltaWs = (adaptingNeurons.collect { |aNeuron| aNeuron.inputLinks.collect { |aLink| aLink.deltaWAccumulated } })[0] # TODO this a quick and dirty measurement...
+  #                                                                                                                                   # puts "absFlockingErrorsOld=\t#{temp}\tabsFlockingErrors=\t#{accumulatedAbsoluteFlockingErrors}\tfractionalChanges=\t#{relativeChanges}\tLinkO=\t#{measuredAccumDeltaWs[0]}\tLink1=\t#{measuredAccumDeltaWs[1]}\tLink2=\t#{measuredAccumDeltaWs[2]}\tPREVIOUS mse=\t#{network.calcNetworksMeanSquareError} "
+  #end
 
 end
 
