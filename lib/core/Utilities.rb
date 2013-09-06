@@ -5,7 +5,14 @@ require 'matrix'
 require 'redis'
 require 'yaml'
 
+theComputersName = Socket.gethostname
+
+if((theComputersName == "master") || (theComputersName == "node001") )     # TODO this is currently unuseful!
+$redis = Redis.new # (:host => "master")
+else
 $redis = Redis.new
+end
+
 
 def pushData(key, data)
   $redis.rpush(key,YAML.dump(data))

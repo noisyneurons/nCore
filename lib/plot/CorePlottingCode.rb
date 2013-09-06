@@ -32,7 +32,7 @@ def plotMSEvsEpochNumber(aLearningNetwork)
   #puts "working directory= \t#{aValue}"
   ## aPlotter = Plotter.new(title="Training Error", "Number of Epochs", "Error on Training Set", plotOutputFilenameBase = "/home/mark/Code/Ruby/NN2012/plots/xyPlot")
 
-  aPlotter = Plotter.new(title="Training Error", "Number of Epochs", "Error on Training Set", plotOutputFilenameBase = "#{Dir.pwd}/../../plots/xyPlot")
+  aPlotter = Plotter.new(title="Training Error", "Number of Epochs", "Error on Training Set", plotOutputFilenameBase = "#{Dir.home}/Code/Ruby/NN2012/plots/xyPlot")
   aPlotter.plot(x, y)
 end
 

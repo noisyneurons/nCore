@@ -1,8 +1,7 @@
 require_relative '../lib/core/SimulationDataStore'
 
-redis = Redis.new # (:host => "192.168.1.131", :port => 8765)
 
-experimentNumber =  redis.get("experimentNumber")
+experimentNumber =  $redis.get("experimentNumber")
 puts "\nNext Experiment Number=\t #{experimentNumber}"
 
 selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
@@ -18,5 +17,5 @@ unless (selectedData.empty?)
   puts "################################################################################################################################################## \n\n"
 end
 
-arrayOfKeys = redis.keys("*")
+arrayOfKeys = $redis.keys("*")
 puts "Number of Keys in Redis database: #{arrayOfKeys.length}"

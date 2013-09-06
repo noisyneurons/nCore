@@ -1,8 +1,6 @@
 ### VERSION "nCore"
 ## ../nCore/lib/core/Trainers.rb
 
-require 'rubygems'
-
 require_relative 'Utilities'
 
 #### TODO Redis and database stuff -- should be moved to more appropriate place

@@ -3,21 +3,28 @@
 # Purpose:  To quantitatively explore the simplest clustering w/o supervision.
 # This is a simplified and significantly reorganized version of 'Phase1Phase2MultiCycle.rb'
 
+
+# require 'rubygems'
+# require './bundler/setup'
+
+require 'relix'
+require 'redis'
+require 'hiredis'
+
+#require_relative '../../vendor/ruby/1.9.1/gems/relix-2.2.0/lib/relix'
+#require_relative '../../vendor/ruby/1.9.1/gems/redis-3.0.4/lib/redis'
+#require_relative '../../vendor/ruby/1.9.1/gems/hiredis-0.4.5/lib/hiredis'
+
 require 'yaml'
 require_relative '../lib/core/DataSet'
 require_relative '../lib/core/NeuralParts'
 require_relative '../lib/core/NeuralPartsExtended'
-
 # require_relative '../lib/core/ExampleImportanceMods'    # TODO where should this go?
-
 require_relative '../lib/core/NetworkFactories'
-
 require_relative '../lib/plot/CorePlottingCode'
 require_relative '../lib/core/SimulationDataStore'
 require_relative '../lib/core/Trainers.rb'
-
 # require_relative '../lib/core/ExampleImportanceMods'    # TODO where should this go?
-
 require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 
 

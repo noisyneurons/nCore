@@ -1,7 +1,7 @@
 ### VERSION "nCore"
 ## ../nCore/lib/core/SimulationDataStore.rb
 
-require 'rubygems'
+
 require_relative 'Utilities'
 require 'relix'
 require 'yaml'
