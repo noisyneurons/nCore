@@ -4,13 +4,11 @@
 require_relative 'Utilities'
 
 #### TODO Redis and database stuff -- should be moved to more appropriate place
-require 'relix'
+# require 'relix'
 
 class Experiment
   attr_reader :descriptionOfExperiment, :args
 
-  $redis = Redis.new
-  # $redis.flushdb
   $redis.setnx("experimentNumber", 0)
   @@number = $redis.get("experimentNumber")
 

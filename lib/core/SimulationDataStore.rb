@@ -3,11 +3,10 @@
 
 
 require_relative 'Utilities'
-require 'relix'
-require 'yaml'
 
 class SnapShotData
   include Relix
+  Relix.host = $currentHost
   attr_accessor :id, :experimentNumber, :descriptionOfExperiment, :network, :time, :epochs, :trainMSE, :testMSE
 
   relix do
@@ -62,6 +61,7 @@ end
 
 class FlockData
   include Relix
+  Relix.host = $currentHost
   attr_accessor :id, :experimentNumber, :epochs, :neuron, :exampleNumber, :netInputs, :flockErrors
 
   relix do
@@ -110,6 +110,7 @@ end
 
 class NeuronData
   include Relix
+  Relix.host = $currentHost
   attr_accessor :id, :experimentNumber, :epochs, :neuron
 
   relix do

@@ -1,12 +1,11 @@
 require_relative '../lib/core/SimulationDataStore'
 
-#require 'redis'
-
 # Notes: PutLoveInYourHeart (:host => "192.168.1.128", :port => 8765)
 # Notes: MakeASadSongMuchBetter (:host => "192.168.1.127", :port => 8765) Wired
 # Notes: MakeASadSongMuchBetter (:host => "192.168.1.131", :port => 8765) Wireless
 
-redis = Redis.new # (:host => "192.168.1.131", :port => 8765)
+# redis = Redis.new(host => "localhost", :port => 8765)
+redis = Redis.new
 
 dataStore = SimulationDataStoreManager.create
 dataStore.deleteTemporaryTables

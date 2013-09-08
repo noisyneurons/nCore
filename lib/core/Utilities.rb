@@ -1,27 +1,30 @@
 # Utilities.rb
 
+require 'rubygems'
 require 'mathn'
 require 'matrix'
 require 'redis'
+require 'relix'
 require 'yaml'
 
 theComputersName = Socket.gethostname
 
-if((theComputersName == "master") || (theComputersName == "node001") )     # TODO this is currently unuseful!
-$redis = Redis.new # (:host => "master")
-else
-$redis = Redis.new
-end
+$currentHost = if (theComputersName == "MakeASadSongMuchBetter")
+                 "localhost"
+               else
+                 "master"
+               end
 
+$redis = Redis.new(:host => $currentHost)
 
 def pushData(key, data)
-  $redis.rpush(key,YAML.dump(data))
+  $redis.rpush(key, YAML.dump(data))
 end
 
 def retrieveAllData(key)
   veryLargeInteger = 999999999999
   aListOfData = $redis.lrange(key, 0, veryLargeInteger)
-  aListOfData.collect {|aDataItem| YAML.load( aDataItem )}
+  aListOfData.collect { |aDataItem| YAML.load(aDataItem) }
 end
 
 

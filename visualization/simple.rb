@@ -5,14 +5,16 @@ require 'redis'
 # Notes: MakeASadSongMuchBetter (:host => "192.168.1.131", :port => 8765) Wireless
 
 
-redis = Redis.new # (:host => "192.168.1.131", :port => 8765)
+# redis = Redis.new # (:host => "192.168.1.131", :port => 8765)
+redis = Redis.new(:host => "ec2-54-224-56-245.compute-1.amazonaws.com")
 
-anArray = [1,2,3]
-x = Marshal.dump(anArray)
-redis.set("myKey", x)
+#anArray = [1,2,3,4,5]
+#x = Marshal.dump(anArray)
+#redis.set("myKey", x)
 y = redis.get("myKey")
 maybeAnArray = Marshal.load(y)
 puts "maybeAnArray=\t#{maybeAnArray.class}"
+puts "array= #{maybeAnArray}"
 puts "*****************************"
 
 
