@@ -238,6 +238,8 @@ class AbstractTrainer
   end
 end
 
+
+
 class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   attr_accessor :maxFlockingIterationsCount, :flockingIterationsCount, :accumulatedExampleImportanceFactors,
                 :absFlockingErrorsOld #,  :accumulatedAbsoluteFlockingErrors
@@ -405,7 +407,6 @@ class NewCircleTrainer < SimpleAdjustableLearningRateTrainer
     setUniversalNeuronGroupNames
   end
 end
-
 
 class XORTrainer < SimpleAdjustableLearningRateTrainer
 

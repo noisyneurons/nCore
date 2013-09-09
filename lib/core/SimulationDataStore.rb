@@ -22,9 +22,12 @@ class SnapShotData
     YAML.load($redis.get(key))
   end
 
-  def SnapShotData.deleteTables
-    ary = $redis.keys("SSD*")
+  def SnapShotData.deleteData(experimentNumber)
+    ary = $redis.keys("SSD#{experimentNumber}*")
     ary.each { |item| $redis.del(item) }
+  end
+
+  def SnapShotData.deleteEntireIndex!
     ary = $redis.keys("SnapShotData*")
     ary.each { |item| $redis.del(item) }
   end
@@ -77,9 +80,12 @@ class FlockData
     $redis.get(redisKey)
   end
 
-  def FlockData.deleteTables
-    ary = $redis.keys("FD*")
+  def FlockData.deleteData(experimentNumber)
+    ary = $redis.keys("FD#{experimentNumber}*")
     ary.each { |item| $redis.del(item) }
+  end
+
+  def FlockData.deleteEntireIndex!
     ary = $redis.keys("FlockData*")
     ary.each { |item| $redis.del(item) }
   end
@@ -125,9 +131,12 @@ class NeuronData
     $redis.get(key)
   end
 
-  def NeuronData.deleteTables
-    ary = $redis.keys("ND*")
+  def NeuronData.deleteData(experimentNumber)
+    ary = $redis.keys("ND#{experimentNumber}*")
     ary.each { |item| $redis.del(item) }
+  end
+
+  def NeuronData.deleteEntireIndex!
     ary = $redis.keys("NeuronData*")
     ary.each { |item| $redis.del(item) }
   end
@@ -138,9 +147,7 @@ class NeuronData
     @experimentNumber = Experiment.number
     @neuron = neuronDataToRecord[:neuronID]
     @epochs = neuronDataToRecord[:epochNumber]
-
     $redis.set(neuronDataKey, neuronDataToRecord)
-
     index!
   end
 
@@ -171,9 +178,9 @@ class SimulationDataStoreManager
     @@dataStoreManager = self
   end
 
-  def deleteTemporaryTables
-    FlockData.deleteTables
-    NeuronData.deleteTables
+  def deleteTemporaryData(experimentNumber)
+    FlockData.deleteData(experimentNumber)
+    NeuronData.deleteData(experimentNumber)
   end
 end
 

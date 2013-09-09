@@ -4,18 +4,7 @@
 # This is a simplified and significantly reorganized version of 'Phase1Phase2MultiCycle.rb'
 
 
-# require 'rubygems'
-# require './bundler/setup'
-
-require 'relix'
-require 'redis'
-require 'hiredis'
-
-#require_relative '../../vendor/ruby/1.9.1/gems/relix-2.2.0/lib/relix'
-#require_relative '../../vendor/ruby/1.9.1/gems/redis-3.0.4/lib/redis'
-#require_relative '../../vendor/ruby/1.9.1/gems/hiredis-0.4.5/lib/hiredis'
-
-require 'yaml'
+require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
 require_relative '../lib/core/NeuralParts'
 require_relative '../lib/core/NeuralPartsExtended'
@@ -153,7 +142,7 @@ displayAndPlotResults(args, accumulatedAbsoluteFlockingErrors, dataStoreManager,
                       lastTrainingMSE, network, theTrainer, trainingSequence)
 
 SnapShotData.new(descriptionOfExperiment, network, Time.now, lastEpoch, lastTrainingMSE, lastTestingMSE)
-                                                    Experiment.number
+
 selectedData = SnapShotData.lookup { |q| q[:experimentNumber_epochs].eq({experimentNumber: Experiment.number, epochs: lastEpoch}) }
 
 selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
@@ -166,6 +155,8 @@ unless (selectedData.empty?)
   end
 end
 
-FlockData.deleteTables
+FlockData.deleteData(Experiment.number)
+NeuronData.deleteData(Experiment.number)
+
 experiment.save
 

@@ -5,7 +5,6 @@ require 'yaml'
 
 theComputersName = Socket.gethostname
 
-currentHost = "localhost"
 currentHost = "ec2-54-224-56-245.compute-1.amazonaws.com" # master external dns
 currentHost = "ec2-107-20-13-47.compute-1.amazonaws.com" # node001 external dns
 
@@ -14,6 +13,7 @@ currentHost = "ip-10-164-60-198.ec2.internal" # node001 internal dns
 
 currentHost = "master"
 currentHost = "node001"
+currentHost = "localhost"
 
 $redis = Redis.new(:host => currentHost)
 

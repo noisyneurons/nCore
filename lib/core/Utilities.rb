@@ -3,8 +3,9 @@
 require 'rubygems'
 require 'mathn'
 require 'matrix'
-require 'redis'
 require 'relix'
+require 'redis'
+require 'hiredis'
 require 'yaml'
 
 theComputersName = Socket.gethostname
