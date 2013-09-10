@@ -1,11 +1,6 @@
 ### VERSION "nCore"
 ## ../nCore/lib/core/Trainers.rb
 
-require_relative 'Utilities'
-
-#### TODO Redis and database stuff -- should be moved to more appropriate place
-# require 'relix'
-
 class Experiment
   attr_reader :descriptionOfExperiment, :args
 
@@ -165,6 +160,208 @@ module FlockingDecisionRoutines # TODO If one neuron does NOT meet criteria, all
 
 end
 
+#####
+
+class AbstractNeuronGroups
+  attr_accessor :allNeuronLayers, :allNeuronsInOneArray,
+                :inputLayer, :outputLayer, :neuronsWithInputLinks, :neuronsWithInputLinksInReverseOrder,
+                :adaptingNeurons, :neuronsWhoseClustersNeedToBeSeeded
+
+  def initialize(constructedNetwork)
+    @allNeuronLayers = constructedNetwork.allNeuronLayers
+    @allNeuronsInOneArray = constructedNetwork.allNeuronsInOneArray
+    @inputLayer = constructedNetwork.inputLayer
+    @outputLayer = constructedNetwork.outputLayer
+    @neuronsWithInputLinks = nil
+    @neuronsWithInputLinksInReverseOrder = nil
+    @adaptingNeurons = nil
+    @neuronsWhoseClustersNeedToBeSeeded = nil
+  end
+
+  def setUniversalNeuronGroupNames
+    self.neuronsWithInputLinks = layersWithInputLinks.flatten
+    self.neuronsWithInputLinksInReverseOrder = neuronsWithInputLinks.reverse
+    self.allNeuronsInOneArray = inputLayer + neuronsWithInputLinks
+    self.adaptingNeurons = adaptingLayers.flatten unless (adaptingLayers.nil?)
+    self.neuronsWhoseClustersNeedToBeSeeded = layersWhoseClustersNeedToBeSeeded.flatten unless (layersWhoseClustersNeedToBeSeeded.nil?)
+  end
+end
+
+class NeuronGroupsSimplest < AbstractNeuronGroups
+  def nameTrainingGroupsAndSetLearningRatesForStep1OfTraining
+    self.layersWithInputLinks = [outputLayer]
+    self.adaptingLayers = [outputLayer]
+    self.layersWhoseClustersNeedToBeSeeded = [outputLayer]
+    setUniversalNeuronGroupNames
+  end
+end
+
+#####
+
+class AbstractStepTrainer
+  attr_accessor :examples, :neuronGroups, :args, :numberOfExamples, :dataStoreManager, :allNeuronLayers,
+                :allNeuronsInOneArray, :inputLayer, :outputLayer, :maxFlockingIterationsCount,
+                :flockingIterationsCount, :accumulatedExampleImportanceFactors,
+                :absFlockingErrorsOld
+
+  include ExampleDistribution
+  include FlockingDecisionRoutines
+
+  def initialize(examples, neuronGroups, args)
+    @examples = examples
+    @neuronGroups = neuronGroups
+    @args = args
+
+    @numberOfExamples = args[:numberOfExamples]
+
+    @allNeuronLayers = neuronGroups.createSimpleLearningANN
+    @allNeuronsInOneArray = neuronGroups.allNeuronsInOneArray
+    @inputLayer = neuronGroups.inputLayer
+    @outputLayer = neuronGroups.outputLayer
+
+    @flockingIterationsCount = 0
+    @maxFlockingIterationsCount = args[:maxFlockingIterationsCount]
+    @accumulatedExampleImportanceFactors = nil
+  end
+
+  def train
+    STDERR.puts "Error:  called abstract method"
+  end
+
+  def prepareForRepeatedFlockingIterations
+    recenterEachNeuronsClusters(adaptingNeurons) # necessary for later determining if clusters are still "tight-enough!"
+    adaptingNeurons.each { |aNeuron| aNeuron.inputLinks.each { |aLink| aLink.store = 0.0 } }
+    return accumulatedAbsoluteFlockingErrors = []
+  end
+
+  #### Standard Backprop of Output Errors
+
+  def performStandardBackPropTraining
+    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
+    acrossExamplesAccumulateDeltaWs { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForOutputError }
+    adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+  end
+
+#### Local Flocking
+
+  def adaptToLocalFlockError
+    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate] }
+    adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
+    acrossExamplesAccumulateFlockingErrorDeltaWs()
+    adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+    return adaptingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
+  end
+
+  def acrossExamplesAccumulateFlockingErrorDeltaWs
+    acrossExamplesAccumulateDeltaWs do |aNeuron, dataRecord|
+      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
+      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
+      aNeuron.calcAccumDeltaWsForLocalFlocking
+    end
+  end
+
+#### Used for BOTH Standard Backprop and Local Flocking
+
+  def acrossExamplesAccumulateDeltaWs
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
+    numberOfExamples.times do |exampleNumber|
+      allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+      neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
+      outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
+      adaptingNeurons.each do |aNeuron|
+        dataRecord = aNeuron.recordResponsesForExample
+        yield(aNeuron, dataRecord, exampleNumber)
+      end
+    end
+  end
+
+
+  #### Refinements and specialized control functions:
+
+  def useFuzzyClusters? # TODO Would this be better put 'into each neuron'
+    exampleWeightings = adaptingNeurons.first.clusters[0].membershipWeightForEachExample # TODO Why is only the first neuron used for this determination?
+    criteria0 = 0.2
+    criteria1 = 1.0 - criteria0
+    count = 0
+    exampleWeightings.each { |aWeight| count += 1 if (aWeight <= criteria0) }
+    exampleWeightings.each { |aWeight| count += 1 if (aWeight > criteria1) }
+                                                                                         # puts "count=\t #{count}"
+    return true if (count < numberOfExamples)
+    return false
+  end
+
+  ###------------  Core Support Section ------------------------------
+
+  def distributeSetOfExamples(examples)
+    @examples = examples
+    @numberOfExamples = examples.length
+    distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
+  end
+
+  def recenterEachNeuronsClusters(adaptingNeurons)
+    dispersions = adaptingNeurons.collect { |aNeuron| aNeuron.clusterAllResponses } # TODO Perhaps we might only need to clusterAllResponses every K epochs?
+  end
+
+  def seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
+    numberOfExamples.times do |exampleNumber|
+      allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+      neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
+      neuronsWithInputLinks.each { |aNeuron| aNeuron.recordResponsesForExample }
+    end
+    neuronsWhoseClustersNeedToBeSeeded.each { |aNeuron| aNeuron.initializeClusterCenters } # TODO is there any case where system should be reinitialized in this manner?
+    recenterEachNeuronsClusters(neuronsWhoseClustersNeedToBeSeeded)
+  end
+end
+
+class FlockStepTrainer < AbstractStepTrainer
+  def initialize(examples, neuronGroups, args)
+    super
+    @layersWithInputLinks = neuronGroups.layersWithInputLinks
+    @adaptingLayers = neuronGroups.adaptingLayers
+    @layersWhoseClustersNeedToBeSeeded = neuronGroups.layersWhoseClustersNeedToBeSeeded
+  end
+
+  def train(trials)
+    distributeSetOfExamples(examples)
+    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)
+    accumulatedAbsoluteFlockingErrors = []
+    trials.times do
+      innerTrainingLoop(accumulatedAbsoluteFlockingErrors)
+    end
+  end
+
+  def innerTrainingLoop(accumulatedAbsoluteFlockingErrors)
+    accumulatedAbsoluteFlockingErrors = unless (flockingShouldOccur?(accumulatedAbsoluteFlockingErrors))
+                                          performStandardBackPropTraining()
+                                          prepareForRepeatedFlockingIterations()
+                                        else
+                                          adaptToLocalFlockError()
+                                        end
+  end
+end
+
+
+class TrainingSupervisor
+  def initialize(stepTrainer, network, args)
+
+
+
+
+
+  end
+
+  def train
+    numTrials = 4000
+    stepTrainer.train(numTrials)
+  end
+
+
+end
+
+
+
 class AbstractTrainer
   attr_accessor :trainingSequence, :minMSE, :maxNumEpochs, :examples, :dataArray, :args,
                 :numberOfExamples, :dataStoreManager,
@@ -191,7 +388,6 @@ class AbstractTrainer
                 :layerTuners, :flockingHasConverged, :adaptingLayers, :adaptingNeurons
 
   include ExampleDistribution
-  include NeuronToNeuronConnection
   include RecordingAndPlottingRoutines
   include FlockingDecisionRoutines
 
@@ -239,10 +435,9 @@ class AbstractTrainer
 end
 
 
-
 class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   attr_accessor :maxFlockingIterationsCount, :flockingIterationsCount, :accumulatedExampleImportanceFactors,
-                :absFlockingErrorsOld #,  :accumulatedAbsoluteFlockingErrors
+                :absFlockingErrorsOld
 
   def postInitialize
     @flockingIterationsCount = 0
@@ -359,7 +554,7 @@ class SimpleAdjustableLearningRateTrainer < AbstractTrainer
   #end
 
 
-########### MISC:  naming, grouping, specifying learning rates, and displaying data ####################
+  ########### MISC:  naming, grouping, specifying learning rates, and displaying data ####################
 
   def nameTrainingGroupsAndSetLearningRatesForStep1OfTraining
     self.layersWithInputLinks = [outputLayer]
