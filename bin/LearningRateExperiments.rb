@@ -1,8 +1,7 @@
 ### VERSION "nCore"
 ## ../nCore/bin/LearningRateExperiments.rb
 # Purpose:  To quantitatively explore the simplest clustering w/o supervision.
-# This is a simplified and significantly reorganized version of 'Phase1Phase2MultiCycle.rb'
-
+# This is a simplified and significantly reorganized version of 'Phase1Phase2MultiCycle.rb
 
 require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
@@ -98,25 +97,24 @@ class Experiment
 end
 
 ###################################### START of Main Learning  ##########################################
+######################## Specify data store and experiment description....
+
 srand(0)
 descriptionOfExperiment = "SimpleAdjustableLearningRateTrainerMultiFlockIterations Reference Run NUMBER 2"
 experiment = Experiment.new(descriptionOfExperiment)
 args = experiment.setParameters
+# dataStoreManager = SimulationDataStoreManager.create
+args[:dataStoreManager] = dataStoreManager = SimulationDataStoreManager.new(args)
+args[:trainingSequence] = trainingSequence = TrainingSequence.new(args)
 
 ############################### create training set...
 examples = createTrainingSet(args)
 
-######################## Specify data store and experiment description....
-dataStoreManager = SimulationDataStoreManager.create
-
 ######################## Create Network....
-trainingSequence = TrainingSequence.create(args)
-
 network = SimpleFlockingNeuronNetwork.new(dataStoreManager, args)   # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
 puts network
 
-############################### train ...
-
+############################### Create Trainer ...
 theTrainer = SimpleAdjustableLearningRateTrainer.new(trainingSequence, network, args)
 
 arrayOfNeuronsToPlot = nil

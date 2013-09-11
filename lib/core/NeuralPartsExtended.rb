@@ -131,7 +131,7 @@ class FlockingNeuron < Neuron
     typeOfClusterer = args[:typeOfClusterer]
     @clusterer = typeOfClusterer.new(args)
     @dPrime = 0.0
-    @trainingSequence = TrainingSequence.instance
+    @trainingSequence = args[:trainingSequence]
   end
 
   def backPropagate(&block)
@@ -163,7 +163,7 @@ class FlockingOutputNeuron < OutputNeuron
     typeOfClusterer = args[:typeOfClusterer]
     @clusterer = typeOfClusterer.new(args)
     @dPrime = 0.0
-    @trainingSequence = TrainingSequence.instance
+    @trainingSequence = args[:trainingSequence]
   end
 
   def backPropagate(&block)
@@ -221,8 +221,8 @@ class NeuronRecorder
   def initialize(neuron, args)
     @neuron = neuron
     @args = args
-    @trainingSequence = TrainingSequence.instance
-    @dataStoreManager = SimulationDataStoreManager.instance
+    @trainingSequence = args[:trainingSequence]
+    @dataStoreManager = args[:dataStoreManager]
     @exampleDataSet = dataStoreManager.exampleDataSet
     @epochDataSet = dataStoreManager.epochDataSet
     @withinEpochMeasures = []
@@ -240,8 +240,8 @@ class FlockingNeuronRecorder < NeuronRecorder # TODO Need to separate into 2 cla
   def initialize(neuron, args)
     @neuron = neuron
     @args = args
-    @trainingSequence = TrainingSequence.instance
-    @dataStoreManager = SimulationDataStoreManager.instance
+    @trainingSequence = args[:trainingSequence]
+    @dataStoreManager = args[:dataStoreManager]
     @withinEpochMeasures = []
     @exampleVectorLength = args[:exampleVectorLength]
   end

@@ -183,24 +183,15 @@ end
 
 
 class SimulationDataStoreManager
-  attr_accessor :epochNumber
-  private_class_method(:new)
-
-  @@dataStoreManager = nil
-
-  def SimulationDataStoreManager.create
-    @@dataStoreManager = new unless @@dataStoreManager
-    @@dataStoreManager
-  end
+  attr_accessor :args, :epochNumber
 
   def SimulationDataStoreManager.instance
     return @@dataStoreManager
   end
 
-  def initialize
-    STDERR.puts "ERROR:  SimulationDataStoreManager.new called MORE THAN ONE TIME!!!!!" unless (@@dataStoreManager.nil?)
+  def initialize(args)
+    @args = args
     @epochNumber = nil
-    @@dataStoreManager = self
   end
 
   def deleteDataForExperiment(experimentNumber)

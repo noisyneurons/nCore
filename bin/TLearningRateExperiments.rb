@@ -12,6 +12,7 @@ require_relative '../lib/core/NeuralPartsExtended'
 require_relative '../lib/core/NetworkFactories'
 require_relative '../lib/plot/CorePlottingCode'
 require_relative '../lib/core/SimulationDataStore'
+require_relative '../lib/core/TrainingSequencingAndGrouping'
 require_relative '../lib/core/Trainers.rb'
 # require_relative '../lib/core/ExampleImportanceMods'    # TODO where should this go?
 require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
@@ -102,14 +103,12 @@ srand(0)
 descriptionOfExperiment = "New Module Trainers trying to duplicate: SimpleAdjustableLearningRateTrainerMultiFlockIterations Reference Run NUMBER 2"
 experiment = Experiment.new(descriptionOfExperiment)
 args = experiment.setParameters
+args[:dataStoreManager] = dataStoreManager = SimulationDataStoreManager.new(args)
+args[:trainingSequence] = trainingSequence = TrainingSequence.new(args)
 
-############################### create training set...
+############################# create training set...
 examples = createTrainingSet(args)
 
-######################## Specify data store and experiment description....
-dataStoreManager = SimulationDataStoreManager.create
-
-trainingSequence = TrainingSequence.create(args)
 
 ######################## Create Network....
 network = SimpleFlockingNeuronNetwork.new(dataStoreManager, args)   # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
@@ -117,50 +116,51 @@ network = SimpleFlockingNeuronNetwork.new(dataStoreManager, args)   # TODO Curre
 ############################### train ...
 
 # theTrainer = SimpleAdjustableLearningRateTrainer.new(trainingSequence, network, args)
-theTrainer = TrainingSupervisor.new(examples, trainingSequence, network, args)
+theTrainer = TrainingSupervisor.new(examples, network, args)
 
 arrayOfNeuronsToPlot = nil
 lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors = theTrainer.train
 
 
 theTrainer.displayTrainingResults(arrayOfNeuronsToPlot)
-#
-#lastTestingMSE = nil
-## theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, accumulatedAbsoluteFlockingErrors)
-#
-####################################### END of Main Learning ##########################################
-#
-#
-#puts "############ Include Example Numbers #############"
-#4000.times do |epochNumber|
-#  selectedData = FlockData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber,
-#                                                                               neuron: 2}) }
-#  puts "For epoch number=\t#{epochNumber}" unless (selectedData.empty?)
-#
-#  selectedData.each { |itemKey| puts FlockData.values(itemKey) } unless (selectedData.empty?)
-#
-#end
-#puts "####################################"
-#
-#displayAndPlotResults(args, accumulatedAbsoluteFlockingErrors, dataStoreManager, lastEpoch, lastTestingMSE,
-#                      lastTrainingMSE, network, theTrainer, trainingSequence)
-#
-#SnapShotData.new(descriptionOfExperiment, network, Time.now, lastEpoch, lastTrainingMSE, lastTestingMSE)
-#
-#selectedData = SnapShotData.lookup { |q| q[:experimentNumber_epochs].eq({experimentNumber: Experiment.number, epochs: lastEpoch}) }
-#
-#selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
-#unless (selectedData.empty?)
-#  puts
-#  puts "Number\tDescription\tLastEpoch\tTrainMSE\tTestMSE\tTime"
-#  selectedData.each do |aSelectedExperiment|
-#    aHash = SnapShotData.values(aSelectedExperiment)
-#    puts "#{aHash[:experimentNumber]}\t#{aHash[:descriptionOfExperiment]}\t#{aHash[:epochs]}\t#{aHash[:trainMSE]}\t#{aHash[:testMSE]}\t#{aHash[:time]}"
-#  end
-#end
-#
-#FlockData.deleteData(Experiment.number)
-#NeuronData.deleteData(Experiment.number)
-#
-#experiment.save
-#
+
+
+lastTestingMSE = nil
+# theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, accumulatedAbsoluteFlockingErrors)
+
+###################################### END of Main Learning ##########################################
+
+
+puts "############ Include Example Numbers #############"
+4000.times do |epochNumber|
+  selectedData = FlockData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber,
+                                                                               neuron: 2}) }
+  puts "For epoch number=\t#{epochNumber}" unless (selectedData.empty?)
+
+  selectedData.each { |itemKey| puts FlockData.values(itemKey) } unless (selectedData.empty?)
+
+end
+puts "####################################"
+
+displayAndPlotResults(args, accumulatedAbsoluteFlockingErrors, dataStoreManager, lastEpoch, lastTestingMSE,
+                      lastTrainingMSE, network, theTrainer, trainingSequence)
+
+SnapShotData.new(descriptionOfExperiment, network, Time.now, lastEpoch, lastTrainingMSE, lastTestingMSE)
+
+selectedData = SnapShotData.lookup { |q| q[:experimentNumber_epochs].eq({experimentNumber: Experiment.number, epochs: lastEpoch}) }
+
+selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
+unless (selectedData.empty?)
+  puts
+  puts "Number\tDescription\tLastEpoch\tTrainMSE\tTestMSE\tTime"
+  selectedData.each do |aSelectedExperiment|
+    aHash = SnapShotData.values(aSelectedExperiment)
+    puts "#{aHash[:experimentNumber]}\t#{aHash[:descriptionOfExperiment]}\t#{aHash[:epochs]}\t#{aHash[:trainMSE]}\t#{aHash[:testMSE]}\t#{aHash[:time]}"
+  end
+end
+
+FlockData.deleteData(Experiment.number)
+NeuronData.deleteData(Experiment.number)
+
+experiment.save
+

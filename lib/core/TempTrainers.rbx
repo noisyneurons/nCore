@@ -12,7 +12,7 @@ class TrainerAnalogy4Class < AbstractTrainer
     @trainingSequence = trainingSequence
     @network = network
     @args = args
-    @dataStoreManager = SimulationDataStoreManager.instance
+    @dataStoreManager = args[:dataStoreManager]
     @allNeuronLayers = network.createSimpleLearningANN
     @startTime = Time.now
     @elapsedTime = nil
