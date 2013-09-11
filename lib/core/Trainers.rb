@@ -164,18 +164,24 @@ end
 
 class AbstractNeuronGroups
   attr_accessor :allNeuronLayers, :allNeuronsInOneArray,
-                :inputLayer, :outputLayer, :neuronsWithInputLinks, :neuronsWithInputLinksInReverseOrder,
+                :inputLayer, :outputLayer,
+                :layersWithInputLinks, :adaptingLayers, :layersWhoseClustersNeedToBeSeeded,
+                :neuronsWithInputLinks, :neuronsWithInputLinksInReverseOrder,
                 :adaptingNeurons, :neuronsWhoseClustersNeedToBeSeeded
 
-  def initialize(constructedNetwork)
-    @allNeuronLayers = constructedNetwork.allNeuronLayers
-    @allNeuronsInOneArray = constructedNetwork.allNeuronsInOneArray
-    @inputLayer = constructedNetwork.inputLayer
-    @outputLayer = constructedNetwork.outputLayer
+  def initialize(network)
+    @allNeuronLayers = network.createSimpleLearningANN
+    @allNeuronsInOneArray = network.allNeuronsInOneArray
+    @inputLayer = network.inputLayer
+    @outputLayer = network.outputLayer
+
+    STDOUT.puts "@outputLayer.length #{@outputLayer.length}"
+
     @neuronsWithInputLinks = nil
     @neuronsWithInputLinksInReverseOrder = nil
     @adaptingNeurons = nil
     @neuronsWhoseClustersNeedToBeSeeded = nil
+
   end
 
   def setUniversalNeuronGroupNames
@@ -188,45 +194,68 @@ class AbstractNeuronGroups
 end
 
 class NeuronGroupsSimplest < AbstractNeuronGroups
-  def nameTrainingGroupsAndSetLearningRatesForStep1OfTraining
+
+  def nameTrainingGroupsAndSetLearningRates
     self.layersWithInputLinks = [outputLayer]
     self.adaptingLayers = [outputLayer]
     self.layersWhoseClustersNeedToBeSeeded = [outputLayer]
-    setUniversalNeuronGroupNames
+    setUniversalNeuronGroupNames()
   end
 end
 
 #####
 
 class AbstractStepTrainer
-  attr_accessor :examples, :neuronGroups, :args, :numberOfExamples, :dataStoreManager, :allNeuronLayers,
-                :allNeuronsInOneArray, :inputLayer, :outputLayer, :maxFlockingIterationsCount,
-                :flockingIterationsCount, :accumulatedExampleImportanceFactors,
-                :absFlockingErrorsOld
+  attr_accessor :examples, :numberOfExamples, :neuronGroups, :trainingSequence,
+                :args, :dataStoreManager, :numberOfOutputNeurons,
+
+                :allNeuronLayers, :inputLayer, :outputLayer,
+                :layersWithInputLinks, :adaptingLayers,
+                :layersWhoseClustersNeedToBeSeeded,
+
+                :allNeuronsInOneArray, :neuronsWithInputLinks,
+                :neuronsWithInputLinksInReverseOrder, :adaptingNeurons,
+                :neuronsWhoseClustersNeedToBeSeeded,
+
+                :maxFlockingIterationsCount, :flockingIterationsCount,
+                :accumulatedExampleImportanceFactors, :absFlockingErrorsOld
+
 
   include ExampleDistribution
   include FlockingDecisionRoutines
 
-  def initialize(examples, neuronGroups, args)
+  def initialize(examples, neuronGroups, trainingSequence, args)
     @examples = examples
     @neuronGroups = neuronGroups
+    @trainingSequence = trainingSequence
     @args = args
 
     @numberOfExamples = args[:numberOfExamples]
 
-    @allNeuronLayers = neuronGroups.createSimpleLearningANN
+    @allNeuronLayers = neuronGroups.allNeuronLayers
     @allNeuronsInOneArray = neuronGroups.allNeuronsInOneArray
     @inputLayer = neuronGroups.inputLayer
     @outputLayer = neuronGroups.outputLayer
+    @layersWithInputLinks = neuronGroups.layersWithInputLinks
+    @neuronsWithInputLinks = neuronGroups.neuronsWithInputLinks
+    @neuronsWithInputLinksInReverseOrder = neuronGroups.neuronsWithInputLinksInReverseOrder
+    @adaptingLayers = neuronGroups.adaptingLayers
+    @adaptingNeurons = neuronGroups.adaptingNeurons
+    @layersWhoseClustersNeedToBeSeeded = neuronGroups.layersWhoseClustersNeedToBeSeeded
+    @neuronsWhoseClustersNeedToBeSeeded = neuronGroups.neuronsWhoseClustersNeedToBeSeeded
 
     @flockingIterationsCount = 0
     @maxFlockingIterationsCount = args[:maxFlockingIterationsCount]
     @accumulatedExampleImportanceFactors = nil
+
+    @numberOfOutputNeurons = @outputLayer.length
+    @numberOfExamples = examples.length
   end
 
   def train
     STDERR.puts "Error:  called abstract method"
   end
+
 
   def prepareForRepeatedFlockingIterations
     recenterEachNeuronsClusters(adaptingNeurons) # necessary for later determining if clusters are still "tight-enough!"
@@ -293,6 +322,11 @@ class AbstractStepTrainer
 
   ###------------  Core Support Section ------------------------------
 
+  def calcMSE
+    sse = outputLayer.inject(0.0) { |sum, anOutputNeuron| sum + anOutputNeuron.calcSumOfSquaredErrors }
+    return (sse / (numberOfOutputNeurons * numberOfExamples))
+  end
+
   def distributeSetOfExamples(examples)
     @examples = examples
     @numberOfExamples = examples.length
@@ -316,20 +350,16 @@ class AbstractStepTrainer
 end
 
 class FlockStepTrainer < AbstractStepTrainer
-  def initialize(examples, neuronGroups, args)
-    super
-    @layersWithInputLinks = neuronGroups.layersWithInputLinks
-    @adaptingLayers = neuronGroups.adaptingLayers
-    @layersWhoseClustersNeedToBeSeeded = neuronGroups.layersWhoseClustersNeedToBeSeeded
-  end
 
   def train(trials)
     distributeSetOfExamples(examples)
     seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)
     accumulatedAbsoluteFlockingErrors = []
     trials.times do
-      innerTrainingLoop(accumulatedAbsoluteFlockingErrors)
+      accumulatedAbsoluteFlockingErrors = innerTrainingLoop(accumulatedAbsoluteFlockingErrors)
+      trainingSequence.nextEpoch
     end
+    return calcMSE, accumulatedAbsoluteFlockingErrors
   end
 
   def innerTrainingLoop(accumulatedAbsoluteFlockingErrors)
@@ -344,22 +374,33 @@ end
 
 
 class TrainingSupervisor
-  def initialize(stepTrainer, network, args)
+  attr_accessor :stepTrainer, :trainingSequence, :network, :args
 
-
-
-
-
+  def initialize(examples, trainingSequence, network, args)
+    @trainingSequence = trainingSequence
+    @network = network
+    @args = args
+    neuronGroups = NeuronGroupsSimplest.new(network)
+    neuronGroups.nameTrainingGroupsAndSetLearningRates
+    @stepTrainer = FlockStepTrainer.new(examples, neuronGroups, trainingSequence, args)
   end
 
   def train
-    numTrials = 4000
-    stepTrainer.train(numTrials)
+    mse = 1e20
+    numTrials = 1000
+    # while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
+    while ((mse > 0.001) && trainingSequence.stillMoreEpochs)
+      mse, accumulatedAbsoluteFlockingErrors = stepTrainer.train(numTrials)
+    end
+    return trainingSequence.epochs, mse, accumulatedAbsoluteFlockingErrors
   end
 
+  def displayTrainingResults(arrayOfNeuronsToPlot)
+    puts network
+    generatePlotForEachNeuron(arrayOfNeuronsToPlot) if arrayOfNeuronsToPlot.present?
+  end
 
 end
-
 
 
 class AbstractTrainer
