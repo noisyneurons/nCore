@@ -1,31 +1,6 @@
 ### VERSION "nCore"
 ## ../nCore/lib/core/Trainers.rb
 
-class Experiment
-  attr_reader :descriptionOfExperiment, :args
-
-  $redis.setnx("experimentNumber", 0)
-  @@number = $redis.get("experimentNumber")
-
-  def Experiment.number
-    @@number
-  end
-
-  #def Experiment.deleteTable
-  #  $redis.del("experimentNumber")
-  #end
-
-  def initialize(experimentDescription)
-    $redis.incr("experimentNumber")
-    @descriptionOfExperiment = descriptionOfExperiment
-  end
-
-  def save
-    $redis.save
-  end
-end
-#### Redis and database stuff -- should be moved to more appropriate place
-
 module RecordingAndPlottingRoutines
 
   def storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, dPrimes)
@@ -170,18 +145,8 @@ class AbstractNeuronGroups
                 :adaptingNeurons, :neuronsWhoseClustersNeedToBeSeeded
 
   def initialize(network)
-    @allNeuronLayers = network.createSimpleLearningANN
-    @allNeuronsInOneArray = network.allNeuronsInOneArray
-    @inputLayer = network.inputLayer
-    @outputLayer = network.outputLayer
-
-    STDOUT.puts "@outputLayer.length #{@outputLayer.length}"
-
-    @neuronsWithInputLinks = nil
-    @neuronsWithInputLinksInReverseOrder = nil
-    @adaptingNeurons = nil
-    @neuronsWhoseClustersNeedToBeSeeded = nil
-
+    @allNeuronLayers = network.allNeuronLayers
+    nameTrainingGroups()
   end
 
   def setUniversalNeuronGroupNames
@@ -194,8 +159,9 @@ class AbstractNeuronGroups
 end
 
 class NeuronGroupsSimplest < AbstractNeuronGroups
-
-  def nameTrainingGroupsAndSetLearningRates
+  def nameTrainingGroups
+    self.inputLayer = allNeuronLayers.first
+    self.outputLayer = allNeuronLayers.last
     self.layersWithInputLinks = [outputLayer]
     self.adaptingLayers = [outputLayer]
     self.layersWhoseClustersNeedToBeSeeded = [outputLayer]
@@ -381,7 +347,6 @@ class TrainingSupervisor
     @network = network
     @args = args
     neuronGroups = NeuronGroupsSimplest.new(network)
-    neuronGroups.nameTrainingGroupsAndSetLearningRates
     @stepTrainer = FlockStepTrainer.new(examples, neuronGroups, trainingSequence, args)
   end
 
@@ -439,7 +404,7 @@ class AbstractTrainer
     @numberOfExamples = args[:numberOfExamples]
     @dataStoreManager = SimulationDataStoreManager.instance
 
-    @allNeuronLayers = network.createSimpleLearningANN
+    @allNeuronLayers = network.allNeuronLayers
     @allNeuronsInOneArray = network.allNeuronsInOneArray
     @inputLayer = network.inputLayer
     @outputLayer = network.outputLayer
@@ -953,7 +918,7 @@ end
 ###########....
 
 class TrainingSequence
-  attr_accessor :network, :args, :epochs, :epochsInPhase1, :epochsInPhase2, :numberOfEpochsInCycle,
+  attr_accessor :args, :epochs, :epochsInPhase1, :epochsInPhase2, :numberOfEpochsInCycle,
                 :maxNumberOfEpochs, :epochsSinceBeginningOfCycle, :status,
                 :stillMoreEpochs, :lastEpoch, :inPhase2, :inPhase1,
                 :atStartOfCycle, :atStartOfPhase1, :atStartOfPhase2,
@@ -964,8 +929,8 @@ class TrainingSequence
 
   @@trainingSequence = nil
 
-  def TrainingSequence.create(network, args)
-    @@trainingSequence = new(network, args) unless @@trainingSequence
+  def TrainingSequence.create(args)
+    @@trainingSequence = new(args) unless @@trainingSequence
     @@trainingSequence
   end
 
@@ -973,8 +938,7 @@ class TrainingSequence
     return @@trainingSequence
   end
 
-  def initialize(network, args)
-    @network = network
+  def initialize(args)
     @args = args
     @dataStoreManager = SimulationDataStoreManager.instance
     @maxNumberOfEpochs = args[:maxNumEpochs]

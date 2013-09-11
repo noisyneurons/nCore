@@ -109,11 +109,13 @@ examples = createTrainingSet(args)
 ######################## Specify data store and experiment description....
 dataStoreManager = SimulationDataStoreManager.create
 
+trainingSequence = TrainingSequence.create(args)
+
 ######################## Create Network....
-network = SimpleFlockingNeuronNetwork.new(dataStoreManager, args)
+network = SimpleFlockingNeuronNetwork.new(dataStoreManager, args)   # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
 
 ############################### train ...
-trainingSequence = TrainingSequence.create(network, args)
+
 # theTrainer = SimpleAdjustableLearningRateTrainer.new(trainingSequence, network, args)
 theTrainer = TrainingSupervisor.new(examples, trainingSequence, network, args)
 

@@ -110,11 +110,13 @@ examples = createTrainingSet(args)
 dataStoreManager = SimulationDataStoreManager.create
 
 ######################## Create Network....
-network = SimpleFlockingNeuronNetwork.new(dataStoreManager, args)
+trainingSequence = TrainingSequence.create(args)
+
+network = SimpleFlockingNeuronNetwork.new(dataStoreManager, args)   # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
 puts network
 
 ############################### train ...
-trainingSequence = TrainingSequence.create(network, args)
+
 theTrainer = SimpleAdjustableLearningRateTrainer.new(trainingSequence, network, args)
 
 arrayOfNeuronsToPlot = nil

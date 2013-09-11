@@ -93,13 +93,13 @@ class BaseNetwork
     @theBiasNeuron = BiasNeuron.new(args)
     NeuronBase.zeroID
     @numberOfExamples = @args[:numberOfExamples]
+    createSimpleLearningANN
   end
 
   def createSimpleLearningANN
     @networkRecorder = NetworkRecorder.new(self, args)
     createAllLayersOfNeurons()
     connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
-    return allNeuronLayers
   end
 
   def calcNetworksMeanSquareError

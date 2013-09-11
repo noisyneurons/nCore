@@ -1,8 +1,33 @@
 ### VERSION "nCore"
 ## ../nCore/lib/core/SimulationDataStore.rb
 
-
 require_relative 'Utilities'
+
+
+class Experiment
+  attr_reader :descriptionOfExperiment, :args
+
+  $redis.setnx("experimentNumber", 0)
+  @@number = $redis.get("experimentNumber")
+
+  def Experiment.number
+    @@number
+  end
+
+  #def Experiment.deleteTable
+  #  $redis.del("experimentNumber")
+  #end
+
+  def initialize(experimentDescription)
+    $redis.incr("experimentNumber")
+    @descriptionOfExperiment = descriptionOfExperiment
+  end
+
+  def save
+    $redis.save
+  end
+end
+
 
 class SnapShotData
   include Relix
@@ -178,7 +203,7 @@ class SimulationDataStoreManager
     @@dataStoreManager = self
   end
 
-  def deleteTemporaryData(experimentNumber)
+  def deleteDataForExperiment(experimentNumber)
     FlockData.deleteData(experimentNumber)
     NeuronData.deleteData(experimentNumber)
   end
