@@ -4,6 +4,129 @@
 require_relative 'Utilities'
 
 
+class DataRecordingSequencer
+  attr_accessor :args, :maxNumberOfEpochs, :lastEpoch
+
+  def initialize(args)
+    @args = args
+    @numberOfEpochsBetweenStoringDBRecords = @args[:numberOfEpochsBetweenStoringDBRecords]
+    @maxNumberOfEpochs = args[:maxNumEpochs]
+    @lastEpoch = false
+  end
+
+  def timeToRecordData
+    epochs = args[epochs]
+    record = false
+    return if (epochs < 0)
+    record = true if ((epochs % numberOfEpochsBetweenStoringDBRecords) == 0)
+    record = true if lastEpoch
+    return record
+  end
+end
+
+
+class DataXfer
+  attr_accessor :objectToGetDataFrom, :objectToReceiveData, :recordingSequencer
+
+  def initialize(objectToGetDataFrom, objectToReceiveData, recordingSequencer)
+    @objectToGetDataFrom = objectToGetDataFrom
+    @objectToReceiveData = objectToReceiveData
+    @recordingSequencer  = recordingSequencer
+  end
+end
+
+
+
+
+module RecordingAndPlottingRoutines
+
+  def storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, dPrimes)
+    self.elapsedTime = Time.now - startTime
+    dataStoreManager.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, dPrimes, elapsedTime)
+  end
+
+  def generatePlotForEachNeuron(arrayOfNeuronsToPlot)
+    arrayOfNeuronsToPlot.each do |theNeuron|
+      xAry, yAry = getZeroXingExampleSet(theNeuron)
+      plotDotsWhereOutputGtPt5(xAry, yAry, theNeuron, trainingSequence.epochs)
+    end
+  end
+
+  def oneForwardPassEpoch(testingExamples)
+    trainingExamples = examples
+    distributeSetOfExamples(testingExamples)
+    testMSE = measureNeuralResponsesForTesting
+    distributeSetOfExamples(trainingExamples) # restore training examples
+    return testMSE
+  end
+
+  def getZeroXingExampleSet(theNeuron)
+    trainingExamples = examples
+    minX1 = -4.0
+    maxX1 = 4.0
+    numberOfTrials = 100
+    increment = (maxX1 - minX1) / numberOfTrials
+    x0Array = []
+    x1Array = []
+    numberOfTrials.times do |index|
+      x1 = minX1 + index * increment
+      x0 = findZeroCrossingFast(x1, theNeuron)
+      next if (x0.nil?)
+      x1Array << x1
+      x0Array << x0
+    end
+    self.examples = trainingExamples
+    [x0Array, x1Array]
+  end
+
+  def measureNeuralResponsesForTesting
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
+    numberOfExamples.times do |exampleNumber|
+      allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+      outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
+      neuronsWithInputLinks.each { |aNeuron| aNeuron.recordResponsesForExample }
+    end
+    mse = network.calcNetworksMeanSquareError
+  end
+
+  def findZeroCrossingFast(x1, theNeuron)
+    minX0 = -2.0
+    maxX0 = 2.0
+    range = maxX0 - minX0
+
+    initialOutput = ioFunctionFor2inputs(minX0, x1, theNeuron)
+    initialOutputLarge = false
+    initialOutputLarge = true if (initialOutput >= 0.5)
+
+    wasThereACrossing = false
+    20.times do |count|
+      range = maxX0 - minX0
+      bisectedX0 = minX0 + (range / 2.0)
+      currentOutput = ioFunctionFor2inputs(bisectedX0, x1, theNeuron)
+      currentOutputLarge = false
+      currentOutputLarge = true if (currentOutput > 0.5)
+      if (currentOutputLarge != initialOutputLarge)
+        maxX0 = bisectedX0
+        wasThereACrossing = true
+      else
+        minX0 = bisectedX0
+      end
+    end
+    return nil if (wasThereACrossing == false)
+    estimatedCrossingForX0 = (minX0 + maxX0) / 2.0
+    return estimatedCrossingForX0
+  end
+
+  def ioFunctionFor2inputs(x0, x1, theNeuron) # TODO should this be moved to an analysis or plotting class?
+    examples = [{:inputs => [x0, x1], :exampleNumber => 0}]
+    distributeDataToAnArrayOfNeurons(inputLayer, examples)
+    allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(0) }
+    return theNeuron.output
+  end
+end
+
+
+
 class Experiment
   attr_reader :descriptionOfExperiment, :args
 

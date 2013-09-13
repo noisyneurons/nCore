@@ -326,8 +326,11 @@ class NeuronRecorder
     @withinEpochMeasures = []
   end
 
+  def dataToRecord
+    {:neuronID => neuron.id, :netInput => neuron.netInput, :error => neuron.error, :exampleNumber => neuron.exampleNumber}
+  end
+
   def recordResponsesForExample
-    dataToRecord = {:netInput => neuron.netInput, :error => neuron.error, :exampleNumber => neuron.exampleNumber}
     self.withinEpochMeasures << dataToRecord
     return dataToRecord
   end
@@ -338,10 +341,8 @@ class NeuronRecorder
 end
 
 class OutputNeuronRecorder < NeuronRecorder
-  def recordResponsesForExample
-    dataToRecord = {:netInput => neuron.netInput, :error => neuron.error, :exampleNumber => neuron.exampleNumber,
-                    :weightedErrorMetric => neuron.weightedErrorMetric}
-    self.withinEpochMeasures << dataToRecord
-    return dataToRecord
+  def dataToRecord
+    {:netInput => neuron.netInput, :error => neuron.error, :exampleNumber => neuron.exampleNumber,
+     :weightedErrorMetric => neuron.weightedErrorMetric}
   end
 end

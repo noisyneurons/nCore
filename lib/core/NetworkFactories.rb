@@ -3,19 +3,90 @@
 
 require_relative 'Utilities'
 
+module NeuronToNeuronConnection
+  def connect_layer_to_another(sendingLayer, receivingLayer, args)
+    sendingLayer.each { |sendingNeuron| connectToAllNeuronsInReceivingLayer(sendingNeuron, receivingLayer, args) }
+  end
+
+  def createArrayOfNeurons(typeOfNeuron, numberOfNeurons, args)
+    Array.new(numberOfNeurons) { |i| typeOfNeuron.new(args) }
+  end
+
+  def retrieveLinksBetweenGroupsOfNeurons(sendingLayer, receivingLayer)
+    arrayOfCommonLinks = sendingLayer.collect do |aSendingNeuron|
+      receivingLayer.collect do |aReceivingNeuron|
+        retrieveLinkBetween(aSendingNeuron, aReceivingNeuron)
+      end
+    end
+    return arrayOfCommonLinks.flatten.compact
+  end
+
+  def disconnect_one_layer_from_another(sendingLayer, receivingLayer)
+    sendingLayer.each do |aSendingNeuron|
+      receivingLayer.each do |aReceivingNeuron|
+        deleteCommonLinkBetweenNeurons(aSendingNeuron, aReceivingNeuron)
+      end
+    end
+  end
+
+  private
+
+  def connectToAllNeuronsInReceivingLayer(sendingNeuron, receivingLayer, args)
+    receivingLayer.each { |receivingNeuron| connect_neuron_to_neuron(sendingNeuron, receivingNeuron, args) }
+  end
+
+  def connect_neuron_to_neuron(inputNeuron, outputNeuron, args)
+    theLink = createLink(inputNeuron, outputNeuron, args)
+    inputNeuron.outputLinks << theLink
+    outputNeuron.inputLinks << theLink
+  end
+
+  def createLink(inputNeuron, outputNeuron, args)
+    typeOfLink = args[:typeOfLink] || Link
+    return typeOfLink.new(inputNeuron, outputNeuron, args)
+  end
+
+  def retrieveLinkBetween(aSendingNeuron, aReceivingNeuron)
+    outputLinks = aSendingNeuron.outputLinks
+    inputLinks = aReceivingNeuron.inputLinks
+    theCommonLink = findCommonLink(outputLinks, inputLinks)
+  end
+
+  def findCommonLink(outputLinks, inputLinks)
+    theCommonLink = outputLinks.find do |anOutputLink|
+      inputLinks.find { |anInputLink| anInputLink == anOutputLink }
+    end
+  end
+
+  def deleteCommonLinkBetweenNeurons(aSendingNeuron, aReceivingNeuron)
+    outputLinks = aSendingNeuron.outputLinks
+    inputLinks = aReceivingNeuron.inputLinks
+    deleteCommonLink(outputLinks, inputLinks)
+  end
+
+  def deleteCommonLink(outputLinks, inputLinks)
+    theCommonLink = outputLinks.find do |anOutputLink|
+      inputLinks.find { |anInputLink| anInputLink == anOutputLink }
+    end
+    outputLinks.delete(theCommonLink)
+    inputLinks.delete(theCommonLink)
+  end
+end
+
+
 ############################################################
 class BaseNetwork
   attr_accessor :args, :allNeuronLayers, :theBiasNeuron,
-                :inputLayer, :outputLayer,
+                :inputLayer, :outputLayer
 
-                def initialize(args)
-                  @args = args
-                  @allNeuronLayers = []
-                  NeuronBase.zeroID
-                  @theBiasNeuron = BiasNeuron.new(args)
-                  NeuronBase.zeroID
-                  createSimpleLearningANN
-                end
+  def initialize(args)
+    @args = args
+    @allNeuronLayers = []
+    NeuronBase.zeroID
+    @theBiasNeuron = BiasNeuron.new(args)
+    NeuronBase.zeroID
+    createSimpleLearningANN
+  end
 
   def createSimpleLearningANN
     createAllLayersOfNeurons()
@@ -49,6 +120,7 @@ class BaseNetwork
     connect_layer_to_another([theBiasNeuron], singleArrayOfAllNeuronsToReceiveBiasInput, args)
   end
 end # Base network
+
 
 class SimpleFlockingNeuronNetwork < BaseNetwork
 
@@ -84,23 +156,26 @@ end
 #
 #
 
-class NetworkRecorder
-  attr_accessor :network, :args, :measures
 
-  def initialize(network, args)
-    @network = network
-    @args = args
-    @measures = []
-    @trainingSequence = nil
-  end
+#class NetworkRecorder
+#  attr_accessor :network, :recordingSequencer, :args, :measures
+#
+#  def initialize(network, recordingSequencer, args)
+#    @network = network
+#    @recordingSequencer = recordingSequencer
+#    @args = args
+#    @measures = []
+#    @trainingSequence = args[:trainingSequence]
+#  end
+#
+#  def trainingSequence
+#    args[:trainingSequence]
+#  end
+#
+#  def recordResponses
+#    measures << {:mse => network.mse, :epochs => trainingSequence.epochs} if (trainingSequence.timeToRecordData)
+#  end
+#end
 
-  def trainingSequence
-    args[:trainingSequence]
-  end
-
-  def recordResponses
-    measures << {:mse => network.mse, :epochs => trainingSequence.epochs} if (trainingSequence.timeToRecordData)
-  end
-end
-
+############################################################
 

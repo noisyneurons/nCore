@@ -1,24 +1,15 @@
 ### VERSION "nCore"
 ## ../nCore/lib/core/TrainingSequencingAndGrouping.rb
 
-
-
 class TrainingSequence
-  attr_accessor :args, :epochs, :epochsInPhase1, :epochsInPhase2, :numberOfEpochsInCycle,
-                :maxNumberOfEpochs, :epochsSinceBeginningOfCycle, :status,
-                :stillMoreEpochs, :lastEpoch, :inPhase2, :inPhase1,
-                :atStartOfCycle, :atStartOfPhase1, :atStartOfPhase2,
-                :atStartOfTraining, :afterFirstEpoch, :dataStoreManager,
-                :tagDataSet, :epochDataSet, :numberOfEpochsBetweenStoringDBRecords
+  attr_accessor :args, :epochs, :maxNumberOfEpochs,
+                :stillMoreEpochs, :lastEpoch,
+                :atStartOfTraining, :afterFirstEpoch
 
   def initialize(args)
     @args = args
-    @dataStoreManager = args[:dataStoreManager]
     @maxNumberOfEpochs = args[:maxNumEpochs]
-    @numberOfEpochsBetweenStoringDBRecords = @args[:numberOfEpochsBetweenStoringDBRecords]
-
     @epochs = -1
-    @epochsSinceBeginningOfCycle = -1
     @atStartOfTraining = true
     @afterFirstEpoch = false
     @stillMoreEpochs = true
@@ -26,33 +17,26 @@ class TrainingSequence
     nextEpoch
   end
 
+  def epochs=(value)
+    @epochs = value
+    args[:epochs] = value
+  end
+
   def nextEpoch
     self.epochs += 1
     self.atStartOfTraining = false if (epochs > 0)
     self.afterFirstEpoch = true unless (atStartOfTraining)
-
-    self.epochsSinceBeginningOfCycle += 1
 
     self.lastEpoch = false
     self.lastEpoch = true if (epochs == (maxNumberOfEpochs - 1))
 
     self.stillMoreEpochs = true
     self.stillMoreEpochs = false if (epochs >= maxNumberOfEpochs)
-
-    dataStoreManager.epochNumber = epochs
-  end
-
-  def timeToRecordData
-    record = false
-    return if (epochs < 0)
-    record = true if ((epochs % numberOfEpochsBetweenStoringDBRecords) == 0)
-    record = true if lastEpoch
-    return record
   end
 end
 
-#####
 
+#####
 class AbstractNeuronGroups
   attr_accessor :allNeuronLayers, :allNeuronsInOneArray,
                 :inputLayer, :outputLayer,
@@ -74,6 +58,7 @@ class AbstractNeuronGroups
   end
 end
 
+
 class NeuronGroupsSimplest < AbstractNeuronGroups
   def nameTrainingGroups
     self.inputLayer = allNeuronLayers.first
@@ -84,4 +69,3 @@ class NeuronGroupsSimplest < AbstractNeuronGroups
     setUniversalNeuronGroupNames()
   end
 end
-

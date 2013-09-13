@@ -57,9 +57,6 @@ class Experiment
         :descriptionOfExperiment => descriptionOfExperiment,
         :rng => Random.new(randomNumberSeed),
 
-        :phase1Epochs => 10000,
-        :phase2Epochs => 0,
-
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.02,
         :minMSE => 0.0001,
@@ -111,41 +108,46 @@ examples = createTrainingSet(args)
 
 
 ######################## Create Network....
-network = SimpleFlockingNeuronNetwork.new(dataStoreManager, args)   # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
+network = SimpleFlockingNeuronNetwork.new(args)   # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
 
 ############################### train ...
 
 # theTrainer = SimpleAdjustableLearningRateTrainer.new(trainingSequence, network, args)
 theTrainer = TrainingSupervisor.new(examples, network, args)
 
-arrayOfNeuronsToPlot = nil
+
 lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors = theTrainer.train
 
-
-theTrainer.displayTrainingResults(arrayOfNeuronsToPlot)
-
-
-lastTestingMSE = nil
-# theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, accumulatedAbsoluteFlockingErrors)
-
-###################################### END of Main Learning ##########################################
+puts network
+puts "lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors"
+puts lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors
 
 
-puts "############ Include Example Numbers #############"
-4000.times do |epochNumber|
-  selectedData = FlockData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber,
-                                                                               neuron: 2}) }
-  puts "For epoch number=\t#{epochNumber}" unless (selectedData.empty?)
-
-  selectedData.each { |itemKey| puts FlockData.values(itemKey) } unless (selectedData.empty?)
-
-end
-puts "####################################"
-
-displayAndPlotResults(args, accumulatedAbsoluteFlockingErrors, dataStoreManager, lastEpoch, lastTestingMSE,
-                      lastTrainingMSE, network, theTrainer, trainingSequence)
-
-SnapShotData.new(descriptionOfExperiment, network, Time.now, lastEpoch, lastTrainingMSE, lastTestingMSE)
+# arrayOfNeuronsToPlot = nil
+#theTrainer.displayTrainingResults(arrayOfNeuronsToPlot)
+#
+#
+#lastTestingMSE = nil
+## theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, accumulatedAbsoluteFlockingErrors)
+#
+####################################### END of Main Learning ##########################################
+#
+#
+#puts "############ Include Example Numbers #############"
+#4000.times do |epochNumber|
+#  selectedData = FlockData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber,
+#                                                                               neuron: 2}) }
+#  puts "For epoch number=\t#{epochNumber}" unless (selectedData.empty?)
+#
+#  selectedData.each { |itemKey| puts FlockData.values(itemKey) } unless (selectedData.empty?)
+#
+#end
+#puts "####################################"
+#
+#displayAndPlotResults(args, accumulatedAbsoluteFlockingErrors, dataStoreManager, lastEpoch, lastTestingMSE,
+#                      lastTrainingMSE, network, theTrainer, trainingSequence)
+#
+SnapShotData.new(descriptionOfExperiment, network, Time.now, lastEpoch, lastTrainingMSE, lastTestingMSE = nil)
 
 selectedData = SnapShotData.lookup { |q| q[:experimentNumber_epochs].eq({experimentNumber: Experiment.number, epochs: lastEpoch}) }
 
@@ -159,8 +161,8 @@ unless (selectedData.empty?)
   end
 end
 
-FlockData.deleteData(Experiment.number)
-NeuronData.deleteData(Experiment.number)
+#FlockData.deleteData(Experiment.number)
+#NeuronData.deleteData(Experiment.number)
 
 experiment.save
 

@@ -18,88 +18,8 @@ $currentHost = if (theComputersName == "MakeASadSongMuchBetter")
 
 $redis = Redis.new(:host => $currentHost)
 
-def pushData(key, data)
-  $redis.rpush(key, YAML.dump(data))
-end
-
-def retrieveAllData(key)
-  veryLargeInteger = 999999999999
-  aListOfData = $redis.lrange(key, 0, veryLargeInteger)
-  aListOfData.collect { |aDataItem| YAML.load(aDataItem) }
-end
-
 
 ############################# MODULES ###########################
-
-module NeuronToNeuronConnection
-  def connect_layer_to_another(sendingLayer, receivingLayer, args)
-    sendingLayer.each { |sendingNeuron| connectToAllNeuronsInReceivingLayer(sendingNeuron, receivingLayer, args) }
-  end
-
-  def createArrayOfNeurons(typeOfNeuron, numberOfNeurons, args)
-    Array.new(numberOfNeurons) { |i| typeOfNeuron.new(args) }
-  end
-
-  def retrieveLinksBetweenGroupsOfNeurons(sendingLayer, receivingLayer)
-    arrayOfCommonLinks = sendingLayer.collect do |aSendingNeuron|
-      receivingLayer.collect do |aReceivingNeuron|
-        retrieveLinkBetween(aSendingNeuron, aReceivingNeuron)
-      end
-    end
-    return arrayOfCommonLinks.flatten.compact
-  end
-
-  def disconnect_one_layer_from_another(sendingLayer, receivingLayer)
-    sendingLayer.each do |aSendingNeuron|
-      receivingLayer.each do |aReceivingNeuron|
-        deleteCommonLinkBetweenNeurons(aSendingNeuron, aReceivingNeuron)
-      end
-    end
-  end
-
-  private
-
-  def connectToAllNeuronsInReceivingLayer(sendingNeuron, receivingLayer, args)
-    receivingLayer.each { |receivingNeuron| connect_neuron_to_neuron(sendingNeuron, receivingNeuron, args) }
-  end
-
-  def connect_neuron_to_neuron(inputNeuron, outputNeuron, args)
-    theLink = createLink(inputNeuron, outputNeuron, args)
-    inputNeuron.outputLinks << theLink
-    outputNeuron.inputLinks << theLink
-  end
-
-  def createLink(inputNeuron, outputNeuron, args)
-    typeOfLink = args[:typeOfLink] || Link
-    return typeOfLink.new(inputNeuron, outputNeuron, args)
-  end
-
-  def retrieveLinkBetween(aSendingNeuron, aReceivingNeuron)
-    outputLinks = aSendingNeuron.outputLinks
-    inputLinks = aReceivingNeuron.inputLinks
-    theCommonLink = findCommonLink(outputLinks, inputLinks)
-  end
-
-  def findCommonLink(outputLinks, inputLinks)
-    theCommonLink = outputLinks.find do |anOutputLink|
-      inputLinks.find { |anInputLink| anInputLink == anOutputLink }
-    end
-  end
-
-  def deleteCommonLinkBetweenNeurons(aSendingNeuron, aReceivingNeuron)
-    outputLinks = aSendingNeuron.outputLinks
-    inputLinks = aReceivingNeuron.inputLinks
-    deleteCommonLink(outputLinks, inputLinks)
-  end
-
-  def deleteCommonLink(outputLinks, inputLinks)
-    theCommonLink = outputLinks.find do |anOutputLink|
-      inputLinks.find { |anInputLink| anInputLink == anOutputLink }
-    end
-    outputLinks.delete(theCommonLink)
-    inputLinks.delete(theCommonLink)
-  end
-end
 
 module OS
   def OS.windows?
@@ -116,38 +36,6 @@ module OS
 
   def OS.linux?
     OS.unix? and not OS.mac?
-  end
-end
-
-############################# DATA GENERATION ###########################
-
-class DataGenerator
-  attr_reader :arrayOfExamples
-
-  def initialize(arrayOf2DInputSeedArrays, numberOfExamplesPerClass = 1, increment = 1.0)
-    numberOfClasses = arrayOf2DInputSeedArrays.length
-    @arrayOfExamples = []
-    arrayOf2DInputSeedArrays.each_with_index do |seedArray, indexToOutputDimensionToSet|
-      anExample = nil
-      inputs = seedArray.clone
-      numberOfExamplesPerClass.times do |i|
-        outputs = Array.new(numberOfClasses) { 0.0 }
-        outputs[indexToOutputDimensionToSet] = 1.0
-        anExample = Example.new(inputs, outputs)
-        @arrayOfExamples << anExample
-        inputs = inputs.clone
-        inputs[1] += increment
-      end
-    end
-  end
-
-  def arrayOfExamples
-    @arrayOfExamples.each_with_index do |anExample, exampleNumber|
-      inputs = anExample[0]
-      outputs = anExample[1]
-      puts "#{exampleNumber}\tinputs= #{inputs};\toutputs= #{outputs};"
-    end
-    return @arrayOfExamples
   end
 end
 
@@ -179,34 +67,6 @@ def periodicallyDisplayContentsOfHash(hashWithData, epochNumber, interval)
   end
 end
 
-################## ExampleList ROTATION of 2-D Inputs ###########################
-
-def extractArrayOfExampleInputVectors(exampleList)
-  arrayOfInputRows = []
-  exampleList.each do |inputTarget|
-    inputRow = inputTarget[0]
-    arrayOfInputRows << inputRow
-  end
-  return arrayOfInputRows
-end
-
-def reconstructExampleListUsingNewInputs(originalExampleList, rotatedMatrix)
-  arrayOfInputs = rotatedMatrix.to_a
-  originalExampleList.each_with_index do |example, exampleNumber|
-    example[0] = arrayOfInputs[exampleNumber]
-  end
-  return originalExampleList
-end
-
-def createRotationMatrix(angleInDegrees) # for CLOCKWISE Rotations!!
-  angleInRadians = angleInDegrees * ((2.0*Math::PI)/360.0)
-  s = Math.sin(angleInRadians)
-  c = Math.cos(angleInRadians)
-  # puts "angleInRadians= #{angleInRadians}\ts= #{s}\tc= #{c}\t    "
-  rotationMatrix = Matrix[[c, -s], [s, c]]
-  # puts "rotationMatrix= #{rotationMatrix} "
-  return rotationMatrix
-end
 
 
 #TODO Subclass Vector and add these methods to the subclass
