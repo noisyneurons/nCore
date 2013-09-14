@@ -31,11 +31,9 @@ class DataXfer
   def initialize(objectToGetDataFrom, objectToReceiveData, recordingSequencer)
     @objectToGetDataFrom = objectToGetDataFrom
     @objectToReceiveData = objectToReceiveData
-    @recordingSequencer  = recordingSequencer
+    @recordingSequencer = recordingSequencer
   end
 end
-
-
 
 
 module RecordingAndPlottingRoutines
@@ -126,7 +124,6 @@ module RecordingAndPlottingRoutines
 end
 
 
-
 class Experiment
   attr_reader :descriptionOfExperiment, :args
 
@@ -210,54 +207,47 @@ class SnapShotData
 end
 
 
-class FlockData
+class DetailedNeuronData
   include Relix
   Relix.host = $currentHost
-  attr_accessor :id, :experimentNumber, :epochs, :neuron, :exampleNumber, :netInputs, :flockErrors
+  attr_accessor :id, :experimentNumber, :epochs, :neuron, :exampleNumber
 
   relix do
-    primary_key :flockDataKey
-    multi :experimentNumber_epochs_neuron, on: %w(experimentNumber epochs neuron)
+    primary_key :detailedNeuronDataKey
+    multi :experimentNumber_epochs_neuron_exampleNumber, on: %w(experimentNumber epochs neuron exampleNumber)
     multi :experimentNumber, index_values: true
   end
 
   @@ID = 0
 
-  def FlockData.values(key)
+  def DetailedNeuronData.values(key)
     redisKey = key
     $redis.get(redisKey)
   end
 
-  def FlockData.deleteData(experimentNumber)
-    ary = $redis.keys("FD#{experimentNumber}*")
+  def DetailedNeuronData.deleteData(experimentNumber)
+    ary = $redis.keys("DND#{experimentNumber}*")
     ary.each { |item| $redis.del(item) }
   end
 
-  def FlockData.deleteEntireIndex!
-    ary = $redis.keys("FlockData*")
+  def DetailedNeuronData.deleteEntireIndex!
+    ary = $redis.keys("DetailedNeuronData*")
     ary.each { |item| $redis.del(item) }
   end
 
-  def initialize(epochs, neuron, exampleNumber, netInputs=1, flockErrors=1)
+  def initialize(detailedNeuronDataToRecord)
     @id = @@ID
     @@ID += 1
     @experimentNumber = Experiment.number
-    @epochs = epochs
-    @neuron = neuron
-    @netInputs = netInputs
-    @flockErrors = flockErrors
-    @exampleNumber = exampleNumber
-
-    theData = {:experimentNumber => experimentNumber, :epochs => epochs, :neuron => neuron,
-               :exampleNumber => exampleNumber, :netInputs => netInputs, :flockErrors => flockErrors}
-
-    $redis.set(flockDataKey, theData)
-
+    @epochs = detailedNeuronDataToRecord[:epochs]
+    @neuron = detailedNeuronDataToRecord[:neuronID]
+    @exampleNumber = detailedNeuronDataToRecord[:exampleNumber]
+    $redis.set(detailedNeuronDataKey, detailedNeuronDataToRecord)
     index!
   end
 
-  def flockDataKey
-    "FD#{experimentNumber}.#{id}"
+  def detailedNeuronDataKey
+    "DND#{experimentNumber}.#{id}"
   end
 end
 
@@ -294,13 +284,40 @@ class NeuronData
     @@ID += 1
     @experimentNumber = Experiment.number
     @neuron = neuronDataToRecord[:neuronID]
-    @epochs = neuronDataToRecord[:epochNumber]
+    @epochs = neuronDataToRecord[:epochs]
     $redis.set(neuronDataKey, neuronDataToRecord)
     index!
   end
 
   def neuronDataKey
     "ND#{experimentNumber}.#{id}"
+  end
+end
+
+
+module DBAccess
+
+  def dbStoreData
+    savingInterval = args[intervalForSavingNeuronData]
+    if recordOrNot?(savingInterval)
+      tempDataHash = dataToRecord()
+      tempDataHash[:epochs] = arg[epochs]
+      NeuronData.new(tempDataHash)
+    end
+  end
+
+  def dbStoreDetailedData
+    savingInterval = args[intervalForSavingDetailedNeuronData]
+    if recordOrNot?(savingInterval)
+      tempDataHash = dataToRecord()
+      tempDataHash[:epochs] = arg[epochs]
+      DetailedNeuronData.new(tempDataHash)
+    end
+  end
+
+  def recordOrNot?(recordingInterval)
+    epochs = args[epochs]
+    return ((epochs % recordingInterval) == 0)
   end
 end
 
@@ -318,7 +335,7 @@ class SimulationDataStoreManager
   end
 
   def deleteDataForExperiment(experimentNumber)
-    FlockData.deleteData(experimentNumber)
+    DetailedNeuronData.deleteData(experimentNumber)
     NeuronData.deleteData(experimentNumber)
   end
 end

@@ -129,11 +129,11 @@ lastTestingMSE = nil
 
 puts "############ Include Example Numbers #############"
 4000.times do |epochNumber|
-  selectedData = FlockData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber,
+  selectedData = DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber,
                                                                                neuron: 2}) }
   puts "For epoch number=\t#{epochNumber}" unless (selectedData.empty?)
 
-  selectedData.each { |itemKey| puts FlockData.values(itemKey) } unless (selectedData.empty?)
+  selectedData.each { |itemKey| puts DetailedNeuronData.values(itemKey) } unless (selectedData.empty?)
 
 end
 puts "####################################"
@@ -155,7 +155,7 @@ unless (selectedData.empty?)
   end
 end
 
-FlockData.deleteData(Experiment.number)
+DetailedNeuronData.deleteData(Experiment.number)
 NeuronData.deleteData(Experiment.number)
 
 experiment.save

@@ -36,7 +36,7 @@ class SimpleAdjustableLearningRateTrainer
       dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
       dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
       epochs = args[:trainingSequence].epochs
-      FlockData.new(args[:trainingSequence].epochs, aNeuron.id, exampleNumber, dataRecord[:netInput], dataRecord[:localFlockingError]) if(epochs % 100 == 0)
+      DetailedNeuronData.new(args[:trainingSequence].epochs, aNeuron.id, exampleNumber, dataRecord[:netInput], dataRecord[:localFlockingError]) if(epochs % 100 == 0)
       # print "#{dataRecord[:netInput]},\t#{dataRecord[:localFlockingError]};\t"
       aNeuron.calcAccumDeltaWsForLocalFlocking
     end
