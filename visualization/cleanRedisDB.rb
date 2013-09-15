@@ -5,13 +5,14 @@ require_relative '../lib/core/SimulationDataStore'
 # Notes: MakeASadSongMuchBetter (:host => "192.168.1.131", :port => 8765) Wireless
 
 # redis = Redis.new(host => "localhost", :port => 8765)
-redis = Redis.new
+$redis = Redis.new
 
-dataStore = SimulationDataStoreManager.create
-dataStore.deleteTemporaryTables
-
-experimentNumber =  redis.get("experimentNumber")
+experimentNumber =  $redis.get("experimentNumber")
 puts "\nNext Experiment Number=\t #{experimentNumber}"
+
+dataStore = SimulationDataStoreManager.new
+dataStore.deleteAllDataAndIndexesExceptSnapShot!
+
 
 selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
 unless (selectedData.empty?)
@@ -26,5 +27,5 @@ unless (selectedData.empty?)
   puts "################################################################################################################################################## \n\n"
 end
 
-arrayOfKeys = redis.keys("*")
+arrayOfKeys = $redis.keys("*")
 puts "Remaining Keys in Redis database after selective deletion: #{arrayOfKeys}"

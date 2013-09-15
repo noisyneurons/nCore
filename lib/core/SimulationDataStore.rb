@@ -4,37 +4,37 @@
 require_relative 'Utilities'
 
 
-class DataRecordingSequencer
-  attr_accessor :args, :maxNumberOfEpochs, :lastEpoch
-
-  def initialize(args)
-    @args = args
-    @numberOfEpochsBetweenStoringDBRecords = @args[:numberOfEpochsBetweenStoringDBRecords]
-    @maxNumberOfEpochs = args[:maxNumEpochs]
-    @lastEpoch = false
-  end
-
-  def timeToRecordData
-    epochs = args[epochs]
-    record = false
-    return if (epochs < 0)
-    record = true if ((epochs % numberOfEpochsBetweenStoringDBRecords) == 0)
-    record = true if lastEpoch
-    return record
-  end
-end
-
-
-class DataXfer
-  attr_accessor :objectToGetDataFrom, :objectToReceiveData, :recordingSequencer
-
-  def initialize(objectToGetDataFrom, objectToReceiveData, recordingSequencer)
-    @objectToGetDataFrom = objectToGetDataFrom
-    @objectToReceiveData = objectToReceiveData
-    @recordingSequencer = recordingSequencer
-  end
-end
-
+#class DataRecordingSequencer
+#  attr_accessor :args, :maxNumberOfEpochs, :lastEpoch
+#
+#  def initialize(args)
+#    @args = args
+#    @numberOfEpochsBetweenStoringDBRecords = @args[:numberOfEpochsBetweenStoringDBRecords]
+#    @maxNumberOfEpochs = args[:maxNumEpochs]
+#    @lastEpoch = false
+#  end
+#
+#  def timeToRecordData
+#    epochs = args[epochs]
+#    record = false
+#    return if (epochs < 0)
+#    record = true if ((epochs % numberOfEpochsBetweenStoringDBRecords) == 0)
+#    record = true if lastEpoch
+#    return record
+#  end
+#end
+#
+#
+#class DataXfer
+#  attr_accessor :objectToGetDataFrom, :objectToReceiveData, :recordingSequencer
+#
+#  def initialize(objectToGetDataFrom, objectToReceiveData, recordingSequencer)
+#    @objectToGetDataFrom = objectToGetDataFrom
+#    @objectToReceiveData = objectToReceiveData
+#    @recordingSequencer = recordingSequencer
+#  end
+#end
+#
 
 module RecordingAndPlottingRoutines
 
@@ -138,7 +138,7 @@ class Experiment
   #  $redis.del("experimentNumber")
   #end
 
-  def initialize(experimentDescription)
+  def initialize(experimentDescription = nil)
     $redis.incr("experimentNumber")
     @descriptionOfExperiment = descriptionOfExperiment
   end
@@ -296,40 +296,40 @@ end
 
 
 module DBAccess
+  def storeDataInDB
+    dbStoreData
+    dbStoreDetailedData
+  end
 
   def dbStoreData
-    savingInterval = args[intervalForSavingNeuronData]
+    savingInterval = args[:intervalForSavingNeuronData]
     if recordOrNot?(savingInterval)
-      tempDataHash = dataToRecord()
-      tempDataHash[:epochs] = arg[epochs]
-      NeuronData.new(tempDataHash)
+      aHash = metricRecorder.dataToRecord
+      aHash[:epochs] = args[:epochs]
+      NeuronData.new(aHash)
     end
   end
 
   def dbStoreDetailedData
-    savingInterval = args[intervalForSavingDetailedNeuronData]
+    savingInterval = args[:intervalForSavingDetailedNeuronData]
     if recordOrNot?(savingInterval)
-      tempDataHash = dataToRecord()
-      tempDataHash[:epochs] = arg[epochs]
-      DetailedNeuronData.new(tempDataHash)
+      aHash = metricRecorder.dataToRecord
+      aHash[:epochs] = args[:epochs]
+      DetailedNeuronData.new(aHash)
     end
   end
 
   def recordOrNot?(recordingInterval)
-    epochs = args[epochs]
+    epochs = args[:epochs]
     return ((epochs % recordingInterval) == 0)
   end
 end
 
 
 class SimulationDataStoreManager
-  attr_accessor :args, :epochNumber
+  attr_accessor :args
 
-  def SimulationDataStoreManager.instance
-    return @@dataStoreManager
-  end
-
-  def initialize(args)
+  def initialize(args={})
     @args = args
     @epochNumber = nil
   end
@@ -337,6 +337,15 @@ class SimulationDataStoreManager
   def deleteDataForExperiment(experimentNumber)
     DetailedNeuronData.deleteData(experimentNumber)
     NeuronData.deleteData(experimentNumber)
+  end
+
+  def deleteAllDataAndIndexesExceptSnapShot!
+    nextExperimentNumber = $redis.get("experimentNumber")
+    (1...nextExperimentNumber.to_i).each do |experimentNumber|
+      deleteDataForExperiment(experimentNumber)
+    end
+    DetailedNeuronData.deleteEntireIndex!
+    NeuronData.deleteEntireIndex!
   end
 end
 

@@ -18,15 +18,23 @@ currentHost = "localhost"
 $redis = Redis.new(:host => currentHost)
 
 experimentNumber =  $redis.get("experimentNumber")
-puts "\nNext Experiment Number=\t #{experimentNumber}"
+puts "Next Experiment Number=\t #{experimentNumber}\n\n"
 
 arrayOfKeys = $redis.keys("SSD*")
-puts "Number of Keys in Redis database: #{arrayOfKeys.length}"
-
-puts "\n\nSnap Shot Keys in Redis database: #{arrayOfKeys}"
+puts "Number of 'Snap Shot Keys' in Redis database: #{arrayOfKeys.length}"
+puts "Snap Shot Keys in Redis database: #{arrayOfKeys}\n\n"
 
 #arrayOfKeys.each do |aKey|
 #  puts "\n\nSnap Shot Key:\t#{arrayOfKeys}\tValue=\t#{$redis.get(aKey)}"
 #end
+
+arrayOfKeys = $redis.keys("ND*")
+puts "Number of 'NeuronData Keys' in Redis database: #{arrayOfKeys.length}"
+puts "NeuronData Keys in Redis database: #{arrayOfKeys}\n\n"
+
+
+arrayOfKeys = $redis.keys("DND*")
+puts "Number of 'DetailedNeuronData Keys' in Redis database: #{arrayOfKeys.length}"
+puts "NeuronData Keys in Redis database: #{arrayOfKeys}\n\n"
 
 

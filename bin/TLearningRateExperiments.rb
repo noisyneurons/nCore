@@ -18,6 +18,16 @@ require_relative '../lib/core/Trainers.rb'
 require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 
 
+class Neuron
+  include DBAccess
+end
+
+class OutputNeuron
+  include DBAccess
+end
+
+
+
 def createTrainingSet(args)
   include ExampleDistribution
   examples = []
@@ -73,7 +83,8 @@ class Experiment
         :numberOfExamples => numberOfExamples,
 
         # Recording and database parameters
-        :numberOfEpochsBetweenStoringDBRecords => 100,
+        :intervalForSavingNeuronData => 100,
+        :intervalForSavingDetailedNeuronData => 1000,
 
         # Flocking Parameters...
         :flockingLearningRate => -0.002,

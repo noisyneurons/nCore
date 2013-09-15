@@ -41,13 +41,6 @@ module FlockingDecisionRoutines # TODO If one neuron does NOT meet criteria, all
   end
 end
 
-
-module DBStorage
-
-
-end
-
-
 ###########...
 
 class AbstractStepTrainer
@@ -216,6 +209,8 @@ class FlockStepTrainer < AbstractStepTrainer
                                         else
                                           adaptToLocalFlockError()
                                         end
+    adaptingNeurons.each { |aNeuron| aNeuron.storeDataInDB }
+    return accumulatedAbsoluteFlockingErrors
   end
 
   def logNetworksResponses(neurons)
