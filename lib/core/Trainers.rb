@@ -140,6 +140,7 @@ class AbstractStepTrainer
       adaptingNeurons.each do |aNeuron|
         dataRecord = aNeuron.recordResponsesForExample
         yield(aNeuron, dataRecord, exampleNumber)
+        aNeuron.dbStoreDetailedData
       end
     end
   end
@@ -209,7 +210,7 @@ class FlockStepTrainer < AbstractStepTrainer
                                         else
                                           adaptToLocalFlockError()
                                         end
-    adaptingNeurons.each { |aNeuron| aNeuron.storeDataInDB }
+    adaptingNeurons.each { |aNeuron| aNeuron.dbStoreData }
     return accumulatedAbsoluteFlockingErrors
   end
 

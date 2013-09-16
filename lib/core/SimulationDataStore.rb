@@ -4,38 +4,6 @@
 require_relative 'Utilities'
 
 
-#class DataRecordingSequencer
-#  attr_accessor :args, :maxNumberOfEpochs, :lastEpoch
-#
-#  def initialize(args)
-#    @args = args
-#    @numberOfEpochsBetweenStoringDBRecords = @args[:numberOfEpochsBetweenStoringDBRecords]
-#    @maxNumberOfEpochs = args[:maxNumEpochs]
-#    @lastEpoch = false
-#  end
-#
-#  def timeToRecordData
-#    epochs = args[epochs]
-#    record = false
-#    return if (epochs < 0)
-#    record = true if ((epochs % numberOfEpochsBetweenStoringDBRecords) == 0)
-#    record = true if lastEpoch
-#    return record
-#  end
-#end
-#
-#
-#class DataXfer
-#  attr_accessor :objectToGetDataFrom, :objectToReceiveData, :recordingSequencer
-#
-#  def initialize(objectToGetDataFrom, objectToReceiveData, recordingSequencer)
-#    @objectToGetDataFrom = objectToGetDataFrom
-#    @objectToReceiveData = objectToReceiveData
-#    @recordingSequencer = recordingSequencer
-#  end
-#end
-#
-
 module RecordingAndPlottingRoutines
 
   def storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, dPrimes)
@@ -51,7 +19,7 @@ module RecordingAndPlottingRoutines
   end
 
   def oneForwardPassEpoch(testingExamples)
-    trainingExamples = examples
+    trainingExamples = args[:examples]
     distributeSetOfExamples(testingExamples)
     testMSE = measureNeuralResponsesForTesting
     distributeSetOfExamples(trainingExamples) # restore training examples
@@ -59,7 +27,7 @@ module RecordingAndPlottingRoutines
   end
 
   def getZeroXingExampleSet(theNeuron)
-    trainingExamples = examples
+    trainingExamples = args[:examples]
     minX1 = -4.0
     maxX1 = 4.0
     numberOfTrials = 100
@@ -296,16 +264,13 @@ end
 
 
 module DBAccess
-  def storeDataInDB
-    dbStoreData
-    dbStoreDetailedData
-  end
-
   def dbStoreData
     savingInterval = args[:intervalForSavingNeuronData]
     if recordOrNot?(savingInterval)
       aHash = metricRecorder.dataToRecord
+      aHash.delete(:exampleNumber)
       aHash[:epochs] = args[:epochs]
+      aHash[:accumulatedAbsoluteFlockingError] = accumulatedAbsoluteFlockingError
       NeuronData.new(aHash)
     end
   end
@@ -323,6 +288,23 @@ module DBAccess
     epochs = args[:epochs]
     return ((epochs % recordingInterval) == 0)
   end
+
+  #  def timeToRecordData
+  #    epochs = args[epochs]
+  #    record = false
+  #    return if (epochs < 0)
+  #    record = true if ((epochs % numberOfEpochsBetweenStoringDBRecords) == 0)
+  #    record = true if lastEpoch
+  #    return record
+  #  end
+end
+
+class Neuron
+  include DBAccess
+end
+
+class OutputNeuron
+  include DBAccess
 end
 
 
@@ -331,7 +313,6 @@ class SimulationDataStoreManager
 
   def initialize(args={})
     @args = args
-    @epochNumber = nil
   end
 
   def deleteDataForExperiment(experimentNumber)
