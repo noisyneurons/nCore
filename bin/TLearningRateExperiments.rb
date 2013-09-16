@@ -111,10 +111,9 @@ examples = createTrainingSet(args)
 network = SimpleFlockingNeuronNetwork.new(args) # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
 
 ############################### train ...
-
-# theTrainer = SimpleAdjustableLearningRateTrainer.new(trainingSequence, network, args)
 theTrainer = TrainingSupervisor.new(examples, network, args)
 
+startingTime = Time.now
 lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors = theTrainer.train
 
 puts network
@@ -132,6 +131,25 @@ puts lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors
 ####################################### END of Main Learning ##########################################
 #
 #
+
+#
+#displayAndPlotResults(args, accumulatedAbsoluteFlockingErrors, dataStoreManager, lastEpoch, lastTestingMSE,
+#                      lastTrainingMSE, network, theTrainer, trainingSequence)
+#
+
+puts "############ SnapShotData #############"
+dataToStoreLongTerm = {:experimentNumber => Experiment.number,
+                       :descriptionOfExperiment => descriptionOfExperiment,
+                       :network => network.to_s,
+                       :time => Time.now,
+                       :elapsedTime => (Time.now - startingTime),
+                       :epochs => lastEpoch,
+                       :trainMSE => lastTrainingMSE,
+                       :testMSE => nil,
+                       :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors
+}
+SnapShotData.new(dataToStoreLongTerm)
+
 puts "############ NeuronData #############"
 4000.times do |epochNumber|
   selectedData = NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber, neuron: 2}) }
@@ -148,12 +166,6 @@ puts "\n\n############ DetailedNeuronData #############"
   end
 end
 
-#
-#displayAndPlotResults(args, accumulatedAbsoluteFlockingErrors, dataStoreManager, lastEpoch, lastTestingMSE,
-#                      lastTrainingMSE, network, theTrainer, trainingSequence)
-#
-
-SnapShotData.new(descriptionOfExperiment, network, Time.now, lastEpoch, lastTrainingMSE, lastTestingMSE = nil)
 # selectedData = SnapShotData.lookup { |q| q[:experimentNumber_epochs].eq({experimentNumber: Experiment.number, epochs: lastEpoch}) }
 selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
 unless (selectedData.empty?)

@@ -145,27 +145,13 @@ class SnapShotData
     ary.each { |item| $redis.del(item) }
   end
 
-  def initialize(descriptionOfExperiment, network, time, epochs, trainMSE, testMSE = 0.0)
+  def initialize(dataToRecord)
     @id = @@ID
     @@ID += 1
-    @experimentNumber = Experiment.number
+    @experimentNumber = dataToRecord[:experimentNumber]
+    @epochs = dataToRecord[:epochs]
 
-    @descriptionOfExperiment = descriptionOfExperiment
-    @network = network.to_s
-    @time = time
-    @epochs = epochs
-    @trainMSE = trainMSE
-    @testMSE = testMSE
-
-    theData = {:experimentNumber => experimentNumber, :descriptionOfExperiment => descriptionOfExperiment,
-               :network => network.to_s,
-               :time => time,
-               :epochs => epochs,
-               :trainMSE => trainMSE,
-               :testMSE => testMSE
-    }
-
-    $redis.set(dataKey, YAML.dump(theData))
+    $redis.set(dataKey, YAML.dump(dataToRecord))
     index!
   end
 
