@@ -3,7 +3,6 @@
 # Purpose:  To quantitatively explore the simplest clustering w/o supervision.
 # This is a simplified and significantly reorganized version of 'Phase1Phase2MultiCycle.rb'
 
-
 require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
 require_relative '../lib/core/NeuralParts'
@@ -75,6 +74,7 @@ class Experiment
         # Recording and database parameters
         :intervalForSavingNeuronData => 100,
         :intervalForSavingDetailedNeuronData => 1000,
+        :intervalForSavingTrainingData => 100,
 
         # Flocking Parameters...
         :flockingLearningRate => -0.002,
@@ -123,31 +123,18 @@ puts lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors
 
 #arrayOfNeuronsToPlot = network.outputLayer
 #theTrainer.displayTrainingResults(arrayOfNeuronsToPlot)
-
-
-#lastTestingMSE = nil
 ## theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, accumulatedAbsoluteFlockingErrors)
-#
-####################################### END of Main Learning ##########################################
-#
-#
-
-#
 #displayAndPlotResults(args, accumulatedAbsoluteFlockingErrors, dataStoreManager, lastEpoch, lastTestingMSE,
-#                      lastTrainingMSE, network, theTrainer, trainingSequence)
-#
 
 puts "############ SnapShotData #############"
-dataToStoreLongTerm = {:experimentNumber => Experiment.number,
-                       :descriptionOfExperiment => descriptionOfExperiment,
-                       :network => network.to_s,
-                       :time => Time.now,
-                       :elapsedTime => (Time.now - startingTime),
-                       :epochs => lastEpoch,
-                       :trainMSE => lastTrainingMSE,
-                       :testMSE => nil,
+
+lastTestingMSE = nil
+dataToStoreLongTerm = {:experimentNumber => Experiment.number, :descriptionOfExperiment => descriptionOfExperiment,
+                       :network => network.to_s, :time => Time.now, :elapsedTime => (Time.now - startingTime),
+                       :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE,
                        :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors
 }
+
 SnapShotData.new(dataToStoreLongTerm)
 
 puts "############ NeuronData #############"

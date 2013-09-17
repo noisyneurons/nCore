@@ -55,7 +55,7 @@ class AbstractStepTrainer
                 :neuronsWithInputLinksInReverseOrder, :adaptingNeurons,
                 :neuronsWhoseClustersNeedToBeSeeded,
 
-                :maxFlockingIterationsCount, :flockingIterationsCount,
+                :maxFlockingIterationsCount, :flockingIterationsCount, :accumulatedAbsoluteFlockingErrors,
                 :accumulatedExampleImportanceFactors, :absFlockingErrorsOld
 
 
@@ -196,10 +196,9 @@ class FlockStepTrainer < AbstractStepTrainer
     accumulatedAbsoluteFlockingErrors = []
     trials.times do
       accumulatedAbsoluteFlockingErrors = innerTrainingLoop(accumulatedAbsoluteFlockingErrors)
-      logNetworksResponses(adaptingNeurons)
+      #dbStoreTrainingData
       trainingSequence.nextEpoch
     end
-
     return calcMSE, accumulatedAbsoluteFlockingErrors
   end
 
@@ -210,12 +209,8 @@ class FlockStepTrainer < AbstractStepTrainer
                                         else
                                           adaptToLocalFlockError()
                                         end
-    adaptingNeurons.each { |aNeuron| aNeuron.dbStoreData }
+    adaptingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
     return accumulatedAbsoluteFlockingErrors
-  end
-
-  def logNetworksResponses(neurons)
-#    neurons.each { |aNeuron| aNeuron.recordResponsesForEpoch } if (neurons.present?)
   end
 end
 

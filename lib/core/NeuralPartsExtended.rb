@@ -5,7 +5,6 @@ require_relative 'Utilities'
 require_relative 'NeuralParts'
 require_relative 'WeightedClustering'
 
-
 ############################################################
 module CommonNeuronCalculations
   def recordResponsesForEpoch
@@ -209,7 +208,6 @@ class FlockingLink < Link
 end
 
 ############################################################
-
 
 class FlockingNeuronRecorder < NeuronRecorder # TODO Need to separate into 2 classes the two concerns currently handled by this class: reporting vs. getting info for 'clusterAllResponses'
   attr_accessor :trainingSequence, :exampleDataSet, :epochDataSet, :dataStoreManager, :exampleVectorLength

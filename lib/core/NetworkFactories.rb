@@ -73,7 +73,6 @@ module NeuronToNeuronConnection
   end
 end
 
-
 ############################################################
 class BaseNetwork
   attr_accessor :args, :allNeuronLayers, :theBiasNeuron,
@@ -120,7 +119,6 @@ class BaseNetwork
     connect_layer_to_another([theBiasNeuron], singleArrayOfAllNeuronsToReceiveBiasInput, args)
   end
 end # Base network
-
 
 class SimpleFlockingNeuronNetwork < BaseNetwork
 

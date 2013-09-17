@@ -4,6 +4,20 @@
 require_relative 'Utilities'
 
 
+def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
+    lastTestingMSE, lastTrainingMSE, network, theTrainer, trainingSequence)
+  puts network
+  puts "Elapsed Time=\t#{theTrainer.elapsedTime}"
+  puts "\tAt Epoch #{trainingSequence.epochs}"
+  puts "\tAt Epoch #{lastEpoch}"
+  puts "\t\tThe Network's Training MSE=\t#{lastTrainingMSE}\t and TEST MSE=\t#{lastTestingMSE}\n"
+  puts "\t\t\tThe dPrime(s) at the end of training are: #{dPrimes}"
+
+#############################  plotting and visualization....
+  plotMSEvsEpochNumber(network)
+end
+
+
 module RecordingAndPlottingRoutines
 
   def storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, dPrimes)
@@ -250,7 +264,7 @@ end
 
 
 module DBAccess
-  def dbStoreData
+  def dbStoreNeuronData
     savingInterval = args[:intervalForSavingNeuronData]
     if recordOrNot?(savingInterval)
       aHash = metricRecorder.dataToRecord
@@ -267,6 +281,14 @@ module DBAccess
       aHash = metricRecorder.dataToRecord
       aHash[:epochs] = args[:epochs]
       DetailedNeuronData.new(aHash)
+    end
+  end
+
+  def dbStoreTrainingData
+    savingInterval = args[:intervalForSavingTrainingData]
+    if recordOrNot?(savingInterval)
+      aHash = {:epochs => args[:epochs], :mse => calcMSE, :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors}
+      TrainingData.new(aHash)
     end
   end
 
@@ -293,6 +315,9 @@ class OutputNeuron
   include DBAccess
 end
 
+class AbstractStepTrainer
+  include DBAccess
+end
 
 class SimulationDataStoreManager
   attr_accessor :args

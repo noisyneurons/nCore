@@ -4,7 +4,6 @@
 require_relative '../core/Utilities'
 require_relative '../../../rgplot/lib/gnuplotMOD'
 
-
 # NOTES:
 
 # POINT SIZE AND TYPE
@@ -24,14 +23,6 @@ def plotMSEvsEpochNumber(aLearningNetwork)
   x = mseVsEpochMeasurements.collect { |aMeasure| aMeasure[:epochs] }
   y = mseVsEpochMeasurements.collect { |aMeasure| aMeasure[:mse] }
 
-  #puts
-  #puts "#{Dir.pwd}/../../plots/xyPlot"
-  #puts
-  #puts "working directory= \t#{Dir.pwd}"
-  #aValue = File.expand_path File.dirname(__FILE__)
-  #puts "working directory= \t#{aValue}"
-  ## aPlotter = Plotter.new(title="Training Error", "Number of Epochs", "Error on Training Set", plotOutputFilenameBase = "/home/mark/Code/Ruby/NN2012/plots/xyPlot")
-
   aPlotter = Plotter.new(title="Training Error", "Number of Epochs", "Error on Training Set", plotOutputFilenameBase = "#{Dir.home}/Code/Ruby/NN2012/plots/xyPlot")
   aPlotter.plot(x, y)
 end
@@ -41,7 +32,6 @@ def plotDotsWhereOutputGtPt5(x, y, aNeuron, epochNumber)
 #  aPlotter = Plotter.new(title="Zero Xing for Neuron #{aNeuron.id} at epoch #{epochNumber}", "input 0", "input 1", plotOutputFilenameBase = "/home/mark/Code/Ruby/NN2012/plots/zeroXingPlot_N#{aNeuron.id}_E#{epochNumber}")
   aPlotter.plot(x, y)
 end
-
 
 ############ ORIGINAL Plotting Section (uses a specialized library) #########################
 class Plotter
