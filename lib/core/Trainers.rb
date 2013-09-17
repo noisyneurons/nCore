@@ -99,7 +99,7 @@ class AbstractStepTrainer
   def prepareForRepeatedFlockingIterations
     recenterEachNeuronsClusters(adaptingNeurons) # necessary for later determining if clusters are still "tight-enough!"
     adaptingNeurons.each { |aNeuron| aNeuron.inputLinks.each { |aLink| aLink.store = 0.0 } }
-    return accumulatedAbsoluteFlockingErrors = []
+    self.accumulatedAbsoluteFlockingErrors = []
   end
 
   #### Standard Backprop of Output Errors
@@ -117,7 +117,7 @@ class AbstractStepTrainer
     adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
     acrossExamplesAccumulateFlockingErrorDeltaWs()
     adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-    return adaptingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
+    self.accumulatedAbsoluteFlockingErrors = adaptingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
   end
 
   def acrossExamplesAccumulateFlockingErrorDeltaWs
@@ -193,24 +193,23 @@ class FlockStepTrainer < AbstractStepTrainer
   def train(trials)
     distributeSetOfExamples(examples)
     seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)
-    accumulatedAbsoluteFlockingErrors = []
+    self.accumulatedAbsoluteFlockingErrors = []
     trials.times do
-      accumulatedAbsoluteFlockingErrors = innerTrainingLoop(accumulatedAbsoluteFlockingErrors)
-      #dbStoreTrainingData
+      innerTrainingLoop()
+      dbStoreTrainingData
       trainingSequence.nextEpoch
     end
     return calcMSE, accumulatedAbsoluteFlockingErrors
   end
 
-  def innerTrainingLoop(accumulatedAbsoluteFlockingErrors)
-    accumulatedAbsoluteFlockingErrors = unless (flockingShouldOccur?(accumulatedAbsoluteFlockingErrors))
-                                          performStandardBackPropTraining()
-                                          prepareForRepeatedFlockingIterations()
-                                        else
-                                          adaptToLocalFlockError()
-                                        end
+  def innerTrainingLoop
+    unless (flockingShouldOccur?(accumulatedAbsoluteFlockingErrors))
+      performStandardBackPropTraining()
+      prepareForRepeatedFlockingIterations()
+    else
+      adaptToLocalFlockError()
+    end
     adaptingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
-    return accumulatedAbsoluteFlockingErrors
   end
 end
 

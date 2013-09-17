@@ -263,6 +263,49 @@ class NeuronData
 end
 
 
+class TrainingData
+  include Relix
+  Relix.host = $currentHost
+  attr_accessor :id, :experimentNumber, :epochs
+
+  relix do
+    primary_key :trainingDataKey
+    multi :experimentNumber_epochs, on: %w(experimentNumber epochs)
+    multi :experimentNumber, index_values: true
+  end
+
+  @@ID = 0
+
+  def TrainingData.values(key)
+    $redis.get(key)
+  end
+
+  def TrainingData.deleteData(experimentNumber)
+    ary = $redis.keys("TD#{experimentNumber}*")
+    ary.each { |item| $redis.del(item) }
+  end
+
+  def TrainingData.deleteEntireIndex!
+    ary = $redis.keys("TrainingData*")
+    ary.each { |item| $redis.del(item) }
+  end
+
+  def initialize(trainingDataToRecord)
+    @id = @@ID
+    @@ID += 1
+    @experimentNumber = Experiment.number
+    @epochs = trainingDataToRecord[:epochs]
+    $redis.set(trainingDataKey, trainingDataToRecord)
+    index!
+  end
+
+  def trainingDataKey
+    "TD#{experimentNumber}.#{id}"
+  end
+end
+
+
+
 module DBAccess
   def dbStoreNeuronData
     savingInterval = args[:intervalForSavingNeuronData]
@@ -319,26 +362,26 @@ class AbstractStepTrainer
   include DBAccess
 end
 
-class SimulationDataStoreManager
-  attr_accessor :args
 
-  def initialize(args={})
-    @args = args
-  end
-
-  def deleteDataForExperiment(experimentNumber)
-    DetailedNeuronData.deleteData(experimentNumber)
-    NeuronData.deleteData(experimentNumber)
-  end
-
-  def deleteAllDataAndIndexesExceptSnapShot!
-    nextExperimentNumber = $redis.get("experimentNumber")
-    (1...nextExperimentNumber.to_i).each do |experimentNumber|
-      deleteDataForExperiment(experimentNumber)
-    end
-    DetailedNeuronData.deleteEntireIndex!
-    NeuronData.deleteEntireIndex!
-  end
-end
-
+#class SimulationDataStoreManager
+#  attr_accessor :args
+#
+#  def initialize(args={})
+#    @args = args
+#  end
+#
+#  def deleteDataForExperiment(experimentNumber)
+#    DetailedNeuronData.deleteData(experimentNumber)
+#    NeuronData.deleteData(experimentNumber)
+#  end
+#
+#  def deleteAllDataAndIndexesExceptSnapShot!
+#    nextExperimentNumber = $redis.get("experimentNumber")
+#    (1...nextExperimentNumber.to_i).each do |experimentNumber|
+#      deleteDataForExperiment(experimentNumber)
+#    end
+#    DetailedNeuronData.deleteEntireIndex!
+#    NeuronData.deleteEntireIndex!
+#  end
+#end
 

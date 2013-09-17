@@ -164,8 +164,12 @@ unless (selectedData.empty?)
   end
 end
 
+TrainingData.deleteData(Experiment.number)
+TrainingData.deleteEntireIndex!
 NeuronData.deleteData(Experiment.number)
+NeuronData.deleteEntireIndex!
 DetailedNeuronData.deleteData(Experiment.number)
+DetailedNeuronData.deleteEntireIndex!
 
 experiment.save
 
