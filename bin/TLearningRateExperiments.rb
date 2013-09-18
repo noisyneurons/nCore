@@ -118,6 +118,9 @@ puts network
 puts "lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors"
 puts lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors
 
+#arrayOfNeuronsToPlot = [network.outputLayer[0]]
+#generatePlotForEachNeuron(arrayOfNeuronsToPlot)
+
 
 #arrayOfNeuronsToPlot = network.outputLayer
 #theTrainer.displayTrainingResults(arrayOfNeuronsToPlot)
@@ -127,20 +130,16 @@ puts lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors
 
 
 lastTestingMSE = nil
-dataToStoreLongTerm = {:experimentNumber => Experiment.number, :descriptionOfExperiment => descriptionOfExperiment,
-                       :network => network.to_s, :time => Time.now, :elapsedTime => (Time.now - startingTime),
-                       :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE,
-                       :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors
-}
-SnapShotData.new(dataToStoreLongTerm)
+
 
 puts "\n\n############ NeuronData #############"
 keysToRecords = []
 NeuronData.lookup_values(:epochs).each do |epochNumber|
   keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber, neuron: 2}) }
 end
-records = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) } unless (keysToRecords.empty?)
-puts records
+neuronDataRecords = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) } unless (keysToRecords.empty?)
+puts neuronDataRecords
+
 
 puts "\n\n############ DetailedNeuronData #############"
 keysToRecords = []
@@ -149,18 +148,24 @@ DetailedNeuronData.lookup_values(:epochs).each do |epochNumber|
     keysToRecords << DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: Experiment.number, epochs: epochNumber, neuron: 2, exampleNumber: anExampleNumber}) }
    end
 end
-records = keysToRecords.collect { |recordKey| DetailedNeuronData.values(recordKey) } unless (keysToRecords.empty?)
-puts records
+detailedNeuronDataRecords = keysToRecords.collect { |recordKey| DetailedNeuronData.values(recordKey) } unless (keysToRecords.empty?)
+puts detailedNeuronDataRecords
 
 
 puts "\n\n############ TrainingData #############"
 keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: Experiment.number}) }
-records = keysToRecords.collect { |recordKey| TrainingData.values(recordKey) } unless (keysToRecords.empty?)
-puts records
-plotMSEvsEpochNumber(records)
+trainingDataRecords = keysToRecords.collect { |recordKey| TrainingData.values(recordKey) } unless (keysToRecords.empty?)
+puts trainingDataRecords
 
 
 puts "\n\n############ SnapShotData #############"
+dataToStoreLongTerm = {:experimentNumber => Experiment.number, :descriptionOfExperiment => descriptionOfExperiment,
+                       :network => network, :time => Time.now, :elapsedTime => (Time.now - startingTime),
+                       :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE,
+                       :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors
+}
+SnapShotData.new(dataToStoreLongTerm)
+
 selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
 unless (selectedData.empty?)
   puts
@@ -168,15 +173,17 @@ unless (selectedData.empty?)
   selectedData.each do |aSelectedExperiment|
     aHash = SnapShotData.values(aSelectedExperiment)
     puts "#{aHash[:experimentNumber]}\t\t#{aHash[:epochs]}\t#{aHash[:trainMSE]}\t#{aHash[:testMSE]}\t\t#{aHash[:time]}\t\t\t\t#{aHash[:descriptionOfExperiment]}"
+
   end
+
+  aHash = SnapShotData.values(selectedData.last)
+  puts aHash[:network]
+  #puts "NETWORK\n\n#{(aHash[:network]).outputLayer[0]}"
 end
 
-TrainingData.deleteData(Experiment.number)
-TrainingData.deleteEntireIndex!
-NeuronData.deleteData(Experiment.number)
-NeuronData.deleteEntireIndex!
-DetailedNeuronData.deleteData(Experiment.number)
-DetailedNeuronData.deleteEntireIndex!
+plotMSEvsEpochNumber(trainingDataRecords)
+
+experiment.deleteTemporaryDataRecordsInDB()
 
 experiment.save
 

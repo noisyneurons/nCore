@@ -235,6 +235,8 @@ class TrainingSupervisor
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
       mse, accumulatedAbsoluteFlockingErrors = stepTrainer.train(numTrials)
     end
+    arrayOfNeuronsToPlot = [network.outputLayer[0]]
+    displayTrainingResults(arrayOfNeuronsToPlot)
     return trainingSequence.epochs, mse, accumulatedAbsoluteFlockingErrors
   end
 

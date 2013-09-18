@@ -4,32 +4,16 @@
 require_relative 'Utilities'
 
 
-def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
-    lastTestingMSE, lastTrainingMSE, network, theTrainer, trainingSequence)
-  puts network
-  puts "Elapsed Time=\t#{theTrainer.elapsedTime}"
-  puts "\tAt Epoch #{trainingSequence.epochs}"
-  puts "\tAt Epoch #{lastEpoch}"
-  puts "\t\tThe Network's Training MSE=\t#{lastTrainingMSE}\t and TEST MSE=\t#{lastTestingMSE}\n"
-  puts "\t\t\tThe dPrime(s) at the end of training are: #{dPrimes}"
-
-#############################  plotting and visualization....
-  plotMSEvsEpochNumber(network)
-end
-
-
 module RecordingAndPlottingRoutines
 
-  def storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, dPrimes)
-    self.elapsedTime = Time.now - startTime
-    dataStoreManager.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, dPrimes, elapsedTime)
-  end
-
-  def generatePlotForEachNeuron(arrayOfNeuronsToPlot)
-    arrayOfNeuronsToPlot.each do |theNeuron|
-      xAry, yAry = getZeroXingExampleSet(theNeuron)
-      plotDotsWhereOutputGtPt5(xAry, yAry, theNeuron, trainingSequence.epochs)
+  def measureNeuralResponsesForTesting
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
+    numberOfExamples.times do |exampleNumber|
+      allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+      outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
+      neuronsWithInputLinks.each { |aNeuron| aNeuron.recordResponsesForExample }
     end
+    mse = network.calcNetworksMeanSquareError
   end
 
   def oneForwardPassEpoch(testingExamples)
@@ -40,8 +24,14 @@ module RecordingAndPlottingRoutines
     return testMSE
   end
 
+  def generatePlotForEachNeuron(arrayOfNeuronsToPlot)
+    arrayOfNeuronsToPlot.each do |theNeuron|
+      xAry, yAry = getZeroXingExampleSet(theNeuron)
+      plotDotsWhereOutputGtPt5(xAry, yAry, theNeuron, args[:epochs])
+    end
+  end
+
   def getZeroXingExampleSet(theNeuron)
-    trainingExamples = args[:examples]
     minX1 = -4.0
     maxX1 = 4.0
     numberOfTrials = 100
@@ -55,18 +45,7 @@ module RecordingAndPlottingRoutines
       x1Array << x1
       x0Array << x0
     end
-    self.examples = trainingExamples
     [x0Array, x1Array]
-  end
-
-  def measureNeuralResponsesForTesting
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
-    numberOfExamples.times do |exampleNumber|
-      allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-      outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
-      neuronsWithInputLinks.each { |aNeuron| aNeuron.recordResponsesForExample }
-    end
-    mse = network.calcNetworksMeanSquareError
   end
 
   def findZeroCrossingFast(x1, theNeuron)
@@ -98,10 +77,21 @@ module RecordingAndPlottingRoutines
   end
 
   def ioFunctionFor2inputs(x0, x1, theNeuron) # TODO should this be moved to an analysis or plotting class?
-    examples = [{:inputs => [x0, x1], :exampleNumber => 0}]
-    distributeDataToAnArrayOfNeurons(inputLayer, examples)
-    allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(0) }
+    clampOutputsOfTheInputNeuronsThatDrive(x0, x1, theNeuron)
+    theNeuron.propagate(0)
     return theNeuron.output
+  end
+
+  def clampOutputsOfTheInputNeuronsThatDrive(x0, x1, theNeuron)
+    inputLinks = theNeuron.inputLinks
+    neuronsDrivingTheNeuron = []
+    inputLinks.length.times do |index|
+      neuronsDrivingTheNeuron << inputLinks[index].inputNeuron
+    end
+    index = 0
+    neuronsDrivingTheNeuron[index].output = x0
+    index += 1
+    neuronsDrivingTheNeuron[index].output = x1
   end
 end
 
@@ -116,9 +106,18 @@ class Experiment
     @@number
   end
 
-  #def Experiment.deleteTable
-  #  $redis.del("experimentNumber")
-  #end
+  def deleteTemporaryDataRecordsInDB
+    TrainingData.deleteData(Experiment.number)
+    TrainingData.deleteEntireIndex!
+    NeuronData.deleteData(Experiment.number)
+    NeuronData.deleteEntireIndex!
+    DetailedNeuronData.deleteData(Experiment.number)
+    DetailedNeuronData.deleteEntireIndex!
+  end
+
+  def Experiment.deleteTable!
+    $redis.del("experimentNumber")
+  end
 
   def initialize(experimentDescription = nil)
     $redis.incr("experimentNumber")
@@ -130,6 +129,7 @@ class Experiment
   end
 end
 
+#############################
 
 class SnapShotData
   include Relix
@@ -308,7 +308,7 @@ class TrainingData
   end
 end
 
-
+#####################################
 module DBAccess
   def dbStoreNeuronData
     savingInterval = args[:intervalForSavingNeuronData]
@@ -377,7 +377,7 @@ class SimulationDataStoreManager
     DetailedNeuronData.deleteData(experimentNumber)
     NeuronData.deleteData(experimentNumber)
     TrainingData.deleteData(experimentNumber)
-      end
+  end
 
   def deleteAllDataAndIndexesExceptSnapShot!
     nextExperimentNumber = $redis.get("experimentNumber")
