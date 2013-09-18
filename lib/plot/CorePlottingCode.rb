@@ -17,15 +17,25 @@ require_relative '../../../rgplot/lib/gnuplotMOD'
 
 ############ Recent Additions to Plotting Section (uses a specialized library) #########################
 
-def plotMSEvsEpochNumber(aLearningNetwork)
-  mseVsEpochMeasurements = aLearningNetwork.measures
-  std("measures=\t", mseVsEpochMeasurements)
+#def plotMSEvsEpochNumber(aLearningNetwork)
+#  mseVsEpochMeasurements = aLearningNetwork.measures
+#  std("measures=\t", mseVsEpochMeasurements)
+#  x = mseVsEpochMeasurements.collect { |aMeasure| aMeasure[:epochs] }
+#  y = mseVsEpochMeasurements.collect { |aMeasure| aMeasure[:mse] }
+#
+#  aPlotter = Plotter.new(title="Training Error", "Number of Epochs", "Error on Training Set", plotOutputFilenameBase = "#{Dir.home}/Code/Ruby/NN2012/plots/xyPlot")
+#  aPlotter.plot(x, y)
+#end
+
+
+def plotMSEvsEpochNumber(mseVsEpochMeasurements)
   x = mseVsEpochMeasurements.collect { |aMeasure| aMeasure[:epochs] }
   y = mseVsEpochMeasurements.collect { |aMeasure| aMeasure[:mse] }
-
   aPlotter = Plotter.new(title="Training Error", "Number of Epochs", "Error on Training Set", plotOutputFilenameBase = "#{Dir.home}/Code/Ruby/NN2012/plots/xyPlot")
   aPlotter.plot(x, y)
 end
+
+
 
 def plotDotsWhereOutputGtPt5(x, y, aNeuron, epochNumber)
   aPlotter = Plotter.new(title="Zero Xing for Neuron #{aNeuron.id} at epoch #{epochNumber}", "input 0", "input 1", plotOutputFilenameBase = "#{Dir.pwd}/../../plots/zeroXingPlot_N#{aNeuron.id}_E#{epochNumber}")

@@ -184,6 +184,8 @@ class DetailedNeuronData
     primary_key :detailedNeuronDataKey
     multi :experimentNumber_epochs_neuron_exampleNumber, on: %w(experimentNumber epochs neuron exampleNumber)
     multi :experimentNumber, index_values: true
+    multi :epochs, index_values: true
+    multi :exampleNumber, index_values: true
   end
 
   @@ID = 0
@@ -229,6 +231,7 @@ class NeuronData
     primary_key :neuronDataKey
     multi :experimentNumber_epochs_neuron, on: %w(experimentNumber epochs neuron)
     multi :experimentNumber, index_values: true
+    multi :epochs, index_values: true
   end
 
   @@ID = 0
@@ -272,12 +275,13 @@ class TrainingData
     primary_key :trainingDataKey
     multi :experimentNumber_epochs, on: %w(experimentNumber epochs)
     multi :experimentNumber, index_values: true
+    multi :epochs, index_values: true
   end
 
   @@ID = 0
 
   def TrainingData.values(key)
-    $redis.get(key)
+    YAML.load($redis.get(key))
   end
 
   def TrainingData.deleteData(experimentNumber)
@@ -295,7 +299,7 @@ class TrainingData
     @@ID += 1
     @experimentNumber = Experiment.number
     @epochs = trainingDataToRecord[:epochs]
-    $redis.set(trainingDataKey, trainingDataToRecord)
+    $redis.set(trainingDataKey, YAML.dump(trainingDataToRecord))
     index!
   end
 
@@ -303,7 +307,6 @@ class TrainingData
     "TD#{experimentNumber}.#{id}"
   end
 end
-
 
 
 module DBAccess
@@ -330,7 +333,7 @@ module DBAccess
   def dbStoreTrainingData
     savingInterval = args[:intervalForSavingTrainingData]
     if recordOrNot?(savingInterval)
-      aHash = {:epochs => args[:epochs], :mse => calcMSE, :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors}
+      aHash = {:experimentNumber => Experiment.number, :epochs => args[:epochs], :mse => calcMSE, :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors}
       TrainingData.new(aHash)
     end
   end
@@ -363,25 +366,27 @@ class AbstractStepTrainer
 end
 
 
-#class SimulationDataStoreManager
-#  attr_accessor :args
-#
-#  def initialize(args={})
-#    @args = args
-#  end
-#
-#  def deleteDataForExperiment(experimentNumber)
-#    DetailedNeuronData.deleteData(experimentNumber)
-#    NeuronData.deleteData(experimentNumber)
-#  end
-#
-#  def deleteAllDataAndIndexesExceptSnapShot!
-#    nextExperimentNumber = $redis.get("experimentNumber")
-#    (1...nextExperimentNumber.to_i).each do |experimentNumber|
-#      deleteDataForExperiment(experimentNumber)
-#    end
-#    DetailedNeuronData.deleteEntireIndex!
-#    NeuronData.deleteEntireIndex!
-#  end
-#end
+class SimulationDataStoreManager
+  attr_accessor :args
+
+  def initialize(args={})
+    @args = args
+  end
+
+  def deleteDataForExperiment(experimentNumber)
+    DetailedNeuronData.deleteData(experimentNumber)
+    NeuronData.deleteData(experimentNumber)
+    TrainingData.deleteData(experimentNumber)
+      end
+
+  def deleteAllDataAndIndexesExceptSnapShot!
+    nextExperimentNumber = $redis.get("experimentNumber")
+    (1...nextExperimentNumber.to_i).each do |experimentNumber|
+      deleteDataForExperiment(experimentNumber)
+    end
+    DetailedNeuronData.deleteEntireIndex!
+    NeuronData.deleteEntireIndex!
+    TrainingData.deleteEntireIndex!
+  end
+end
 

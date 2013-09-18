@@ -1,4 +1,4 @@
-# require_relative '../lib/core/SimulationDataStore'
+# '~/Code/Ruby/NN2012/nCore/visualization/quickViewOfRedisDB.rb'
 
 require 'redis'
 require 'yaml'
@@ -24,9 +24,6 @@ arrayOfKeys = $redis.keys("SSD*")
 puts "Number of 'Snap Shot Keys' in Redis database: #{arrayOfKeys.length}"
 puts "Snap Shot Keys in Redis database: #{arrayOfKeys}\n\n"
 
-#arrayOfKeys.each do |aKey|
-#  puts "\n\nSnap Shot Key:\t#{arrayOfKeys}\tValue=\t#{$redis.get(aKey)}"
-#end
 
 arrayOfKeys = $redis.keys("ND*")
 puts "Number of 'NeuronData Keys' in Redis database: #{arrayOfKeys.length}"
@@ -35,6 +32,12 @@ puts "NeuronData Keys in Redis database: #{arrayOfKeys}\n\n"
 
 arrayOfKeys = $redis.keys("DND*")
 puts "Number of 'DetailedNeuronData Keys' in Redis database: #{arrayOfKeys.length}"
-puts "NeuronData Keys in Redis database: #{arrayOfKeys}\n\n"
+puts "DetailedNeuronData Keys in Redis database: #{arrayOfKeys}\n\n"
+
+arrayOfKeys = $redis.keys("TD*")
+puts "Number of 'TrainingData Keys' in Redis database: #{arrayOfKeys.length}"
+puts "TrainingData Keys in Redis database: #{arrayOfKeys}\n\n"
+
+
 
 

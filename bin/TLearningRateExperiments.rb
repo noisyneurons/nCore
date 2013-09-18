@@ -7,15 +7,13 @@ require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
 require_relative '../lib/core/NeuralParts'
 require_relative '../lib/core/NeuralPartsExtended'
-# require_relative '../lib/core/ExampleImportanceMods'    # TODO where should this go?
+# require_relative '../lib/core/ExampleImportanceMods'    # TODO Is this useful???  So far NOT!
 require_relative '../lib/core/NetworkFactories'
 require_relative '../lib/plot/CorePlottingCode'
 require_relative '../lib/core/SimulationDataStore'
 require_relative '../lib/core/TrainingSequencingAndGrouping'
 require_relative '../lib/core/Trainers.rb'
-# require_relative '../lib/core/ExampleImportanceMods'    # TODO where should this go?
 require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
-
 
 def createTrainingSet(args)
   include ExampleDistribution
@@ -32,18 +30,18 @@ def createTrainingSet(args)
   return examples
 end
 
-def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
-    lastTestingMSE, lastTrainingMSE, network, theTrainer, trainingSequence)
-  puts network
-  puts "Elapsed Time=\t#{theTrainer.elapsedTime}"
-  puts "\tAt Epoch #{trainingSequence.epochs}"
-  puts "\tAt Epoch #{lastEpoch}"
-  puts "\t\tThe Network's Training MSE=\t#{lastTrainingMSE}\t and TEST MSE=\t#{lastTestingMSE}\n"
-  puts "\t\t\tThe dPrime(s) at the end of training are: #{dPrimes}"
-
-#############################  plotting and visualization....
-  plotMSEvsEpochNumber(network)
-end
+#def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
+#    lastTestingMSE, lastTrainingMSE, network, theTrainer, trainingSequence)
+#  puts network
+#  puts "Elapsed Time=\t#{theTrainer.elapsedTime}"
+#  puts "\tAt Epoch #{trainingSequence.epochs}"
+#  puts "\tAt Epoch #{lastEpoch}"
+#  puts "\t\tThe Network's Training MSE=\t#{lastTrainingMSE}\t and TEST MSE=\t#{lastTestingMSE}\n"
+#  puts "\t\t\tThe dPrime(s) at the end of training are: #{dPrimes}"
+#
+##############################  plotting and visualization....
+#  plotMSEvsEpochNumber(network)
+#end
 
 class Experiment
   def setParameters
@@ -98,7 +96,7 @@ end
 
 ###################################### START of Main Learning  ##########################################
 srand(0)
-descriptionOfExperiment = "New Module Trainers trying to duplicate: SimpleAdjustableLearningRateTrainerMultiFlockIterations Reference Run NUMBER 2"
+descriptionOfExperiment = "TLearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges"
 experiment = Experiment.new(descriptionOfExperiment)
 args = experiment.setParameters
 args[:trainingSequence] = trainingSequence = TrainingSequence.new(args)
@@ -126,7 +124,7 @@ puts lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors
 ## theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, accumulatedAbsoluteFlockingErrors)
 #displayAndPlotResults(args, accumulatedAbsoluteFlockingErrors, dataStoreManager, lastEpoch, lastTestingMSE,
 
-puts "############ SnapShotData #############"
+
 
 lastTestingMSE = nil
 dataToStoreLongTerm = {:experimentNumber => Experiment.number, :descriptionOfExperiment => descriptionOfExperiment,
@@ -134,33 +132,42 @@ dataToStoreLongTerm = {:experimentNumber => Experiment.number, :descriptionOfExp
                        :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE,
                        :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors
 }
-
 SnapShotData.new(dataToStoreLongTerm)
 
-puts "############ NeuronData #############"
-4000.times do |epochNumber|
-  selectedData = NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber, neuron: 2}) }
-  # puts "For epoch number=\t#{epochNumber}" unless (selectedData.empty?)
-  selectedData.each { |itemKey| puts NeuronData.values(itemKey) } unless (selectedData.empty?)
+puts "\n\n############ NeuronData #############"
+keysToRecords = []
+NeuronData.lookup_values(:epochs).each do |epochNumber|
+  keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber, neuron: 2}) }
 end
+records = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) } unless (keysToRecords.empty?)
+puts records
 
 puts "\n\n############ DetailedNeuronData #############"
-4000.times do |epochNumber|
-  (0...args[:numberOfExamples]).each do |anExampleNumber|
-    selectedData = DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: Experiment.number, epochs: epochNumber, neuron: 2, exampleNumber: anExampleNumber}) }
-    # puts "For epoch number=\t#{epochNumber}" unless (selectedData.empty?)
-    selectedData.each { |itemKey| puts DetailedNeuronData.values(itemKey) } unless (selectedData.empty?)
-  end
+keysToRecords = []
+DetailedNeuronData.lookup_values(:epochs).each do |epochNumber|
+  DetailedNeuronData.lookup_values(:exampleNumber).each do |anExampleNumber|
+    keysToRecords << DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: Experiment.number, epochs: epochNumber, neuron: 2, exampleNumber: anExampleNumber}) }
+   end
 end
+records = keysToRecords.collect { |recordKey| DetailedNeuronData.values(recordKey) } unless (keysToRecords.empty?)
+puts records
 
-# selectedData = SnapShotData.lookup { |q| q[:experimentNumber_epochs].eq({experimentNumber: Experiment.number, epochs: lastEpoch}) }
+
+puts "\n\n############ TrainingData #############"
+keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: Experiment.number}) }
+records = keysToRecords.collect { |recordKey| TrainingData.values(recordKey) } unless (keysToRecords.empty?)
+puts records
+plotMSEvsEpochNumber(records)
+
+
+puts "\n\n############ SnapShotData #############"
 selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
 unless (selectedData.empty?)
   puts
-  puts "Number\tDescription\tLastEpoch\tTrainMSE\tTestMSE\tTime"
+  puts "Number\tLastEpoch\tTrainMSE\t\tTestMSE\t\tTime\t\t\t\tDescription"
   selectedData.each do |aSelectedExperiment|
     aHash = SnapShotData.values(aSelectedExperiment)
-    puts "#{aHash[:experimentNumber]}\t#{aHash[:descriptionOfExperiment]}\t#{aHash[:epochs]}\t#{aHash[:trainMSE]}\t#{aHash[:testMSE]}\t#{aHash[:time]}"
+    puts "#{aHash[:experimentNumber]}\t\t#{aHash[:epochs]}\t#{aHash[:trainMSE]}\t#{aHash[:testMSE]}\t\t#{aHash[:time]}\t\t\t\t#{aHash[:descriptionOfExperiment]}"
   end
 end
 

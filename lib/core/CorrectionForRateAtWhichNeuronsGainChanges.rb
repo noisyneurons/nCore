@@ -12,8 +12,8 @@
 #
 # However, by the time the average netInputs become larger (as they often will as learning progresses) the ratio between any
 # of two of the 'neural gains' can become quite large, e.g. for netInputs > 1.0 - 2.0.
-# For netInputs above 3.0 the average ratio of gains is relatively large but does the average
-# ration does NOT change!  See function implementing this equation below:  "Rate of Change of the Ratio of 2 typical Neural-Gains"
+# For netInputs above 3.0 the average ratio of gains is relatively large but the average
+# ratio of gains does NOT change any more!  See function implementing this equation below:  "Rate of Change of the Ratio of 2 typical Neural-Gains"
 
 
 require_relative 'Utilities'
@@ -25,29 +25,19 @@ module CommonClusteringCode
 end
 
 
-class SimpleAdjustableLearningRateTrainer
+class AbstractStepTrainer
   include Math
 
-  def accumulateFlockingErrorDeltaWs
+  def adaptToLocalFlockError
     adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate] }
     adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
-    # print "Net Input, Flocking Error=\t"
-    acrossExamplesAccumulateDeltaWs do |aNeuron, dataRecord, exampleNumber|
-      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
-      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
-      epochs = args[:trainingSequence].epochs
-      DetailedNeuronData.new(args[:trainingSequence].epochs, aNeuron.id, exampleNumber, dataRecord[:netInput], dataRecord[:localFlockingError]) if(epochs % 100 == 0)
-      # print "#{dataRecord[:netInput]},\t#{dataRecord[:localFlockingError]};\t"
-      aNeuron.calcAccumDeltaWsForLocalFlocking
-    end
-    # puts
-    adaptingNeurons.collect { |aNeuron| (aNeuron.accumulatedAbsoluteFlockingError * correctionFactorForRateAtWhichNeuronsGainChanges(aNeuron.clustersCenter)) }
+    acrossExamplesAccumulateFlockingErrorDeltaWs()
+    adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+    self.accumulatedAbsoluteFlockingErrors = adaptingNeurons.collect { |aNeuron| (aNeuron.accumulatedAbsoluteFlockingError * correctionFactorForRateAtWhichNeuronsGainChanges(aNeuron.clustersCenter)) }
   end
 
-
-  # Function:
-  #  Implements a method that corrects for: "how the Ratio of Neural-Gains changes with the magnitudes of the example netInputs"
-  def correctionFactorForRateAtWhichNeuronsGainChanges(clustersCenter, correctionFactorsFloor = 0.1)
+  #  This method corrects for: "how the Ratio of Neural-Gains changes with the magnitudes of the example netInputs"
+  def correctionFactorForRateAtWhichNeuronsGainChanges(clustersCenter, correctionFactorsFloor = 0.01)
     c = clustersCenter[0]
     m = (exp(-c) + 1)
 
@@ -59,4 +49,21 @@ class SimpleAdjustableLearningRateTrainer
     result = (n * (o + p) * q).abs
     return [result, correctionFactorsFloor].max
   end
+
+
+  #def accumulateFlockingErrorDeltaWs
+  #  adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate] }
+  #  adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
+  #
+  #  acrossExamplesAccumulateDeltaWs do |aNeuron, dataRecord, exampleNumber|
+  #    dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
+  #    dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
+  #    epochs = args[:trainingSequence].epochs
+  #    DetailedNeuronData.new(args[:trainingSequence].epochs, aNeuron.id, exampleNumber, dataRecord[:netInput], dataRecord[:localFlockingError]) if(epochs % 100 == 0)
+  #
+  #    aNeuron.calcAccumDeltaWsForLocalFlocking
+  #  end
+  #  self.accumulatedAbsoluteFlockingErrors = adaptingNeurons.collect { |aNeuron| (aNeuron.accumulatedAbsoluteFlockingError * correctioaccumulatedAbsoluteFlockingErrornFactorForRateAtWhichNeuronsGainChanges(aNeuron.clustersCenter)) }
+  #end
+
 end
