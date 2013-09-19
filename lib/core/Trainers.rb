@@ -188,8 +188,8 @@ class AbstractStepTrainer
   end
 end
 
-class FlockStepTrainer < AbstractStepTrainer
 
+class FlockStepTrainer < AbstractStepTrainer
   def train(trials)
     distributeSetOfExamples(examples)
     seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)
@@ -214,7 +214,33 @@ class FlockStepTrainer < AbstractStepTrainer
 end
 
 
-class TrainingSupervisor
+class BPofFlockingStepTrainer < AbstractStepTrainer
+  def train(trials)
+    distributeSetOfExamples(examples)
+    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)
+    self.accumulatedAbsoluteFlockingErrors = []
+    trials.times do
+      innerTrainingLoop()
+      dbStoreTrainingData
+      trainingSequence.nextEpoch
+    end
+    return calcMSE, accumulatedAbsoluteFlockingErrors
+  end
+
+  def innerTrainingLoop
+    unless (flockingShouldOccur?(accumulatedAbsoluteFlockingErrors))
+      performStandardBackPropTraining()
+      prepareForRepeatedFlockingIterations()
+    else
+      adaptToLocalFlockError()
+    end
+    adaptingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
+  end
+end
+
+
+
+class TrainingSupervisorSimplest
   attr_accessor :stepTrainer, :trainingSequence, :network, :args, :startTime, :elapsedTime, :minMSE
   include RecordingAndPlottingRoutines
 
@@ -227,6 +253,42 @@ class TrainingSupervisor
     @minMSE = args[:minMSE]
     neuronGroups = NeuronGroupsSimplest.new(network)
     @stepTrainer = FlockStepTrainer.new(examples, neuronGroups, trainingSequence, args)
+  end
+
+  def train
+    mse = 1e20
+    numTrials = 1000
+    while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
+      mse, accumulatedAbsoluteFlockingErrors = stepTrainer.train(numTrials)
+    end
+    arrayOfNeuronsToPlot = [network.outputLayer[0]]
+    displayTrainingResults(arrayOfNeuronsToPlot)
+    return trainingSequence.epochs, mse, accumulatedAbsoluteFlockingErrors
+  end
+
+  def displayTrainingResults(arrayOfNeuronsToPlot)
+    puts network
+    generatePlotForEachNeuron(arrayOfNeuronsToPlot) if arrayOfNeuronsToPlot.present?
+  end
+end
+
+class TrainingSupervisorBPofFlocking
+  attr_accessor :step1Trainer, :step2Trainer, :trainingSequence, :network, :args, :startTime, :elapsedTime, :minMSE
+  include RecordingAndPlottingRoutines
+
+  def initialize(examples, network, args)
+    @trainingSequence = args[:trainingSequence]
+    @network = network
+    @args = args
+    @startTime = Time.now
+    @elapsedTime = nil
+    @minMSE = args[:minMSE]
+
+    neuronGroups1 = NeuronGroups1BPofFlocking.new(network)
+    @step1Trainer = FlockStepTrainer.new(examples, neuronGroups1, trainingSequence, args)
+
+    neuronGroups2 = NeuronGroups2BPofFlocking.new(network)
+    @step2Trainer = BPofFlockingStepTrainer.new(examples, neuronGroups2, trainingSequence, args)
   end
 
   def train

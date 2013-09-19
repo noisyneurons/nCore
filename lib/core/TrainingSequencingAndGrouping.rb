@@ -58,7 +58,6 @@ class AbstractNeuronGroups
   end
 end
 
-
 class NeuronGroupsSimplest < AbstractNeuronGroups
   def nameTrainingGroups
     self.inputLayer = allNeuronLayers.first
@@ -69,3 +68,28 @@ class NeuronGroupsSimplest < AbstractNeuronGroups
     setUniversalNeuronGroupNames()
   end
 end
+
+class NeuronGroups1BPofFlocking < AbstractNeuronGroups
+  def nameTrainingGroups
+    self.inputLayer = allNeuronLayers.first
+    hiddenLayer = allNeuronLayers[1]
+    self.outputLayer = allNeuronLayers.last
+    self.layersWithInputLinks = [hiddenLayer, outputLayer]
+    self.adaptingLayers = [outputLayer]
+    self.layersWhoseClustersNeedToBeSeeded = [outputLayer]
+    setUniversalNeuronGroupNames()
+  end
+end
+
+class NeuronGroups2BPofFlocking < AbstractNeuronGroups
+  def nameTrainingGroups
+    self.inputLayer = allNeuronLayers.first
+    hiddenLayer = allNeuronLayers[1]
+    self.outputLayer = allNeuronLayers.last
+    self.layersWithInputLinks = [hiddenLayer, outputLayer]
+    self.adaptingLayers = [outputLayer]
+    self.layersWhoseClustersNeedToBeSeeded = [hiddenLayer, outputLayer]
+    setUniversalNeuronGroupNames()
+  end
+end
+

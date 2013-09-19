@@ -1,7 +1,7 @@
 ### VERSION "nCore"
-## ../nCore/bin/TLearningRateExperiments.rb
-# Purpose:  To quantitatively explore the simplest clustering w/o supervision.
-# This is a simplified and significantly reorganized version of 'Phase1Phase2MultiCycle.rb'
+## ../nCore/bin/TFlockBP.rb
+# Purpose:  To quantitatively explore the 'NEXT simplest' flocking -- non-local flocking from output neuron to hidden neuron.
+
 
 require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
@@ -104,7 +104,7 @@ class Experiment
 
         # Network Architecture
         :numberOfInputNeurons => 2,
-        :numberOfHiddenNeurons => 0,
+        :numberOfHiddenNeurons => 1,
         :numberOfOutputNeurons => 1,
         :weightRange => 1.0,
         :typeOfLink => FlockingLink,
@@ -140,7 +140,7 @@ end
 ###################################### START of Main Learning  ##########################################
 srand(0)
 
-descriptionOfExperiment = "TLearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges"
+descriptionOfExperiment = "TFlockBP"
 experiment = Experiment.new(descriptionOfExperiment)
 args = experiment.setParameters
 args[:trainingSequence] = trainingSequence = TrainingSequence.new(args)
@@ -149,7 +149,7 @@ args[:trainingSequence] = trainingSequence = TrainingSequence.new(args)
 examples = createTrainingSet(args)
 
 ######################## Create Network....
-network = SimpleFlockingNetwork.new(args) # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
+network = BPofFlockingNetwork.new(args)
 
 ############################### train ...
 theTrainer = TrainingSupervisorSimplest.new(examples, network, args)

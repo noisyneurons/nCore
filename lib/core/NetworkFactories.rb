@@ -120,7 +120,7 @@ class BaseNetwork
   end
 end # Base network
 
-class SimpleFlockingNeuronNetwork < BaseNetwork
+class SimpleFlockingNeuronNetwork < BaseNetwork   # TODO this is identical, except in name, to  SimpleFlockingNetwork
 
   def createAllLayersOfNeurons
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
@@ -131,49 +131,30 @@ class SimpleFlockingNeuronNetwork < BaseNetwork
   end
 end
 
-############################################################
+class SimpleFlockingNetwork < BaseNetwork
 
-#@networkRecorder = NetworkRecorder.new(self, args
-#
-#def calcNetworksMeanSquareError
-#  outputLayer = allNeuronLayers.last
-#  sse = outputLayer.inject(0.0) { |sum, anOutputNeuron| sum + anOutputNeuron.calcSumOfSquaredErrors }
-#  numberOfOutputNeurons = outputLayer.length
-#  self.mse = (sse / (numberOfOutputNeurons * numberOfExamples))
-#end
-#
-## Secondary Importance:
-#
-#def recordResponses
-#  networkRecorder.recordResponses
-#end
-#
-#def measures
-#  networkRecorder.measures
-#end
-#
-#
+  def createAllLayersOfNeurons
+    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
+    self.allNeuronLayers << inputLayer
+
+    self.outputLayer = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
+    self.allNeuronLayers << outputLayer
+  end
+end
+
+class BPofFlockingNetwork < BaseNetwork
+
+  def createAllLayersOfNeurons
+    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
+    self.allNeuronLayers << inputLayer
+
+    hiddenLayer = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingNeuron, args[:numberOfHiddenNeurons])
+    self.allNeuronLayers << hiddenLayer
+
+    self.outputLayer = createAndConnectLayer(hiddenLayer, typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
+    self.allNeuronLayers << outputLayer
+  end
+end
 
 
-#class NetworkRecorder
-#  attr_accessor :network, :recordingSequencer, :args, :measures
-#
-#  def initialize(network, recordingSequencer, args)
-#    @network = network
-#    @recordingSequencer = recordingSequencer
-#    @args = args
-#    @measures = []
-#    @trainingSequence = args[:trainingSequence]
-#  end
-#
-#  def trainingSequence
-#    args[:trainingSequence]
-#  end
-#
-#  def recordResponses
-#    measures << {:mse => network.mse, :epochs => trainingSequence.epochs} if (trainingSequence.timeToRecordData)
-#  end
-#end
-
-############################################################
 
