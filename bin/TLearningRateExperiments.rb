@@ -30,18 +30,61 @@ def createTrainingSet(args)
   return examples
 end
 
-#def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
-#    lastTestingMSE, lastTrainingMSE, network, theTrainer, trainingSequence)
-#  puts network
-#  puts "Elapsed Time=\t#{theTrainer.elapsedTime}"
-#  puts "\tAt Epoch #{trainingSequence.epochs}"
-#  puts "\tAt Epoch #{lastEpoch}"
-#  puts "\t\tThe Network's Training MSE=\t#{lastTrainingMSE}\t and TEST MSE=\t#{lastTestingMSE}\n"
-#  puts "\t\t\tThe dPrime(s) at the end of training are: #{dPrimes}"
-#
-##############################  plotting and visualization....
-#  plotMSEvsEpochNumber(network)
-#end
+def reportTrainingResults(accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, network, startingTime)
+  puts network
+
+  lastTestingMSE = nil
+  puts "lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE"
+  puts lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE
+
+  puts "\n\n############ NeuronData #############"
+  keysToRecords = []
+  NeuronData.lookup_values(:epochs).each do |epochNumber|
+    keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber, neuron: 2}) }
+  end
+  neuronDataRecords = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) } unless (keysToRecords.empty?)
+  puts neuronDataRecords
+
+
+  puts "\n\n############ DetailedNeuronData #############"
+  keysToRecords = []
+  DetailedNeuronData.lookup_values(:epochs).each do |epochNumber|
+    DetailedNeuronData.lookup_values(:exampleNumber).each do |anExampleNumber|
+      keysToRecords << DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: Experiment.number, epochs: epochNumber, neuron: 2, exampleNumber: anExampleNumber}) }
+    end
+  end
+  detailedNeuronDataRecords = keysToRecords.collect { |recordKey| DetailedNeuronData.values(recordKey) } unless (keysToRecords.empty?)
+  puts detailedNeuronDataRecords
+
+
+  puts "\n\n############ TrainingData #############"
+  keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: Experiment.number}) }
+  trainingDataRecords = keysToRecords.collect { |recordKey| TrainingData.values(recordKey) } unless (keysToRecords.empty?)
+  puts trainingDataRecords
+
+
+  puts "\n\n############ SnapShotData #############"
+  dataToStoreLongTerm = {:experimentNumber => Experiment.number, :descriptionOfExperiment => descriptionOfExperiment,
+                         :network => network, :time => Time.now, :elapsedTime => (Time.now - startingTime),
+                         :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE,
+                         :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors
+  }
+  SnapShotData.new(dataToStoreLongTerm)
+
+  keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
+  unless (keysToRecords.empty?)
+    puts
+    puts "Number\tLastEpoch\tTrainMSE\t\tTestMSE\t\tTime\t\t\t\tDescription"
+    keysToRecords.each do |keyToOneRecord|
+      recordHash = SnapShotData.values(keyToOneRecord)
+      puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t#{recordHash[:trainMSE]}\t#{recordHash[:testMSE]}\t\t#{recordHash[:time]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
+    end
+
+    # recordHash = SnapShotData.values(keysToRecords.last)
+  end
+
+  plotMSEvsEpochNumber(trainingDataRecords)
+end
 
 class Experiment
   def setParameters
@@ -96,6 +139,7 @@ end
 
 ###################################### START of Main Learning  ##########################################
 srand(0)
+
 descriptionOfExperiment = "TLearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges"
 experiment = Experiment.new(descriptionOfExperiment)
 args = experiment.setParameters
@@ -103,7 +147,6 @@ args[:trainingSequence] = trainingSequence = TrainingSequence.new(args)
 
 ############################# create training set...
 examples = createTrainingSet(args)
-
 
 ######################## Create Network....
 network = SimpleFlockingNeuronNetwork.new(args) # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
@@ -114,76 +157,10 @@ theTrainer = TrainingSupervisor.new(examples, network, args)
 startingTime = Time.now
 lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors = theTrainer.train
 
-puts network
-puts "lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors"
-puts lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors
+############################## reporting results....
 
-#arrayOfNeuronsToPlot = [network.outputLayer[0]]
-#generatePlotForEachNeuron(arrayOfNeuronsToPlot)
+reportTrainingResults(accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, network, startingTime)
 
-
-#arrayOfNeuronsToPlot = network.outputLayer
-#theTrainer.displayTrainingResults(arrayOfNeuronsToPlot)
-## theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, accumulatedAbsoluteFlockingErrors)
-#displayAndPlotResults(args, accumulatedAbsoluteFlockingErrors, dataStoreManager, lastEpoch, lastTestingMSE,
-
-
-
-lastTestingMSE = nil
-
-
-puts "\n\n############ NeuronData #############"
-keysToRecords = []
-NeuronData.lookup_values(:epochs).each do |epochNumber|
-  keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber, neuron: 2}) }
-end
-neuronDataRecords = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) } unless (keysToRecords.empty?)
-puts neuronDataRecords
-
-
-puts "\n\n############ DetailedNeuronData #############"
-keysToRecords = []
-DetailedNeuronData.lookup_values(:epochs).each do |epochNumber|
-  DetailedNeuronData.lookup_values(:exampleNumber).each do |anExampleNumber|
-    keysToRecords << DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: Experiment.number, epochs: epochNumber, neuron: 2, exampleNumber: anExampleNumber}) }
-   end
-end
-detailedNeuronDataRecords = keysToRecords.collect { |recordKey| DetailedNeuronData.values(recordKey) } unless (keysToRecords.empty?)
-puts detailedNeuronDataRecords
-
-
-puts "\n\n############ TrainingData #############"
-keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: Experiment.number}) }
-trainingDataRecords = keysToRecords.collect { |recordKey| TrainingData.values(recordKey) } unless (keysToRecords.empty?)
-puts trainingDataRecords
-
-
-puts "\n\n############ SnapShotData #############"
-dataToStoreLongTerm = {:experimentNumber => Experiment.number, :descriptionOfExperiment => descriptionOfExperiment,
-                       :network => network, :time => Time.now, :elapsedTime => (Time.now - startingTime),
-                       :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE,
-                       :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors
-}
-SnapShotData.new(dataToStoreLongTerm)
-
-selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
-unless (selectedData.empty?)
-  puts
-  puts "Number\tLastEpoch\tTrainMSE\t\tTestMSE\t\tTime\t\t\t\tDescription"
-  selectedData.each do |aSelectedExperiment|
-    aHash = SnapShotData.values(aSelectedExperiment)
-    puts "#{aHash[:experimentNumber]}\t\t#{aHash[:epochs]}\t#{aHash[:trainMSE]}\t#{aHash[:testMSE]}\t\t#{aHash[:time]}\t\t\t\t#{aHash[:descriptionOfExperiment]}"
-
-  end
-
-  aHash = SnapShotData.values(selectedData.last)
-  puts aHash[:network]
-  #puts "NETWORK\n\n#{(aHash[:network]).outputLayer[0]}"
-end
-
-plotMSEvsEpochNumber(trainingDataRecords)
-
+############################## key/value db clean-up....
 experiment.deleteTemporaryDataRecordsInDB()
-
 experiment.save
-
