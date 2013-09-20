@@ -3,26 +3,25 @@
 
 require_relative 'Utilities'
 
-
 module RecordingAndPlottingRoutines
 
-  def measureNeuralResponsesForTesting
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
-    numberOfExamples.times do |exampleNumber|
-      allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-      outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
-      neuronsWithInputLinks.each { |aNeuron| aNeuron.recordResponsesForExample }
-    end
-    mse = network.calcNetworksMeanSquareError
-  end
+  #def measureNeuralResponsesForTesting
+  #  neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
+  #  numberOfExamples.times do |exampleNumber|
+  #    allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+  #    outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
+  #    neuronsWithInputLinks.each { |aNeuron| aNeuron.recordResponsesForExample }
+  #  end
+  #  mse = network.calcNetworksMeanSquareError
+  #end
 
-  def oneForwardPassEpoch(testingExamples)
-    trainingExamples = args[:examples]
-    distributeSetOfExamples(testingExamples)
-    testMSE = measureNeuralResponsesForTesting
-    distributeSetOfExamples(trainingExamples) # restore training examples
-    return testMSE
-  end
+  #def oneForwardPassEpoch(testingExamples)
+  #  trainingExamples = args[:examples]
+  #  distributeSetOfExamples(testingExamples)
+  #  testMSE = measureNeuralResponsesForTesting
+  #  distributeSetOfExamples(trainingExamples) # restore training examples
+  #  return testMSE
+  #end
 
   def generatePlotForEachNeuron(arrayOfNeuronsToPlot)
     arrayOfNeuronsToPlot.each do |theNeuron|
@@ -95,6 +94,7 @@ module RecordingAndPlottingRoutines
   end
 end
 
+#############################
 
 class Experiment
   attr_reader :descriptionOfExperiment, :args
@@ -174,7 +174,6 @@ class SnapShotData
   end
 end
 
-
 class DetailedNeuronData
   include Relix
   Relix.host = $currentHost
@@ -221,7 +220,6 @@ class DetailedNeuronData
   end
 end
 
-
 class NeuronData
   include Relix
   Relix.host = $currentHost
@@ -264,7 +262,6 @@ class NeuronData
     "ND#{experimentNumber}.#{id}"
   end
 end
-
 
 class TrainingData
   include Relix
@@ -309,6 +306,7 @@ class TrainingData
 end
 
 #####################################
+
 module DBAccess
   def dbStoreNeuronData
     savingInterval = args[:intervalForSavingNeuronData]
@@ -365,6 +363,7 @@ class AbstractStepTrainer
   include DBAccess
 end
 
+#####################################
 
 class SimulationDataStoreManager
   attr_accessor :args
@@ -390,3 +389,34 @@ class SimulationDataStoreManager
   end
 end
 
+#def recordResponsesForEpoch
+#  if (trainingSequence.timeToRecordData)
+#    determineCentersOfClusters()
+#    epochDataToRecord = ({:epochNumber => dataStoreManager.epochNumber, :neuronID => neuron.id,
+#                          :wt1 => neuron.inputLinks[0].weight, :wt2 => neuron.inputLinks[1].weight,
+#                          :cluster0Center => @cluster0Center, :cluster1Center => @cluster1Center,
+#                          :dPrime => neuron.dPrime})
+#    quickReportOfExampleWeightings(epochDataToRecord)
+#    NeuronData.new(epochDataToRecord)
+#  end
+#end
+#
+#def quickReportOfExampleWeightings(epochDataToRecord)
+#  neuron.clusters.each_with_index do |cluster, numberOfCluster|
+#    cluster.membershipWeightForEachExample.each { |exampleWeight| puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
+#    puts
+#    puts "NumExamples=\t#{cluster.numExamples}\tNum Membership Weights=\t#{cluster.membershipWeightForEachExample.length}"
+#  end
+#end
+#
+#def determineCentersOfClusters
+#  cluster0 = neuron.clusters[0]
+#  if (cluster0.center.present?)
+#    @cluster0Center = cluster0.center[0]
+#    cluster1 = neuron.clusters[1]
+#    @cluster1Center = cluster1.center[0]
+#  else
+#    cluster0Center = 0.0
+#    cluster1Center = 0.0
+#  end
+#end
