@@ -18,8 +18,8 @@ end
 
 module CombiningFlockingAndSupervisedErrorCode
 
-  def calcAccumDeltaWsForOutputError
-    inputLinks.each { |inputLink| inputLink.calcAccumDeltaWsForOutputError(higherLayerError) }
+  def calcAccumDeltaWsForHigherLayerError
+    inputLinks.each { |inputLink| inputLink.calcAccumDeltaWsForHigherLayerError(higherLayerError) }
   end
 
   def calcAccumDeltaWsForLocalFlocking
@@ -172,7 +172,7 @@ end
 class FlockingLink < Link
   attr_accessor :previousDeltaWAccumulated, :store
 
-  def calcAccumDeltaWsForOutputError(higherLayerError)
+  def calcAccumDeltaWsForHigherLayerError(higherLayerError)
     self.deltaW = learningRate * higherLayerError * inputNeuron.output
     self.deltaWAccumulated += deltaW
   end

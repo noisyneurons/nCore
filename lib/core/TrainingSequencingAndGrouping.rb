@@ -104,25 +104,51 @@ end
 
 
 #####
-class NeuronGroups1BPofFlocking < NeuronGroupsTrivial
-  attr_accessor :layersToReceive_backPropagate_message, :neuronsToReceive_backPropagate_message
+class NeuronGroupsBPofFlockError < AbstractNeuronGroups
+  attr_accessor :outputErrorAdaptingLayers,:flockErrorGeneratingLayers,:flockErrorAdaptingLayers,
+                :outputErrorAdaptingNeurons,:flockErrorGeneratingNeurons,:flockErrorAdaptingNeurons
   def nameTrainingGroups
-    self.layersWithInputLinks = [outputLayer]
-    self.outputErrorAdaptingLayers = [outputLayer]
+    hiddenLayer = allNeuronLayers[1]
+    self.layersWithInputLinks = [hiddenLayer, outputLayer]
+
+    self.outputErrorAdaptingLayers = layersWithInputLinks
     self.flockErrorGeneratingLayers = [outputLayer]
-    self.flockErrorAdaptingLayers =  [outputLayer]
+    self.flockErrorAdaptingLayers =  [hiddenLayer]
+
     self.layersWhoseClustersNeedToBeSeeded = flockErrorGeneratingLayers
-
-    self.layersToReceive_backPropagate_message = nil
-
     setNeuronGroupNames()
   end
 
   def setNeuronGroupNames
     super
-    neuronsToReceive_backPropagate_message = layersToReceive_backPropagate_message.flatten unless (layersToReceive_backPropagate_message.nil?)
+    self.outputErrorAdaptingNeurons = outputErrorAdaptingLayers.flatten unless (outputErrorAdaptingLayers.nil?)
+    self.flockErrorGeneratingNeurons = flockErrorGeneratingLayers.flatten unless (flockErrorGeneratingLayers.nil?)
+    self.flockErrorAdaptingNeurons = flockErrorAdaptingLayers.flatten unless (flockErrorAdaptingLayers.nil?)
   end
 end
+
+
+
+#####
+#class NeuronGroups1BPofFlocking < NeuronGroupsTrivial
+#  attr_accessor :layersToReceive_backPropagate_message, :neuronsToReceive_backPropagate_message
+#  def nameTrainingGroups
+#    self.layersWithInputLinks = [outputLayer]
+#    self.outputErrorAdaptingLayers = [outputLayer]
+#    self.flockErrorGeneratingLayers = [outputLayer]
+#    self.flockErrorAdaptingLayers =  [outputLayer]
+#    self.layersWhoseClustersNeedToBeSeeded = flockErrorGeneratingLayers
+#
+#    self.layersToReceive_backPropagate_message = nil
+#
+#    setNeuronGroupNames()
+#  end
+#
+#  def setNeuronGroupNames
+#    super
+#    neuronsToReceive_backPropagate_message = layersToReceive_backPropagate_message.flatten unless (layersToReceive_backPropagate_message.nil?)
+#  end
+#end
 
 
 #class NeuronGroups2BPofFlocking < AbstractNeuronGroups

@@ -105,7 +105,7 @@ class AbstractStepTrainer
 
   def performStandardBackPropTraining
     adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
-    acrossExamplesAccumulateDeltaWs { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForOutputError }
+    acrossExamplesAccumulateDeltaWs { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForHigherLayerError }
     adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
   end
 
@@ -259,7 +259,7 @@ class FlockStepTrainerNEW < AbstractStepTrainer
 
   def performStandardBackPropTraining
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
-    acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForOutputError }
+    acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForHigherLayerError }
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
   end
 
@@ -317,25 +317,6 @@ class FlockStepTrainerNEW < AbstractStepTrainer
 end
 
 class BPofFlockingStepTrainer < FlockStepTrainerNEW
-  attr_accessor :layersToReceive_backPropagate_message, :neuronsToReceive_backPropagate_message
-
-  def specifyGroupsOfLayersAndNeurons
-    super
-    @layersToReceive_backPropagate_message =  neuronGroups.layersToReceive_backPropagate_message
-    @neuronsToReceive_backPropagate_message = neuronGroups.neuronsToReceive_backPropagate_message
-  end
-
-  def train(trials)
-    distributeSetOfExamples(examples)
-    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)
-    self.accumulatedAbsoluteFlockingErrors = []
-    trials.times do
-      innerTrainingLoop()
-      dbStoreTrainingData()
-      trainingSequence.nextEpoch
-    end
-    return calcMSE, accumulatedAbsoluteFlockingErrors
-  end
 
   def innerTrainingLoop
     unless (flockingShouldOccur?(accumulatedAbsoluteFlockingErrors))
@@ -368,13 +349,13 @@ class BPofFlockingStepTrainer < FlockStepTrainerNEW
         dataRecord = aNeuron.recordResponsesForExample
         dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
         dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
-        aNeuron.copyLocalFlockErrorToBP # copy local flock error to slot for bp of flock error....
         aNeuron.dbStoreDetailedData
       end
 
-      # backprop flocking error
-      neuronsToReceive_backPropagate_message.reverse.each { |aNeuron| aNeuron.backPropagate } unless(neuronsToReceive_backPropagate_message.nil?) # for most cases, same neurons as flockErrorAdaptingNeurons
-      flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.calcAccumDeltaWsForLocalFlocking } # could be both local flock and bp flock neurons
+      flockErrorAdaptingNeurons.each do |aNeuron|
+        aNeuron.backPropagate { |higherLayerError, localFlockingError| localFlockingError }
+        aNeuron.calcAccumDeltaWsForHigherLayerError
+      end
     end
   end
 end
@@ -454,7 +435,7 @@ class TrainingSupervisorBPofFlocking
     @startTime = Time.now
     @elapsedTime = nil
     @minMSE = args[:minMSE]
-    neuronGroups = NeuronGroups1BPofFlocking.new(network)
+    neuronGroups = NeuronGroupsBPofFlockError.new(network)
     @stepTrainer = BPofFlockingStepTrainer.new(examples, neuronGroups, trainingSequence, args)
   end
 
