@@ -37,7 +37,7 @@ module FlockingDecisionRoutines # TODO If one neuron does NOT meet criteria, all
   end
 
   def tooEarlyToFlock?
-    trainingSequence.epochs < 200
+    args[:epochs] < 200
   end
 end
 
@@ -323,6 +323,7 @@ class BPofFlockingStepTrainer < FlockStepTrainerNEW
       performStandardBackPropTraining()
       prepareForRepeatedFlockingIterations()
     else
+      std("here ",args[:epochs])
       adaptToBPofFlockError
     end
     flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
@@ -349,11 +350,12 @@ class BPofFlockingStepTrainer < FlockStepTrainerNEW
         dataRecord = aNeuron.recordResponsesForExample
         dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
         dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
+        aNeuron.backPropagate {|higherLayerError, localFlockingError| localFlockingError } # TODO some unnecessary calculations.  Should change!!
         aNeuron.dbStoreDetailedData
       end
 
       flockErrorAdaptingNeurons.each do |aNeuron|
-        aNeuron.backPropagate { |higherLayerError, localFlockingError| localFlockingError }
+        aNeuron.backPropagate
         aNeuron.calcAccumDeltaWsForHigherLayerError
       end
     end

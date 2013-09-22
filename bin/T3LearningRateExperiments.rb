@@ -98,9 +98,9 @@ class Experiment
         :rng => Random.new(randomNumberSeed),
 
         # training parameters re. Output Error
-        :outputErrorLearningRate => 2.0, #0.02,
+        :outputErrorLearningRate => 0.40, #0.02,
         :minMSE => 0.0001,
-        :maxNumEpochs => 4e3,
+        :maxNumEpochs => 4005,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
@@ -118,9 +118,9 @@ class Experiment
         :intervalForSavingTrainingData => 100,
 
         # Flocking Parameters...
-        :flockingLearningRate => -0.04, # -0.002,
-        :maxFlockingIterationsCount => 2000, # 3800, # 2000,
-        :maxAbsFlockingErrorsPerExample => 0.002, # 0.00000000000001, #0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
+        :flockingLearningRate => -0.02, # -0.04, # -0.002,
+        :maxFlockingIterationsCount => 10, # 2000,
+        :maxAbsFlockingErrorsPerExample => 0.002, #    0.04 / numberOfExamples = 0.005
 
         :typeOfClusterer => DynamicClusterer,
         :numberOfClusters => 2,
