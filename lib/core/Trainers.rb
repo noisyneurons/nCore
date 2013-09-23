@@ -323,8 +323,9 @@ class BPofFlockingStepTrainer < FlockStepTrainerNEW
       performStandardBackPropTraining()
       prepareForRepeatedFlockingIterations()
     else
-      std("here ",args[:epochs])
+
       adaptToBPofFlockError
+      std("h", [args[:epochs], accumulatedAbsoluteFlockingErrors])
     end
     flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
   end
@@ -350,7 +351,7 @@ class BPofFlockingStepTrainer < FlockStepTrainerNEW
         dataRecord = aNeuron.recordResponsesForExample
         dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
         dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
-        aNeuron.backPropagate {|higherLayerError, localFlockingError| localFlockingError } # TODO some unnecessary calculations.  Should change!!
+        aNeuron.backPropagate { |higherLayerError, localFlockingError| localFlockingError } # TODO some unnecessary calculations.  Should change!!
         aNeuron.dbStoreDetailedData
       end
 
@@ -360,6 +361,13 @@ class BPofFlockingStepTrainer < FlockStepTrainerNEW
       end
     end
   end
+
+  def useFuzzyClusters?  # TODO revert back to super...
+    return true
+  end
+
+
+
 end
 
 
