@@ -221,7 +221,7 @@ class FlockStepTrainer < AbstractStepTrainer
   end
 end
 
-class FlockStepTrainerNEW < AbstractStepTrainer
+class FlockStepTrainerTrivial < AbstractStepTrainer
   attr_accessor :outputErrorAdaptingLayers, :flockErrorGeneratingLayers, :flockErrorAdaptingLayers,
                 :outputErrorAdaptingNeurons, :flockErrorGeneratingNeurons, :flockErrorAdaptingNeurons
 
@@ -316,7 +316,7 @@ class FlockStepTrainerNEW < AbstractStepTrainer
   end
 end
 
-class BPofFlockingStepTrainer < FlockStepTrainerNEW
+class BPofFlockingStepTrainer < FlockStepTrainerTrivial
 
   def innerTrainingLoop
     unless (flockingShouldOccur?(accumulatedAbsoluteFlockingErrors))
@@ -362,13 +362,17 @@ class BPofFlockingStepTrainer < FlockStepTrainerNEW
     end
   end
 
-  def useFuzzyClusters?  # TODO revert back to super...
+  def useFuzzyClusters? # TODO revert back to super...
     return true
   end
+end
 
+class HiddenNeuronLocalFlockingStepTrainer < FlockStepTrainerTrivial
 
 
 end
+
+
 
 
 #####
@@ -415,7 +419,7 @@ class TrainingSupervisorTrivial
     @elapsedTime = nil
     @minMSE = args[:minMSE]
     neuronGroups = NeuronGroupsTrivial.new(network)
-    @stepTrainer = FlockStepTrainerNEW.new(examples, neuronGroups, trainingSequence, args)
+    @stepTrainer = FlockStepTrainerTrivial.new(examples, neuronGroups, trainingSequence, args)
   end
 
   def train
@@ -434,8 +438,8 @@ class TrainingSupervisorTrivial
   end
 end
 
-class TrainingSupervisorBPofFlocking
-  attr_accessor :stepTrainer, :trainingSequence, :network, :args, :startTime, :elapsedTime, :minMSE
+class TrainingSupervisorHiddenNeuronLocalFlocking
+  attr_accessor :stepTrainer, :trainingSequence, :neuronGroups, :network, :args, :startTime, :elapsedTime, :minMSE
   include RecordingAndPlottingRoutines
 
   def initialize(examples, network, args)
@@ -445,8 +449,8 @@ class TrainingSupervisorBPofFlocking
     @startTime = Time.now
     @elapsedTime = nil
     @minMSE = args[:minMSE]
-    neuronGroups = NeuronGroupsBPofFlockError.new(network)
-    @stepTrainer = BPofFlockingStepTrainer.new(examples, neuronGroups, trainingSequence, args)
+    @neuronGroups = NeuronGroupsHiddenNeuronLocalFlockingError.new(network)
+    @stepTrainer = HiddenNeuronLocalFlockingStepTrainer.new(examples, neuronGroups, trainingSequence, args)
   end
 
   def train
@@ -455,7 +459,7 @@ class TrainingSupervisorBPofFlocking
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
       mse, accumulatedAbsoluteFlockingErrors = stepTrainer.train(numTrials)
     end
-    arrayOfNeuronsToPlot = [network.outputLayer[0]]
+    arrayOfNeuronsToPlot = [neuronGroups.flockErrorGeneratingNeurons[0]]
     plotTrainingResults(arrayOfNeuronsToPlot)
     return trainingSequence.epochs, mse, accumulatedAbsoluteFlockingErrors
   end

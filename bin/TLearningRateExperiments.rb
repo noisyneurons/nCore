@@ -40,7 +40,7 @@ def reportTrainingResults(accumulatedAbsoluteFlockingErrors, descriptionOfExperi
   puts "\n\n############ NeuronData #############"
   keysToRecords = []
   NeuronData.lookup_values(:epochs).each do |epochNumber|
-    keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber, neuron: 2}) }
+    keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber, neuron: 2}) }
   end
   neuronDataRecords = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) } unless (keysToRecords.empty?)
   puts neuronDataRecords
@@ -50,7 +50,7 @@ def reportTrainingResults(accumulatedAbsoluteFlockingErrors, descriptionOfExperi
   keysToRecords = []
   DetailedNeuronData.lookup_values(:epochs).each do |epochNumber|
     DetailedNeuronData.lookup_values(:exampleNumber).each do |anExampleNumber|
-      keysToRecords << DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: Experiment.number, epochs: epochNumber, neuron: 2, exampleNumber: anExampleNumber}) }
+      keysToRecords << DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber, neuron: 2, exampleNumber: anExampleNumber}) }
     end
   end
   detailedNeuronDataRecords = keysToRecords.collect { |recordKey| DetailedNeuronData.values(recordKey) } unless (keysToRecords.empty?)
@@ -58,13 +58,13 @@ def reportTrainingResults(accumulatedAbsoluteFlockingErrors, descriptionOfExperi
 
 
   puts "\n\n############ TrainingData #############"
-  keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: Experiment.number}) }
+  keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: ExperimentLogger.number}) }
   trainingDataRecords = keysToRecords.collect { |recordKey| TrainingData.values(recordKey) } unless (keysToRecords.empty?)
   puts trainingDataRecords
 
 
   puts "\n\n############ SnapShotData #############"
-  dataToStoreLongTerm = {:experimentNumber => Experiment.number, :descriptionOfExperiment => descriptionOfExperiment,
+  dataToStoreLongTerm = {:experimentNumber => ExperimentLogger.number, :descriptionOfExperiment => descriptionOfExperiment,
                          :network => network, :time => Time.now, :elapsedTime => (Time.now - startingTime),
                          :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE,
                          :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors
@@ -93,7 +93,7 @@ class Experiment
     randomNumberSeed = 0
 
     @args = {
-        :experimentNumber => Experiment.number,
+        :experimentNumber => ExperimentLogger.number,
         :descriptionOfExperiment => descriptionOfExperiment,
         :rng => Random.new(randomNumberSeed),
 
@@ -141,7 +141,7 @@ end
 srand(0)
 
 descriptionOfExperiment = "TLearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges"
-experiment = Experiment.new(descriptionOfExperiment)
+experiment = ExperimentLogger.new(descriptionOfExperiment)
 args = experiment.setParameters
 args[:trainingSequence] = trainingSequence = TrainingSequence.new(args)
 

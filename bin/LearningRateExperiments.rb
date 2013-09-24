@@ -51,7 +51,7 @@ class Experiment
     randomNumberSeed = 0
 
     @args = {
-        :experimentNumber => Experiment.number,
+        :experimentNumber => ExperimentLogger.number,
         :descriptionOfExperiment => descriptionOfExperiment,
         :rng => Random.new(randomNumberSeed),
 
@@ -101,7 +101,7 @@ end
 
 srand(0)
 descriptionOfExperiment = "SimpleAdjustableLearningRateTrainerMultiFlockIterations Reference Run NUMBER 2"
-experiment = Experiment.new(descriptionOfExperiment)
+experiment = ExperimentLogger.new(descriptionOfExperiment)
 args = experiment.setParameters
 # dataStoreManager = SimulationDataStoreManager.create
 args[:dataStoreManager] = dataStoreManager = SimulationDataStoreManager.new(args)
@@ -129,7 +129,7 @@ lastTestingMSE = nil
 
 puts "############ Include Example Numbers #############"
 4000.times do |epochNumber|
-  selectedData = DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber,
+  selectedData = DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber,
                                                                                neuron: 2}) }
   puts "For epoch number=\t#{epochNumber}" unless (selectedData.empty?)
 
@@ -143,7 +143,7 @@ displayAndPlotResults(args, accumulatedAbsoluteFlockingErrors, dataStoreManager,
 
 SnapShotData.new(descriptionOfExperiment, network, Time.now, lastEpoch, lastTrainingMSE, lastTestingMSE)
 
-selectedData = SnapShotData.lookup { |q| q[:experimentNumber_epochs].eq({experimentNumber: Experiment.number, epochs: lastEpoch}) }
+selectedData = SnapShotData.lookup { |q| q[:experimentNumber_epochs].eq({experimentNumber: ExperimentLogger.number, epochs: lastEpoch}) }
 
 selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
 unless (selectedData.empty?)
@@ -155,8 +155,8 @@ unless (selectedData.empty?)
   end
 end
 
-DetailedNeuronData.deleteData(Experiment.number)
-NeuronData.deleteData(Experiment.number)
+DetailedNeuronData.deleteData(ExperimentLogger.number)
+NeuronData.deleteData(ExperimentLogger.number)
 
 experiment.save
 

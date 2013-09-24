@@ -1,90 +1,9 @@
 ### VERSION "nCore"
-## ../nCore/bin/T3LearningRateExperiments.rb
+## ../nCore/bin/T2LearningRateExperiments.rb
 # Purpose:  To quantitatively explore the simplest clustering w/o supervision.
 # This is a simplified and significantly reorganized version of 'Phase1Phase2MultiCycle.rb'
 
-require_relative '../lib/core/Utilities'
-require_relative '../lib/core/DataSet'
-require_relative '../lib/core/NeuralParts'
-require_relative '../lib/core/NeuralPartsExtended'
-# require_relative '../lib/core/ExampleImportanceMods'    # TODO Is this useful???  So far NOT!
-require_relative '../lib/core/NetworkFactories'
-require_relative '../lib/plot/CorePlottingCode'
-require_relative '../lib/core/SimulationDataStore'
-require_relative '../lib/core/TrainingSequencingAndGrouping'
-require_relative '../lib/core/Trainers.rb'
-require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
-
-def createTrainingSet(args)
-  include ExampleDistribution
-  examples = []
-  examples << {:inputs => [1.0, 1.0], :targets => [1.0], :exampleNumber => 0, :class => 1}
-  examples << {:inputs => [1.0, 2.0], :targets => [1.0], :exampleNumber => 1, :class => 1}
-  examples << {:inputs => [1.0, 3.0], :targets => [1.0], :exampleNumber => 2, :class => 1}
-  examples << {:inputs => [1.0, 4.0], :targets => [1.0], :exampleNumber => 3, :class => 1}
-  examples << {:inputs => [-1.0, -1.0], :targets => [0.0], :exampleNumber => 4, :class => 0}
-  examples << {:inputs => [-1.0, -2.0], :targets => [0.0], :exampleNumber => 5, :class => 0}
-  examples << {:inputs => [-1.0, -3.0], :targets => [0.0], :exampleNumber => 6, :class => 0}
-  examples << {:inputs => [-1.0, -4.0], :targets => [0.0], :exampleNumber => 7, :class => 0}
-  STDERR.puts "****************Incorrect Number of Examples Specified!! ************************" if (args[:numberOfExamples] != examples.length)
-  return examples
-end
-
-def reportTrainingResults(accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, network, startingTime)
-  puts network
-
-  lastTestingMSE = nil
-  puts "lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE"
-  puts lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE
-
-  puts "\n\n############ NeuronData #############"
-  keysToRecords = []
-  NeuronData.lookup_values(:epochs).each do |epochNumber|
-    keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: Experiment.number, epochs: epochNumber, neuron: 3}) }
-  end
-  neuronDataRecords = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) } unless (keysToRecords.empty?)
-  puts neuronDataRecords
-
-
-  puts "\n\n############ DetailedNeuronData #############"
-  keysToRecords = []
-  DetailedNeuronData.lookup_values(:epochs).each do |epochNumber|
-    DetailedNeuronData.lookup_values(:exampleNumber).each do |anExampleNumber|
-      keysToRecords << DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: Experiment.number, epochs: epochNumber, neuron: 3, exampleNumber: anExampleNumber}) }
-    end
-  end
-  detailedNeuronDataRecords = keysToRecords.collect { |recordKey| DetailedNeuronData.values(recordKey) } unless (keysToRecords.empty?)
-  puts detailedNeuronDataRecords
-
-
-  puts "\n\n############ TrainingData #############"
-  keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: Experiment.number}) }
-  trainingDataRecords = keysToRecords.collect { |recordKey| TrainingData.values(recordKey) } unless (keysToRecords.empty?)
-  puts trainingDataRecords
-
-
-  puts "\n\n############ SnapShotData #############"
-  dataToStoreLongTerm = {:experimentNumber => Experiment.number, :descriptionOfExperiment => descriptionOfExperiment,
-                         :network => network, :time => Time.now, :elapsedTime => (Time.now - startingTime),
-                         :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE,
-                         :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors
-  }
-  SnapShotData.new(dataToStoreLongTerm)
-
-  keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
-  unless (keysToRecords.empty?)
-    puts
-    puts "Number\tLastEpoch\tTrainMSE\t\tTestMSE\t\tTime\t\t\t\tDescription"
-    keysToRecords.each do |keyToOneRecord|
-      recordHash = SnapShotData.values(keyToOneRecord)
-      puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t#{recordHash[:trainMSE]}\t#{recordHash[:testMSE]}\t\t#{recordHash[:time]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
-    end
-
-    # recordHash = SnapShotData.values(keysToRecords.last)
-  end
-
-  plotMSEvsEpochNumber(trainingDataRecords)
-end
+require_relative 'BaseLearningExperiment'
 
 class Experiment
   def setParameters
@@ -93,7 +12,7 @@ class Experiment
     randomNumberSeed = 0
 
     @args = {
-        :experimentNumber => Experiment.number,
+        :experimentNumber => ExperimentLogger.number,
         :descriptionOfExperiment => descriptionOfExperiment,
         :rng => Random.new(randomNumberSeed),
 
@@ -141,7 +60,7 @@ end
 srand(0)
 
 descriptionOfExperiment = "T3LearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges"
-experiment = Experiment.new(descriptionOfExperiment)
+experiment = ExperimentLogger.new(descriptionOfExperiment)
 args = experiment.setParameters
 args[:trainingSequence] = trainingSequence = TrainingSequence.new(args)
 
@@ -152,15 +71,21 @@ examples = createTrainingSet(args)
 network = BPofFlockingNetwork.new(args) # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
 
 ############################### train ...
-theTrainer = TrainingSupervisorBPofFlocking.new(examples, network, args)
+theTrainer = TrainingSupervisorHiddenNeuronLocalFlocking.new(examples, network, args)
 
 startingTime = Time.now
 lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors = theTrainer.train
 
 ############################## reporting results....
 
-reportTrainingResults(accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, network, startingTime)
+neuronToDisplay = 2
+reportTrainingResults(neuronToDisplay, accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, network, startingTime)
 
 ############################## key/value db clean-up....
 experiment.deleteTemporaryDataRecordsInDB()
 experiment.save
+
+###################################### START of Main Learning  ##########################################
+performSimulation()
+
+

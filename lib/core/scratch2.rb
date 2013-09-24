@@ -29,7 +29,7 @@ class SnapShotData
   def initialize(experimentDescription, network, time, epochs, trainMSE, testMSE = 0.0)
     @id = @@ID
     @@ID += 1
-    @experimentNumber = Experiment.number
+    @experimentNumber = ExperimentLogger.number
 
     @experimentDescription = experimentDescription
     @network = network

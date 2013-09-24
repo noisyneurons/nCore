@@ -1,7 +1,5 @@
 ### VERSION "nCore"
-## ../nCore/bin/TFlockBP.rb
-# Purpose:  To quantitatively explore the 'NEXT simplest' flocking -- non-local flocking from output neuron to hidden neuron.
-
+## ../nCore/bin/BaseLearningExperiments.rb
 
 require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
@@ -30,7 +28,7 @@ def createTrainingSet(args)
   return examples
 end
 
-def reportTrainingResults(accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, network, startingTime)
+def reportTrainingResults(neuronToDisplay, accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, network, startingTime)
   puts network
 
   lastTestingMSE = nil
@@ -40,7 +38,7 @@ def reportTrainingResults(accumulatedAbsoluteFlockingErrors, descriptionOfExperi
   puts "\n\n############ NeuronData #############"
   keysToRecords = []
   NeuronData.lookup_values(:epochs).each do |epochNumber|
-    keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber, neuron: 2}) }
+    keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber, neuron: neuronToDisplay}) }
   end
   neuronDataRecords = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) } unless (keysToRecords.empty?)
   puts neuronDataRecords
@@ -50,7 +48,7 @@ def reportTrainingResults(accumulatedAbsoluteFlockingErrors, descriptionOfExperi
   keysToRecords = []
   DetailedNeuronData.lookup_values(:epochs).each do |epochNumber|
     DetailedNeuronData.lookup_values(:exampleNumber).each do |anExampleNumber|
-      keysToRecords << DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber, neuron: 2, exampleNumber: anExampleNumber}) }
+      keysToRecords << DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber, neuron: neuronToDisplay, exampleNumber: anExampleNumber}) }
     end
   end
   detailedNeuronDataRecords = keysToRecords.collect { |recordKey| DetailedNeuronData.values(recordKey) } unless (keysToRecords.empty?)
@@ -87,6 +85,17 @@ def reportTrainingResults(accumulatedAbsoluteFlockingErrors, descriptionOfExperi
 end
 
 class Experiment
+  attr_accessor :descriptionOfExperiment, :experimentLogger, :args, :trainingSequence
+
+  def initialize(descriptionOfExperiment)
+    srand(0)
+    @descriptionOfExperiment = descriptionOfExperiment
+    @experimentLogger = ExperimentLogger.new(descriptionOfExperiment)
+    @args = self.setParameters
+    @trainingSequence = TrainingSequence.new(args)
+    @args[:trainingSequence] = trainingSequence
+  end
+
   def setParameters
 
     numberOfExamples = 8
@@ -104,7 +113,7 @@ class Experiment
 
         # Network Architecture
         :numberOfInputNeurons => 2,
-        :numberOfHiddenNeurons => 1,
+        :numberOfHiddenNeurons => 0,
         :numberOfOutputNeurons => 1,
         :weightRange => 1.0,
         :typeOfLink => FlockingLink,
@@ -135,32 +144,30 @@ class Experiment
         :floorToPreventOverflow => 1e-30
     }
   end
-end
 
-###################################### START of Main Learning  ##########################################
-srand(0)
-
-descriptionOfExperiment = "TFlockBP"
-experiment = ExperimentLogger.new(descriptionOfExperiment)
-args = experiment.setParameters
-args[:trainingSequence] = trainingSequence = TrainingSequence.new(args)
+  def performSimulation
 
 ############################# create training set...
-examples = createTrainingSet(args)
+    examples = createTrainingSet(args)
 
 ######################## Create Network....
-network = BPofFlockingNetwork.new(args)
+    network = SimpleFlockingNetwork.new(args) # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
 
-############################### train ...
-theTrainer = TrainingSupervisorSimplest.new(examples, network, args)
+###################################### START of Learning/Training  ##########################################
 
-startingTime = Time.now
-lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors = theTrainer.train
+    theTrainer = TrainingSupervisorTrivial.new(examples, network, args)
+
+
+    lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors = theTrainer.train
 
 ############################## reporting results....
+    startingTime = Time.now
+    neuronToDisplay = 2
+    reportTrainingResults(neuronToDisplay, accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, network, startingTime)
 
-reportTrainingResults(accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, network, startingTime)
+############################## clean-up....
+    experimentLogger.deleteTemporaryDataRecordsInDB()
+    experimentLogger.save
+  end
+end
 
-############################## key/value db clean-up....
-experiment.deleteTemporaryDataRecordsInDB()
-experiment.save

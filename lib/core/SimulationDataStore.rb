@@ -96,26 +96,26 @@ end
 
 #############################
 
-class Experiment
+class ExperimentLogger
   attr_reader :descriptionOfExperiment, :args
 
   $redis.setnx("experimentNumber", 0)
   @@number = $redis.get("experimentNumber")
 
-  def Experiment.number
+  def ExperimentLogger.number
     @@number
   end
 
   def deleteTemporaryDataRecordsInDB
-    TrainingData.deleteData(Experiment.number)
+    TrainingData.deleteData(ExperimentLogger.number)
     TrainingData.deleteEntireIndex!
-    NeuronData.deleteData(Experiment.number)
+    NeuronData.deleteData(ExperimentLogger.number)
     NeuronData.deleteEntireIndex!
-    DetailedNeuronData.deleteData(Experiment.number)
+    DetailedNeuronData.deleteData(ExperimentLogger.number)
     DetailedNeuronData.deleteEntireIndex!
   end
 
-  def Experiment.deleteTable!
+  def ExperimentLogger.deleteTable!
     $redis.del("experimentNumber")
   end
 
@@ -207,7 +207,7 @@ class DetailedNeuronData
   def initialize(detailedNeuronDataToRecord)
     @id = @@ID
     @@ID += 1
-    @experimentNumber = Experiment.number
+    @experimentNumber = ExperimentLogger.number
     @epochs = detailedNeuronDataToRecord[:epochs]
     @neuron = detailedNeuronDataToRecord[:neuronID]
     @exampleNumber = detailedNeuronDataToRecord[:exampleNumber]
@@ -251,7 +251,7 @@ class NeuronData
   def initialize(neuronDataToRecord)
     @id = @@ID
     @@ID += 1
-    @experimentNumber = Experiment.number
+    @experimentNumber = ExperimentLogger.number
     @neuron = neuronDataToRecord[:neuronID]
     @epochs = neuronDataToRecord[:epochs]
     $redis.set(neuronDataKey, neuronDataToRecord)
@@ -294,7 +294,7 @@ class TrainingData
   def initialize(trainingDataToRecord)
     @id = @@ID
     @@ID += 1
-    @experimentNumber = Experiment.number
+    @experimentNumber = ExperimentLogger.number
     @epochs = trainingDataToRecord[:epochs]
     $redis.set(trainingDataKey, YAML.dump(trainingDataToRecord))
     index!
@@ -331,7 +331,7 @@ module DBAccess
   def dbStoreTrainingData
     savingInterval = args[:intervalForSavingTrainingData]
     if recordOrNot?(savingInterval)
-      aHash = {:experimentNumber => Experiment.number, :epochs => args[:epochs], :mse => calcMSE, :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors}
+      aHash = {:experimentNumber => ExperimentLogger.number, :epochs => args[:epochs], :mse => calcMSE, :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors}
       TrainingData.new(aHash)
     end
   end

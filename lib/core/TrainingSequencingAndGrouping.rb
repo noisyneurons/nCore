@@ -112,7 +112,7 @@ class NeuronGroupsBPofFlockError < AbstractNeuronGroups
     self.layersWithInputLinks = [hiddenLayer, outputLayer]
 
     self.outputErrorAdaptingLayers = layersWithInputLinks
-    self.flockErrorGeneratingLayers = [outputLayer]
+    self.flockErrorGeneratingLayers = [hiddenLayer]
     self.flockErrorAdaptingLayers =  [hiddenLayer]
 
     self.layersWhoseClustersNeedToBeSeeded = flockErrorGeneratingLayers
@@ -125,6 +125,31 @@ class NeuronGroupsBPofFlockError < AbstractNeuronGroups
     self.flockErrorGeneratingNeurons = flockErrorGeneratingLayers.flatten unless (flockErrorGeneratingLayers.nil?)
     self.flockErrorAdaptingNeurons = flockErrorAdaptingLayers.flatten unless (flockErrorAdaptingLayers.nil?)
   end
+end
+
+
+class NeuronGroupsHiddenNeuronLocalFlockingError  < AbstractNeuronGroups
+  attr_accessor :outputErrorAdaptingLayers,:flockErrorGeneratingLayers,:flockErrorAdaptingLayers,
+                :outputErrorAdaptingNeurons,:flockErrorGeneratingNeurons,:flockErrorAdaptingNeurons
+  def nameTrainingGroups
+    hiddenLayer = allNeuronLayers[1]
+    self.layersWithInputLinks = [hiddenLayer, outputLayer]
+
+    self.outputErrorAdaptingLayers = layersWithInputLinks
+    self.flockErrorGeneratingLayers = [hiddenLayer]
+    self.flockErrorAdaptingLayers =  [hiddenLayer]
+
+    self.layersWhoseClustersNeedToBeSeeded = flockErrorGeneratingLayers
+    setNeuronGroupNames()
+  end
+
+  def setNeuronGroupNames
+    super
+    self.outputErrorAdaptingNeurons = outputErrorAdaptingLayers.flatten unless (outputErrorAdaptingLayers.nil?)
+    self.flockErrorGeneratingNeurons = flockErrorGeneratingLayers.flatten unless (flockErrorGeneratingLayers.nil?)
+    self.flockErrorAdaptingNeurons = flockErrorAdaptingLayers.flatten unless (flockErrorAdaptingLayers.nil?)
+  end
+
 end
 
 
