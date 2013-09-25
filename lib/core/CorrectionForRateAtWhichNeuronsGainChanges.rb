@@ -50,21 +50,4 @@ class AbstractStepTrainer
     result = (n * (o + p) * q).abs
     return [result, correctionFactorsFloor].max
   end
-
-
-  #def accumulateFlockingErrorDeltaWs
-  #  adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate] }
-  #  adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
-  #
-  #  acrossExamplesAccumulateDeltaWs do |aNeuron, dataRecord, exampleNumber|
-  #    dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
-  #    dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
-  #    epochs = args[:trainingSequence].epochs
-  #    DetailedNeuronData.new(args[:trainingSequence].epochs, aNeuron.id, exampleNumber, dataRecord[:netInput], dataRecord[:localFlockingError]) if(epochs % 100 == 0)
-  #
-  #    aNeuron.calcAccumDeltaWsForLocalFlocking
-  #  end
-  #  self.accumulatedAbsoluteFlockingErrors = adaptingNeurons.collect { |aNeuron| (aNeuron.accumulatedAbsoluteFlockingError * correctioaccumulatedAbsoluteFlockingErrornFactorForRateAtWhichNeuronsGainChanges(aNeuron.clustersCenter)) }
-  #end
-
 end

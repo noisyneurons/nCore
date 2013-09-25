@@ -109,15 +109,15 @@ class AbstractStepTrainer
   end
 
   def prepareForRepeatedFlockingIterations
-    recenterEachNeuronsClusters(flockErrorGeneratingNeurons) # necessary for later determining if clusters are still "tight-enough!"
-    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.inputLinks.each { |aLink| aLink.store = 0.0 } }
+    recenterEachNeuronsClusters(flockErrorGeneratingNeurons)
+    zeroOutFlockingLinksMomentumMemoryStore
     self.accumulatedAbsoluteFlockingErrors = []
   end
 
   def adaptToLocalFlockError
     STDERR.puts "Generating neurons and adapting neurons are not one in the same.  This is NOT local flocking!!" if (flockErrorGeneratingNeurons != flockErrorAdaptingNeurons)
     flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate] }
-    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
+    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 } # accumulatedAbsoluteFlockingError is a metric used for global control and monitoring
     acrossExamplesAccumulateFlockingErrorDeltaWs
     flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
     self.accumulatedAbsoluteFlockingErrors = flockErrorGeneratingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
@@ -125,19 +125,17 @@ class AbstractStepTrainer
 
   def acrossExamplesAccumulateFlockingErrorDeltaWs
     acrossExamplesAccumulateDeltaWs(flockErrorAdaptingNeurons) do |aNeuron, dataRecord|
-      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
-      dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
+      dataRecord[:localFlockingError] = calcNeuronsLocalFlockingError(aNeuron)
       aNeuron.calcAccumDeltaWsForLocalFlocking
     end
   end
 
   def acrossExamplesAccumulateDeltaWs(adaptingNeurons)
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
+    clearEpochAccumulationsInAllNeurons()
     numberOfExamples.times do |exampleNumber|
-      allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-      neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
-      outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
+      propagateAcrossEntireNetwork(exampleNumber)
+      backpropagateAcrossEntireNetwork()
+      calcWeightedErrorMetricForExample()
       adaptingNeurons.each do |aNeuron|
         dataRecord = aNeuron.recordResponsesForExample
         yield(aNeuron, dataRecord, exampleNumber)
@@ -146,20 +144,8 @@ class AbstractStepTrainer
     end
   end
 
-  #### Refinements and specialized control functions:
-  def useFuzzyClusters? # TODO Would this be better put 'into each neuron'
-    exampleWeightings = flockErrorGeneratingNeurons.first.clusters[0].membershipWeightForEachExample # TODO Why is only the first neuron used for this determination?
-    criteria0 = 0.2
-    criteria1 = 1.0 - criteria0
-    count = 0
-    exampleWeightings.each { |aWeight| count += 1 if (aWeight <= criteria0) }
-    exampleWeightings.each { |aWeight| count += 1 if (aWeight > criteria1) }
-                                                                                                     # puts "count=\t #{count}"
-    return true if (count < numberOfExamples)
-    return false
-  end
-
   ###------------  Core Support Section ------------------------------
+  #### Also, some refinements and specialized control functions:
 
   def calcMSE
     sse = outputLayer.inject(0.0) { |sum, anOutputNeuron| sum + anOutputNeuron.calcSumOfSquaredErrors }
@@ -186,7 +172,49 @@ class AbstractStepTrainer
     neuronsWhoseClustersNeedToBeSeeded.each { |aNeuron| aNeuron.initializeClusterCenters } # TODO is there any case where system should be reinitialized in this manner?
     recenterEachNeuronsClusters(neuronsWhoseClustersNeedToBeSeeded)
   end
+
+  def zeroOutFlockingLinksMomentumMemoryStore
+    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.inputLinks.each { |aLink| aLink.store = 0.0 } }
+  end
+
+  def calcNeuronsLocalFlockingError(aNeuron)
+    localFlockingError = if (useFuzzyClusters?)
+                           aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter }
+                         else
+                           aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample }
+                         end
+  end
+
+  def useFuzzyClusters? # TODO Would this be better put 'into each neuron'
+    exampleWeightings = flockErrorGeneratingNeurons.first.clusters[0].membershipWeightForEachExample # TODO Why is only the first neuron used for this determination?
+    criteria0 = 0.2
+    criteria1 = 1.0 - criteria0
+    count = 0
+    exampleWeightings.each { |aWeight| count += 1 if (aWeight <= criteria0) }
+    exampleWeightings.each { |aWeight| count += 1 if (aWeight > criteria1) }
+                                                                                                     # puts "count=\t #{count}"
+    return true if (count < numberOfExamples)
+    return false
+  end
+
+  def clearEpochAccumulationsInAllNeurons
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
+  end
+
+  def propagateAcrossEntireNetwork(exampleNumber)
+    allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+  end
+
+  def backpropagateAcrossEntireNetwork
+    neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
+  end
+
+  def calcWeightedErrorMetricForExample
+    outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
+  end
 end
+
 
 class StepTrainerForLocalFlocking < AbstractStepTrainer
   def train(trials)
@@ -214,13 +242,11 @@ end
 
 
 class BPofFlockingStepTrainer < StepTrainerForLocalFlocking
-
   def innerTrainingLoop
     unless (flockingShouldOccur?(accumulatedAbsoluteFlockingErrors))
       performStandardBackPropTraining()
       prepareForRepeatedFlockingIterations()
     else
-
       adaptToBPofFlockError
       std("h", [args[:epochs], accumulatedAbsoluteFlockingErrors])
     end
@@ -237,17 +263,15 @@ class BPofFlockingStepTrainer < StepTrainerForLocalFlocking
   end
 
   def acrossExamplesAccumulateNonLocalFlockingErrorDeltaWs
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
+    clearEpochAccumulationsInAllNeurons()
     numberOfExamples.times do |exampleNumber|
-      allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-      neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
-      outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
+      propagateAcrossEntireNetwork(exampleNumber)
+      backpropagateAcrossEntireNetwork()
+      calcWeightedErrorMetricForExample()
 
       flockErrorGeneratingNeurons.each do |aNeuron|
         dataRecord = aNeuron.recordResponsesForExample
-        dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter } if (useFuzzyClusters?)
-        dataRecord[:localFlockingError] = aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample } unless (useFuzzyClusters?)
+        dataRecord[:localFlockingError] = calcNeuronsLocalFlockingError(aNeuron)
         aNeuron.backPropagate { |higherLayerError, localFlockingError| localFlockingError } # TODO some unnecessary calculations.  Should change!!
         aNeuron.dbStoreDetailedData
       end
@@ -259,44 +283,11 @@ class BPofFlockingStepTrainer < StepTrainerForLocalFlocking
     end
   end
 
-  def useFuzzyClusters? # TODO revert back to super...
-    return true
-  end
+  #def useFuzzyClusters? # TODO revert back to super...
+  #  return true
+  #end
 end
 
-
-
-#####
-#class TrainingSupervisorSimplest
-#  attr_accessor :stepTrainer, :trainingSequence, :network, :args, :startTime, :elapsedTime, :minMSE
-#  include RecordingAndPlottingRoutines
-#
-#  def initialize(examples, network, args)
-#    @trainingSequence = args[:trainingSequence]
-#    @network = network
-#    @args = args
-#    @startTime = Time.now
-#    @elapsedTime = nil
-#    @minMSE = args[:minMSE]
-#    neuronGroups = NeuronGroupsSimplest.new(network)
-#    @stepTrainer = FlockStepTrainer.new(examples, neuronGroups, trainingSequence, args)
-#  end
-#
-#  def train
-#    mse = 1e20
-#    numTrials = 1000
-#    while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
-#      mse, accumulatedAbsoluteFlockingErrors = stepTrainer.train(numTrials)
-#    end
-#    arrayOfNeuronsToPlot = [network.outputLayer[0]]
-#    plotTrainingResults(arrayOfNeuronsToPlot)
-#    return trainingSequence.epochs, mse, accumulatedAbsoluteFlockingErrors
-#  end
-#
-#  def plotTrainingResults(arrayOfNeuronsToPlot)
-#    generatePlotForEachNeuron(arrayOfNeuronsToPlot) if arrayOfNeuronsToPlot.present?
-#  end
-#end
 
 class TrainingSupervisorTrivial
   attr_accessor :stepTrainer, :trainingSequence, :network, :args, :startTime, :elapsedTime, :minMSE
