@@ -54,38 +54,16 @@ class Experiment
         :floorToPreventOverflow => 1e-30
     }
   end
+
+  def createNetworkAndTrainer(examples)
+    network = BPofFlockingNetwork.new(args)
+    theTrainer = TrainingSupervisorHiddenNeuronLocalFlocking.new(examples, network, args)
+    return network, theTrainer
+  end
 end
 
 ###################################### START of Main Learning  ##########################################
-srand(0)
 
-descriptionOfExperiment = "T3LearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges"
-experiment = ExperimentLogger.new(descriptionOfExperiment)
-args = experiment.setParameters
-args[:trainingSequence] = trainingSequence = TrainingSequence.new(args)
+experiment = Experiment.new("T3LearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges")
 
-############################# create training set...
-examples = createTrainingSet(args)
-
-######################## Create Network....
-network = BPofFlockingNetwork.new(args) # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
-
-############################### train ...
-theTrainer = TrainingSupervisorHiddenNeuronLocalFlocking.new(examples, network, args)
-
-startingTime = Time.now
-lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors = theTrainer.train
-
-############################## reporting results....
-
-neuronToDisplay = 2
-reportTrainingResults(neuronToDisplay, accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, network, startingTime)
-
-############################## key/value db clean-up....
-experiment.deleteTemporaryDataRecordsInDB()
-experiment.save
-
-###################################### START of Main Learning  ##########################################
-performSimulation()
-
-
+experiment.performSimulation()

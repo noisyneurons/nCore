@@ -13,79 +13,9 @@ require_relative '../lib/core/TrainingSequencingAndGrouping'
 require_relative '../lib/core/Trainers.rb'
 require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 
-def createTrainingSet(args)
-  include ExampleDistribution
-  examples = []
-  examples << {:inputs => [1.0, 1.0], :targets => [1.0], :exampleNumber => 0, :class => 1}
-  examples << {:inputs => [1.0, 2.0], :targets => [1.0], :exampleNumber => 1, :class => 1}
-  examples << {:inputs => [1.0, 3.0], :targets => [1.0], :exampleNumber => 2, :class => 1}
-  examples << {:inputs => [1.0, 4.0], :targets => [1.0], :exampleNumber => 3, :class => 1}
-  examples << {:inputs => [-1.0, -1.0], :targets => [0.0], :exampleNumber => 4, :class => 0}
-  examples << {:inputs => [-1.0, -2.0], :targets => [0.0], :exampleNumber => 5, :class => 0}
-  examples << {:inputs => [-1.0, -3.0], :targets => [0.0], :exampleNumber => 6, :class => 0}
-  examples << {:inputs => [-1.0, -4.0], :targets => [0.0], :exampleNumber => 7, :class => 0}
-  STDERR.puts "****************Incorrect Number of Examples Specified!! ************************" if (args[:numberOfExamples] != examples.length)
-  return examples
-end
-
-def reportTrainingResults(neuronToDisplay, accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, network, startingTime)
-  puts network
-
-  lastTestingMSE = nil
-  puts "lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE"
-  puts lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE
-
-  puts "\n\n############ NeuronData #############"
-  keysToRecords = []
-  NeuronData.lookup_values(:epochs).each do |epochNumber|
-    keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber, neuron: neuronToDisplay}) }
-  end
-  neuronDataRecords = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) } unless (keysToRecords.empty?)
-  puts neuronDataRecords
-
-
-  puts "\n\n############ DetailedNeuronData #############"
-  keysToRecords = []
-  DetailedNeuronData.lookup_values(:epochs).each do |epochNumber|
-    DetailedNeuronData.lookup_values(:exampleNumber).each do |anExampleNumber|
-      keysToRecords << DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber, neuron: neuronToDisplay, exampleNumber: anExampleNumber}) }
-    end
-  end
-  detailedNeuronDataRecords = keysToRecords.collect { |recordKey| DetailedNeuronData.values(recordKey) } unless (keysToRecords.empty?)
-  puts detailedNeuronDataRecords
-
-
-  puts "\n\n############ TrainingData #############"
-  keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: ExperimentLogger.number}) }
-  trainingDataRecords = keysToRecords.collect { |recordKey| TrainingData.values(recordKey) } unless (keysToRecords.empty?)
-  puts trainingDataRecords
-
-
-  puts "\n\n############ SnapShotData #############"
-  dataToStoreLongTerm = {:experimentNumber => ExperimentLogger.number, :descriptionOfExperiment => descriptionOfExperiment,
-                         :network => network, :time => Time.now, :elapsedTime => (Time.now - startingTime),
-                         :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE,
-                         :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors
-  }
-  SnapShotData.new(dataToStoreLongTerm)
-
-  keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
-  unless (keysToRecords.empty?)
-    puts
-    puts "Number\tLastEpoch\tTrainMSE\t\tTestMSE\t\tTime\t\t\t\tDescription"
-    keysToRecords.each do |keyToOneRecord|
-      recordHash = SnapShotData.values(keyToOneRecord)
-      puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t#{recordHash[:trainMSE]}\t#{recordHash[:testMSE]}\t\t#{recordHash[:time]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
-    end
-
-    # recordHash = SnapShotData.values(keysToRecords.last)
-  end
-
-  plotMSEvsEpochNumber(trainingDataRecords)
-end
-
 class Experiment
   attr_accessor :descriptionOfExperiment, :experimentLogger, :args, :trainingSequence
+  include ExampleDistribution
 
   def initialize(descriptionOfExperiment)
     srand(0)
@@ -145,29 +75,102 @@ class Experiment
     }
   end
 
+  def createTrainingSet(args)
+    #include ExampleDistribution
+    examples = []
+    examples << {:inputs => [1.0, 1.0], :targets => [1.0], :exampleNumber => 0, :class => 1}
+    examples << {:inputs => [1.0, 2.0], :targets => [1.0], :exampleNumber => 1, :class => 1}
+    examples << {:inputs => [1.0, 3.0], :targets => [1.0], :exampleNumber => 2, :class => 1}
+    examples << {:inputs => [1.0, 4.0], :targets => [1.0], :exampleNumber => 3, :class => 1}
+    examples << {:inputs => [-1.0, -1.0], :targets => [0.0], :exampleNumber => 4, :class => 0}
+    examples << {:inputs => [-1.0, -2.0], :targets => [0.0], :exampleNumber => 5, :class => 0}
+    examples << {:inputs => [-1.0, -3.0], :targets => [0.0], :exampleNumber => 6, :class => 0}
+    examples << {:inputs => [-1.0, -4.0], :targets => [0.0], :exampleNumber => 7, :class => 0}
+    STDERR.puts "****************Incorrect Number of Examples Specified!! ************************" if (args[:numberOfExamples] != examples.length)
+    return examples
+  end
+
+  def reportTrainingResults(neuronToDisplay, accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, network, startingTime)
+    puts network
+
+    lastTestingMSE = nil
+    puts "lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE"
+    puts lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE
+
+    puts "\n\n############ NeuronData #############"
+    keysToRecords = []
+    NeuronData.lookup_values(:epochs).each do |epochNumber|
+      keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber, neuron: neuronToDisplay}) }
+    end
+    neuronDataRecords = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) } unless (keysToRecords.empty?)
+    puts neuronDataRecords
+
+
+    puts "\n\n############ DetailedNeuronData #############"
+    keysToRecords = []
+    DetailedNeuronData.lookup_values(:epochs).each do |epochNumber|
+      DetailedNeuronData.lookup_values(:exampleNumber).each do |anExampleNumber|
+        keysToRecords << DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber, neuron: neuronToDisplay, exampleNumber: anExampleNumber}) }
+      end
+    end
+    detailedNeuronDataRecords = keysToRecords.collect { |recordKey| DetailedNeuronData.values(recordKey) } unless (keysToRecords.empty?)
+    puts detailedNeuronDataRecords
+
+
+    puts "\n\n############ TrainingData #############"
+    keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: ExperimentLogger.number}) }
+    trainingDataRecords = keysToRecords.collect { |recordKey| TrainingData.values(recordKey) } unless (keysToRecords.empty?)
+    puts trainingDataRecords
+
+
+    puts "\n\n############ SnapShotData #############"
+    dataToStoreLongTerm = {:experimentNumber => ExperimentLogger.number, :descriptionOfExperiment => descriptionOfExperiment,
+                           :network => network, :time => Time.now, :elapsedTime => (Time.now - startingTime),
+                           :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE,
+                           :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors
+    }
+    SnapShotData.new(dataToStoreLongTerm)
+
+    keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
+    unless (keysToRecords.empty?)
+      puts
+      puts "Number\tLastEpoch\tTrainMSE\t\tTestMSE\t\tTime\t\t\t\tDescription"
+      keysToRecords.each do |keyToOneRecord|
+        recordHash = SnapShotData.values(keyToOneRecord)
+        puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t#{recordHash[:trainMSE]}\t#{recordHash[:testMSE]}\t\t#{recordHash[:time]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
+      end
+
+      # recordHash = SnapShotData.values(keysToRecords.last)
+    end
+
+    plotMSEvsEpochNumber(trainingDataRecords)
+  end
+
   def performSimulation
 
 ############################# create training set...
     examples = createTrainingSet(args)
 
-######################## Create Network....
-    network = SimpleFlockingNetwork.new(args) # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
+######################## Create Network and Trainer ....
+    network, theTrainer = createNetworkAndTrainer(examples)
 
-###################################### START of Learning/Training  ##########################################
+###################################### perform Learning/Training  ##########################################
 
-    theTrainer = TrainingSupervisorTrivial.new(examples, network, args)
-
-
+    startingTime = Time.now
     lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors = theTrainer.train
 
 ############################## reporting results....
-    startingTime = Time.now
+
     neuronToDisplay = 2
     reportTrainingResults(neuronToDisplay, accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, network, startingTime)
 
 ############################## clean-up....
     experimentLogger.deleteTemporaryDataRecordsInDB()
     experimentLogger.save
+  end
+
+  def createNetworkAndTrainer(examples)
+    STDERR.puts "ERROR: BaseLearningExperiment's 'createNetworkAndTrainer' method should not have been called"
   end
 end
 
