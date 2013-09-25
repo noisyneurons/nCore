@@ -29,11 +29,12 @@ class AbstractStepTrainer
   include Math
 
   def adaptToLocalFlockError
-    adaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate] }
-    adaptingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
-    acrossExamplesAccumulateFlockingErrorDeltaWs()
-    adaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-    self.accumulatedAbsoluteFlockingErrors = adaptingNeurons.collect { |aNeuron| (aNeuron.accumulatedAbsoluteFlockingError * correctionFactorForRateAtWhichNeuronsGainChanges(aNeuron.clustersCenter)) }
+    STDERR.puts "Generating neurons and adapting neurons are not one in the same.  This is NOT local flocking!!" if (flockErrorGeneratingNeurons != flockErrorAdaptingNeurons)
+    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate] }
+    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
+    acrossExamplesAccumulateFlockingErrorDeltaWs
+    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+    self.accumulatedAbsoluteFlockingErrors = flockErrorGeneratingNeurons.collect { |aNeuron| (aNeuron.accumulatedAbsoluteFlockingError * correctionFactorForRateAtWhichNeuronsGainChanges(aNeuron.clustersCenter)) }
   end
 
   #  This method corrects for: "how the Ratio of Neural-Gains changes with the magnitudes of the example netInputs"
