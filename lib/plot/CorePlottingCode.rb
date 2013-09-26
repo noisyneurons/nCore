@@ -36,7 +36,6 @@ def plotMSEvsEpochNumber(mseVsEpochMeasurements)
 end
 
 
-
 def plotDotsWhereOutputGtPt5(x, y, aNeuron, epochNumber)
   aPlotter = Plotter.new(title="Zero Xing for Neuron #{aNeuron.id} at epoch #{epochNumber}", "input 0", "input 1", plotOutputFilenameBase = "#{Dir.pwd}/../../plots/zeroXingPlot_N#{aNeuron.id}_E#{epochNumber}")
 #  aPlotter = Plotter.new(title="Zero Xing for Neuron #{aNeuron.id} at epoch #{epochNumber}", "input 0", "input 1", plotOutputFilenameBase = "/home/mark/Code/Ruby/NN2012/plots/zeroXingPlot_N#{aNeuron.id}_E#{epochNumber}")

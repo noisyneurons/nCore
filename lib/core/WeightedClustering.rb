@@ -57,9 +57,10 @@ class DynamicClusterer
   def determineClusterAssociatedWithExample(pointNumber)
     clusterWeightingsForExample = examplesFractionalMembershipInEachCluster(pointNumber)
     maxWeight = 0.0
-    clusterAssociatedWithExample = nil
+    clusterAssociatedWithExample = nil # clusters[0] #nil   # TODO BIG PROBLEM HERE
     clusterWeightingsForExample.each_with_index do |weightingGivenExampleForCluster, clusterNumber|
-      if (weightingGivenExampleForCluster > maxWeight)
+      std("weightingGivenExampleForCluster",weightingGivenExampleForCluster)
+      if (weightingGivenExampleForCluster >= maxWeight)
         maxWeight = weightingGivenExampleForCluster
         clusterAssociatedWithExample = clusters[clusterNumber]
       end
@@ -113,7 +114,12 @@ class DynamicClusterer
     sumOfRatios = 0.0
     clusters.each do |otherCluster|
       distanceToOtherCluster = otherCluster.center.dist_to(thePoint)
-      distanceToOtherCluster = [distanceToOtherCluster, floorToPreventOverflow].max # puts floor on comparison distance to avoid "divide by zero"
+      distanceToOtherCluster = unless (distanceToOtherCluster.nan?)
+                                 [distanceToOtherCluster, floorToPreventOverflow].max
+                               else
+                                 floorToPreventOverflow
+                               end
+
       ratio = distanceToSelectedCluster/distanceToOtherCluster
       ratioToAPower = ratio**power
       sumOfRatios += ratioToAPower
@@ -166,8 +172,13 @@ class DynamicClusterer
   def recenterClusters(points)
     arrayOfDistancesMoved = clusters.collect { |aCluster| aCluster.recenter!(points) }
     keepCentersSymmetrical if (args[:symmetricalCenters]) # TODO may want to include this in the calculation of largest largestEuclidianDistanceMoved
+    arrayOfDistancesMoved = arrayOfDistancesMoved.delete_if { |number| number.nan? }
     largestEuclidianDistanceMoved = arrayOfDistancesMoved.max
-    return largestEuclidianDistanceMoved #  < delta #  determine if there was very little change in all the clusters' centers
+    unless (largestEuclidianDistanceMoved.nil?)
+      largestEuclidianDistanceMoved
+    else
+      floorToPreventOverflow
+    end
   end
 
   def keepCentersSymmetrical
@@ -290,8 +301,6 @@ class Cluster
     return sumOfWeightedExamples
   end
 end
-
-
 
 
 #class FuzzyClustererOfExamplesOfDifferingImportance  < DynamicClusterer

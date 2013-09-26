@@ -149,7 +149,7 @@ args[:trainingSequence] = trainingSequence = TrainingSequence.new(args)
 examples = createTrainingSet(args)
 
 ######################## Create Network....
-network = BPofFlockingNetwork.new(args)
+network = Flocking3LayerNetwork.new(args)
 
 ############################### train ...
 theTrainer = TrainingSupervisorSimplest.new(examples, network, args)

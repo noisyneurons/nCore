@@ -111,7 +111,7 @@ args[:trainingSequence] = trainingSequence = TrainingSequence.new(args)
 examples = createTrainingSet(args)
 
 ######################## Create Network....
-network = SimpleFlockingNeuronNetwork.new(dataStoreManager, args)   # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
+network = SimpleFlockingNeuronNetwork.new(dataStoreManager, args) # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
 puts network
 
 ############################### Create Trainer ...
@@ -130,7 +130,7 @@ lastTestingMSE = nil
 puts "############ Include Example Numbers #############"
 4000.times do |epochNumber|
   selectedData = DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber,
-                                                                               neuron: 2}) }
+                                                                                        neuron: 2}) }
   puts "For epoch number=\t#{epochNumber}" unless (selectedData.empty?)
 
   selectedData.each { |itemKey| puts DetailedNeuronData.values(itemKey) } unless (selectedData.empty?)

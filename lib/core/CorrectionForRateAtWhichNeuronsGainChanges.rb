@@ -48,6 +48,7 @@ class AbstractStepTrainer
     q = exp(c)
 
     result = (n * (o + p) * q).abs
+    return correctionFactorsFloor if(result.nan?)
     return [result, correctionFactorsFloor].max
   end
 end

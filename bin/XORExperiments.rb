@@ -1,5 +1,5 @@
 ### VERSION "nCore"
-## ../nCore/bin/T3LearningRateExperiments.rb
+## ../nCore/bin/XORExperiments.rb
 # Purpose:  To quantitatively explore the simplest clustering w/o supervision.
 # This is a simplified and significantly reorganized version of 'Phase1Phase2MultiCycle.rb'
 
@@ -8,7 +8,7 @@ require_relative 'BaseLearningExperiment'
 class Experiment
   def setParameters
 
-    numberOfExamples = 8
+    numberOfExamples = 4
     randomNumberSeed = 0
 
     @args = {
@@ -17,13 +17,13 @@ class Experiment
         :rng => Random.new(randomNumberSeed),
 
         # training parameters re. Output Error
-        :outputErrorLearningRate => 0.40, #0.02,
+        :outputErrorLearningRate => 1.0, # 0.40, #0.02,
         :minMSE => 0.0001,
         :maxNumEpochs => 4e3,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
-        :numberOfHiddenNeurons => 1,
+        :numberOfHiddenNeurons => 3,
         :numberOfOutputNeurons => 1,
         :weightRange => 1.0,
         :typeOfLink => FlockingLink,
@@ -55,15 +55,27 @@ class Experiment
     }
   end
 
+  def createTrainingSet(args)
+    examples = []
+    examples << {:inputs => [1.0, 1.0], :targets => [0.0], :exampleNumber => 0, :class => 0}
+    examples << {:inputs => [1.0, -1.0], :targets => [1.0], :exampleNumber => 1, :class => 1}
+    examples << {:inputs => [-1.0, -1.0], :targets => [0.0], :exampleNumber => 2, :class => 0}
+    examples << {:inputs => [-1.0, 1.0], :targets => [1.0], :exampleNumber => 3, :class => 1}
+    if (args[:numberOfExamples] != examples.length)
+      STDERR.puts "****************Incorrect Number of Examples Specified!! ************************"
+    end
+    examples
+  end
+
   def createNetworkAndTrainer(examples)
     network = Flocking3LayerNetwork.new(args)
-    theTrainer = TrainingSupervisorHiddenNeuronLocalFlocking.new(examples, network, args)
+    theTrainer = TrainingSupervisorAllLocalFlockingLayers.new(examples, network, args)
     return network, theTrainer
   end
 end
 
 ###################################### START of Main Learning  ##########################################
 
-experiment = Experiment.new("T3LearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges")
+experiment = Experiment.new("XORExperiments using correctionFactorForRateAtWhichNeuronsGainChanges")
 
 experiment.performSimulation()

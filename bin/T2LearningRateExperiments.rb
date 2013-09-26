@@ -60,7 +60,7 @@ class Experiment
 
   def createNetworkAndTrainer(examples)
     network = SimpleFlockingNetwork.new(args)
-    theTrainer = TrainingSupervisorTrivial.new(examples, network, args)
+    theTrainer = TrainingSupervisorOutputNeuronLocalFlocking.new(examples, network, args)
     return network, theTrainer
   end
 end

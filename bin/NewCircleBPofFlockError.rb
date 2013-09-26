@@ -129,7 +129,7 @@ examples = createTrainingSet(args)
 
 ############################### create testing set...
 args[:firstExamplesAngleToXAxis] = 15.0
-testingExamples  = createTrainingSet(args)
+testingExamples = createTrainingSet(args)
 
 ######################## Specify data store and experiment description....
 dataStoreManager = SimulationDataStoreManager.create
@@ -154,7 +154,7 @@ puts "############ Include Example Numbers #############"
 
 4000.times do |epochNumber|
   selectedData = DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber,
-                                                                               neuron: 2}) }
+                                                                                        neuron: 2}) }
   puts "For epoch number=\t#{epochNumber}" unless (selectedData.empty?)
 
   selectedData.each { |itemKey| puts DetailedNeuronData.values(itemKey) } unless (selectedData.empty?)

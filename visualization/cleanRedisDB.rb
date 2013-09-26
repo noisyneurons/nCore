@@ -16,7 +16,7 @@ currentHost = "localhost"
 
 $redis = Redis.new(:host => currentHost)
 
-experimentNumber =  $redis.get("experimentNumber")
+experimentNumber = $redis.get("experimentNumber")
 puts "\nNext Experiment Number=\t #{experimentNumber}"
 
 dataStore = SimulationDataStoreManager.new

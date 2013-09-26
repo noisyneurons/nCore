@@ -68,7 +68,6 @@ def periodicallyDisplayContentsOfHash(hashWithData, epochNumber, interval)
 end
 
 
-
 #TODO Subclass Vector and add these methods to the subclass
 class Vector
   # Calculates the distance to Point p

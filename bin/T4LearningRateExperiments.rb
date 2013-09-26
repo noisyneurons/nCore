@@ -17,7 +17,7 @@ class Experiment
         :rng => Random.new(randomNumberSeed),
 
         # training parameters re. Output Error
-        :outputErrorLearningRate => 0.40, #0.02,
+        :outputErrorLearningRate => 1.0, # 0.4, #0.02,
         :minMSE => 0.0001,
         :maxNumEpochs => 4e3,
 
@@ -37,7 +37,7 @@ class Experiment
         :intervalForSavingTrainingData => 100,
 
         # Flocking Parameters...
-        :flockingLearningRate => -0.02, # -0.04, # -0.002,
+        :flockingLearningRate => -0.002, # -0.04, # -0.002,
         :maxFlockingIterationsCount => 10, # 2000,
         :maxAbsFlockingErrorsPerExample => 0.002, #    0.04 / numberOfExamples = 0.005
 
@@ -57,13 +57,13 @@ class Experiment
 
   def createNetworkAndTrainer(examples)
     network = Flocking3LayerNetwork.new(args)
-    theTrainer = TrainingSupervisorHiddenNeuronLocalFlocking.new(examples, network, args)
+    theTrainer = TrainingSupervisorAllLocalFlockingLayers.new(examples, network, args)
     return network, theTrainer
   end
 end
 
 ###################################### START of Main Learning  ##########################################
 
-experiment = Experiment.new("T3LearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges")
+experiment = Experiment.new("T4LearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges")
 
 experiment.performSimulation()

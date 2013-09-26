@@ -17,7 +17,7 @@ currentHost = "localhost"
 
 $redis = Redis.new(:host => currentHost)
 
-experimentNumber =  $redis.get("experimentNumber")
+experimentNumber = $redis.get("experimentNumber")
 puts "Next Experiment Number=\t #{experimentNumber}\n\n"
 
 arrayOfKeys = $redis.keys("SSD*")

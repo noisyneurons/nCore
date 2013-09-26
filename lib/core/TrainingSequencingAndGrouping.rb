@@ -1,40 +1,6 @@
 ### VERSION "nCore"
 ## ../nCore/lib/core/TrainingSequencingAndGrouping.rb
 
-class TrainingSequence
-  attr_accessor :args, :epochs, :maxNumberOfEpochs,
-                :stillMoreEpochs, :lastEpoch,
-                :atStartOfTraining, :afterFirstEpoch
-
-  def initialize(args)
-    @args = args
-    @maxNumberOfEpochs = args[:maxNumEpochs]
-    @epochs = -1
-    @atStartOfTraining = true
-    @afterFirstEpoch = false
-    @stillMoreEpochs = true
-    @lastEpoch = false
-    nextEpoch
-  end
-
-  def epochs=(value)
-    @epochs = value
-    args[:epochs] = value
-  end
-
-  def nextEpoch
-    self.epochs += 1
-    self.atStartOfTraining = false if (epochs > 0)
-    self.afterFirstEpoch = true unless (atStartOfTraining)
-
-    self.lastEpoch = false
-    self.lastEpoch = true if (epochs == (maxNumberOfEpochs - 1))
-
-    self.stillMoreEpochs = true
-    self.stillMoreEpochs = false if (epochs >= maxNumberOfEpochs)
-  end
-end
-
 #####
 class AbstractNeuronGroups
   attr_accessor :allNeuronLayers, :allNeuronsInOneArray,
@@ -63,21 +29,6 @@ class AbstractNeuronGroups
     self.flockErrorAdaptingNeurons = flockErrorAdaptingLayers.flatten unless (flockErrorAdaptingLayers.nil?)
   end
 end
-
-#####
-#class NeuronGroupsSimplest < AbstractNeuronGroups
-#  def nameTrainingGroups
-#    self.layersWithInputLinks = [outputLayer]
-#    self.adaptingLayers = [outputLayer]
-#    self.layersWhoseClustersNeedToBeSeeded = [outputLayer]
-#    setNeuronGroupNames()
-#  end
-#
-#  def setNeuronGroupNames
-#    super
-#    self.adaptingNeurons = adaptingLayers.flatten unless (adaptingLayers.nil?)
-#  end
-#end
 
 
 #####
@@ -112,6 +63,21 @@ class NeuronGroupsHiddenNeuronLocalFlockingError < NeuronGroupsTrivial
   end
 end
 
+
+class NeuronGroupsAllLocalFlockingLayers < NeuronGroupsTrivial
+  def nameTrainingGroups
+    hiddenLayer = allNeuronLayers[1]
+    self.layersWithInputLinks = [hiddenLayer, outputLayer]
+
+    self.outputErrorAdaptingLayers = layersWithInputLinks
+    self.flockErrorGeneratingLayers = layersWithInputLinks
+    self.flockErrorAdaptingLayers = layersWithInputLinks
+
+    self.layersWhoseClustersNeedToBeSeeded = flockErrorGeneratingLayers
+    setNeuronGroupNames()
+  end
+end
+
 #####
 class NeuronGroupsBPofFlockError < AbstractNeuronGroups
   attr_accessor :outputErrorAdaptingLayers, :flockErrorGeneratingLayers, :flockErrorAdaptingLayers,
@@ -137,6 +103,41 @@ class NeuronGroupsBPofFlockError < AbstractNeuronGroups
   end
 end
 
+
+#####
+class TrainingSequence
+  attr_accessor :args, :epochs, :maxNumberOfEpochs,
+                :stillMoreEpochs, :lastEpoch,
+                :atStartOfTraining, :afterFirstEpoch
+
+  def initialize(args)
+    @args = args
+    @maxNumberOfEpochs = args[:maxNumEpochs]
+    @epochs = -1
+    @atStartOfTraining = true
+    @afterFirstEpoch = false
+    @stillMoreEpochs = true
+    @lastEpoch = false
+    nextEpoch
+  end
+
+  def epochs=(value)
+    @epochs = value
+    args[:epochs] = value
+  end
+
+  def nextEpoch
+    self.epochs += 1
+    self.atStartOfTraining = false if (epochs > 0)
+    self.afterFirstEpoch = true unless (atStartOfTraining)
+
+    self.lastEpoch = false
+    self.lastEpoch = true if (epochs == (maxNumberOfEpochs - 1))
+
+    self.stillMoreEpochs = true
+    self.stillMoreEpochs = false if (epochs >= maxNumberOfEpochs)
+  end
+end
 
 
 
