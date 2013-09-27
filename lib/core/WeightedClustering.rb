@@ -57,9 +57,10 @@ class DynamicClusterer
   def determineClusterAssociatedWithExample(pointNumber)
     clusterWeightingsForExample = examplesFractionalMembershipInEachCluster(pointNumber)
     maxWeight = 0.0
-    clusterAssociatedWithExample = nil # clusters[0] #nil   # TODO BIG PROBLEM HERE
+    clusterAssociatedWithExample = nil
+    std("clusterWeightingsForExample",clusterWeightingsForExample)
     clusterWeightingsForExample.each_with_index do |weightingGivenExampleForCluster, clusterNumber|
-      std("weightingGivenExampleForCluster",weightingGivenExampleForCluster)
+
       if (weightingGivenExampleForCluster >= maxWeight)
         maxWeight = weightingGivenExampleForCluster
         clusterAssociatedWithExample = clusters[clusterNumber]
@@ -114,12 +115,14 @@ class DynamicClusterer
     sumOfRatios = 0.0
     clusters.each do |otherCluster|
       distanceToOtherCluster = otherCluster.center.dist_to(thePoint)
-      distanceToOtherCluster = unless (distanceToOtherCluster.nan?)
-                                 [distanceToOtherCluster, floorToPreventOverflow].max
-                               else
-                                 floorToPreventOverflow
-                               end
 
+      #distanceToOtherCluster = unless (distanceToOtherCluster.nan?)
+      #                           [distanceToOtherCluster, floorToPreventOverflow].max
+      #                         else
+      #                           floorToPreventOverflow
+      #                         end
+
+      distanceToOtherCluster = [distanceToOtherCluster, floorToPreventOverflow].max
       ratio = distanceToSelectedCluster/distanceToOtherCluster
       ratioToAPower = ratio**power
       sumOfRatios += ratioToAPower
@@ -172,7 +175,7 @@ class DynamicClusterer
   def recenterClusters(points)
     arrayOfDistancesMoved = clusters.collect { |aCluster| aCluster.recenter!(points) }
     keepCentersSymmetrical if (args[:symmetricalCenters]) # TODO may want to include this in the calculation of largest largestEuclidianDistanceMoved
-    arrayOfDistancesMoved = arrayOfDistancesMoved.delete_if { |number| number.nan? }
+    # arrayOfDistancesMoved = arrayOfDistancesMoved.delete_if { |number| number.nan? }
     largestEuclidianDistanceMoved = arrayOfDistancesMoved.max
     unless (largestEuclidianDistanceMoved.nil?)
       largestEuclidianDistanceMoved

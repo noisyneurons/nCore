@@ -18,7 +18,7 @@ module FlockingDecisionRoutines # TODO If one neuron does NOT meet criteria, all
     if (accumulatedAbsoluteFlockingErrors.empty?)
       true
     else
-      accumulatedAbsoluteFlockingErrors = accumulatedAbsoluteFlockingErrors.delete_if{ |number| number.nan?}
+      # accumulatedAbsoluteFlockingErrors = accumulatedAbsoluteFlockingErrors.delete_if{ |number| number.nan?}
       largestAbsoluteFlockingErrorPerExample = accumulatedAbsoluteFlockingErrors.max / numberOfExamples
       needToReduceFlockingError = largestAbsoluteFlockingErrorPerExample > args[:maxAbsFlockingErrorsPerExample]
       stillEnoughIterationsToFlock = flockingIterationsCount < maxFlockingIterationsCount
@@ -187,6 +187,7 @@ class AbstractStepTrainer
   end
 
   def useFuzzyClusters? # TODO Would this be better put 'into each neuron'
+    return true if(args[:alwaysUseFuzzyClusters])
     exampleWeightings = flockErrorGeneratingNeurons.first.clusters[0].membershipWeightForEachExample # TODO Why is only the first neuron used for this determination?
     criteria0 = 0.2
     criteria1 = 1.0 - criteria0
@@ -239,6 +240,10 @@ class StepTrainerForLocalFlocking < AbstractStepTrainer
     end
     flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
   end
+
+  #def useFuzzyClusters? # TODO revert back to super...
+  #  return true
+  #end
 end
 
 

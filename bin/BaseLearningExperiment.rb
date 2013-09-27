@@ -61,6 +61,7 @@ class Experiment
         :maxFlockingIterationsCount => 2000, # 3800, # 2000,
         :maxAbsFlockingErrorsPerExample => 0.002, # 0.00000000000001, #0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
 
+        :alwaysUseFuzzyClusters => true,
         :typeOfClusterer => DynamicClusterer,
         :numberOfClusters => 2,
         :m => 2.0,
@@ -76,17 +77,7 @@ class Experiment
   end
 
   def createTrainingSet(args)
-    #include ExampleDistribution
-    examples = []
-    examples << {:inputs => [1.0, 1.0], :targets => [1.0], :exampleNumber => 0, :class => 1}
-    examples << {:inputs => [1.0, 2.0], :targets => [1.0], :exampleNumber => 1, :class => 1}
-    examples << {:inputs => [1.0, 3.0], :targets => [1.0], :exampleNumber => 2, :class => 1}
-    examples << {:inputs => [1.0, 4.0], :targets => [1.0], :exampleNumber => 3, :class => 1}
-    examples << {:inputs => [-1.0, -1.0], :targets => [0.0], :exampleNumber => 4, :class => 0}
-    examples << {:inputs => [-1.0, -2.0], :targets => [0.0], :exampleNumber => 5, :class => 0}
-    examples << {:inputs => [-1.0, -3.0], :targets => [0.0], :exampleNumber => 6, :class => 0}
-    examples << {:inputs => [-1.0, -4.0], :targets => [0.0], :exampleNumber => 7, :class => 0}
-    STDERR.puts "****************Incorrect Number of Examples Specified!! ************************" if (args[:numberOfExamples] != examples.length)
+    STDERR.puts "Error: base class method called!!"
     return examples
   end
 
