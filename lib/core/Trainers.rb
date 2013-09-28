@@ -217,7 +217,6 @@ class AbstractStepTrainer
   end
 end
 
-
 class StepTrainerForLocalFlocking < AbstractStepTrainer
   def train(trials)
     distributeSetOfExamples(examples)
@@ -240,10 +239,17 @@ class StepTrainerForLocalFlocking < AbstractStepTrainer
     end
     flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
   end
+end
 
-  #def useFuzzyClusters? # TODO revert back to super...
-  #  return true
-  #end
+class StepTrainerForOutputErrorBPOnly
+  def train(trials)
+    distributeSetOfExamples(examples)
+    trials.times do
+      performStandardBackPropTraining
+      trainingSequence.nextEpoch
+    end
+    return calcMSE
+  end
 end
 
 

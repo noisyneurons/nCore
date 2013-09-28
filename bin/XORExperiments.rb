@@ -17,13 +17,13 @@ class Experiment
         :rng => Random.new(randomNumberSeed),
 
         # training parameters re. Output Error
-        :outputErrorLearningRate => 2.0, # 0.40, #0.02,
+        :outputErrorLearningRate => 0.2, # 0.40, #0.02,
         :minMSE => 0.0001,
-        :maxNumEpochs => 12e3,
+        :maxNumEpochs => 4e3,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
-        :numberOfHiddenNeurons => 3,
+        :numberOfHiddenNeurons => 8,
         :numberOfOutputNeurons => 1,
         :weightRange => 1.0,
         :typeOfLink => FlockingLink,
@@ -37,11 +37,11 @@ class Experiment
         :intervalForSavingTrainingData => 100,
 
         # Flocking Parameters...
-        :flockingLearningRate => -0.002, # -0.04, # -0.002,
+        :flockingLearningRate => -0.002, #-0.002,
         :maxFlockingIterationsCount => 10, # 2000,
         :maxAbsFlockingErrorsPerExample => 0.1, #    0.04 / numberOfExamples = 0.005
 
-        :alwaysUseFuzzyClusters => true,
+
         :typeOfClusterer => DynamicClusterer,
         :numberOfClusters => 2,
         :m => 2.0,
@@ -50,6 +50,7 @@ class Experiment
         :delta => 1e-2,
         :maxNumberOfClusteringIterations => 10,
         :symmetricalCenters => true, # if true, speed is negatively affected
+        :alwaysUseFuzzyClusters => true,
 
         # Inner Numeric Constraints -- used to floating point under or overflow
         :floorToPreventOverflow => 1e-30
@@ -68,11 +69,12 @@ class Experiment
     examples
   end
 
-  def createNetworkAndTrainer(examples)
+    def createNetworkAndTrainer(examples)
     network = Flocking3LayerNetwork.new(args)
     theTrainer = TrainingSupervisorAllLocalFlockingLayers.new(examples, network, args)
     return network, theTrainer
-  end
+    end
+
 end
 
 ###################################### START of Main Learning  ##########################################
