@@ -1,7 +1,6 @@
 # '~/Code/Ruby/NN2012/nCore/visualization/quickViewOfRedisDB.rb'
 
-require 'redis'
-require 'yaml'
+require_relative '../bin/BaseLearningExperiment'
 
 theComputersName = Socket.gethostname
 

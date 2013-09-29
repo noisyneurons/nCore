@@ -20,7 +20,7 @@ require_relative 'Utilities'
 
 module CommonClusteringCode
   def clustersCenter
-    clusters[0].center
+    clusters[0].center  # assuming symetrical cluster centers therefore d output/d input of cluster[0].center or cluster[1].center are the SAME value
   end
 end
 

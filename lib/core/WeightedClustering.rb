@@ -42,6 +42,18 @@ class DynamicClusterer
     return [clusters, maxNumberOfClusteringIterations, largestEuclidianDistanceMoved]
   end
 
+  def pointsTargetForIterationInFuzzyClustering(pointNumber)
+    theExamplesFractionalMembershipInEachCluster = examplesFractionalMembershipInEachCluster(pointNumber)
+    sumOfWeightedDeviationsNecessaryToMoveToClusters = Vector.elements(Array.new(exampleVectorLength) { 0.0 })
+    sumOfWeights = 0.0
+    theExamplesFractionalMembershipInEachCluster.each_with_index do |examplesFractionalMembershipInCluster, indexToCluster|
+      sumOfWeightedDeviationsNecessaryToMoveToClusters += examplesFractionalMembershipInCluster * (clusters[indexToCluster].center - point)
+      sumOfWeights += examplesFractionalMembershipInCluster
+    end
+    aggregatedNecessaryVectorDeviation = sumOfWeightedDeviationsNecessaryToMoveToClusters / sumOfWeights
+    targetPoint = aggregatedNecessaryVectorDeviation + point
+  end
+
   def estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(pointNumber)
     theExamplesFractionalMembershipInEachCluster = examplesFractionalMembershipInEachCluster(pointNumber)
     weightedClusterCentersSum = Vector.elements(Array.new(exampleVectorLength) { 0.0 })
@@ -92,7 +104,7 @@ class DynamicClusterer
 
   protected
 
-  def examplesFractionalMembershipInEachCluster(pointNumber) # recall routine.. The work has already been done...
+  def examplesFractionalMembershipInEachCluster(pointNumber) # This is just a "recall" routine.. since the calculations have already been done...
     return @clusters.collect { |aCluster| aCluster.membershipWeightForEachExample[pointNumber] }
   end
 
@@ -127,7 +139,7 @@ class DynamicClusterer
       ratioToAPower = ratio**power
       sumOfRatios += ratioToAPower
     end
-    membershipForThisPointForThisArbitraryCluster = 1.0 / sumOfRatios
+    thisPointsFractionalMembershipToSelectedCluster = 1.0 / sumOfRatios
   end
 
   ## SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE

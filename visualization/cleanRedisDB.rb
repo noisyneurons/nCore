@@ -1,6 +1,6 @@
 # '~/Code/Ruby/NN2012/nCore/visualization/cleanRedisDB.rb'
 
-require_relative '../lib/core/SimulationDataStore'
+require_relative '../bin/BaseLearningExperiment'
 
 theComputersName = Socket.gethostname
 
