@@ -4,6 +4,7 @@
 # This is a simplified and significantly reorganized version of 'Phase1Phase2MultiCycle.rb'
 
 require_relative 'BaseLearningExperiment'
+require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 
 class Experiment
   def setParameters
@@ -17,7 +18,7 @@ class Experiment
         :rng => Random.new(randomNumberSeed),
 
         # training parameters re. Output Error
-        :outputErrorLearningRate => 0.2, # 0.40, #0.02,
+        :outputErrorLearningRate => 0.1, # 0.40, #0.02,
         :minMSE => 0.0001,
         :maxNumEpochs => 4e3,
 
@@ -37,10 +38,9 @@ class Experiment
         :intervalForSavingTrainingData => 100,
 
         # Flocking Parameters...
-        :flockingLearningRate => -0.002, #-0.002,
-        :maxFlockingIterationsCount => 10, # 2000,
-        :maxAbsFlockingErrorsPerExample => 0.1, #    0.04 / numberOfExamples = 0.005
-
+        :flockingLearningRate => -0.008, #-0.002,
+        :maxFlockingIterationsCount => 100, # 2000,
+        :maxAbsFlockingErrorsPerExample => 0.001, #    0.04 / numberOfExamples = 0.005
 
         :typeOfClusterer => DynamicClusterer,
         :numberOfClusters => 2,
@@ -51,6 +51,7 @@ class Experiment
         :maxNumberOfClusteringIterations => 10,
         :symmetricalCenters => true, # if true, speed is negatively affected
         :alwaysUseFuzzyClusters => true,
+        :epochsBeforeFlockingAllowed => 200,
 
         # Inner Numeric Constraints -- used to floating point under or overflow
         :floorToPreventOverflow => 1e-30
@@ -69,11 +70,11 @@ class Experiment
     examples
   end
 
-    def createNetworkAndTrainer(examples)
+  def createNetworkAndTrainer(examples)
     network = Flocking3LayerNetwork.new(args)
     theTrainer = TrainingSupervisorAllLocalFlockingLayers.new(examples, network, args)
     return network, theTrainer
-    end
+  end
 
 end
 

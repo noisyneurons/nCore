@@ -60,8 +60,9 @@ module CommonClusteringCode
     return localFlockingError
   end
 
-  def weightedExamplesCenter # TODO !! should only need to this on the first flocking iteration for each example ('memoize' this??)
-    clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
+  def weightedExamplesCenter
+    # clusterer.pointsTargetForIterationInFuzzyClustering(exampleNumber, locationOfExample)[0]
+     clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
   end
 
   def centerOfDominantClusterForExample
@@ -97,7 +98,7 @@ module CommonClusteringCode
 
   private ############################ PRIVATE METHODS BELOW ###########################
 
-  def locationOfExample
+  def locationOfExample # TODO Here we have EXCLUDED other dimensions
     return netInput
   end
 end

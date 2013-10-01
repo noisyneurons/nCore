@@ -1,8 +1,8 @@
 # weightedClustering_test.rb
 
 require 'test/unit'
-require 'minitest/reporters'
-MiniTest::Reporters.use!
+#require 'minitest/reporters'
+#Test::Reporters.use!
 
 require_relative '../lib/core/WeightedClustering'
 
@@ -22,7 +22,7 @@ class Cluster
 end
 
 ######################  TESTS  TESTS    #####################
-class TestCluster < MiniTest::Unit::TestCase
+class TestCluster < Test::Unit::TestCase
   # Called before every test method runs. Can be used
   # to set up fixture information.
   def setup
@@ -31,7 +31,7 @@ class TestCluster < MiniTest::Unit::TestCase
     @data = seedsForDataArray.collect do |aScalar|
       Vector[aScalar, aScalar]
     end
-    @aCluster = Cluster.new(m=2.0, numExamples=5, examplesVectorLength=2)
+    @aCluster = Cluster.new(m=2.0, numExamples=6, examplesVectorLength=2)
     @aCluster.calcCenterInVectorSpace(@data)
   end
 
@@ -65,7 +65,7 @@ class TestCluster < MiniTest::Unit::TestCase
   end
 end
 
-class TestClusterDispersion1 < MiniTest::Unit::TestCase
+class TestClusterDispersion1 < Test::Unit::TestCase
   # Called before every test method runs. Can be used
   # to set up fixture information.
   def setup
@@ -93,7 +93,7 @@ class TestClusterDispersion1 < MiniTest::Unit::TestCase
   end
 end
 
-class TestClusterDispersion2 < MiniTest::Unit::TestCase
+class TestClusterDispersion2 < Test::Unit::TestCase
   def setup
     @data = []
     @data << Vector[-3.0, 0.0] << Vector[-2.0, 0.0] << Vector[-1.0, 0.0] << Vector[0.0, 0.0] << Vector[1.0, 0.0]
@@ -119,7 +119,7 @@ class TestClusterDispersion2 < MiniTest::Unit::TestCase
   end
 end
 
-class TestClusterDispersion3 < MiniTest::Unit::TestCase
+class TestClusterDispersion3 < Test::Unit::TestCase
   def setup
     @data = []
     a = 1.0 / Math.sqrt(2.0)
@@ -150,7 +150,7 @@ class TestClusterDispersion3 < MiniTest::Unit::TestCase
 end
 
 
-class TestDynamicClustering < MiniTest::Unit::TestCase
+class TestDynamicClustering < Test::Unit::TestCase
   def setup
     srand(0.0)
     @points = []
@@ -173,7 +173,7 @@ class TestDynamicClustering < MiniTest::Unit::TestCase
     cluster0ExpectedCenter = Vector[-1.0981518336640481, 0.0]
     cluster0Actual = @cluster0.center
     distanceBetweenActualAndExpected = (cluster0Actual - cluster0ExpectedCenter).r
-    delta = 1.0
+    delta = 0.0001
     assert_in_delta(0.0, distanceBetweenActualAndExpected, delta, "Error: Cluster 0 center too far away from expected position")
     cluster1ExpectedCenter = Vector[-0.6122303913842454, 0.0]
     cluster1Actual = @cluster1.center
@@ -199,7 +199,7 @@ class TestDynamicClustering < MiniTest::Unit::TestCase
     cluster0ExpectedCenter = Vector[0.35265701435265806, 0.0]
     cluster0Actual = @cluster0.center
     distanceBetweenActualAndExpected = (cluster0Actual - cluster0ExpectedCenter).r
-    delta = 0.001
+    delta = 0.0001
     assert_in_delta(0.0, distanceBetweenActualAndExpected, delta, "Error: Cluster 0 center too far away from expected position")
     cluster1ExpectedCenter = Vector[-2.352657014352598, 0.0]
     cluster1Actual = @cluster1.center
@@ -286,7 +286,7 @@ class TestDynamicClustering < MiniTest::Unit::TestCase
 end
 
 
-class TestDynamicClusteringB < MiniTest::Unit::TestCase
+class TestDynamicClusteringB < Test::Unit::TestCase
   class DummyCluster
     attr_accessor :center
   end
@@ -301,7 +301,7 @@ class TestDynamicClusteringB < MiniTest::Unit::TestCase
     end
 
     def examplesFractionalMembershipInEachCluster(pointNumber)
-      return [1.0, 1.0]
+      return [0.5, 0.5]
     end
   end
 
@@ -324,14 +324,14 @@ class TestDynamicClusteringB < MiniTest::Unit::TestCase
     @cluster1 = @aClusterer.clusters[1]
   end
 
-  def test_calcPointsLocationAsEstimatedFromWeightedClusterCenters
+  def test_estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster
     actual = @aClusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(1)
     assert_equal(Vector[0.0, 0.0], actual, "Error in estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster")
   end
 end
 
 
-class TestDynamicClusteringC < MiniTest::Unit::TestCase
+class TestDynamicClusteringC < Test::Unit::TestCase
   class DummyCluster
     attr_accessor :center
   end
@@ -346,7 +346,7 @@ class TestDynamicClusteringC < MiniTest::Unit::TestCase
     end
 
     def examplesFractionalMembershipInEachCluster(pointNumber)
-      return [1.0, 1.0]
+      return [0.5, 0.5]
     end
   end
 
@@ -369,13 +369,13 @@ class TestDynamicClusteringC < MiniTest::Unit::TestCase
     @cluster1 = @aClusterer.clusters[1]
   end
 
-  def test_calcPointsLocationAsEstimatedFromWeightedClusterCenters
+  def test_estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster
     actual = @aClusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(1)
     assert_equal(Vector[0.25, 0.0], actual, "Error in estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster")
   end
 end
 
-class TestDynamicClusteringD < MiniTest::Unit::TestCase
+class TestDynamicClusteringD < Test::Unit::TestCase
   class DummyCluster
     attr_accessor :center
   end
@@ -390,7 +390,7 @@ class TestDynamicClusteringD < MiniTest::Unit::TestCase
     end
 
     def examplesFractionalMembershipInEachCluster(pointNumber)
-      return [1.0, 0.5]
+      return [0.666666666666666666666666666666666, 0.3333333333333333333333333333333333]
     end
   end
 
@@ -413,10 +413,64 @@ class TestDynamicClusteringD < MiniTest::Unit::TestCase
     @cluster1 = @aClusterer.clusters[1]
   end
 
-  def test_calcPointsLocationAsEstimatedFromWeightedClusterCenters
+  def test_estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster
     actual = @aClusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(1)
     assert_equal(Vector[0.0, 0.0], actual, "Error in estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster")
   end
 end
+
+
+class TestDynamicClusteringRecent < Test::Unit::TestCase
+  class DummyCluster
+    attr_accessor :center
+  end
+
+  class DummyClusterer < DynamicClusterer
+    def clusters
+      cluster1 = DummyCluster.new
+      cluster1.center = Vector[1.0, 0.0]
+      cluster2 = DummyCluster.new
+      cluster2.center = Vector[-1.0, 0.0]
+      return [cluster1, cluster2]
+    end
+
+    def examplesFractionalMembershipInEachCluster(pointNumber)
+      return [0.9, 0.0]
+    end
+  end
+
+  def setup
+    srand(0.0)
+    @points = []
+    @scaleFactor = 1.0
+    @points << (@scaleFactor * Vector[3.0, 0.0]) << (@scaleFactor * Vector[2.0, 0.0]) << (@scaleFactor * Vector[1.0, 0.0]) << (@scaleFactor * Vector[0.0, 0.0]) << (@scaleFactor * Vector[-1.0, 0.0])
+    @numberOfClusters = 2; @m=2.0; @numExamples = 5; @vectorLength = 2; @delta=0.001; @maxNumberOfClusteringIterations= 100
+    @aClusterer = DummyClusterer.new(
+        {:numberOfClusters => @numberOfClusters,
+         :m => @m,
+         :numExamples => @numExamples,
+         :exampleVectorLength => @vectorLength,
+         :delta => @delta,
+         :maxNumberOfClusteringIterations => @maxNumberOfClusteringIterations}
+    )
+    @aClusterer.initializationOfClusterCenters(@points)
+    @cluster0 = @aClusterer.clusters[0]
+    @cluster1 = @aClusterer.clusters[1]
+  end
+
+  #def test_estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster
+  #  actual = @aClusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(1)
+  #  assert_equal(Vector[0.0, 0.0], actual, "Error in estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster")
+  #end
+
+  def test_pointsTargetForIterationInFuzzyClustering
+    actual = @aClusterer.pointsTargetForIterationInFuzzyClustering(2, @points)
+    assert_equal(Vector[0.0, 0.0], actual, "Error in estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster")
+  end
+
+end
+
+
+
 
 

@@ -19,8 +19,12 @@
 require_relative 'Utilities'
 
 module CommonClusteringCode
-  def clustersCenter
-    clusters[0].center  # assuming symetrical cluster centers therefore d output/d input of cluster[0].center or cluster[1].center are the SAME value
+  #def clustersCenter
+  #  clusters[0].center[0] # assuming symmetrical cluster centers therefore d output/d input of cluster[0].center or cluster[1].center are the SAME value
+  #end
+
+  def clustersCenter     # TODO This is a simple approximation IF we want to deal with non-symmetric clusters... Do we want to deal with non-symmetric clusters
+  ( (clusters[0].center[0]).abs + (clusters[1].center[0]).abs ) / 2.0
   end
 end
 
@@ -39,7 +43,7 @@ class AbstractStepTrainer
 
   #  This method corrects for: "how the Ratio of Neural-Gains changes with the magnitudes of the example netInputs"
   def correctionFactorForRateAtWhichNeuronsGainChanges(clustersCenter, correctionFactorsFloor = 0.01)
-    c = clustersCenter[0]
+    c = clustersCenter
     m = (exp(-c) + 1)
 
     n = m**2

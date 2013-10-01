@@ -1,20 +1,15 @@
 require_relative 'Utilities'
-require 'relix'
-require 'yaml'
 
-theComputersName = ENV["COMPUTERNAME"]
-puts "theComputersName = #{theComputersName}"
-puts "Socket.gethostname = #{Socket.gethostname}"
+floorToPreventOverflow = 1e-30
+largestEuclidianDistanceMoved = 1e35
 
-#$redis = Redis.new
-##$redis.flushdb
-#
-#
-#ary = $redis.keys("*")
-#ary.each { |item| p item }
-#
-## $redis.shutdown
-#
-#
-#
+return1 =unless (largestEuclidianDistanceMoved.nil?)
+  largestEuclidianDistanceMoved
+else
+  floorToPreventOverflow
+end
 
+
+return2 = largestEuclidianDistanceMoved ||= floorToPreventOverflow
+
+puts return1, return2

@@ -42,16 +42,13 @@ class DynamicClusterer
     return [clusters, maxNumberOfClusteringIterations, largestEuclidianDistanceMoved]
   end
 
-  def pointsTargetForIterationInFuzzyClustering(pointNumber)
-    theExamplesFractionalMembershipInEachCluster = examplesFractionalMembershipInEachCluster(pointNumber)
-    sumOfWeightedDeviationsNecessaryToMoveToClusters = Vector.elements(Array.new(exampleVectorLength) { 0.0 })
-    sumOfWeights = 0.0
-    theExamplesFractionalMembershipInEachCluster.each_with_index do |examplesFractionalMembershipInCluster, indexToCluster|
-      sumOfWeightedDeviationsNecessaryToMoveToClusters += examplesFractionalMembershipInCluster * (clusters[indexToCluster].center - point)
-      sumOfWeights += examplesFractionalMembershipInCluster
-    end
-    aggregatedNecessaryVectorDeviation = sumOfWeightedDeviationsNecessaryToMoveToClusters / sumOfWeights
-    targetPoint = aggregatedNecessaryVectorDeviation + point
+  def pointsTargetForIterationInFuzzyClustering(pointNumber, netInput) # TODO mostly assumes we are only concerned with netInput
+    singleDimensionPoint = Vector[netInput]
+    nearestCluster = clusters.min_by { |aCluster| (singleDimensionPoint - aCluster.center).r }
+    centerOfNearestCluster = nearestCluster.center
+    target = (centerOfNearestCluster + singleDimensionPoint) / 2.0
+    std("centerOfNearestCluster, target", [centerOfNearestCluster, target])
+    return target
   end
 
   def estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(pointNumber)
@@ -70,7 +67,7 @@ class DynamicClusterer
     clusterWeightingsForExample = examplesFractionalMembershipInEachCluster(pointNumber)
     maxWeight = 0.0
     clusterAssociatedWithExample = nil
-    std("clusterWeightingsForExample",clusterWeightingsForExample)
+    std("clusterWeightingsForExample", clusterWeightingsForExample)
     clusterWeightingsForExample.each_with_index do |weightingGivenExampleForCluster, clusterNumber|
 
       if (weightingGivenExampleForCluster >= maxWeight)
@@ -142,6 +139,46 @@ class DynamicClusterer
     thisPointsFractionalMembershipToSelectedCluster = 1.0 / sumOfRatios
   end
 
+  def recenterClusters(points)
+    arrayOfDistancesMoved = clusters.collect { |aCluster| aCluster.recenter!(points) }
+    # arrayOfDistancesMoved = arrayOfDistancesMoved.delete_if { |number| number.nan? }
+    largestEuclidianDistanceMoved = arrayOfDistancesMoved.max ||= floorToPreventOverflow
+  end
+
+#  keepCentersSymmetrical if (args[:symmetricalCenters]) # TODO may want to include this in the calculation of largest largestEuclidianDistanceMoved
+  def keepCentersSymmetrical
+    distanceBetween2ClustersOnNetInputDimension = (clusters[1].center[0] - clusters[0].center[0])
+    cluster1IsToTheRightOfCluster0 = (distanceBetween2ClustersOnNetInputDimension >= 0.0)
+    symmetricalOffset = distanceBetween2ClustersOnNetInputDimension.abs / 2.0
+
+    case exampleVectorLength
+
+      when 1
+        if cluster1IsToTheRightOfCluster0
+          clusters[1].center = Vector[symmetricalOffset]
+          clusters[0].center = Vector[(-1.0 * symmetricalOffset)]
+        else
+          clusters[0].center = Vector[symmetricalOffset]
+          clusters[1].center = Vector[(-1.0 * symmetricalOffset)]
+        end
+
+
+      when 2
+        if cluster1IsToTheRightOfCluster0
+          clusters[1].center = Vector[symmetricalOffset, clusters[1].center[1]]
+          clusters[0].center = Vector[(-1.0 * symmetricalOffset), clusters[0].center[1]]
+        else
+          clusters[0].center = Vector[symmetricalOffset, clusters[0].center[1]]
+          clusters[1].center = Vector[(-1.0 * symmetricalOffset), clusters[1].center[1]]
+        end
+
+      else
+        STDERR.puts "error: Example Vector Length incorrectly specified"
+    end
+  end
+
+
+  # TODO -- SAVE BELOW.  Why?
   ## SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE
   #def calcThisPointsFractionalMembershipToThisCluster(thePoint, arbitraryCluster, power) # TODO this code is doubly redundant.  It repeats the same calculations for each cluster.  Will be particularly inefficient for more than 2  clusters.
   #  case exampleVectorLength
@@ -183,49 +220,6 @@ class DynamicClusterer
   #  end
   #  membershipForThisPointForThisArbitraryCluster = membershipSimplificationFunction(1.0 / sumOfRatios)
   #end
-
-  def recenterClusters(points)
-    arrayOfDistancesMoved = clusters.collect { |aCluster| aCluster.recenter!(points) }
-    keepCentersSymmetrical if (args[:symmetricalCenters]) # TODO may want to include this in the calculation of largest largestEuclidianDistanceMoved
-    # arrayOfDistancesMoved = arrayOfDistancesMoved.delete_if { |number| number.nan? }
-    largestEuclidianDistanceMoved = arrayOfDistancesMoved.max
-    unless (largestEuclidianDistanceMoved.nil?)
-      largestEuclidianDistanceMoved
-    else
-      floorToPreventOverflow
-    end
-  end
-
-  def keepCentersSymmetrical
-    distanceBetween2ClustersOnNetInputDimension = (clusters[1].center[0] - clusters[0].center[0])
-    cluster1IsToTheRightOfCluster0 = (distanceBetween2ClustersOnNetInputDimension >= 0.0)
-    symmetricalOffset = distanceBetween2ClustersOnNetInputDimension.abs / 2.0
-
-    case exampleVectorLength
-
-      when 1
-        if cluster1IsToTheRightOfCluster0
-          clusters[1].center = Vector[symmetricalOffset]
-          clusters[0].center = Vector[(-1.0 * symmetricalOffset)]
-        else
-          clusters[0].center = Vector[symmetricalOffset]
-          clusters[1].center = Vector[(-1.0 * symmetricalOffset)]
-        end
-
-
-      when 2
-        if cluster1IsToTheRightOfCluster0
-          clusters[1].center = Vector[symmetricalOffset, clusters[1].center[1]]
-          clusters[0].center = Vector[(-1.0 * symmetricalOffset), clusters[0].center[1]]
-        else
-          clusters[0].center = Vector[symmetricalOffset, clusters[0].center[1]]
-          clusters[1].center = Vector[(-1.0 * symmetricalOffset), clusters[1].center[1]]
-        end
-
-      else
-        STDERR.puts "error: Example Vector Length incorrectly specified"
-    end
-  end
 end
 
 
@@ -248,7 +242,7 @@ class Cluster
 
   # Recenters the cluster
   def recenter!(examples)
-    STDERR.puts "Error: Number of Examples is INCORRECT!!" if (numExamples != examples.length)
+    STDERR.puts "Error: Number of Examples is INCORRECT!! i.e. #{numExamples} versus #{examples.length}" if (numExamples != examples.length)
     old_center = center
     self.calcCenterInVectorSpace(examples)
     return old_center.dist_to(center) # this is currently a Euclidian Distance Measure.

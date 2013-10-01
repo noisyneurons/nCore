@@ -11,7 +11,6 @@ require_relative '../lib/plot/CorePlottingCode'
 require_relative '../lib/core/SimulationDataStore'
 require_relative '../lib/core/TrainingSequencingAndGrouping'
 require_relative '../lib/core/Trainers.rb'
-require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 
 class Experiment
   attr_accessor :descriptionOfExperiment, :experimentLogger, :args, :trainingSequence
@@ -61,7 +60,6 @@ class Experiment
         :maxFlockingIterationsCount => 2000, # 3800, # 2000,
         :maxAbsFlockingErrorsPerExample => 0.002, # 0.00000000000001, #0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
 
-        :alwaysUseFuzzyClusters => true,
         :typeOfClusterer => DynamicClusterer,
         :numberOfClusters => 2,
         :m => 2.0,
@@ -70,6 +68,8 @@ class Experiment
         :delta => 1e-2,
         :maxNumberOfClusteringIterations => 10,
         :symmetricalCenters => true, # if true, speed is negatively affected
+        :alwaysUseFuzzyClusters => true,
+        :epochsBeforeFlockingAllowed => 200,
 
         # Inner Numeric Constraints -- used to floating point under or overflow
         :floorToPreventOverflow => 1e-30
