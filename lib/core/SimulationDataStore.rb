@@ -190,8 +190,7 @@ class DetailedNeuronData
   @@ID = 0
 
   def DetailedNeuronData.values(key)
-    redisKey = key
-    $redis.get(redisKey)
+    YAML.load($redis.get(key))
   end
 
   def DetailedNeuronData.deleteData(experimentNumber)
@@ -211,7 +210,7 @@ class DetailedNeuronData
     @epochs = detailedNeuronDataToRecord[:epochs]
     @neuron = detailedNeuronDataToRecord[:neuronID]
     @exampleNumber = detailedNeuronDataToRecord[:exampleNumber]
-    $redis.set(detailedNeuronDataKey, detailedNeuronDataToRecord)
+    $redis.set(detailedNeuronDataKey, YAML.dump(detailedNeuronDataToRecord))
     index!
   end
 
@@ -235,7 +234,7 @@ class NeuronData
   @@ID = 0
 
   def NeuronData.values(key)
-    $redis.get(key)
+    YAML.load($redis.get(key))
   end
 
   def NeuronData.deleteData(experimentNumber)
@@ -254,7 +253,7 @@ class NeuronData
     @experimentNumber = ExperimentLogger.number
     @neuron = neuronDataToRecord[:neuronID]
     @epochs = neuronDataToRecord[:epochs]
-    $redis.set(neuronDataKey, neuronDataToRecord)
+    $redis.set(neuronDataKey, YAML.dump(neuronDataToRecord))
     index!
   end
 

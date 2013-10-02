@@ -211,7 +211,7 @@ end
 class StepTrainerForLocalFlocking < AbstractStepTrainer
   def train(trials)
     distributeSetOfExamples(examples)
-    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)
+    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)   # TODO ONLY "seed" when necessary?   # unless(args[:epochs] > 1)
     self.accumulatedAbsoluteFlockingErrors = []
     trials.times do
       innerTrainingLoop()
@@ -295,7 +295,7 @@ end
 
 ######
 class TrainingSupervisorBase
-  attr_accessor :examples, :network, :args, :stepTrainer, :trainingSequence, :startTime, :elapsedTime, :minMSE
+  attr_accessor :examples, :network, :args, :neuronGroups, :stepTrainer, :trainingSequence, :startTime, :elapsedTime, :minMSE
   include RecordingAndPlottingRoutines
 
   def initialize(examples, network, args)
@@ -315,7 +315,7 @@ class TrainingSupervisorBase
 
   def train
     mse = 1e20
-    numTrials = 1000
+    numTrials = 50
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
       mse, accumulatedAbsoluteFlockingErrors = stepTrainer.train(numTrials)
     end
@@ -332,28 +332,26 @@ end
 class TrainingSupervisorOutputNeuronLocalFlocking < TrainingSupervisorBase
 
   def postInitialize
-    neuronGroups = NeuronGroupsTrivial.new(network)
-    @stepTrainer = StepTrainerForLocalFlocking.new(examples, neuronGroups, trainingSequence, args)
+    self.neuronGroups = NeuronGroupsTrivial.new(network)
+    self.stepTrainer = StepTrainerForLocalFlocking.new(examples, neuronGroups, trainingSequence, args)
   end
 end
 
 class TrainingSupervisorHiddenNeuronLocalFlocking < TrainingSupervisorBase
-  attr_accessor :stepTrainer, :trainingSequence, :neuronGroups, :network, :args, :startTime, :elapsedTime, :minMSE
   include RecordingAndPlottingRoutines
 
   def postInitialize
-    @neuronGroups = NeuronGroupsHiddenNeuronLocalFlockingError.new(network)
-    @stepTrainer = StepTrainerForLocalFlocking.new(examples, neuronGroups, trainingSequence, args)
+    self.neuronGroups = NeuronGroupsHiddenNeuronLocalFlockingError.new(network)
+    self.stepTrainer = StepTrainerForLocalFlocking.new(examples, neuronGroups, trainingSequence, args)
   end
 end
 
 class TrainingSupervisorAllLocalFlockingLayers < TrainingSupervisorBase
-  attr_accessor :stepTrainer, :trainingSequence, :neuronGroups, :network, :args, :startTime, :elapsedTime, :minMSE
   include RecordingAndPlottingRoutines
 
   def postInitialize
-    @neuronGroups = NeuronGroupsAllLocalFlockingLayers.new(network)
-    @stepTrainer = StepTrainerForLocalFlocking.new(examples, neuronGroups, trainingSequence, args)
+    self.neuronGroups = NeuronGroupsAllLocalFlockingLayers.new(network)
+    self.stepTrainer = StepTrainerForLocalFlocking.new(examples, neuronGroups, trainingSequence, args)
   end
 end
 
