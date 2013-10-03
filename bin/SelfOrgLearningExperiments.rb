@@ -12,9 +12,6 @@ class Experiment
 
   def setParameters
 
-    numberOfExamples = 4
-    randomNumberSeed = 0
-
     @args = {
         :experimentNumber => ExperimentLogger.number,
         :descriptionOfExperiment => descriptionOfExperiment,
@@ -23,7 +20,7 @@ class Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.02,
         :minMSE => 0.0001,
-        :maxNumEpochs => 50,
+        :maxNumEpochs => 500,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
@@ -61,21 +58,21 @@ class Experiment
     }
   end
 
-  def createTrainingSet(args)
+  def createTrainingSet
     examples = []
     examples << {:inputs => [1.0, 1.0], :targets => [0.0], :exampleNumber => 0, :class => 0}
     examples << {:inputs => [1.0, -1.0], :targets => [1.0], :exampleNumber => 1, :class => 1}
     examples << {:inputs => [-1.0, -1.0], :targets => [0.0], :exampleNumber => 2, :class => 0}
     examples << {:inputs => [-1.0, 1.0], :targets => [1.0], :exampleNumber => 3, :class => 1}
-    if (args[:numberOfExamples] != examples.length)
-      STDERR.puts "****************Incorrect Number of Examples Specified!! ************************"
-    end
-    examples
+    self.numberOfExamples = examples.length
+    return examples
   end
 
-  def createNetworkAndTrainer(examples)
-    network = SimpleFlockingNetwork.new(args)
-    theTrainer = TrainingSupervisorOutputNeuronLocalFlocking.new(examples, network, args)
+  def createNetworkAndTrainer
+    network = Flocking1LayerNetwork.new(args)
+
+    theTrainer = TrainingSuperONLYLocalFlocking.new(examples, network, args)
+    #theTrainer = TrainingSupervisorOutputNeuronLocalFlocking.new(examples, network, args)
     return network, theTrainer
   end
 
@@ -158,6 +155,6 @@ class Experiment
 
 end
 
-experiment = Experiment.new("T2LearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges")
+experiment = Experiment.new("SelfOrgLearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges", randomNumberSeed=2)
 
 experiment.performSimulation()

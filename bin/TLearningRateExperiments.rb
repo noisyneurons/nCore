@@ -149,7 +149,7 @@ args[:trainingSequence] = trainingSequence = TrainingSequence.new(args)
 examples = createTrainingSet(args)
 
 ######################## Create Network....
-network = SimpleFlockingNetwork.new(args) # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
+network = Flocking1LayerNetwork.new(args) # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
 
 ############################### train ...
 theTrainer = TrainingSupervisorSimplest.new(examples, network, args)

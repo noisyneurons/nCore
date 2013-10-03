@@ -131,7 +131,7 @@ class SimpleFlockingNeuronNetwork < BaseNetwork # TODO this is identical, except
   end
 end
 
-class SimpleFlockingNetwork < BaseNetwork
+class Flocking1LayerNetwork < BaseNetwork
 
   def createAllLayersOfNeurons
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])

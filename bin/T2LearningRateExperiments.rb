@@ -12,9 +12,6 @@ class Experiment
 
   def setParameters
 
-    numberOfExamples = 8
-    randomNumberSeed = 0
-
     @args = {
         :experimentNumber => ExperimentLogger.number,
         :descriptionOfExperiment => descriptionOfExperiment,
@@ -43,7 +40,7 @@ class Experiment
         # Flocking Parameters...
         :flockingLearningRate => -0.002,
         :maxFlockingIterationsCount => 2000, # 3800, # 2000,
-        :maxAbsFlockingErrorsPerExample => 0.002, # 0.00000000000001, #0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
+        :maxAbsFlockingErrorsPerExample => 0.02, # 0.00000000000001, #0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
 
         :typeOfClusterer => DynamicClusterer,
         :numberOfClusters => 2,
@@ -61,7 +58,7 @@ class Experiment
     }
   end
 
-  def createTrainingSet(args)
+  def createTrainingSet
     examples = []
     examples << {:inputs => [1.0, 1.0], :targets => [1.0], :exampleNumber => 0, :class => 1}
     examples << {:inputs => [1.0, 2.0], :targets => [1.0], :exampleNumber => 1, :class => 1}
@@ -71,17 +68,17 @@ class Experiment
     examples << {:inputs => [-1.0, -2.0], :targets => [0.0], :exampleNumber => 5, :class => 0}
     examples << {:inputs => [-1.0, -3.0], :targets => [0.0], :exampleNumber => 6, :class => 0}
     examples << {:inputs => [-1.0, -4.0], :targets => [0.0], :exampleNumber => 7, :class => 0}
-    STDERR.puts "****************Incorrect Number of Examples Specified!! ************************" if (args[:numberOfExamples] != examples.length)
+    self.numberOfExamples = examples.length
     return examples
   end
 
-  def createNetworkAndTrainer(examples)
-    network = SimpleFlockingNetwork.new(args)
+  def createNetworkAndTrainer
+    network = Flocking1LayerNetwork.new(args)
     theTrainer = TrainingSupervisorOutputNeuronLocalFlocking.new(examples, network, args)
     return network, theTrainer
   end
 end
 
-experiment = Experiment.new("T2LearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges")
+experiment = Experiment.new("T2LearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges", randomNumberSeed=0)
 
 experiment.performSimulation()

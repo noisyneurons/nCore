@@ -13,23 +13,20 @@ require_relative '../lib/core/TrainingSequencingAndGrouping'
 require_relative '../lib/core/Trainers.rb'
 
 class Experiment
-  attr_accessor :descriptionOfExperiment, :experimentLogger, :args, :trainingSequence
+  attr_accessor :descriptionOfExperiment, :randomNumberSeed, :experimentLogger, :examples, :numberOfExamples, :args, :trainingSequence
   include ExampleDistribution
 
-  def initialize(descriptionOfExperiment)
-    srand(0)
+  def initialize(descriptionOfExperiment, randomNumberSeed)
     @descriptionOfExperiment = descriptionOfExperiment
+    @randomNumberSeed = randomNumberSeed
     @experimentLogger = ExperimentLogger.new(descriptionOfExperiment)
+    @examples = createTrainingSet
     @args = self.setParameters
     @trainingSequence = TrainingSequence.new(args)
     @args[:trainingSequence] = trainingSequence
   end
 
   def setParameters
-
-    numberOfExamples = 8
-    randomNumberSeed = 0
-
     @args = {
         :experimentNumber => ExperimentLogger.number,
         :descriptionOfExperiment => descriptionOfExperiment,
@@ -67,7 +64,7 @@ class Experiment
         :exampleVectorLength => 1,
         :delta => 1e-2,
         :maxNumberOfClusteringIterations => 10,
-        :symmetricalCenters => true, # if true, speed is negatively affected
+         #  :symmetricalCenters => true, # if true, speed is negatively affected # TODO not re-implemented yet.
         :alwaysUseFuzzyClusters => true,
         :epochsBeforeFlockingAllowed => 200,
 
@@ -76,7 +73,7 @@ class Experiment
     }
   end
 
-  def createTrainingSet(args)
+  def createTrainingSet
     STDERR.puts "Error: base class method called!!"
     return examples
   end
@@ -128,7 +125,7 @@ class Experiment
     }
     SnapShotData.new(dataToStoreLongTerm)
 
-    keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
+    keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(10) }
     unless (keysToRecords.empty?)
       puts
       puts "Number\tLastEpoch\tTrainMSE\t\tTestMSE\t\tTime\t\t\t\tDescription"
@@ -145,11 +142,8 @@ class Experiment
 
   def performSimulation
 
-############################# create training set...
-    examples = createTrainingSet(args)
-
 ######################## Create Network and Trainer ....
-    network, theTrainer = createNetworkAndTrainer(examples)
+    network, theTrainer = createNetworkAndTrainer
 
 ###################################### perform Learning/Training  ##########################################
 
@@ -164,10 +158,6 @@ class Experiment
 ############################## clean-up....
     experimentLogger.deleteTemporaryDataRecordsInDB()
     experimentLogger.save
-  end
-
-  def createNetworkAndTrainer(examples)
-    STDERR.puts "ERROR: BaseLearningExperiment's 'createNetworkAndTrainer' method should not have been called"
   end
 end
 

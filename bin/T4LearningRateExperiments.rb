@@ -9,9 +9,6 @@ require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 class Experiment
   def setParameters
 
-    numberOfExamples = 8
-    randomNumberSeed = 0
-
     @args = {
         :experimentNumber => ExperimentLogger.number,
         :descriptionOfExperiment => descriptionOfExperiment,
@@ -58,7 +55,7 @@ class Experiment
     }
   end
 
-  def createTrainingSet(args)
+  def createTrainingSet
     examples = []
     examples << {:inputs => [1.0, 1.0], :targets => [1.0], :exampleNumber => 0, :class => 1}
     examples << {:inputs => [1.0, 2.0], :targets => [1.0], :exampleNumber => 1, :class => 1}
@@ -68,11 +65,11 @@ class Experiment
     examples << {:inputs => [-1.0, -2.0], :targets => [0.0], :exampleNumber => 5, :class => 0}
     examples << {:inputs => [-1.0, -3.0], :targets => [0.0], :exampleNumber => 6, :class => 0}
     examples << {:inputs => [-1.0, -4.0], :targets => [0.0], :exampleNumber => 7, :class => 0}
-    STDERR.puts "****************Incorrect Number of Examples Specified!! ************************" if (args[:numberOfExamples] != examples.length)
+    self.numberOfExamples = examples.length
     return examples
   end
 
-  def createNetworkAndTrainer(examples)
+  def createNetworkAndTrainer
     network = Flocking3LayerNetwork.new(args)
     theTrainer = TrainingSupervisorAllLocalFlockingLayers.new(examples, network, args)
     return network, theTrainer
@@ -81,6 +78,6 @@ end
 
 ###################################### START of Main Learning  ##########################################
 
-experiment = Experiment.new("T4LearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges")
+experiment = Experiment.new("T4LearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges", randomNumberSeed=0)
 
 experiment.performSimulation()

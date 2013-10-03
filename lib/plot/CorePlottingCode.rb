@@ -143,7 +143,7 @@ class Plotter
         numberOfExamples.times do |exampleNumber|
           plot.data << Gnuplot::DataSet.new([epochsArray, (examplesNetInputs[exampleNumber])]) do |ds|
             #ds.with = "points"
-            ds.with = "lines lt 6"
+            ds.with = "lines lt #{exampleNumber + 1}"
             ds.linewidth = 3
             ds.title = "#{exampleNumber}"
           end

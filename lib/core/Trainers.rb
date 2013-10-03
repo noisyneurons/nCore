@@ -97,7 +97,15 @@ class AbstractStepTrainer
   end
 
   def train(trials)
-    STDERR.puts "Error:  called abstract method"
+    distributeSetOfExamples(examples)
+    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO ONLY "seed" when necessary?   # unless(args[:epochs] > 1)
+    self.accumulatedAbsoluteFlockingErrors = []
+    trials.times do
+      innerTrainingLoop()
+      dbStoreTrainingData()
+      trainingSequence.nextEpoch
+    end
+    return calcMSE, accumulatedAbsoluteFlockingErrors
   end
 
   def performStandardBackPropTraining
@@ -209,18 +217,6 @@ class AbstractStepTrainer
 end
 
 class StepTrainerForLocalFlocking < AbstractStepTrainer
-  def train(trials)
-    distributeSetOfExamples(examples)
-    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)   # TODO ONLY "seed" when necessary?   # unless(args[:epochs] > 1)
-    self.accumulatedAbsoluteFlockingErrors = []
-    trials.times do
-      innerTrainingLoop()
-      dbStoreTrainingData()
-      trainingSequence.nextEpoch
-    end
-    return calcMSE, accumulatedAbsoluteFlockingErrors
-  end
-
   def innerTrainingLoop
     unless (flockingShouldOccur?(accumulatedAbsoluteFlockingErrors))
       performStandardBackPropTraining()
@@ -234,64 +230,24 @@ class StepTrainerForLocalFlocking < AbstractStepTrainer
   end
 end
 
-#class StepTrainerForOutputErrorBPOnly
-#  def train(trials)
-#    distributeSetOfExamples(examples)
-#    trials.times do
-#      performStandardBackPropTraining
-#      trainingSequence.nextEpoch
-#    end
-#    return calcMSE
-#  end
-#end
-#
-#
-#class BPofFlockingStepTrainer < StepTrainerForLocalFlocking
-#  def innerTrainingLoop
-#    unless (flockingShouldOccur?(accumulatedAbsoluteFlockingErrors))
-#      performStandardBackPropTraining()
-#    else
-#      prepareForRepeatedFlockingIterations()
-#      adaptToBPofFlockError
-#      std("h", [args[:epochs], accumulatedAbsoluteFlockingErrors])
-#    end
-#    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
-#  end
-#
-#  def adaptToBPofFlockError
-#    STDERR.puts "Generating neurons and adapting neurons are the same. Wrong Routine Called!!" if (flockErrorGeneratingNeurons == flockErrorAdaptingNeurons)
-#    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate] }
-#    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
-#    acrossExamplesAccumulateNonLocalFlockingErrorDeltaWs
-#    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-#    self.accumulatedAbsoluteFlockingErrors = flockErrorGeneratingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
-#  end
-#
-#  def acrossExamplesAccumulateNonLocalFlockingErrorDeltaWs
-#    clearEpochAccumulationsInAllNeurons()
-#    numberOfExamples.times do |exampleNumber|
-#      propagateAcrossEntireNetwork(exampleNumber)
-#      backpropagateAcrossEntireNetwork()
-#      calcWeightedErrorMetricForExample()
-#
-#      flockErrorGeneratingNeurons.each do |aNeuron|
-#        dataRecord = aNeuron.recordResponsesForExample
-#        dataRecord[:localFlockingError] = calcNeuronsLocalFlockingError(aNeuron)
-#        aNeuron.backPropagate { |higherLayerError, localFlockingError| localFlockingError } # TODO some unnecessary calculations.  Should change!!
-#        aNeuron.dbStoreDetailedData
-#      end
-#
-#      flockErrorAdaptingNeurons.each do |aNeuron|
-#        aNeuron.backPropagate
-#        aNeuron.calcAccumDeltaWsForHigherLayerError
-#      end
-#    end
-#  end
-#
-#  #def useFuzzyClusters? # TODO revert back to super...
-#  #  return true
-#  #end
-#end
+class StepTrainerForONLYLocalFlocking < AbstractStepTrainer
+  def innerTrainingLoop
+    self.accumulatedAbsoluteFlockingErrors = []
+    zeroOutFlockingLinksMomentumMemoryStore
+    recenterEachNeuronsClusters(flockErrorGeneratingNeurons)
+    adaptToLocalFlockError()
+    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
+  end
+end
+
+class StepTrainerForOutputErrorBPOnly < AbstractStepTrainer
+  def innerTrainingLoop
+    performStandardBackPropTraining()
+    self.accumulatedAbsoluteFlockingErrors = []
+    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
+  end
+end
+
 
 ######
 class TrainingSupervisorBase
@@ -315,7 +271,7 @@ class TrainingSupervisorBase
 
   def train
     mse = 1e20
-    numTrials = 50
+    numTrials = 500
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
       mse, accumulatedAbsoluteFlockingErrors = stepTrainer.train(numTrials)
     end
@@ -329,8 +285,14 @@ class TrainingSupervisorBase
   end
 end
 
-class TrainingSupervisorOutputNeuronLocalFlocking < TrainingSupervisorBase
+class TrainingSuperONLYLocalFlocking < TrainingSupervisorBase
+  def postInitialize
+    self.neuronGroups = NeuronGroupsTrivial.new(network)
+    self.stepTrainer = StepTrainerForONLYLocalFlocking.new(examples, neuronGroups, trainingSequence, args)
+  end
+end
 
+class TrainingSupervisorOutputNeuronLocalFlocking < TrainingSupervisorBase
   def postInitialize
     self.neuronGroups = NeuronGroupsTrivial.new(network)
     self.stepTrainer = StepTrainerForLocalFlocking.new(examples, neuronGroups, trainingSequence, args)
