@@ -99,13 +99,21 @@ class Experiment
     puts "\n\n############ DetailedNeuronData #############\n"
     puts "Epoch\t\t\t\tEx0\t\t\t\tEx1\t\t\t\tEx2\t\t\t\tEx3"
     keysToRecords = []
+    epochsArray = []
+    examplesNetInputs = []
     DetailedNeuronData.lookup_values(:epochs).each do |epochNumber|
       netInputs = []
+      epochsArray << epochNumber.to_i
       DetailedNeuronData.lookup_values(:exampleNumber).each do |anExampleNumber|
         aRecordKey = DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber, neuron: neuronToDisplay, exampleNumber: anExampleNumber}) }
         unless (aRecordKey.empty?)
+
           aHash = DetailedNeuronData.values(aRecordKey)
-          netInputs << aHash[:netInput]
+          aNetInput = aHash[:netInput]
+          exampleNumber = anExampleNumber.to_i
+          examplesNetInputs[exampleNumber] = [] if(examplesNetInputs[exampleNumber].nil?)
+          examplesNetInputs[exampleNumber] << aNetInput
+          netInputs << aNetInput
         end
       end
 
@@ -113,17 +121,9 @@ class Experiment
       puts "#{epochNumber}\t\t#{aStringToPrint}"
     end
 
-    #unless (keysToRecords.empty?)
-    #  keysToRecords.reject! { |recordKey| recordKey.empty? }
-    #  # keysToRecords.each { |recordKey| std("recordKey", recordKey) } unless (keysToRecords.empty?) # TODO DEBUG CODE
-    #  detailedNeuronDataRecords = keysToRecords.collect { |recordKey| DetailedNeuronData.values(recordKey) }
-    #
-    #
-    #
-    #end
-    #
-    #puts detailedNeuronDataRecords
-    #
+    aPlotter = Plotter.new(title="Inputs to Neuron vs. Time", "Number of Epochs", "Net Input to Neuron", plotOutputFilenameBase = "#{Dir.home}/Code/Ruby/NN2012/plots/netInputVsEpochs")
+    aPlotter.plotNetInputs(epochsArray, examplesNetInputs)
+
 
     puts "\n\n############ TrainingData #############"
     keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: ExperimentLogger.number}) }

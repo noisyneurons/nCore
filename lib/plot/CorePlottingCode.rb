@@ -35,12 +35,12 @@ def plotMSEvsEpochNumber(mseVsEpochMeasurements)
   aPlotter.plot(x, y)
 end
 
-
 def plotDotsWhereOutputGtPt5(x, y, aNeuron, epochNumber)
   aPlotter = Plotter.new(title="Zero Xing for Neuron #{aNeuron.id} at epoch #{epochNumber}", "input 0", "input 1", plotOutputFilenameBase = "#{Dir.pwd}/../../plots/zeroXingPlot_N#{aNeuron.id}_E#{epochNumber}")
 #  aPlotter = Plotter.new(title="Zero Xing for Neuron #{aNeuron.id} at epoch #{epochNumber}", "input 0", "input 1", plotOutputFilenameBase = "/home/mark/Code/Ruby/NN2012/plots/zeroXingPlot_N#{aNeuron.id}_E#{epochNumber}")
   aPlotter.plot(x, y)
 end
+
 
 ############ ORIGINAL Plotting Section (uses a specialized library) #########################
 class Plotter
@@ -124,6 +124,35 @@ class Plotter
     end
     createImageFile()
   end
+
+  ########################### 2-D plot of training and test error vs. epoch number   #################################
+  def plotNetInputs(epochsArray, examplesNetInputs)
+    numberOfExamples = examplesNetInputs.length
+    @yMax, @yMin = determineScales(examplesNetInputs.flatten)
+    File.open(@plotFilename, "w") do |gp|
+      Gnuplot::Plot.new(gp) do |plot|
+        plot.title "#{@title}"
+        plot.xlabel "#{@xLabel}"
+        plot.ylabel "#{@yLabel}"
+        plot.key "right top"
+        plot.yrange "[#{@yMin}:#{@yMax}]"
+        #plot.size "square"
+
+        plot.terminal @deviceSetup
+        plot.output @plotImageFilename
+        numberOfExamples.times do |exampleNumber|
+          plot.data << Gnuplot::DataSet.new([epochsArray, (examplesNetInputs[exampleNumber])]) do |ds|
+            #ds.with = "points"
+            ds.with = "lines lt 6"
+            ds.linewidth = 3
+            ds.title = "#{exampleNumber}"
+          end
+        end
+      end
+    end
+    createImageFile()
+  end
+
 
   ########################### Similar 2-D plots: Variables vs. epoch number   #################################
   def plotHyperplaneMeasuresVsEpoch(epochNumber, angleInRadians, averageOfAbsoluteWeights)
