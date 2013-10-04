@@ -65,7 +65,7 @@ class Experiment
         :exampleVectorLength => 1,
         :delta => 1e-2,
         :maxNumberOfClusteringIterations => 10,
-        :symmetricalCenters => true,
+        :keepTargetsSymmetrical => true,
         :alwaysUseFuzzyClusters => true,
         :epochsBeforeFlockingAllowed => 200,
 

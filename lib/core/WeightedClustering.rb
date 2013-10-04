@@ -12,7 +12,7 @@ INFINITY = 1.0/0
 class DynamicClusterer
   protected
   attr_reader :args, :numberOfClusters, :m, :delta, :maxNumberOfClusteringIterations,
-              :numExamples, :exampleVectorLength, :floorToPreventOverflow
+              :numExamples, :exampleVectorLength, :floorToPreventOverflow, :targetsForFlocking
   public
   attr_reader :clusters
 
@@ -26,6 +26,7 @@ class DynamicClusterer
     @delta = args[:delta] # clustering is finished if we don't have to move any cluster more than a distance of delta (Euclidian distance measure or?)
     @maxNumberOfClusteringIterations = args[:maxNumberOfClusteringIterations]
     @clusters = Array.new(numberOfClusters) { |clusterNumber| Cluster.new(m, numExamples, exampleVectorLength, clusterNumber) }
+    @targetsForFlocking = []
   end
 
   def initializationOfClusterCenters(points)
@@ -42,14 +43,14 @@ class DynamicClusterer
     return [clusters, maxNumberOfClusteringIterations, largestEuclidianDistanceMoved]
   end
 
-  def pointsTargetForIterationInFuzzyClustering(pointNumber, netInput) # TODO mostly assumes we are only concerned with netInput
-    singleDimensionPoint = Vector[netInput]
-    nearestCluster = clusters.min_by { |aCluster| (singleDimensionPoint - aCluster.center).r }
-    centerOfNearestCluster = nearestCluster.center
-    target = (centerOfNearestCluster + singleDimensionPoint) / 2.0
-    std("centerOfNearestCluster, target", [centerOfNearestCluster, target])
-    return target
-  end
+  #def pointsTargetForIterationInFuzzyClustering(pointNumber, netInput) # TODO mostly assumes we are only concerned with netInput
+  #  singleDimensionPoint = Vector[netInput]
+  #  nearestCluster = clusters.min_by { |aCluster| (singleDimensionPoint - aCluster.center).r }
+  #  centerOfNearestCluster = nearestCluster.center
+  #  target = (centerOfNearestCluster + singleDimensionPoint) / 2.0
+  #  std("centerOfNearestCluster, target", [centerOfNearestCluster, target])
+  #  return target
+  #end
 
   #def estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(pointNumber)
   #  theExamplesFractionalMembershipInEachCluster = examplesFractionalMembershipInEachCluster(pointNumber)
@@ -63,18 +64,35 @@ class DynamicClusterer
   #end
   #
 
-  def estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(pointNumber)
+  #def estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(pointNumber)
+  #  theExamplesFractionalMembershipInEachCluster = examplesFractionalMembershipInEachCluster(pointNumber)
+  #  weightedClusterCentersSum = Vector.elements(Array.new(exampleVectorLength) { 0.0 })
+  #  weightingSum = 0.0
+  #  keepTargetsSymmetrical if (args[:keepTargetsSymmetrical])
+  #  targetDivergenceFactor = args[:targetDivergenceFactor]
+  #  theExamplesFractionalMembershipInEachCluster.each_with_index do |examplesFractionalMembershipInCluster, indexToCluster|
+  #    weightedClusterCentersSum += examplesFractionalMembershipInCluster * clusters[indexToCluster].center * clusterCenterMultiplier
+  #    weightingSum += examplesFractionalMembershipInCluster
+  #  end
+  #  centerOfWeightedClustersForExample = weightedClusterCentersSum / weightingSum
+  #end
+
+  def examplesTargetForFlocking(pointNumber)
     theExamplesFractionalMembershipInEachCluster = examplesFractionalMembershipInEachCluster(pointNumber)
-    weightedClusterCentersSum = Vector.elements(Array.new(exampleVectorLength) { 0.0 })
-    weightingSum = 0.0
-    keepCentersSymmetrical if (args[:symmetricalCenters])
-    clusterCenterMultiplier = args[:clusterCenterMultiplier]
+    weightedTargetsSum = Vector.elements(Array.new(exampleVectorLength) { 0.0 })
+    sumOfWeights = 0.0
+    clusters.each_with_index {|aCluster, indexToCluster| targetsForFlocking[indexToCluster] = aCluster.center} # initialing targets
+    keepTargetsSymmetrical if (args[:keepTargetsSymmetrical])
+    targetDivergenceFactor = args[:targetDivergenceFactor]
+    targetsForFlocking.collect! { | aTarget | aTarget * targetDivergenceFactor }
     theExamplesFractionalMembershipInEachCluster.each_with_index do |examplesFractionalMembershipInCluster, indexToCluster|
-      weightedClusterCentersSum += examplesFractionalMembershipInCluster * clusters[indexToCluster].center * clusterCenterMultiplier
-      weightingSum += examplesFractionalMembershipInCluster
+      weightedTargetsSum += examplesFractionalMembershipInCluster * targetsForFlocking[indexToCluster]
+      sumOfWeights += examplesFractionalMembershipInCluster
     end
-    centerOfWeightedClustersForExample = weightedClusterCentersSum / weightingSum
+    targetForExample = weightedTargetsSum / sumOfWeights
   end
+
+
 
 
   ################# For reporting / plotting / measures etc...... ###################################
@@ -160,36 +178,68 @@ class DynamicClusterer
     largestEuclidianDistanceMoved = arrayOfDistancesMoved.max ||= floorToPreventOverflow
   end
 
-  def keepCentersSymmetrical
-    distanceBetween2ClustersOnNetInputDimension = (clusters[1].center[0] - clusters[0].center[0])
-    cluster1IsToTheRightOfCluster0 = (distanceBetween2ClustersOnNetInputDimension >= 0.0)
-    symmetricalOffset = distanceBetween2ClustersOnNetInputDimension.abs / 2.0
+  #def keepTargetsSymmetrical
+  #  distanceBetween2ClustersOnNetInputDimension = (clusters[1].center[0] - clusters[0].center[0])
+  #  cluster1IsToTheRightOfCluster0 = (distanceBetween2ClustersOnNetInputDimension >= 0.0)
+  #  symmetricalOffset = distanceBetween2ClustersOnNetInputDimension.abs / 2.0
+  #
+  #  case exampleVectorLength
+  #
+  #    when 1
+  #      if cluster1IsToTheRightOfCluster0
+  #        clusters[1].center = Vector[symmetricalOffset]
+  #        clusters[0].center = Vector[(-1.0 * symmetricalOffset)]
+  #      else
+  #        clusters[0].center = Vector[symmetricalOffset]
+  #        clusters[1].center = Vector[(-1.0 * symmetricalOffset)]
+  #      end
+  #
+  #
+  #    when 2
+  #      if cluster1IsToTheRightOfCluster0
+  #        clusters[1].center = Vector[symmetricalOffset, clusters[1].center[1]]
+  #        clusters[0].center = Vector[(-1.0 * symmetricalOffset), clusters[0].center[1]]
+  #      else
+  #        clusters[0].center = Vector[symmetricalOffset, clusters[0].center[1]]
+  #        clusters[1].center = Vector[(-1.0 * symmetricalOffset), clusters[1].center[1]]
+  #      end
+  #
+  #    else
+  #      STDERR.puts "error: Example Vector Length incorrectly specified"
+  #  end
+  #end
+
+  def keepTargetsSymmetrical
+    distanceBetween2TargetsOnNetInputDimension = (targetsForFlocking[1][0] - targetsForFlocking[0][0])
+    target1IsToTheRightOfTarget0 = (distanceBetween2TargetsOnNetInputDimension >= 0.0)
+    symmetricalOffset = distanceBetween2TargetsOnNetInputDimension.abs / 2.0
 
     case exampleVectorLength
 
       when 1
-        if cluster1IsToTheRightOfCluster0
-          clusters[1].center = Vector[symmetricalOffset]
-          clusters[0].center = Vector[(-1.0 * symmetricalOffset)]
+        if target1IsToTheRightOfTarget0
+          targetsForFlocking[1] = Vector[symmetricalOffset]
+          targetsForFlocking[0] = Vector[(-1.0 * symmetricalOffset)]
         else
-          clusters[0].center = Vector[symmetricalOffset]
-          clusters[1].center = Vector[(-1.0 * symmetricalOffset)]
+          targetsForFlocking[0] = Vector[symmetricalOffset]
+          targetsForFlocking[1] = Vector[(-1.0 * symmetricalOffset)]
         end
 
 
       when 2
-        if cluster1IsToTheRightOfCluster0
-          clusters[1].center = Vector[symmetricalOffset, clusters[1].center[1]]
-          clusters[0].center = Vector[(-1.0 * symmetricalOffset), clusters[0].center[1]]
+        if target1IsToTheRightOfTarget0
+          targetsForFlocking[1] = Vector[ symmetricalOffset, targetsForFlocking[1][1] ]
+          targetsForFlocking[0] = Vector[(-1.0 * symmetricalOffset), targetsForFlocking[0][1]]
         else
-          clusters[0].center = Vector[symmetricalOffset, clusters[0].center[1]]
-          clusters[1].center = Vector[(-1.0 * symmetricalOffset), clusters[1].center[1]]
+          targetsForFlocking[0] = Vector[symmetricalOffset, targetsForFlocking[0][1]]
+          targetsForFlocking[1] = Vector[(-1.0 * symmetricalOffset), targetsForFlocking[1][1]]
         end
 
       else
         STDERR.puts "error: Example Vector Length incorrectly specified"
     end
   end
+
 
 
   # TODO -- SAVE BELOW.  Why?

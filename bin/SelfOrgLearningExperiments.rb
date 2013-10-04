@@ -38,7 +38,7 @@ class Experiment
         :intervalForSavingTrainingData => 500,
 
         # Flocking Parameters...
-        :flockingLearningRate => -0.02,  # -0.002
+        :flockingLearningRate => -0.1,  # -0.002
         :maxFlockingIterationsCount => 2000, # 2000,
         :maxAbsFlockingErrorsPerExample => 0.002, #0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
 
@@ -49,8 +49,8 @@ class Experiment
         :exampleVectorLength => 1,
         :delta => 1e-2,
         :maxNumberOfClusteringIterations => 10,
-        :symmetricalCenters => true,
-        :clusterCenterMultiplier  => 1.1,
+        :keepTargetsSymmetrical => true,
+        :targetDivergenceFactor  => 1.1,
         :alwaysUseFuzzyClusters => true,
         #  :epochsBeforeFlockingAllowed => 200,  DNA
 
@@ -156,6 +156,6 @@ class Experiment
 
 end
 
-experiment = Experiment.new("SelfOrgLearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges", randomNumberSeed=2)
+experiment = Experiment.new("SelfOrgLearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges", randomNumberSeed=0)
 
 experiment.performSimulation()

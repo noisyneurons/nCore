@@ -7,23 +7,16 @@ require_relative 'WeightedClustering'
 
 ############################################################
 module CommonNeuronCalculations
+  def calcAccumDeltaWsForHigherLayerError
+    inputLinks.each { |inputLink| inputLink.calcAccumDeltaWsForHigherLayerError(higherLayerError) }
+  end
+
   def recordResponsesForEpoch
     metricRecorder.recordResponsesForEpoch
   end
 
   def recordLocalFlockingError
     metricRecorder.recordLocalFlockingError
-  end
-end
-
-module CombiningFlockingAndSupervisedErrorCode
-
-  def calcAccumDeltaWsForHigherLayerError
-    inputLinks.each { |inputLink| inputLink.calcAccumDeltaWsForHigherLayerError(higherLayerError) }
-  end
-
-  def calcAccumDeltaWsForLocalFlocking
-    inputLinks.each { |inputLink| inputLink.calcAccumDeltaWsForLocalFlocking(localFlockingError) }
   end
 end
 
@@ -61,8 +54,11 @@ module CommonClusteringCode
   end
 
   def targetForFlockers
-     # clusterer.pointsTargetForIterationInFuzzyClustering(exampleNumber, locationOfExample)[0]
-     clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
+     clusterer.examplesTargetForFlocking(exampleNumber)[0]
+  end
+
+  def calcAccumDeltaWsForLocalFlocking
+    inputLinks.each { |inputLink| inputLink.calcAccumDeltaWsForLocalFlocking(localFlockingError) }
   end
 
   def centerOfDominantClusterForExample
@@ -109,7 +105,6 @@ class FlockingNeuron < Neuron
   attr_accessor :localFlockingError, :accumulatedAbsoluteFlockingError,
                 :higherLayerError, :errorToBackPropToLowerLayer,
                 :clusterer, :maxNumberOfClusteringIterations, :dPrime
-  include CombiningFlockingAndSupervisedErrorCode
   include CommonClusteringCode
 
   def postInitialize
@@ -140,7 +135,6 @@ class FlockingOutputNeuron < OutputNeuron
   attr_accessor :netInput, :localFlockingError, :accumulatedAbsoluteFlockingError,
                 :higherLayerError, :errorToBackPropToLowerLayer, :clusterer,
                 :dPrime, :maxNumberOfClusteringIterations
-  include CombiningFlockingAndSupervisedErrorCode
   include CommonClusteringCode
 
   def postInitialize
@@ -229,6 +223,26 @@ class FlockingNeuronRecorder < NeuronRecorder # TODO Need to separate into 2 cla
     withinEpochMeasures.last[:localFlockingError] = neuron.localFlockingError
   end
 
+
+  def vectorizeEpochMeasures
+    convertEachHashToAVector(withinEpochMeasures)
+  end
+
+  private
+
+  def convertEachHashToAVector(anArray)
+    return anArrayOfVectors = anArray.collect do |measuresForAnExample|
+      netInputDistance = measuresForAnExample[:netInput]
+      case exampleVectorLength
+        when 1
+          Vector[netInputDistance]
+        when 2
+          Vector[netInputDistance, (measuresForAnExample[:higherLayerError])]
+      end
+    end
+  end
+
+  #  SAVE SAVE SAVE  SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE  SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE
   #def recordResponsesForEpoch
   #  if (trainingSequence.timeToRecordData)
   #    determineCentersOfClusters()
@@ -260,24 +274,6 @@ class FlockingNeuronRecorder < NeuronRecorder # TODO Need to separate into 2 cla
   #    cluster1Center = 0.0
   #  end
   #end
-
-  def vectorizeEpochMeasures
-    convertEachHashToAVector(withinEpochMeasures)
-  end
-
-  private
-
-  def convertEachHashToAVector(anArray)
-    return anArrayOfVectors = anArray.collect do |measuresForAnExample|
-      netInputDistance = measuresForAnExample[:netInput]
-      case exampleVectorLength
-        when 1
-          Vector[netInputDistance]
-        when 2
-          Vector[netInputDistance, (measuresForAnExample[:higherLayerError])]
-      end
-    end
-  end
 end
 
 class FlockingOutputNeuronRecorder < FlockingNeuronRecorder # TODO Need to separate into 2 classes the two concerns currently handled by this class: reporting vs. getting info for 'clusterAllResponses'
