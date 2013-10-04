@@ -60,8 +60,8 @@ module CommonClusteringCode
     return localFlockingError
   end
 
-  def weightedExamplesCenter
-    # clusterer.pointsTargetForIterationInFuzzyClustering(exampleNumber, locationOfExample)[0]
+  def targetForFlockers
+     # clusterer.pointsTargetForIterationInFuzzyClustering(exampleNumber, locationOfExample)[0]
      clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
   end
 

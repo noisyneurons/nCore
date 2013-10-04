@@ -179,7 +179,7 @@ class AbstractStepTrainer
 
   def calcNeuronsLocalFlockingError(aNeuron)
     localFlockingError = if (useFuzzyClusters?)
-                           aNeuron.calcLocalFlockingError { aNeuron.weightedExamplesCenter }
+                           aNeuron.calcLocalFlockingError { aNeuron.targetForFlockers }
                          else
                            aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample }
                          end
@@ -271,7 +271,7 @@ class TrainingSupervisorBase
 
   def train
     mse = 1e20
-    numTrials = 500
+    numTrials = 50
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
       mse, accumulatedAbsoluteFlockingErrors = stepTrainer.train(numTrials)
     end

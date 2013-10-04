@@ -51,16 +51,31 @@ class DynamicClusterer
     return target
   end
 
+  #def estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(pointNumber)
+  #  theExamplesFractionalMembershipInEachCluster = examplesFractionalMembershipInEachCluster(pointNumber)
+  #  weightedClusterCentersSum = Vector.elements(Array.new(exampleVectorLength) { 0.0 })
+  #  weightingSum = 0.0
+  #  theExamplesFractionalMembershipInEachCluster.each_with_index do |examplesFractionalMembershipInCluster, indexToCluster|
+  #    weightedClusterCentersSum += examplesFractionalMembershipInCluster * clusters[indexToCluster].center
+  #    weightingSum += examplesFractionalMembershipInCluster
+  #  end
+  #  centerOfWeightedClustersForExample = weightedClusterCentersSum / weightingSum
+  #end
+  #
+
   def estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(pointNumber)
     theExamplesFractionalMembershipInEachCluster = examplesFractionalMembershipInEachCluster(pointNumber)
     weightedClusterCentersSum = Vector.elements(Array.new(exampleVectorLength) { 0.0 })
     weightingSum = 0.0
+    keepCentersSymmetrical if (args[:symmetricalCenters])
+    clusterCenterMultiplier = args[:clusterCenterMultiplier]
     theExamplesFractionalMembershipInEachCluster.each_with_index do |examplesFractionalMembershipInCluster, indexToCluster|
-      weightedClusterCentersSum += examplesFractionalMembershipInCluster * clusters[indexToCluster].center
+      weightedClusterCentersSum += examplesFractionalMembershipInCluster * clusters[indexToCluster].center * clusterCenterMultiplier
       weightingSum += examplesFractionalMembershipInCluster
     end
     centerOfWeightedClustersForExample = weightedClusterCentersSum / weightingSum
   end
+
 
   ################# For reporting / plotting / measures etc...... ###################################
   def determineClusterAssociatedWithExample(pointNumber)
@@ -145,7 +160,6 @@ class DynamicClusterer
     largestEuclidianDistanceMoved = arrayOfDistancesMoved.max ||= floorToPreventOverflow
   end
 
-#  keepCentersSymmetrical if (args[:symmetricalCenters]) # TODO may want to include this in the calculation of largest largestEuclidianDistanceMoved
   def keepCentersSymmetrical
     distanceBetween2ClustersOnNetInputDimension = (clusters[1].center[0] - clusters[0].center[0])
     cluster1IsToTheRightOfCluster0 = (distanceBetween2ClustersOnNetInputDimension >= 0.0)

@@ -20,7 +20,7 @@ class Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.02,
         :minMSE => 0.0001,
-        :maxNumEpochs => 500,
+        :maxNumEpochs => 50,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
@@ -38,9 +38,9 @@ class Experiment
         :intervalForSavingTrainingData => 500,
 
         # Flocking Parameters...
-        :flockingLearningRate => -0.002,
-        :maxFlockingIterationsCount => 2000, # 3800, # 2000,
-        :maxAbsFlockingErrorsPerExample => 0.002, # 0.00000000000001, #0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
+        :flockingLearningRate => -0.02,  # -0.002
+        :maxFlockingIterationsCount => 2000, # 2000,
+        :maxAbsFlockingErrorsPerExample => 0.002, #0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
 
         :typeOfClusterer => DynamicClusterer,
         :numberOfClusters => 2,
@@ -49,9 +49,10 @@ class Experiment
         :exampleVectorLength => 1,
         :delta => 1e-2,
         :maxNumberOfClusteringIterations => 10,
-        ##  :symmetricalCenters => true, # if true, speed is negatively affected
+        :symmetricalCenters => true,
+        :clusterCenterMultiplier  => 1.1,
         :alwaysUseFuzzyClusters => true,
-        :epochsBeforeFlockingAllowed => 200,
+        #  :epochsBeforeFlockingAllowed => 200,  DNA
 
         # Inner Numeric Constraints -- used to floating point under or overflow
         :floorToPreventOverflow => 1e-30

@@ -19,6 +19,7 @@ class Experiment
   def initialize(descriptionOfExperiment, randomNumberSeed)
     @descriptionOfExperiment = descriptionOfExperiment
     @randomNumberSeed = randomNumberSeed
+    srand(randomNumberSeed)
     @experimentLogger = ExperimentLogger.new(descriptionOfExperiment)
     @examples = createTrainingSet
     @args = self.setParameters
@@ -64,7 +65,7 @@ class Experiment
         :exampleVectorLength => 1,
         :delta => 1e-2,
         :maxNumberOfClusteringIterations => 10,
-         #  :symmetricalCenters => true, # if true, speed is negatively affected # TODO not re-implemented yet.
+        :symmetricalCenters => true,
         :alwaysUseFuzzyClusters => true,
         :epochsBeforeFlockingAllowed => 200,
 
