@@ -129,10 +129,10 @@ class Experiment
     keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(10) }
     unless (keysToRecords.empty?)
       puts
-      puts "Number\tLastEpoch\tTrainMSE\t\tTestMSE\t\tTime\t\t\t\tDescription"
+      puts "Number\tLastEpoch\tTrainMSE\t\tTestMSE\t\t\tAccumulatedAbsoluteFlockingErrors\t\t\tTime\t\t\t\tDescription"
       keysToRecords.each do |keyToOneRecord|
         recordHash = SnapShotData.values(keyToOneRecord)
-        puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t#{recordHash[:trainMSE]}\t#{recordHash[:testMSE]}\t\t#{recordHash[:time]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
+        puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t\t#{recordHash[:trainMSE]}\t#{recordHash[:testMSE]}\t\t\t#{recordHash[:accumulatedAbsoluteFlockingErrors]}\t\t\t#{recordHash[:time]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
       end
 
       # recordHash = SnapShotData.values(keysToRecords.last)

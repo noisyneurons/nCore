@@ -22,6 +22,22 @@ end
 
 module CommonClusteringCode
 #  include DistanceTransforms
+  attr_accessor :netInput, :localFlockingError, :accumulatedAbsoluteFlockingError,
+                :higherLayerError, :errorToBackPropToLowerLayer,
+                :clusterer, :maxNumberOfClusteringIterations, :dPrime
+
+  def examplesContainedInEachCluster
+    clusters.collect { | aCluster | examplesInCluster(aCluster) }
+  end
+
+  def examplesInCluster(aCluster)
+    exampleList = []
+    aCluster.membershipWeightForEachExample.each_with_index do | aMembershipWeight, exampleNumber |
+      exampleList << exampleNumber if(aMembershipWeight >= 0.5)
+    end
+    exampleList
+  end
+
 
   def clusters
     clusterer.clusters
@@ -102,9 +118,6 @@ end
 ############################################################
 
 class FlockingNeuron < Neuron
-  attr_accessor :localFlockingError, :accumulatedAbsoluteFlockingError,
-                :higherLayerError, :errorToBackPropToLowerLayer,
-                :clusterer, :maxNumberOfClusteringIterations, :dPrime
   include CommonClusteringCode
 
   def postInitialize
@@ -132,9 +145,6 @@ class FlockingNeuron < Neuron
 end
 
 class FlockingOutputNeuron < OutputNeuron
-  attr_accessor :netInput, :localFlockingError, :accumulatedAbsoluteFlockingError,
-                :higherLayerError, :errorToBackPropToLowerLayer, :clusterer,
-                :dPrime, :maxNumberOfClusteringIterations
   include CommonClusteringCode
 
   def postInitialize

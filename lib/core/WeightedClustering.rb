@@ -158,11 +158,11 @@ class DynamicClusterer
     clusters.each do |otherCluster|
       distanceToOtherCluster = otherCluster.center.dist_to(thePoint)
 
-      #distanceToOtherCluster = unless (distanceToOtherCluster.nan?)
-      #                           [distanceToOtherCluster, floorToPreventOverflow].max
-      #                         else
-      #                           floorToPreventOverflow
-      #                         end
+      distanceToOtherCluster = unless (distanceToOtherCluster.nan?)
+                                 [distanceToOtherCluster, floorToPreventOverflow].max
+                               else
+                                 floorToPreventOverflow
+                               end
 
       distanceToOtherCluster = [distanceToOtherCluster, floorToPreventOverflow].max
       ratio = distanceToSelectedCluster/distanceToOtherCluster
@@ -174,7 +174,7 @@ class DynamicClusterer
 
   def recenterClusters(points)
     arrayOfDistancesMoved = clusters.collect { |aCluster| aCluster.recenter!(points) }
-    # arrayOfDistancesMoved = arrayOfDistancesMoved.delete_if { |number| number.nan? }
+    arrayOfDistancesMoved = arrayOfDistancesMoved.delete_if { |number| number.nan? }
     largestEuclidianDistanceMoved = arrayOfDistancesMoved.max ||= floorToPreventOverflow
   end
 

@@ -11,7 +11,6 @@ require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 class Experiment
 
   def setParameters
-
     @args = {
         :experimentNumber => ExperimentLogger.number,
         :descriptionOfExperiment => descriptionOfExperiment,
@@ -20,25 +19,25 @@ class Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.02,
         :minMSE => 0.0001,
-        :maxNumEpochs => 50,
+        :maxNumEpochs => 100,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
         :numberOfHiddenNeurons => 0,
         :numberOfOutputNeurons => 1,
-        :weightRange => 1.0,
+        :weightRange => 4.0,
         :typeOfLink => FlockingLink,
 
         # Training Set parameters
         :numberOfExamples => numberOfExamples,
 
         # Recording and database parameters
-        :intervalForSavingNeuronData => 500,
+        :intervalForSavingNeuronData => 50,
         :intervalForSavingDetailedNeuronData => 1,
-        :intervalForSavingTrainingData => 500,
+        :intervalForSavingTrainingData => 50,
 
         # Flocking Parameters...
-        :flockingLearningRate => -0.1,  # -0.002
+        :flockingLearningRate => -0.1, # -0.002
         :maxFlockingIterationsCount => 2000, # 2000,
         :maxAbsFlockingErrorsPerExample => 0.002, #0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
 
@@ -50,7 +49,7 @@ class Experiment
         :delta => 1e-2,
         :maxNumberOfClusteringIterations => 10,
         :keepTargetsSymmetrical => true,
-        :targetDivergenceFactor  => 1.1,
+        :targetDivergenceFactor => 1.0,
         :alwaysUseFuzzyClusters => true,
         #  :epochsBeforeFlockingAllowed => 200,  DNA
 
@@ -109,7 +108,7 @@ class Experiment
           aHash = DetailedNeuronData.values(aRecordKey)
           aNetInput = aHash[:netInput]
           exampleNumber = anExampleNumber.to_i
-          examplesNetInputs[exampleNumber] = [] if(examplesNetInputs[exampleNumber].nil?)
+          examplesNetInputs[exampleNumber] = [] if (examplesNetInputs[exampleNumber].nil?)
           examplesNetInputs[exampleNumber] << aNetInput
           netInputs << aNetInput
         end
@@ -129,23 +128,25 @@ class Experiment
     trainingDataRecords = keysToRecords.collect { |recordKey| TrainingData.values(recordKey) } unless (keysToRecords.empty?)
     puts trainingDataRecords
 
+    theOutputNeuron = network.allNeuronLayers[1][0]
 
     puts "\n\n############ SnapShotData #############"
     dataToStoreLongTerm = {:experimentNumber => ExperimentLogger.number, :descriptionOfExperiment => descriptionOfExperiment,
                            :network => network, :time => Time.now, :elapsedTime => (Time.now - startingTime),
                            :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE,
-                           :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors
+                           :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors,
+                           :examplesInClusters => theOutputNeuron.examplesContainedInEachCluster
     }
     SnapShotData.new(dataToStoreLongTerm)
 
-    keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
+    keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(10) }
     keysToRecords.reject! { |recordKey| recordKey.empty? }
     unless (keysToRecords.empty?)
       puts
-      puts "Number\tLastEpoch\tTrainMSE\t\tTestMSE\t\tTime\t\t\t\tDescription"
+      puts "Number\tLastEpoch\tTrainMSE\t\tTestMSE\t\t\tAccumulatedAbsoluteFlockingErrors\tTime\t\t\t\t\t\t\tDescription"
       keysToRecords.each do |keyToOneRecord|
         recordHash = SnapShotData.values(keyToOneRecord)
-        puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t#{recordHash[:trainMSE]}\t#{recordHash[:testMSE]}\t\t#{recordHash[:time]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
+        puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t\t\t#{recordHash[:trainMSE]}\t#{recordHash[:testMSE]}\t\t\t#{recordHash[:accumulatedAbsoluteFlockingErrors][0]}\t\t\t\t#{recordHash[:time]}\t\t#{recordHash[:descriptionOfExperiment]}\t\t#{recordHash[:examplesInClusters]}"
       end
 
       # recordHash = SnapShotData.values(keysToRecords.last)
@@ -156,6 +157,9 @@ class Experiment
 
 end
 
-experiment = Experiment.new("SelfOrgLearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges", randomNumberSeed=0)
 
-experiment.performSimulation()
+20.times do |seed|
+  rSeed = seed + 100
+  experiment = Experiment.new("SelfOrgLearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges", randomNumberSeed = rSeed)
+  experiment.performSimulation()
+end

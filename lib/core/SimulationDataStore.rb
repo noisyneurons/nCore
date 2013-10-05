@@ -121,6 +121,7 @@ class ExperimentLogger
 
   def initialize(experimentDescription = nil)
     $redis.incr("experimentNumber")
+    @@number = "#{@@number.to_i + 1}"
     @descriptionOfExperiment = descriptionOfExperiment
   end
 
@@ -312,6 +313,7 @@ module DBAccess
     if recordOrNot?(savingInterval)
       aHash = metricRecorder.dataToRecord
       aHash.delete(:exampleNumber)
+      aHash.delete(:error)
       aHash[:epochs] = args[:epochs]
       aHash[:accumulatedAbsoluteFlockingError] = accumulatedAbsoluteFlockingError
       NeuronData.new(aHash)
@@ -322,6 +324,7 @@ module DBAccess
     savingInterval = args[:intervalForSavingDetailedNeuronData]
     if recordOrNot?(savingInterval)
       aHash = metricRecorder.dataToRecord
+      aHash.delete(:error)
       aHash[:epochs] = args[:epochs]
       DetailedNeuronData.new(aHash)
     end
@@ -337,7 +340,8 @@ module DBAccess
 
   def recordOrNot?(recordingInterval)
     epochs = args[:epochs]
-    return ((epochs % recordingInterval) == 0)
+    return true if(epochs == 0)
+    return (((epochs + 1) % recordingInterval) == 0)
   end
 
   #  def timeToRecordData
