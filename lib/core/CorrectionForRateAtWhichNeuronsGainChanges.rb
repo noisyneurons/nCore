@@ -19,10 +19,6 @@
 require_relative 'Utilities'
 
 module CommonClusteringCode
-  #def clustersCenter
-  #  clusters[0].center[0] # assuming symmetrical cluster centers therefore d output/d input of cluster[0].center or cluster[1].center are the SAME value
-  #end
-
   def clustersCenter     # TODO This is a simple approximation IF we want to deal with non-symmetric clusters... Do we want to deal with non-symmetric clusters
   ( (clusters[0].center[0]).abs + (clusters[1].center[0]).abs ) / 2.0
   end
@@ -32,13 +28,8 @@ end
 class AbstractStepTrainer
   include Math
 
-  def adaptToLocalFlockError
-    STDERR.puts "Generating neurons and adapting neurons are not one in the same.  This is NOT local flocking!!" if (flockErrorGeneratingNeurons != flockErrorAdaptingNeurons)
-    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate] }
-    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
-    acrossExamplesAccumulateFlockingErrorDeltaWs
-    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-    self.accumulatedAbsoluteFlockingErrors = flockErrorGeneratingNeurons.collect { |aNeuron| (aNeuron.accumulatedAbsoluteFlockingError * correctionFactorForRateAtWhichNeuronsGainChanges(aNeuron.clustersCenter)) }
+  def calcAccumulatedAbsoluteFlockingErrors
+    flockErrorGeneratingNeurons.collect { |aNeuron| (aNeuron.accumulatedAbsoluteFlockingError * correctionFactorForRateAtWhichNeuronsGainChanges(aNeuron.clustersCenter)) }
   end
 
   #  This method corrects for: "how the Ratio of Neural-Gains changes with the magnitudes of the example netInputs"

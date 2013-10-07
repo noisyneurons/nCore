@@ -120,7 +120,7 @@ class AbstractStepTrainer
     flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 } # accumulatedAbsoluteFlockingError is a metric used for global control and monitoring
     acrossExamplesAccumulateFlockingErrorDeltaWs
     flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-    self.accumulatedAbsoluteFlockingErrors = flockErrorGeneratingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
+    self.accumulatedAbsoluteFlockingErrors = calcAccumulatedAbsoluteFlockingErrors()
   end
 
   def acrossExamplesAccumulateFlockingErrorDeltaWs
@@ -142,6 +142,18 @@ class AbstractStepTrainer
         aNeuron.dbStoreDetailedData
       end
     end
+  end
+
+  def calcNeuronsLocalFlockingError(aNeuron)
+    localFlockingError = if (useFuzzyClusters?)
+                           aNeuron.calcLocalFlockingError { aNeuron.targetForFlocking }
+                         else
+                           aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample }
+                         end
+  end
+
+  def calcAccumulatedAbsoluteFlockingErrors
+    flockErrorGeneratingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
   end
 
   ###------------  Core Support Section ------------------------------
@@ -175,14 +187,6 @@ class AbstractStepTrainer
 
   def zeroOutFlockingLinksMomentumMemoryStore
     flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.inputLinks.each { |aLink| aLink.store = 0.0 } }
-  end
-
-  def calcNeuronsLocalFlockingError(aNeuron)
-    localFlockingError = if (useFuzzyClusters?)
-                           aNeuron.calcLocalFlockingError { aNeuron.targetForFlockers }
-                         else
-                           aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample }
-                         end
   end
 
   def useFuzzyClusters? # TODO Would this be better put 'into each neuron'

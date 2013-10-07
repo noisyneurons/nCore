@@ -25,7 +25,7 @@ class Experiment
         :numberOfInputNeurons => 2,
         :numberOfHiddenNeurons => 0,
         :numberOfOutputNeurons => 1,
-        :weightRange => 4.0,
+        :weightRange => 1.0,
         :typeOfLink => FlockingLink,
 
         # Training Set parameters
@@ -157,9 +157,9 @@ class Experiment
 
 end
 
-
-20.times do |seed|
+seed = 0
+#20.times do |seed|
   rSeed = seed + 100
   experiment = Experiment.new("SelfOrgLearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges", randomNumberSeed = rSeed)
   experiment.performSimulation()
-end
+#end

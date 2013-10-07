@@ -21,30 +21,21 @@ module CommonNeuronCalculations
 end
 
 module CommonClusteringCode
-#  include DistanceTransforms
-  attr_accessor :netInput, :localFlockingError, :accumulatedAbsoluteFlockingError,
+  attr_accessor :netInput,
                 :higherLayerError, :errorToBackPropToLowerLayer,
-                :clusterer, :maxNumberOfClusteringIterations, :dPrime
+                :clusterer, :localFlockingError, :accumulatedAbsoluteFlockingError,
+                :maxNumberOfClusteringIterations, :dPrime, :flockingTargeter
 
   def examplesContainedInEachCluster
-    clusters.collect { | aCluster | examplesInCluster(aCluster) }
+    clusters.collect { |aCluster| examplesInCluster(aCluster) }
   end
 
   def examplesInCluster(aCluster)
-    exampleList = []
-    aCluster.membershipWeightForEachExample.each_with_index do | aMembershipWeight, exampleNumber |
-      exampleList << exampleNumber if(aMembershipWeight >= 0.5)
-    end
-    exampleList
+    aCluster.dominantExamplesForCluster
   end
-
 
   def clusters
     clusterer.clusters
-  end
-
-  def clustersCenter
-    clusters[0].center
   end
 
   def initializeClusterCenters
@@ -62,40 +53,23 @@ module CommonClusteringCode
 
   # *** This function should not be called before an entire batch has been processed by the clusterer ***
   def calcLocalFlockingError
-    clusters_center_virtual_or_exact = yield
-    distanceToWeightedExamplesCenter = (clusters_center_virtual_or_exact - locationOfExample)
+    targetToFlockTo = yield
+    distanceToWeightedExamplesCenter = (targetToFlockTo - locationOfExample)
     self.localFlockingError = distanceToWeightedExamplesCenter # TODO weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter))  # TODO Should 'membershipInFlock(examplesNetInput)' be included?  # If included, it reduces the importance of examples with small io derivatives  # TODO Should 'membershipInFlock(examplesNetInput)' be included -- This term, if included, reduces the importance of examples with small io derivatives  ## TODO Should 'weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter)' be included?
     self.accumulatedAbsoluteFlockingError += localFlockingError.abs
     return localFlockingError
   end
 
-  def targetForFlockers
-     clusterer.examplesTargetForFlocking(exampleNumber)[0]
+  def targetForFlocking
+    flockingTargeter.examplesTargetForFlocking(exampleNumber)[0]
   end
 
   def calcAccumDeltaWsForLocalFlocking
     inputLinks.each { |inputLink| inputLink.calcAccumDeltaWsForLocalFlocking(localFlockingError) }
   end
 
-  def centerOfDominantClusterForExample
-    dominantCluster = clusterer.determineClusterAssociatedWithExample(exampleNumber)
-    return dominantCluster.center[0]
-  end
 
   ## ---------------- Reporting methods ------------------------------
-
-  #def reportFlockingInformation
-  #  membershipForExampleInCluster0 =(clusterer.clusters[0]).membershipWeightForEachExample[exampleNumber]
-  #  membershipForExampleInCluster1 =(clusterer.clusters[1]).membershipWeightForEachExample[exampleNumber]
-  #  dataForReport = {:neuronID => self.id,
-  #                   :localFlockingError => self.localFlockingError,
-  #                   :weightedExamplesCenter => weightedExamplesCenter,
-  #                   :locationOfExample => locationOfExample,
-  #                   :membershipForExampleInCluster0 => membershipForExampleInCluster0,
-  #                   :membershipForExampleInCluster1 => membershipForExampleInCluster1
-  #  }
-  #  return dataForReport
-  #end
 
   def calc_dPrime(arrayOfVectorsRepresentingPointsInSpace) # very inexact for small numbers of samples... need to use F-st...
                                                            #puts "dispersionOfInputsForDPrimeCalculation=\t#{clusterer.dispersionOfInputsForDPrimeCalculation(arrayOfVectorsRepresentingPointsInSpace)}"
@@ -107,12 +81,20 @@ module CommonClusteringCode
     return clusterer.dispersionOfInputsForDPrimeCalculation(arrayOfVectorsRepresentingPointsInSpace)
   end
 
-
   private ############################ PRIVATE METHODS BELOW ###########################
 
   def locationOfExample # TODO Here we have EXCLUDED other dimensions
     return netInput
   end
+
+## Currently Dormant Code
+
+  def centerOfDominantClusterForExample
+    dominantCluster = clusterer.determineClusterAssociatedWithExample(exampleNumber)
+    return dominantCluster.center[0]
+  end
+
+
 end
 
 ############################################################
@@ -133,6 +115,7 @@ class FlockingNeuron < Neuron
     @maxNumberOfClusteringIterations = args[:maxNumberOfClusteringIterations]
     typeOfClusterer = args[:typeOfClusterer]
     @clusterer = typeOfClusterer.new(args)
+    @flockingTargeter = Targeter.new(self, @clusterer, args)
     @dPrime = 0.0
     @trainingSequence = args[:trainingSequence]
   end
@@ -161,6 +144,7 @@ class FlockingOutputNeuron < OutputNeuron
     @maxNumberOfClusteringIterations = args[:maxNumberOfClusteringIterations]
     typeOfClusterer = args[:typeOfClusterer]
     @clusterer = typeOfClusterer.new(args)
+    @flockingTargeter = Targeter.new(self, @clusterer, args)
     @dPrime = 0.0
     @trainingSequence = args[:trainingSequence]
   end
