@@ -54,7 +54,7 @@ class Experiment
         #  :epochsBeforeFlockingAllowed => 200,  DNA
 
         # Inner Numeric Constraints -- used to floating point under or overflow
-        :floorToPreventOverflow => 1e-30
+        :floorToPreventOverflow => 1e-60 # 1e-30
     }
   end
 

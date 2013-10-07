@@ -19,6 +19,8 @@ class DynamicClusterer
   def initialize(args)
     @args = args
     @floorToPreventOverflow = args[:floorToPreventOverflow] ||= 1.0e-10
+    @min = floorToPreventOverflow
+    @max = 1.0 - floorToPreventOverflow
     @numberOfClusters = args[:numberOfClusters]
     @m = args[:m]
     @numExamples = args[:numExamples]
@@ -43,57 +45,20 @@ class DynamicClusterer
     return [clusters, maxNumberOfClusteringIterations, largestEuclidianDistanceMoved]
   end
 
-  #def pointsTargetForIterationInFuzzyClustering(pointNumber, netInput) # TODO mostly assumes we are only concerned with netInput
-  #  singleDimensionPoint = Vector[netInput]
-  #  nearestCluster = clusters.min_by { |aCluster| (singleDimensionPoint - aCluster.center).r }
-  #  centerOfNearestCluster = nearestCluster.center
-  #  target = (centerOfNearestCluster + singleDimensionPoint) / 2.0
-  #  std("centerOfNearestCluster, target", [centerOfNearestCluster, target])
-  #  return target
-  #end
-
-  #def estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(pointNumber)
-  #  theExamplesFractionalMembershipInEachCluster = examplesFractionalMembershipInEachCluster(pointNumber)
-  #  weightedClusterCentersSum = Vector.elements(Array.new(exampleVectorLength) { 0.0 })
-  #  weightingSum = 0.0
-  #  theExamplesFractionalMembershipInEachCluster.each_with_index do |examplesFractionalMembershipInCluster, indexToCluster|
-  #    weightedClusterCentersSum += examplesFractionalMembershipInCluster * clusters[indexToCluster].center
-  #    weightingSum += examplesFractionalMembershipInCluster
-  #  end
-  #  centerOfWeightedClustersForExample = weightedClusterCentersSum / weightingSum
-  #end
-  #
-
-  #def estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(pointNumber)
-  #  theExamplesFractionalMembershipInEachCluster = examplesFractionalMembershipInEachCluster(pointNumber)
-  #  weightedClusterCentersSum = Vector.elements(Array.new(exampleVectorLength) { 0.0 })
-  #  weightingSum = 0.0
-  #  keepTargetsSymmetrical if (args[:keepTargetsSymmetrical])
-  #  targetDivergenceFactor = args[:targetDivergenceFactor]
-  #  theExamplesFractionalMembershipInEachCluster.each_with_index do |examplesFractionalMembershipInCluster, indexToCluster|
-  #    weightedClusterCentersSum += examplesFractionalMembershipInCluster * clusters[indexToCluster].center * clusterCenterMultiplier
-  #    weightingSum += examplesFractionalMembershipInCluster
-  #  end
-  #  centerOfWeightedClustersForExample = weightedClusterCentersSum / weightingSum
-  #end
-
   def examplesTargetForFlocking(pointNumber)
     theExamplesFractionalMembershipInEachCluster = examplesFractionalMembershipInEachCluster(pointNumber)
     weightedTargetsSum = Vector.elements(Array.new(exampleVectorLength) { 0.0 })
     sumOfWeights = 0.0
-    clusters.each_with_index {|aCluster, indexToCluster| targetsForFlocking[indexToCluster] = aCluster.center} # initialing targets
+    clusters.each_with_index { |aCluster, indexToCluster| targetsForFlocking[indexToCluster] = aCluster.center } # initialing targets
     keepTargetsSymmetrical if (args[:keepTargetsSymmetrical])
     targetDivergenceFactor = args[:targetDivergenceFactor]
-    targetsForFlocking.collect! { | aTarget | aTarget * targetDivergenceFactor }
+    targetsForFlocking.collect! { |aTarget| aTarget * targetDivergenceFactor }
     theExamplesFractionalMembershipInEachCluster.each_with_index do |examplesFractionalMembershipInCluster, indexToCluster|
       weightedTargetsSum += examplesFractionalMembershipInCluster * targetsForFlocking[indexToCluster]
       sumOfWeights += examplesFractionalMembershipInCluster
     end
     targetForExample = weightedTargetsSum / sumOfWeights
   end
-
-
-
 
   ################# For reporting / plotting / measures etc...... ###################################
   def determineClusterAssociatedWithExample(pointNumber)
@@ -157,57 +122,21 @@ class DynamicClusterer
     sumOfRatios = 0.0
     clusters.each do |otherCluster|
       distanceToOtherCluster = otherCluster.center.dist_to(thePoint)
-
-      distanceToOtherCluster = unless (distanceToOtherCluster.nan?)
-                                 [distanceToOtherCluster, floorToPreventOverflow].max
-                               else
-                                 floorToPreventOverflow
-                               end
-
-      distanceToOtherCluster = [distanceToOtherCluster, floorToPreventOverflow].max
+      distanceToOtherCluster = bottomClip(distanceToOtherCluster)
       ratio = distanceToSelectedCluster/distanceToOtherCluster
       ratioToAPower = ratio**power
       sumOfRatios += ratioToAPower
     end
-    thisPointsFractionalMembershipToSelectedCluster = 1.0 / sumOfRatios
+    thisPointsFractionalMembershipToSelectedCluster = topAndBottomClip(1.0 / sumOfRatios)
   end
 
   def recenterClusters(points)
     arrayOfDistancesMoved = clusters.collect { |aCluster| aCluster.recenter!(points) }
-    arrayOfDistancesMoved = arrayOfDistancesMoved.delete_if { |number| number.nan? }
-    largestEuclidianDistanceMoved = arrayOfDistancesMoved.max ||= floorToPreventOverflow
+    unless (arrayOfDistancesMoved.empty?)
+      return arrayOfDistancesMoved.max ||= floorToPreventOverflow
+    end
+    return floorToPreventOverflow
   end
-
-  #def keepTargetsSymmetrical
-  #  distanceBetween2ClustersOnNetInputDimension = (clusters[1].center[0] - clusters[0].center[0])
-  #  cluster1IsToTheRightOfCluster0 = (distanceBetween2ClustersOnNetInputDimension >= 0.0)
-  #  symmetricalOffset = distanceBetween2ClustersOnNetInputDimension.abs / 2.0
-  #
-  #  case exampleVectorLength
-  #
-  #    when 1
-  #      if cluster1IsToTheRightOfCluster0
-  #        clusters[1].center = Vector[symmetricalOffset]
-  #        clusters[0].center = Vector[(-1.0 * symmetricalOffset)]
-  #      else
-  #        clusters[0].center = Vector[symmetricalOffset]
-  #        clusters[1].center = Vector[(-1.0 * symmetricalOffset)]
-  #      end
-  #
-  #
-  #    when 2
-  #      if cluster1IsToTheRightOfCluster0
-  #        clusters[1].center = Vector[symmetricalOffset, clusters[1].center[1]]
-  #        clusters[0].center = Vector[(-1.0 * symmetricalOffset), clusters[0].center[1]]
-  #      else
-  #        clusters[0].center = Vector[symmetricalOffset, clusters[0].center[1]]
-  #        clusters[1].center = Vector[(-1.0 * symmetricalOffset), clusters[1].center[1]]
-  #      end
-  #
-  #    else
-  #      STDERR.puts "error: Example Vector Length incorrectly specified"
-  #  end
-  #end
 
   def keepTargetsSymmetrical
     distanceBetween2TargetsOnNetInputDimension = (targetsForFlocking[1][0] - targetsForFlocking[0][0])
@@ -228,7 +157,7 @@ class DynamicClusterer
 
       when 2
         if target1IsToTheRightOfTarget0
-          targetsForFlocking[1] = Vector[ symmetricalOffset, targetsForFlocking[1][1] ]
+          targetsForFlocking[1] = Vector[symmetricalOffset, targetsForFlocking[1][1]]
           targetsForFlocking[0] = Vector[(-1.0 * symmetricalOffset), targetsForFlocking[0][1]]
         else
           targetsForFlocking[0] = Vector[symmetricalOffset, targetsForFlocking[0][1]]
@@ -240,52 +169,20 @@ class DynamicClusterer
     end
   end
 
+  def bottomClip(value)
+    return @min if (value < @min)
+    value
+  end
 
+  def topClip(value)
+    return @max if (value > @max)
+    value
+  end
 
-  # TODO -- SAVE BELOW.  Why?
-  ## SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE
-  #def calcThisPointsFractionalMembershipToThisCluster(thePoint, arbitraryCluster, power) # TODO this code is doubly redundant.  It repeats the same calculations for each cluster.  Will be particularly inefficient for more than 2  clusters.
-  #  case exampleVectorLength
-  #    when 1
-  #      forVectorLengthEq1(arbitraryCluster, power, thePoint)
-  #    else
-  #      forVectorLengthGT1(arbitraryCluster, power, thePoint)
-  #  end
-  #end
-  #
-  #def forVectorLengthEq1(arbitraryCluster, power, thePoint)
-  #
-  #  case arbitraryCluster.center[0] >= 0.0
-  #    when true # cluster's center is on positive side
-  #      arbitraryDistance = arbitraryCluster.center[0] - thePoint[0]
-  #      return 1.0 if (arbitraryDistance < 0.0)
-  #      return pointsMembershipToArbitraryCluster(arbitraryDistance, power, thePoint)
-  #    when false # cluster's center is on negative side
-  #      arbitraryDistance = thePoint[0] - arbitraryCluster.center[0]
-  #      return 1.0 if (arbitraryDistance < 0.0)
-  #      return pointsMembershipToArbitraryCluster(arbitraryDistance, power, thePoint)
-  #  end
-  #end
-  #
-  #
-  #def forVectorLengthGT1(arbitraryCluster, power, thePoint)
-  #  arbitraryDistance = arbitraryCluster.center.dist_to(thePoint)
-  #  pointsMembershipToArbitraryCluster(arbitraryDistance, power, thePoint)
-  #end
-  #
-  #def pointsMembershipToArbitraryCluster(arbitraryDistance, power, thePoint)
-  #  sumOfRatios = 0.0
-  #  clusters.each do |comparisonCluster|
-  #    comparisonDistance = comparisonCluster.center.dist_to(thePoint)
-  #    comparisonDistance = [comparisonDistance, minDistanceAllowed].max # puts floor on comparison distance to avoid "divide by zero"
-  #    ratio = arbitraryDistance/comparisonDistance
-  #    ratioToAPower = ratio**power
-  #    sumOfRatios += ratioToAPower
-  #  end
-  #  membershipForThisPointForThisArbitraryCluster = membershipSimplificationFunction(1.0 / sumOfRatios)
-  #end
+  def topAndBottomClip(value)
+    topClip(bottomClip(value))
+  end
 end
-
 
 # Fuzzy Cluster class
 class Cluster
@@ -374,7 +271,6 @@ class Cluster
     return sumOfWeightedExamples
   end
 end
-
 
 #class FuzzyClustererOfExamplesOfDifferingImportance  < DynamicClusterer
 #  def initialize(args)
