@@ -1,57 +1,99 @@
 ### VERSION "nCore"
 ## ../nCore/bin/CircleBPofFlockError.rb
 
-require 'yaml'
-require_relative '../lib/core/DataSet'
-require_relative '../lib/core/NeuralParts'
-require_relative '../lib/core/NeuralPartsExtended'
-require_relative '../lib/core/NetworkFactories'
-require_relative '../lib/plot/CorePlottingCode'
-require_relative '../lib/core/SimulationDataStore'
-require_relative '../lib/core/Trainers.rb'
+require_relative 'BaseLearningExperiment'
+require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 
-class SimpleFlockingNeuronNetwork
-  def designateAndLabelGroupsOfNeurons
-    @allNeuronsInOneArray = allNeuronLayers.flatten
-    @inputLayer = allNeuronLayers[0]
-    @hiddenLayer = allNeuronLayers[1]
-    @outputLayer = allNeuronLayers[2]
-    @neuronsWithInputLinks = hiddenLayer + outputLayer
-    @neuronsWithInputLinksInReverseOrder = neuronsWithInputLinks.reverse
+class Experiment
+
+  def setParameters
+
+    args = {
+        :experimentNumber => ExperimentLogger.number,
+        :descriptionOfExperiment => descriptionOfExperiment,
+        :rng => Random.new(randomNumberSeed),
+
+        # training parameters re. Output Error
+        :outputErrorLearningRate => 0.03,
+        :minMSE => 0.001,
+        :maxNumEpochs => 1e6,
+
+
+        # Network Architecture and initial weights
+        :numberOfInputNeurons => 2,
+        :numberOfHiddenNeurons => 10, # 20,
+        :numberOfOutputNeurons => 1,
+        :weightRange => 1.0,
+        :typeOfLink => FlockingLink,
+
+        # Training Set parameters
+        :numberOfExamples => (numberOfExamples = 24),
+        :firstExamplesAngleToXAxis => 0.0,
+
+        # Recording and database parameters
+        :intervalForSavingNeuronData => 100,
+        :intervalForSavingDetailedNeuronData => 1000,
+        :intervalForSavingTrainingData => 100,
+
+        # Flocking Parameters...
+        :flockingLearningRate => -0.002, # -0.002,
+        :learningRateForBackPropedFlockingError => -0.002,
+        :maxFlockingIterationsCount => 10, # 2000,
+        :maxAbsFlockingErrorsPerExample => 0.002, #  0.04 / numberOfExamples = 0.005
+
+        # Flocker Specs...
+        :typeOfClusterer => DynamicClusterer,
+        :numberOfClusters => 2,
+        :m => 2.0,
+        :numExamples => numberOfExamples,
+        :exampleVectorLength => 1,
+        :delta => 1e-2,
+        :maxNumberOfClusteringIterations => 10,
+        :keepTargetsSymmetrical => true,
+        :targetDivergenceFactor => 1.0,
+        :alwaysUseFuzzyClusters => true,
+        :epochsBeforeFlockingAllowed => 200,
+
+        # Inner Numeric Constraints -- used to floating point under or overflow
+        :floorToPreventOverflow => 1e-60 # 1e-30
+    }
   end
-end
 
-def generateExamplesOnConcentricCircles(firstExamplesAngleToXAxis, args)
-  numberOfExamples = args[:numberOfExamples]
+  def createTrainingSet
+    firstExamplesAngleToXAxis = args[:firstExamplesAngleToXAxis]
+    numberOfExamples = args[:numberOfExamples]
 
-  numberOfClasses = 2
-  numExamplesPerClass = numberOfExamples / numberOfClasses
+    numberOfClasses = 2
+    numExamplesPerClass = numberOfExamples / numberOfClasses
 
-  angleBetweenExamplesInDegrees = 360.0 / numExamplesPerClass
-  radiusArray = [1.0, 1.3]
-  desiredOutput = [0.0, 1.0]
+    angleBetweenExamplesInDegrees = 360.0 / numExamplesPerClass
+    radiusArray = [1.0, 1.3]
+    desiredOutput = [0.0, 1.0]
 
-  examples = []
-  numExamplesPerClass.times do |exampleNumberWithinClass|
-    angle = (angleBetweenExamplesInDegrees * exampleNumberWithinClass) + firstExamplesAngleToXAxis
-    angleInRadians = angle * (360.0/(2.0 * Math::PI))
-    numberOfClasses.times do |indexToClass|
-      radius = radiusArray[indexToClass]
-      x = radius * Math.cos(angleInRadians)
-      y = radius * Math.sin(angleInRadians)
-      aPoint = [x, y]
-      targets = [desiredOutput[indexToClass]]
-      exampleNumber = if (indexToClass == 1)
-                        exampleNumberWithinClass + numExamplesPerClass
-                      else
-                        exampleNumberWithinClass
-                      end
-      anExample = {:inputs => aPoint, :targets => targets, :exampleNumber => exampleNumber, :class => indexToClass}
-      examples << anExample
+    examples = []
+    numExamplesPerClass.times do |exampleNumberWithinClass|
+      angle = (angleBetweenExamplesInDegrees * exampleNumberWithinClass) + firstExamplesAngleToXAxis
+      angleInRadians = angle * (360.0/(2.0 * Math::PI))
+      numberOfClasses.times do |indexToClass|
+        radius = radiusArray[indexToClass]
+        x = radius * Math.cos(angleInRadians)
+        y = radius * Math.sin(angleInRadians)
+        aPoint = [x, y]
+        targets = [desiredOutput[indexToClass]]
+        exampleNumber = if (indexToClass == 1)
+                          exampleNumberWithinClass + numExamplesPerClass
+                        else
+                          exampleNumberWithinClass
+                        end
+        anExample = {:inputs => aPoint, :targets => targets, :exampleNumber => exampleNumber, :class => indexToClass}
+        examples << anExample
+      end
     end
+    STDERR.puts "Error: Incorrect Number of Examples Generated and/or Specified" unless(examples.length == args[:numberOfExamples])
+    return examples
   end
-  return examples
 end
+
 
 def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
     lastTestingMSE, lastTrainingMSE, network, theTrainer, trainingSequence)
@@ -69,81 +111,10 @@ def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
   dataStoreManager.transferDataSetToVisualizer(dataSetFromJoin, args)
 end
 
-def setParameters(descriptionOfExperiment)
-  numberOfExamples = 24
-  args = {
-      :descriptionOfExperiment => descriptionOfExperiment,
-
-      # parameters that impact learning dynamics:
-      :learningRate => 'Not Used!',
-
-      :learningRateNoFlockPhase1 => 0.03,
-      :learningRateLocalFlockPhase2 => -0.002,
-      :learningRateForBackPropedFlockingErrorPhase2 => -0.002,
-
-      :phase1Epochs => 100, #100, # 10,
-      :phase2Epochs => 200, # 10,
-
-      # Stop training parameters
-
-      :minMSE => 0.001, # 0.01,
-      :maxNumEpochs => 1e6, # 1e5,
-
-      # Network Architecture and initial weights
-      :numberOfInputNeurons => 2,
-      :numberOfHiddenNeurons => 10, # 20,
-      :numberOfOutputNeurons => 1,
-      :weightRange => 1.0,
-      :typeOfLink => FlockingLink,
-
-      # Training Set parameters
-      :numberOfExamples => numberOfExamples,
-      :rightShiftUpper2Classes => 0.0,
-
-      # Recording and database parameters
-      :numberOfEpochsBetweenStoringDBRecords => 1000,
-
-      # Flocking Parameters...
-      :typeOfClusterer => DynamicClusterer,
-      :numberOfClusters => 2,
-      :m => 2.0,
-      :numExamples => numberOfExamples,
-      :exampleVectorLength => 2,
-      :delta => 1.0e-3,
-      :maxNumberOfClusteringIterations => 100,
-      :symmetricalCenters => false, # if true, speed is negatively affected
-
-      # Inner Numeric Constraints
-      :floorToPreventOverflow => 1.0e-30,
-      :leadingFactor => 1.0
-  }
-end
 
 
-###################################### Start of Main ##########################################
-srand(0)
-descriptionOfExperiment = "CircleBPofFlockError Reference Run"
-args = setParameters(descriptionOfExperiment)
+###################################### START of Main Learning  ##########################################
 
-############################### create training set...
-examples = generateExamplesOnConcentricCircles(firstExamplesAngleToXAxis = 0.0, args)
-testingExamples = generateExamplesOnConcentricCircles(firstExamplesAngleToXAxis = 15.0, args)
+experiment = Experiment.new("CircleBPofFlockError using correctionFactorForRateAtWhichNeuronsGainChanges", randomNumberSeed=0)
 
-######################## Specify data store and experiment description....
-databaseFilename = "acrossEpochsSequel" #  = ""
-dataStoreManager = SimulationDataStoreManager.create(databaseFilename, examples, args)
-
-######################## Create Network and Train....
-network = SimpleFlockingNeuronNetwork.new(dataStoreManager, args)
-
-trainingSequence = TrainingSequence.create(network, args)
-theTrainer = CircleTrainer.new(trainingSequence, network, args)
-lastEpoch, lastTrainingMSE, dPrimes = theTrainer.simpleLearningWithFlocking(examples)
-
-lastTestingMSE = theTrainer.oneForwardPassEpoch(testingExamples)
-theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, dPrimes)
-
-displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch, lastTestingMSE,
-                      lastTrainingMSE, network, theTrainer, trainingSequence)
-
-
+experiment.performSimulation()

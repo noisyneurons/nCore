@@ -25,7 +25,7 @@ class Experiment
         :typeOfLink => FlockingLink,
 
         # Training Set parameters
-        :numberOfExamples => numberOfExamples,
+        :numberOfExamples => (numberOfExamples = 8),
 
         # Recording and database parameters
         :intervalForSavingNeuronData => 100,
@@ -37,6 +37,7 @@ class Experiment
         :maxFlockingIterationsCount => 10, # 2000,
         :maxAbsFlockingErrorsPerExample => 0.002, #  0.04 / numberOfExamples = 0.005
 
+        # Flocker Specs
         :typeOfClusterer => DynamicClusterer,
         :numberOfClusters => 2,
         :m => 2.0,
@@ -64,7 +65,7 @@ class Experiment
     examples << {:inputs => [-1.0, -2.0], :targets => [0.0], :exampleNumber => 5, :class => 0}
     examples << {:inputs => [-1.0, -3.0], :targets => [0.0], :exampleNumber => 6, :class => 0}
     examples << {:inputs => [-1.0, -4.0], :targets => [0.0], :exampleNumber => 7, :class => 0}
-    self.numberOfExamples = examples.length
+    STDERR.puts "Error: Incorrect Number of Examples Generated and/or Specified" unless(examples.length == args[:numberOfExamples])
     return examples
   end
 

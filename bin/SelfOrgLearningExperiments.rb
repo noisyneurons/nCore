@@ -28,7 +28,7 @@ class Experiment
         :typeOfLink => FlockingLink,
 
         # Training Set parameters
-        :numberOfExamples => numberOfExamples,
+        :numberOfExamples => (numberOfExamples = 4),
 
         # Recording and database parameters
         :intervalForSavingNeuronData => 50,

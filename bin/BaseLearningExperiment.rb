@@ -21,8 +21,8 @@ class Experiment
     @randomNumberSeed = randomNumberSeed
     srand(randomNumberSeed)
     @experimentLogger = ExperimentLogger.new(descriptionOfExperiment)
-    @examples = createTrainingSet
     @args = self.setParameters
+    @examples = createTrainingSet
     @trainingSequence = TrainingSequence.new(args)
     @args[:trainingSequence] = trainingSequence
   end
@@ -76,6 +76,7 @@ class Experiment
 
   def createTrainingSet
     STDERR.puts "Error: base class method called!!"
+    STDERR.puts "Error: Incorrect Number of Examples Generated and/or Specified" unless(examples.length == args[:numberOfExamples])
     return examples
   end
 
