@@ -6,7 +6,6 @@ module FlockingDecisionRoutines # TODO If one neuron does NOT meet criteria, all
 
   def flockingShouldOccur?(accumulatedAbsoluteFlockingErrors)
     return doNotFlock() if (tooEarlyToFlock?)
-    # displayFlockingErrorAndDeltaWInformation(accumulatedAbsoluteFlockingErrors)
     if (doWeNeedToFlockNOW?(accumulatedAbsoluteFlockingErrors))
       return yesDoFlock()
     else
@@ -16,11 +15,14 @@ module FlockingDecisionRoutines # TODO If one neuron does NOT meet criteria, all
 
   def doWeNeedToFlockNOW?(accumulatedAbsoluteFlockingErrors)
     return true if (accumulatedAbsoluteFlockingErrors.empty?)
-    # accumulatedAbsoluteFlockingErrors = accumulatedAbsoluteFlockingErrors.delete_if{ |number| number.nan?}
-    largestAbsoluteFlockingErrorPerExample = accumulatedAbsoluteFlockingErrors.max / numberOfExamples
-    needToReduceFlockingError = largestAbsoluteFlockingErrorPerExample > args[:maxAbsFlockingErrorsPerExample]
+    needToReduceFlockingError = determineIfWeNeedToReduceFlockingError
     stillEnoughIterationsToFlock = flockingIterationsCount < maxFlockingIterationsCount
     return (needToReduceFlockingError && stillEnoughIterationsToFlock)
+  end
+
+  def determineIfWeNeedToReduceFlockingError
+    largestAbsoluteFlockingErrorPerExample = accumulatedAbsoluteFlockingErrors.max / numberOfExamples
+    return (largestAbsoluteFlockingErrorPerExample > args[:maxAbsFlockingErrorsPerExample])
   end
 
   def yesDoFlock
@@ -119,8 +121,8 @@ class AbstractStepTrainer
     flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:flockingLearningRate] }
     flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 } # accumulatedAbsoluteFlockingError is a metric used for global control and monitoring
     acrossExamplesAccumulateFlockingErrorDeltaWs
-    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
     self.accumulatedAbsoluteFlockingErrors = calcAccumulatedAbsoluteFlockingErrors()
+    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight } if (determineIfWeNeedToReduceFlockingError)
   end
 
   def acrossExamplesAccumulateFlockingErrorDeltaWs
@@ -220,20 +222,6 @@ class AbstractStepTrainer
   end
 end
 
-class StepTrainerForLocalFlocking < AbstractStepTrainer
-  def innerTrainingLoop
-    unless (flockingShouldOccur?(accumulatedAbsoluteFlockingErrors))
-      performStandardBackPropTraining()
-      self.accumulatedAbsoluteFlockingErrors = []
-    else
-      zeroOutFlockingLinksMomentumMemoryStore
-      recenterEachNeuronsClusters(flockErrorGeneratingNeurons)
-      adaptToLocalFlockError()
-    end
-    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
-  end
-end
-
 class StepTrainerForONLYLocalFlocking < AbstractStepTrainer
   def innerTrainingLoop
     self.accumulatedAbsoluteFlockingErrors = []
@@ -251,6 +239,21 @@ class StepTrainerForOutputErrorBPOnly < AbstractStepTrainer
     flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
   end
 end
+
+class StepTrainerForLocalFlockingAndOutputError < AbstractStepTrainer
+  def innerTrainingLoop
+    unless (flockingShouldOccur?(accumulatedAbsoluteFlockingErrors))
+      performStandardBackPropTraining()
+      self.accumulatedAbsoluteFlockingErrors = []
+    else
+      zeroOutFlockingLinksMomentumMemoryStore
+      recenterEachNeuronsClusters(flockErrorGeneratingNeurons)
+      adaptToLocalFlockError()
+    end
+    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
+  end
+end
+
 
 
 ######
@@ -299,7 +302,7 @@ end
 class TrainingSupervisorOutputNeuronLocalFlocking < TrainingSupervisorBase
   def postInitialize
     self.neuronGroups = NeuronGroupsTrivial.new(network)
-    self.stepTrainer = StepTrainerForLocalFlocking.new(examples, neuronGroups, trainingSequence, args)
+    self.stepTrainer = StepTrainerForLocalFlockingAndOutputError.new(examples, neuronGroups, trainingSequence, args)
   end
 end
 
@@ -308,7 +311,7 @@ class TrainingSupervisorHiddenNeuronLocalFlocking < TrainingSupervisorBase
 
   def postInitialize
     self.neuronGroups = NeuronGroupsHiddenNeuronLocalFlockingError.new(network)
-    self.stepTrainer = StepTrainerForLocalFlocking.new(examples, neuronGroups, trainingSequence, args)
+    self.stepTrainer = StepTrainerForLocalFlockingAndOutputError.new(examples, neuronGroups, trainingSequence, args)
   end
 end
 
@@ -317,7 +320,7 @@ class TrainingSupervisorAllLocalFlockingLayers < TrainingSupervisorBase
 
   def postInitialize
     self.neuronGroups = NeuronGroupsAllLocalFlockingLayers.new(network)
-    self.stepTrainer = StepTrainerForLocalFlocking.new(examples, neuronGroups, trainingSequence, args)
+    self.stepTrainer = StepTrainerForLocalFlockingAndOutputError.new(examples, neuronGroups, trainingSequence, args)
   end
 end
 

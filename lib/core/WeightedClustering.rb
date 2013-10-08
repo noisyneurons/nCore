@@ -233,7 +233,7 @@ class Cluster
   end
 
   def dominantExamplesForCluster
-    (0...numExamples).find_all {|i| membershipWeightForEachExample[i] >= 0.5 }
+    (0...numExamples).find_all { |i| membershipWeightForEachExample[i] >= 0.5 }
   end
 
   def dispersion(examples) # This actually calculates the standard deviation (unadjusted for small N)

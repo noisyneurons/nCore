@@ -1,7 +1,5 @@
 ### VERSION "nCore"
-## ../nCore/bin/T3LearningRateExperiments.rb
-# Purpose:  To quantitatively explore the simplest clustering w/o supervision.
-# This is a simplified and significantly reorganized version of 'Phase1Phase2MultiCycle.rb'
+## ../nCore/bin/T4LearningRateExperiments.rb
 
 require_relative 'BaseLearningExperiment'
 require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
@@ -35,9 +33,9 @@ class Experiment
         :intervalForSavingTrainingData => 100,
 
         # Flocking Parameters...
-        :flockingLearningRate => -0.002, # -0.04, # -0.002,
+        :flockingLearningRate => -0.002, # -0.002,
         :maxFlockingIterationsCount => 10, # 2000,
-        :maxAbsFlockingErrorsPerExample => 0.002, #    0.04 / numberOfExamples = 0.005
+        :maxAbsFlockingErrorsPerExample => 0.002, #  0.04 / numberOfExamples = 0.005
 
         :typeOfClusterer => DynamicClusterer,
         :numberOfClusters => 2,
@@ -46,12 +44,13 @@ class Experiment
         :exampleVectorLength => 1,
         :delta => 1e-2,
         :maxNumberOfClusteringIterations => 10,
-        :symmetricalCenters => true, # if true, speed is negatively affected
+        :keepTargetsSymmetrical => true,
+        :targetDivergenceFactor => 1.0,
         :alwaysUseFuzzyClusters => true,
         :epochsBeforeFlockingAllowed => 200,
 
         # Inner Numeric Constraints -- used to floating point under or overflow
-        :floorToPreventOverflow => 1e-30
+        :floorToPreventOverflow => 1e-60 # 1e-30
     }
   end
 

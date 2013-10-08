@@ -1,7 +1,6 @@
 ### VERSION "nCore"
 ## ../nCore/bin/SelfOrgLearningExperiments.rb
 # Purpose:  To quantitatively explore the simplest clustering w/o supervision.
-# This is a simplified and significantly reorganized version of 'Phase1Phase2MultiCycle.rb'
 
 require_relative 'BaseLearningExperiment'
 require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'

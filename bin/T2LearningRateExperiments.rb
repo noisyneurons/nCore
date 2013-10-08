@@ -1,7 +1,5 @@
 ### VERSION "nCore"
 ## ../nCore/bin/T2LearningRateExperiments.rb
-# Purpose:  To quantitatively explore the simplest clustering w/o supervision.
-# This is a simplified and significantly reorganized version of 'Phase1Phase2MultiCycle.rb'
 
 require_relative 'BaseLearningExperiment'
 require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
@@ -52,7 +50,7 @@ class Experiment
         :keepTargetsSymmetrical => true,
         :targetDivergenceFactor => 1.0,
         :alwaysUseFuzzyClusters => true,
-        :epochsBeforeFlockingAllowed => 200, # DNA
+        :epochsBeforeFlockingAllowed => 200,
 
         # Inner Numeric Constraints -- used to floating point under or overflow
         :floorToPreventOverflow => 1e-60 # 1e-30
