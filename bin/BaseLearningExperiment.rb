@@ -92,7 +92,11 @@ class Experiment
     NeuronData.lookup_values(:epochs).each do |epochNumber|
       keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber, neuron: neuronToDisplay}) }
     end
-    neuronDataRecords = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) } unless (keysToRecords.empty?)
+    neuronDataRecords = nil
+    unless (keysToRecords.empty?)
+      keysToRecords.reject! { |recordKey| recordKey.empty? }
+      neuronDataRecords = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) }
+    end
     puts neuronDataRecords
 
 
@@ -103,19 +107,20 @@ class Experiment
         keysToRecords << DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber, neuron: neuronToDisplay, exampleNumber: anExampleNumber}) }
       end
     end
-
     unless (keysToRecords.empty?)
       keysToRecords.reject! { |recordKey| recordKey.empty? }
-      # keysToRecords.each { |recordKey| std("recordKey", recordKey) } unless (keysToRecords.empty?) # TODO DEBUG CODE
       detailedNeuronDataRecords = keysToRecords.collect { |recordKey| DetailedNeuronData.values(recordKey) }
     end
-
     puts detailedNeuronDataRecords
 
 
     puts "\n\n############ TrainingData #############"
     keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: ExperimentLogger.number}) }
-    trainingDataRecords = keysToRecords.collect { |recordKey| TrainingData.values(recordKey) } unless (keysToRecords.empty?)
+    trainingDataRecords = nil
+    unless (keysToRecords.empty?)
+      keysToRecords.reject! { |recordKey| recordKey.empty? }
+      trainingDataRecords = keysToRecords.collect { |recordKey| TrainingData.values(recordKey) }
+    end
     puts trainingDataRecords
 
 

@@ -31,15 +31,15 @@ class Experiment
         :firstExamplesAngleToXAxis => 0.0,
 
         # Recording and database parameters
-        :intervalForSavingNeuronData => 100,
-        :intervalForSavingDetailedNeuronData => 1000,
-        :intervalForSavingTrainingData => 100,
+        :intervalForSavingNeuronData => 1000,
+        :intervalForSavingDetailedNeuronData => 5000,
+        :intervalForSavingTrainingData => 1000,
 
         # Flocking Parameters...
         :flockingLearningRate => -0.002, # -0.002,
         :learningRateForBackPropedFlockingError => -0.002,
-        :maxFlockingIterationsCount => 10, # 2000,
-        :maxAbsFlockingErrorsPerExample => 0.002, #  0.04 / numberOfExamples = 0.005
+        :maxFlockingIterationsCount => 2, # 2000,
+        :maxAbsFlockingErrorsPerExample => 0.2, #  0.04 / numberOfExamples = 0.005
 
         # Flocker Specs...
         :typeOfClusterer => DynamicClusterer,
@@ -52,7 +52,7 @@ class Experiment
         :keepTargetsSymmetrical => true,
         :targetDivergenceFactor => 1.0,
         :alwaysUseFuzzyClusters => true,
-        :epochsBeforeFlockingAllowed => 200,
+        :epochsBeforeFlockingAllowed => 10e1,
 
         # Inner Numeric Constraints -- used to floating point under or overflow
         :floorToPreventOverflow => 1e-60 # 1e-30
@@ -92,25 +92,31 @@ class Experiment
     STDERR.puts "Error: Incorrect Number of Examples Generated and/or Specified" unless(examples.length == args[:numberOfExamples])
     return examples
   end
+
+  def createNetworkAndTrainer
+    network = Flocking3LayerNetwork.new(args)
+    theTrainer = TrainingSupervisorAllLocalFlockingLayers.new(examples, network, args)
+    return network, theTrainer
+  end
 end
 
 
-def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
-    lastTestingMSE, lastTrainingMSE, network, theTrainer, trainingSequence)
-  puts network
-  puts "Elapsed Time=\t#{theTrainer.elapsedTime}"
-  puts "\tAt Epoch #{trainingSequence.epochs}"
-  puts "\tAt Epoch #{lastEpoch}"
-  puts "\t\tThe Network's Training MSE=\t#{lastTrainingMSE}\t and TEST MSE=\t#{lastTestingMSE}\n"
-  puts "\t\t\tThe dPrime(s) at the end of training are: #{dPrimes}"
-
-#############################  plotting and visualization....
-  plotMSEvsEpochNumber(network)
-
-  dataSetFromJoin = dataStoreManager.joinDataSets # joinForShoesDisplay
-  dataStoreManager.transferDataSetToVisualizer(dataSetFromJoin, args)
-end
-
+#def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
+#    lastTestingMSE, lastTrainingMSE, network, theTrainer, trainingSequence)
+#  puts network
+#  puts "Elapsed Time=\t#{theTrainer.elapsedTime}"
+#  puts "\tAt Epoch #{trainingSequence.epochs}"
+#  puts "\tAt Epoch #{lastEpoch}"
+#  puts "\t\tThe Network's Training MSE=\t#{lastTrainingMSE}\t and TEST MSE=\t#{lastTestingMSE}\n"
+#  puts "\t\t\tThe dPrime(s) at the end of training are: #{dPrimes}"
+#
+##############################  plotting and visualization....
+#  plotMSEvsEpochNumber(network)
+#
+#  dataSetFromJoin = dataStoreManager.joinDataSets # joinForShoesDisplay
+#  dataStoreManager.transferDataSetToVisualizer(dataSetFromJoin, args)
+#end
+#
 
 
 ###################################### START of Main Learning  ##########################################

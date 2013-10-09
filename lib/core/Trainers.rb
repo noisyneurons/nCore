@@ -2,6 +2,9 @@
 ## ../nCore/lib/core/Trainers.rb
 
 
+###########...
+
+######
 module FlockingDecisionRoutines # TODO If one neuron does NOT meet criteria, all flocking neurons to continue to flock. Why not just those neurons that have not met the criteria.
 
   def flockingShouldOccur?(accumulatedAbsoluteFlockingErrors)
@@ -40,8 +43,6 @@ module FlockingDecisionRoutines # TODO If one neuron does NOT meet criteria, all
     args[:epochs] < args[:epochsBeforeFlockingAllowed] #  200
   end
 end
-
-###########...
 
 class AbstractStepTrainer
   attr_accessor :examples, :numberOfExamples, :neuronGroups, :trainingSequence,
@@ -254,6 +255,68 @@ class StepTrainerForLocalFlockingAndOutputError < AbstractStepTrainer
   end
 end
 
+class StepTrainerForLocalFlockingAndOutputError2 < AbstractStepTrainer
+  def innerTrainingLoop
+    #if performStandardBackPropTraining()
+    #  mseBeforeBP = calcMSE
+    #  self.accumulatedAbsoluteFlockingErrors = []
+    #
+    #  zeroOutFlockingLinksMomentumMemoryStore
+    #  recenterEachNeuronsClusters(flockErrorGeneratingNeurons)
+    #  adaptToLocalFlockError()
+    #  mseAfterBP = calcMSE
+    #  targetMaxMSEAfterFlocking = (mseBeforeBP + mseAfterBP) / 2.0
+    #  @justFlocked = true
+    #end
+    #
+    #
+    #haveNotLostTooMuchGroundByFlocking = mseAfterFlocking < targetMaxMSEAfterFlocking
+    #if (justFlocked && haveNotLostTooMuchGroundByFlocking)
+    #  # do flocking (might need rollback!)
+    #  self.accumulatedAbsoluteFlockingErrors = []
+    #  zeroOutFlockingLinksMomentumMemoryStore
+    #  recenterEachNeuronsClusters(flockErrorGeneratingNeurons)
+    #  adaptToLocalFlockError()
+    #  self.justFlocked = true
+    #  mseJustFlocked = calcMSE
+    #
+    #else
+
+    haveNotLostTooMuchGroundByFlocking = true
+    needToDoBP = !haveNotLostTooMuchGroundByFlocking
+    start = true
+
+    if (start || needToDoBP)
+
+      self.start = false
+      mseBeforeBackProp, mseAfterBackProp = performStandardBackPropTraining()
+      mseMaxAllowed = (mseBeforeBackProp + mseAfterBackProp) / 2.0
+
+
+
+    while(haveNotLostTooMuchGroundByFlocking)
+      mseBeforeFlocking, mseAfterFlocking = adaptToLocalFlockError()
+      haveNotLostTooMuchGroundByFlocking = mseAfterFlocking < mseMaxAllowed
+      needToDoBP = !haveNotLostTooMuchGroundByFlocking
+    end
+
+    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
+  end
+end
+
+class StepTrainerForFlockingAndOutputError < AbstractStepTrainer
+  def innerTrainingLoop
+    unless (flockingShouldOccur?(accumulatedAbsoluteFlockingErrors))
+      performStandardBackPropTraining()
+      self.accumulatedAbsoluteFlockingErrors = []
+    else
+      zeroOutFlockingLinksMomentumMemoryStore
+      recenterEachNeuronsClusters(flockErrorGeneratingNeurons)
+      adaptToLocalFlockError()
+    end
+    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
+  end
+end
 
 
 ######
@@ -321,6 +384,47 @@ class TrainingSupervisorAllLocalFlockingLayers < TrainingSupervisorBase
   def postInitialize
     self.neuronGroups = NeuronGroupsAllLocalFlockingLayers.new(network)
     self.stepTrainer = StepTrainerForLocalFlockingAndOutputError.new(examples, neuronGroups, trainingSequence, args)
+  end
+end
+
+
+######
+module FlockingDecisionRoutines # TODO If one neuron does NOT meet criteria, all flocking neurons to continue to flock. Why not just those neurons that have not met the criteria.
+
+  def flockingShouldOccur?(accumulatedAbsoluteFlockingErrors)
+    return doNotFlock() if (tooEarlyToFlock?)
+    if (doWeNeedToFlockNOW?(accumulatedAbsoluteFlockingErrors))
+      return yesDoFlock()
+    else
+      return doNotFlock()
+    end
+  end
+
+  def doWeNeedToFlockNOW?(accumulatedAbsoluteFlockingErrors)
+    return true if (accumulatedAbsoluteFlockingErrors.empty?)
+    needToReduceFlockingError = determineIfWeNeedToReduceFlockingError
+    stillEnoughIterationsToFlock = flockingIterationsCount < maxFlockingIterationsCount
+    return (needToReduceFlockingError && stillEnoughIterationsToFlock)
+  end
+
+  def determineIfWeNeedToReduceFlockingError
+    largestAbsoluteFlockingErrorPerExample = accumulatedAbsoluteFlockingErrors.max / numberOfExamples
+    return (largestAbsoluteFlockingErrorPerExample > args[:maxAbsFlockingErrorsPerExample])
+  end
+
+  def yesDoFlock
+    self.flockingIterationsCount += 1
+    true
+  end
+
+  def doNotFlock
+    self.absFlockingErrorsOld = []
+    self.flockingIterationsCount = 0
+    return false
+  end
+
+  def tooEarlyToFlock?
+    args[:epochs] < args[:epochsBeforeFlockingAllowed] #  200
   end
 end
 
