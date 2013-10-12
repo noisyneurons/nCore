@@ -14,9 +14,9 @@ class Experiment
         :rng => Random.new(randomNumberSeed),
 
         # training parameters re. Output Error
-        :outputErrorLearningRate => 0.03,
+        :outputErrorLearningRate => 0.3, # 0.03,
         :minMSE => 0.001,
-        :maxNumEpochs => 1e6,
+        :maxNumEpochs => 20e4,
 
 
         # Network Architecture and initial weights
@@ -36,9 +36,9 @@ class Experiment
         :intervalForSavingTrainingData => 1000,
 
         # Flocking Parameters...
-        :flockingLearningRate => -0.002, # -0.002,
+        :flockingLearningRate => -0.0002, # -0.002,
         :learningRateForBackPropedFlockingError => -0.002,
-        :maxFlockingIterationsCount => 2, # 2000,
+        :maxFlockingIterationsCount => 300, # 2000,
         :maxAbsFlockingErrorsPerExample => 0.2, #  0.04 / numberOfExamples = 0.005
 
         # Flocker Specs...
@@ -52,7 +52,7 @@ class Experiment
         :keepTargetsSymmetrical => true,
         :targetDivergenceFactor => 1.0,
         :alwaysUseFuzzyClusters => true,
-        :epochsBeforeFlockingAllowed => 10e1,
+        :epochsBeforeFlockingAllowed => 0, #  10e1,
 
         # Inner Numeric Constraints -- used to floating point under or overflow
         :floorToPreventOverflow => 1e-60 # 1e-30
