@@ -36,9 +36,11 @@ class Experiment
         :intervalForSavingTrainingData => 1000,
 
         # Flocking Parameters...
-        :flockingLearningRate => -0.0002, # -0.002,
+        :flockingLearningRate => -0.002, # -0.002,
         :learningRateForBackPropedFlockingError => -0.002,
-        :maxFlockingIterationsCount => 300, # 2000,
+        :maxFlockingIterationsCount => 30, # 2000,
+        :targetFlockIterationsCount => 3,
+        :ratioDropInMSE => 0.1,
         :maxAbsFlockingErrorsPerExample => 0.2, #  0.04 / numberOfExamples = 0.005
 
         # Flocker Specs...
