@@ -306,14 +306,12 @@ class StepTrainerForLocalFlockingAndOutputError2 < AbstractStepTrainer
       adaptToOutputError = true
       while (adaptToOutputError)
         mseBeforeBackProp, mseAfterBackProp = performStandardBackPropTrainingWithExtraMeasures()
-        initialMSEBeforeBackProp = mseBeforeBackProp if(saveInitialMSE)
+        initialMSEBeforeBackProp = mseBeforeBackProp if (saveInitialMSE)
         saveInitialMSE = false
 
         adaptToOutputError = (initialMSEBeforeBackProp * args[:ratioDropInMSE]) < mseAfterBackProp
-        puts"adaptToOutputError\t#{adaptToOutputError}\tinitialMSEBeforeBackProp\t#{initialMSEBeforeBackProp}\tmseAfterBackProp\t#{mseAfterBackProp}"
-        alpha = 0.5 # 0.0 to 1.0  0.0 minimizes flocking
-        beta = 1.0 - alpha
-        mseMaxAllowedAfterFlocking = ((alpha * initialMSEBeforeBackProp) + (beta * mseAfterBackProp))
+        puts "adaptToOutputError\t#{adaptToOutputError}\tinitialMSEBeforeBackProp\t#{initialMSEBeforeBackProp}\tmseAfterBackProp\t#{mseAfterBackProp}"
+        mseMaxAllowedAfterFlocking = initialMSEBeforeBackProp * args[:ratioDropInMSEForFlocking]
         recordAndIncrementEpochs
       end
 
@@ -328,7 +326,7 @@ class StepTrainerForLocalFlockingAndOutputError2 < AbstractStepTrainer
 
       self.flockingLearningRate = flockingLearningRate * 0.707 if (flockCount < targetFlockIterationsCount)
       self.flockingLearningRate = flockingLearningRate * 1.414 if (flockCount > targetFlockIterationsCount)
-      puts "flockCount=\t#{flockCount}\tflockLearningRate=\t#{flockingLearningRate}" if (args[:epochs] % 100 == 0)
+      puts "flockCount=\t#{flockCount}\tflockLearningRate=\t#{flockingLearningRate}"
     end
     return calcMSE, accumulatedAbsoluteFlockingErrors
   end

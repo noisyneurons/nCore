@@ -341,7 +341,7 @@ module DBAccess
 
   def recordOrNot?(recordingInterval)
     epochs = args[:epochs]
-    return true if(epochs == 0)
+    return true if (epochs == 0)
     return (((epochs + 1) % recordingInterval) == 0)
   end
 

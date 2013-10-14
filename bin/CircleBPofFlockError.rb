@@ -16,7 +16,7 @@ class Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.3, # 0.03,
         :minMSE => 0.001,
-        :maxNumEpochs => 20e4,
+        :maxNumEpochs => 8e3,
 
 
         # Network Architecture and initial weights
@@ -37,11 +37,12 @@ class Experiment
 
         # Flocking Parameters...
         :flockingLearningRate => -0.002, # -0.002,
-        :learningRateForBackPropedFlockingError => -0.002,
+        # :learningRateForBackPropedFlockingError => -0.002,
         :maxFlockingIterationsCount => 30, # 2000,
         :targetFlockIterationsCount => 3,
-        :ratioDropInMSE => 0.1,
-        :maxAbsFlockingErrorsPerExample => 0.2, #  0.04 / numberOfExamples = 0.005
+        :ratioDropInMSE => 0.8,
+        :ratioDropInMSEForFlocking => 0.95,
+        # :maxAbsFlockingErrorsPerExample => 0.2, #  0.04 / numberOfExamples = 0.005
 
         # Flocker Specs...
         :typeOfClusterer => DynamicClusterer,
