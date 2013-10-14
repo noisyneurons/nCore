@@ -333,8 +333,10 @@ module DBAccess
   def dbStoreTrainingData
     savingInterval = args[:intervalForSavingTrainingData]
     if recordOrNot?(savingInterval)
-      puts "epoch number = #{args[:epochs]}\tMSE = #{calcMSE}"
-      aHash = {:experimentNumber => ExperimentLogger.number, :epochs => args[:epochs], :mse => calcMSE, :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors}
+      trainMSE = calcMeanSumSquaredErrors
+      testMSE = calcTestingMeanSquaredErrors
+      puts "epoch number = #{args[:epochs]}\ttrainMSE = #{trainMSE}\ttestMSE = #{testMSE}"
+      aHash = {:experimentNumber => ExperimentLogger.number, :epochs => args[:epochs], :mse => trainMSE, :testMSE => testMSE, :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors}
       TrainingData.new(aHash)
     end
   end

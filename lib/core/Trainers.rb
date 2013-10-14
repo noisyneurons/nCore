@@ -125,7 +125,6 @@ class AbstractStepTrainer
     mseBeforeBackProp = calcMSE # assumes squared error for each example and output neuron is stored in NeuronRecorder
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
     mseAfterBackProp = calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
-                                # std("backprop\t", [mseBeforeBackProp, mseAfterBackProp])
     return mseBeforeBackProp, mseAfterBackProp
   end
 
@@ -199,12 +198,17 @@ class AbstractStepTrainer
       squaredErrors << calcWeightedErrorMetricForExample()
     end
     sse = squaredErrors.flatten.reduce(:+)
-    sse / (numberOfExamples * numberOfOutputNeurons)
+    return (sse / (numberOfExamples * numberOfOutputNeurons))
+  end
+
+  def calcTestingMeanSquaredErrors  # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
+    distributeSetOfExamples(args[:testingExamples])
+    testMSE = calcMeanSumSquaredErrors
+    distributeSetOfExamples(examples)
+    return testMSE
   end
 
   def distributeSetOfExamples(examples)
-    #@examples = examples
-    #@numberOfExamples = examples.length
     distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
   end
 
@@ -310,7 +314,7 @@ class StepTrainerForLocalFlockingAndOutputError2 < AbstractStepTrainer
         saveInitialMSE = false
 
         adaptToOutputError = (initialMSEBeforeBackProp * args[:ratioDropInMSE]) < mseAfterBackProp
-        puts "adaptToOutputError\t#{adaptToOutputError}\tinitialMSEBeforeBackProp\t#{initialMSEBeforeBackProp}\tmseAfterBackProp\t#{mseAfterBackProp}"
+        # puts "adaptToOutputError\t#{adaptToOutputError}\tinitialMSEBeforeBackProp\t#{initialMSEBeforeBackProp}\tmseAfterBackProp\t#{mseAfterBackProp}"
         mseMaxAllowedAfterFlocking = initialMSEBeforeBackProp * args[:ratioDropInMSEForFlocking]
         recordAndIncrementEpochs
       end

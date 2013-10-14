@@ -29,6 +29,7 @@ class Experiment
         # Training Set parameters
         :numberOfExamples => (numberOfExamples = 24),
         :firstExamplesAngleToXAxis => 0.0,
+        :firstExamplesAngleToXAxisForTesting => 15.0,
 
         # Recording and database parameters
         :intervalForSavingNeuronData => 1000,
@@ -36,10 +37,10 @@ class Experiment
         :intervalForSavingTrainingData => 1000,
 
         # Flocking Parameters...
-        :flockingLearningRate => -0.002, # -0.002,
+        :flockingLearningRate => -0.0002, # -0.002,
         # :learningRateForBackPropedFlockingError => -0.002,
         :maxFlockingIterationsCount => 30, # 2000,
-        :targetFlockIterationsCount => 3,
+        :targetFlockIterationsCount => 20,
         :ratioDropInMSE => 0.8,
         :ratioDropInMSEForFlocking => 0.95,
         # :maxAbsFlockingErrorsPerExample => 0.2, #  0.04 / numberOfExamples = 0.005
@@ -65,7 +66,18 @@ class Experiment
   def createTrainingSet
     firstExamplesAngleToXAxis = args[:firstExamplesAngleToXAxis]
     numberOfExamples = args[:numberOfExamples]
+    examples = createExamples(firstExamplesAngleToXAxis, numberOfExamples)
+    return examples
+  end
 
+  def createTestingSet
+    firstExamplesAngleToXAxisForTesting = args[:firstExamplesAngleToXAxisForTesting]
+    numberOfExamples = args[:numberOfExamples]
+    testingExamples = createExamples(firstExamplesAngleToXAxisForTesting, numberOfExamples)
+    args[:testingExamples] = testingExamples
+  end
+
+  def createExamples(firstExamplesAngleToXAxis, numberOfExamples)
     numberOfClasses = 2
     numExamplesPerClass = numberOfExamples / numberOfClasses
 
@@ -92,8 +104,8 @@ class Experiment
         examples << anExample
       end
     end
-    STDERR.puts "Error: Incorrect Number of Examples Generated and/or Specified" unless(examples.length == args[:numberOfExamples])
-    return examples
+    STDERR.puts "Error: Incorrect Number of Examples Generated and/or Specified" unless (examples.length == args[:numberOfExamples])
+    examples
   end
 
   def createNetworkAndTrainer

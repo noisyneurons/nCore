@@ -23,6 +23,7 @@ class Experiment
     @experimentLogger = ExperimentLogger.new(descriptionOfExperiment)
     @args = self.setParameters
     @examples = createTrainingSet
+    createTestingSet
     @trainingSequence = TrainingSequence.new(args)
     @args[:trainingSequence] = trainingSequence
   end
@@ -77,6 +78,11 @@ class Experiment
   def createTrainingSet
     STDERR.puts "Error: base class method called!!"
     STDERR.puts "Error: Incorrect Number of Examples Generated and/or Specified" unless(examples.length == args[:numberOfExamples])
+    return examples
+  end
+
+  def createTestingSet
+    STDERR.puts "Error: base class method called!!"
     return examples
   end
 
