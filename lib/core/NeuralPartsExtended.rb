@@ -21,10 +21,9 @@ module CommonNeuronCalculations
 end
 
 module CommonClusteringCode
-  attr_accessor :netInput,
-                :higherLayerError, :errorToBackPropToLowerLayer,
+  attr_accessor :netInput, :higherLayerError, :errorToBackPropToLowerLayer,
                 :clusterer, :localFlockingError, :accumulatedAbsoluteFlockingError,
-                :maxNumberOfClusteringIterations, :dPrime, :flockingTargeter
+                :maxNumberOfClusteringIterations, :dPrime, :flockingTargeter, :targetToFlockTo
 
   def examplesContainedInEachCluster
     clusters.collect { |aCluster| examplesInCluster(aCluster) }
@@ -53,7 +52,7 @@ module CommonClusteringCode
 
   # *** This function should not be called before an entire batch has been processed by the clusterer ***
   def calcLocalFlockingError
-    targetToFlockTo = yield
+    self.targetToFlockTo = yield
     distanceToWeightedExamplesCenter = (targetToFlockTo - locationOfExample)
     self.localFlockingError = distanceToWeightedExamplesCenter # TODO weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter))  # TODO Should 'membershipInFlock(examplesNetInput)' be included?  # If included, it reduces the importance of examples with small io derivatives  # TODO Should 'membershipInFlock(examplesNetInput)' be included -- This term, if included, reduces the importance of examples with small io derivatives  ## TODO Should 'weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter)' be included?
     self.accumulatedAbsoluteFlockingError += localFlockingError.abs
@@ -93,8 +92,6 @@ module CommonClusteringCode
     dominantCluster = clusterer.determineClusterAssociatedWithExample(exampleNumber)
     return dominantCluster.center[0]
   end
-
-
 end
 
 ############################################################
@@ -210,13 +207,13 @@ class FlockingNeuronRecorder < NeuronRecorder # TODO Need to separate into 2 cla
     aHash = super
     return aHash.merge({:higherLayerError => neuron.higherLayerError,
                         :errorToBackPropToLowerLayer => neuron.errorToBackPropToLowerLayer,
-                        :localFlockingError => neuron.localFlockingError})
+                        :localFlockingError => neuron.localFlockingError,
+                        :targetToFlockTo => neuron.targetToFlockTo})
   end
 
   def recordLocalFlockingError
     withinEpochMeasures.last[:localFlockingError] = neuron.localFlockingError
   end
-
 
   def vectorizeEpochMeasures
     convertEachHashToAVector(withinEpochMeasures)

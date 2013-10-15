@@ -18,7 +18,7 @@ class Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.02,
         :minMSE => 0.0001,
-        :maxNumEpochs => 100,
+        :maxNumEpochs => 10,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
@@ -69,9 +69,7 @@ class Experiment
 
   def createNetworkAndTrainer
     network = Flocking1LayerNetwork.new(args)
-
     theTrainer = TrainingSuperONLYLocalFlocking.new(examples, network, args)
-    #theTrainer = TrainingSupervisorOutputNeuronLocalFlocking.new(examples, network, args)
     return network, theTrainer
   end
 

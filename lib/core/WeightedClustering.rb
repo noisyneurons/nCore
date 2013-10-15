@@ -27,7 +27,7 @@ class Targeter
     weightedTargetsSum = Vector.elements(Array.new(exampleVectorLength) { 0.0 })
     sumOfWeights = 0.0
     clusters.each_with_index { |aCluster, indexToCluster| targetsForFlocking[indexToCluster] = aCluster.center } # initialing targets
-    keepTargetsSymmetrical if (args[:keepTargetsSymmetrical])
+    keepTargetsSymmetrical() if (args[:keepTargetsSymmetrical])
     targetDivergenceFactor = args[:targetDivergenceFactor]
     targetsForFlocking.collect! { |aTarget| aTarget * targetDivergenceFactor }
     theExamplesFractionalMembershipInEachCluster.each_with_index do |examplesFractionalMembershipInCluster, indexToCluster|
@@ -65,6 +65,43 @@ class Targeter
 
       else
         STDERR.puts "error: Example Vector Length incorrectly specified"
+    end
+  end
+end
+
+
+class Targeter2 < Targeter
+  def examplesTargetForFlocking(pointNumber)
+    theExamplesFractionalMembershipInEachCluster = clusterer.examplesFractionalMembershipInEachCluster(pointNumber)
+    weightedTargetsSum = Vector.elements(Array.new(exampleVectorLength) { 0.0 })
+    sumOfWeights = 0.0
+    clusters.each_with_index { |aCluster, indexToCluster| targetsForFlocking[indexToCluster] = aCluster.center } # initialing targets
+    keepTargetsSymmetrical() if (args[:keepTargetsSymmetrical])
+    targetDivergenceFactor = args[:targetDivergenceFactor]
+    targetsForFlocking.collect! { |aTarget| aTarget * targetDivergenceFactor }
+
+
+    theExamplesFractionalMembershipInEachCluster.each_with_index do |examplesFractionalMembershipInCluster, indexToCluster|
+      weightedTargetsSum += examplesFractionalMembershipInCluster * targetsForFlocking[indexToCluster]
+      sumOfWeights += examplesFractionalMembershipInCluster
+    end
+
+
+
+    targetForExample = weightedTargetsSum / sumOfWeights
+  end
+
+  def keepTargetsSymmetrical
+    distanceBetween2TargetsOnNetInputDimension = (targetsForFlocking[1][0] - targetsForFlocking[0][0])
+    target1IsToTheRightOfTarget0 = (distanceBetween2TargetsOnNetInputDimension >= 0.0)
+    symmetricalOffset = distanceBetween2TargetsOnNetInputDimension.abs / 2.0
+
+    if target1IsToTheRightOfTarget0
+      targetsForFlocking[1] = Vector[symmetricalOffset]
+      targetsForFlocking[0] = Vector[(-1.0 * symmetricalOffset)]
+    else
+      targetsForFlocking[0] = Vector[symmetricalOffset]
+      targetsForFlocking[1] = Vector[(-1.0 * symmetricalOffset)]
     end
   end
 end

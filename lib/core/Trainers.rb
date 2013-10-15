@@ -201,10 +201,14 @@ class AbstractStepTrainer
     return (sse / (numberOfExamples * numberOfOutputNeurons))
   end
 
-  def calcTestingMeanSquaredErrors  # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
-    distributeSetOfExamples(args[:testingExamples])
-    testMSE = calcMeanSumSquaredErrors
-    distributeSetOfExamples(examples)
+  def calcTestingMeanSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
+    testMSE = nil
+    testingExamples = args[:testingExamples]
+    unless (testingExamples.nil?)
+      distributeSetOfExamples(testingExamples)
+      testMSE = calcMeanSumSquaredErrors
+      distributeSetOfExamples(examples)
+    end
     return testMSE
   end
 
@@ -398,6 +402,17 @@ class TrainingSuperONLYLocalFlocking < TrainingSupervisorBase
   def postInitialize
     self.neuronGroups = NeuronGroupsTrivial.new(network)
     self.stepTrainer = StepTrainerForONLYLocalFlocking.new(examples, neuronGroups, trainingSequence, args)
+  end
+
+  def train
+    mse = 1e20
+    numTrials = 10
+    while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
+      mse, accumulatedAbsoluteFlockingErrors = stepTrainer.train(numTrials)
+    end
+    arrayOfNeuronsToPlot = [network.outputLayer[0]]
+    plotTrainingResults(arrayOfNeuronsToPlot)
+    return trainingSequence.epochs, mse, accumulatedAbsoluteFlockingErrors
   end
 end
 

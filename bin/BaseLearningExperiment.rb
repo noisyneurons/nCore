@@ -82,8 +82,7 @@ class Experiment
   end
 
   def createTestingSet
-    STDERR.puts "Error: base class method called!!"
-    return examples
+    return nil
   end
 
   def reportTrainingResults(neuronToDisplay, accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, network, startingTime)
