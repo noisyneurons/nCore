@@ -21,7 +21,7 @@ class Experiment
 
         # Network Architecture and initial weights
         :numberOfInputNeurons => 2,
-        :numberOfHiddenNeurons => 10, # 20,
+        :numberOfHiddenNeurons => 20, # 20,
         :numberOfOutputNeurons => 1,
         :weightRange => 1.0,
         :typeOfLink => FlockingLink,
@@ -37,12 +37,12 @@ class Experiment
         :intervalForSavingTrainingData => 1000,
 
         # Flocking Parameters...
-        :flockingLearningRate => -0.0002, # -0.002,
+        :flockingLearningRate => -0.001, # -0.0002,
         # :learningRateForBackPropedFlockingError => -0.002,
-        :maxFlockingIterationsCount => 30, # 2000,
+        :maxFlockingIterationsCount => 100, # 2000,
         :targetFlockIterationsCount => 20,
-        :ratioDropInMSE => 0.8,
-        :ratioDropInMSEForFlocking => 0.95,
+        :ratioDropInMSE => 0.95,
+        :ratioDropInMSEForFlocking => 0.96,
         # :maxAbsFlockingErrorsPerExample => 0.2, #  0.04 / numberOfExamples = 0.005
 
         # Flocker Specs...
@@ -110,28 +110,10 @@ class Experiment
 
   def createNetworkAndTrainer
     network = Flocking3LayerNetwork.new(args)
-    theTrainer = TrainingSupervisorAllLocalFlockingLayers.new(examples, network, args)
+    theTrainer = TrainingSupervisor3LayersOutputNeuronLocalFlocking.new(examples, network, args)
     return network, theTrainer
   end
 end
-
-
-#def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
-#    lastTestingMSE, lastTrainingMSE, network, theTrainer, trainingSequence)
-#  puts network
-#  puts "Elapsed Time=\t#{theTrainer.elapsedTime}"
-#  puts "\tAt Epoch #{trainingSequence.epochs}"
-#  puts "\tAt Epoch #{lastEpoch}"
-#  puts "\t\tThe Network's Training MSE=\t#{lastTrainingMSE}\t and TEST MSE=\t#{lastTestingMSE}\n"
-#  puts "\t\t\tThe dPrime(s) at the end of training are: #{dPrimes}"
-#
-##############################  plotting and visualization....
-#  plotMSEvsEpochNumber(network)
-#
-#  dataSetFromJoin = dataStoreManager.joinDataSets # joinForShoesDisplay
-#  dataStoreManager.transferDataSetToVisualizer(dataSetFromJoin, args)
-#end
-#
 
 
 ###################################### START of Main Learning  ##########################################

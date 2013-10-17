@@ -134,7 +134,7 @@ class AbstractStepTrainer
     flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 } # accumulatedAbsoluteFlockingError is a metric used for global control and monitoring
     acrossExamplesAccumulateFlockingErrorDeltaWs
     self.accumulatedAbsoluteFlockingErrors = calcAccumulatedAbsoluteFlockingErrors()
-    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight } if (determineIfWeNeedToReduceFlockingError)
+    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight } #if (determineIfWeNeedToReduceFlockingError)
   end
 
   def adaptToLocalFlockErrorWithExtraMeasures
@@ -152,7 +152,8 @@ class AbstractStepTrainer
 
   def acrossExamplesAccumulateFlockingErrorDeltaWs
     acrossExamplesAccumulateDeltaWs(flockErrorAdaptingNeurons) do |aNeuron, dataRecord|
-      dataRecord[:localFlockingError] = calcNeuronsLocalFlockingError(aNeuron)
+      dataRecord[:localFlockingError] = temp = calcNeuronsLocalFlockingError(aNeuron)
+      # puts "localFlockingError = \t #{temp}"
       aNeuron.calcAccumDeltaWsForLocalFlocking
     end
   end
@@ -172,11 +173,7 @@ class AbstractStepTrainer
   end
 
   def calcNeuronsLocalFlockingError(aNeuron)
-    localFlockingError = if (useFuzzyClusters?)
-                           aNeuron.calcLocalFlockingError { aNeuron.targetForFlocking }
-                         else
-                           aNeuron.calcLocalFlockingError { aNeuron.centerOfDominantClusterForExample }
-                         end
+    localFlockingError = aNeuron.calcLocalFlockingError
   end
 
   def calcAccumulatedAbsoluteFlockingErrors
@@ -318,23 +315,25 @@ class StepTrainerForLocalFlockingAndOutputError2 < AbstractStepTrainer
         saveInitialMSE = false
 
         adaptToOutputError = (initialMSEBeforeBackProp * args[:ratioDropInMSE]) < mseAfterBackProp
-        # puts "adaptToOutputError\t#{adaptToOutputError}\tinitialMSEBeforeBackProp\t#{initialMSEBeforeBackProp}\tmseAfterBackProp\t#{mseAfterBackProp}"
         mseMaxAllowedAfterFlocking = initialMSEBeforeBackProp * args[:ratioDropInMSEForFlocking]
         recordAndIncrementEpochs
       end
 
+      zeroOutFlockingLinksMomentumMemoryStore
       flockCount = 0
       until ((flockCount += 1) > maxFlockingIterationsCount)
-        zeroOutFlockingLinksMomentumMemoryStore
+        # zeroOutFlockingLinksMomentumMemoryStore
         recenterEachNeuronsClusters(flockErrorGeneratingNeurons)
         mseBeforeFlocking, mseAfterFlocking = adaptToLocalFlockErrorWithExtraMeasures()
         recordAndIncrementEpochs
         break if (mseAfterFlocking > mseMaxAllowedAfterFlocking)
       end
 
-      self.flockingLearningRate = flockingLearningRate * 0.707 if (flockCount < targetFlockIterationsCount)
-      self.flockingLearningRate = flockingLearningRate * 1.414 if (flockCount > targetFlockIterationsCount)
-      puts "flockCount=\t#{flockCount}\tflockLearningRate=\t#{flockingLearningRate}"
+      if (maxFlockingIterationsCount > 0)
+        self.flockingLearningRate = flockingLearningRate * 0.707 if (flockCount < targetFlockIterationsCount)
+        self.flockingLearningRate = flockingLearningRate * 1.414 if (flockCount > targetFlockIterationsCount)
+        puts "flockCount=\t#{flockCount}\tflockLearningRate=\t#{flockingLearningRate}"
+      end
     end
     return calcMSE, accumulatedAbsoluteFlockingErrors
   end
@@ -440,6 +439,17 @@ class TrainingSupervisorAllLocalFlockingLayers < TrainingSupervisorBase
     self.stepTrainer = StepTrainerForLocalFlockingAndOutputError2.new(examples, neuronGroups, trainingSequence, args)
   end
 end
+
+
+class TrainingSupervisor3LayersOutputNeuronLocalFlocking < TrainingSupervisorBase
+  include RecordingAndPlottingRoutines
+
+  def postInitialize
+    self.neuronGroups = NeuronGroups3LayersOutputNeuronLocalFlocking.new(network)
+    self.stepTrainer = StepTrainerForLocalFlockingAndOutputError2.new(examples, neuronGroups, trainingSequence, args)
+  end
+end
+
 
 
 #class WeightChangeNormalizer

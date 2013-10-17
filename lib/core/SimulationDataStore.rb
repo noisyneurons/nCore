@@ -346,15 +346,6 @@ module DBAccess
     return true if (epochs == 0)
     return (((epochs + 1) % recordingInterval) == 0)
   end
-
-  #  def timeToRecordData
-  #    epochs = args[epochs]
-  #    record = false
-  #    return if (epochs < 0)
-  #    record = true if ((epochs % numberOfEpochsBetweenStoringDBRecords) == 0)
-  #    record = true if lastEpoch
-  #    return record
-  #  end
 end
 
 class Neuron

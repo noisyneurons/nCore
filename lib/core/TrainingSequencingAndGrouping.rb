@@ -78,6 +78,22 @@ class NeuronGroupsAllLocalFlockingLayers < NeuronGroupsTrivial
   end
 end
 
+
+class NeuronGroups3LayersOutputNeuronLocalFlocking < NeuronGroupsTrivial
+  def nameTrainingGroups
+    hiddenLayer = allNeuronLayers[1]
+    self.layersWithInputLinks = [hiddenLayer, outputLayer]
+
+    self.outputErrorAdaptingLayers = layersWithInputLinks
+    self.flockErrorGeneratingLayers = [outputLayer]
+    self.flockErrorAdaptingLayers = [outputLayer]
+
+    self.layersWhoseClustersNeedToBeSeeded = flockErrorGeneratingLayers
+    setNeuronGroupNames()
+  end
+end
+
+
 #####
 class NeuronGroupsBPofFlockError < AbstractNeuronGroups
   attr_accessor :outputErrorAdaptingLayers, :flockErrorGeneratingLayers, :flockErrorAdaptingLayers,

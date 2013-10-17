@@ -77,7 +77,7 @@ class Experiment
 
   def createTrainingSet
     STDERR.puts "Error: base class method called!!"
-    STDERR.puts "Error: Incorrect Number of Examples Generated and/or Specified" unless(examples.length == args[:numberOfExamples])
+    STDERR.puts "Error: Incorrect Number of Examples Generated and/or Specified" unless (examples.length == args[:numberOfExamples])
     return examples
   end
 

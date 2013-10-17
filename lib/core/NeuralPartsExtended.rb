@@ -22,7 +22,7 @@ end
 
 module CommonClusteringCode
   attr_accessor :netInput, :higherLayerError, :errorToBackPropToLowerLayer,
-                :clusterer, :localFlockingError, :accumulatedAbsoluteFlockingError,
+                :clusterer, :clusters, :localFlockingError, :accumulatedAbsoluteFlockingError,
                 :maxNumberOfClusteringIterations, :dPrime, :flockingTargeter, :targetToFlockTo
 
   def examplesContainedInEachCluster
@@ -31,10 +31,6 @@ module CommonClusteringCode
 
   def examplesInCluster(aCluster)
     aCluster.dominantExamplesForCluster
-  end
-
-  def clusters
-    clusterer.clusters
   end
 
   def initializeClusterCenters
@@ -52,21 +48,39 @@ module CommonClusteringCode
 
   # *** This function should not be called before an entire batch has been processed by the clusterer ***
   def calcLocalFlockingError
-    self.targetToFlockTo = yield
-    distanceToWeightedExamplesCenter = (targetToFlockTo - locationOfExample)
-    self.localFlockingError = distanceToWeightedExamplesCenter # TODO weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter))  # TODO Should 'membershipInFlock(examplesNetInput)' be included?  # If included, it reduces the importance of examples with small io derivatives  # TODO Should 'membershipInFlock(examplesNetInput)' be included -- This term, if included, reduces the importance of examples with small io derivatives  ## TODO Should 'weightingOfErrorDueToDistanceFromFlocksCenter(algebraicDistanceToFlocksCenter)' be included?
+    keepTargetsSymmetrical if(args[:keepTargetsSymmetrical])
+    errors = clusters.collect do |aCluster|
+      distanceBetweenClusterAndExample =  aCluster.center[0] - locationOfExample
+      weightedDistance = functionForWeightingDistanceBetweenExampleAndClustersCenter(distanceBetweenClusterAndExample)
+      errorTakingExamplesMembershipIntoAccount = weightedDistance * aCluster.membershipWeightForEachExample[exampleNumber]
+    end
+    self.localFlockingError = errors.reduce(:+)
     self.accumulatedAbsoluteFlockingError += localFlockingError.abs
     return localFlockingError
   end
 
-  def targetForFlocking
-    flockingTargeter.examplesTargetForFlocking(exampleNumber)[0]
+  def functionForWeightingDistanceBetweenExampleAndClustersCenter(distanceBetweenClusterAndExample)
+    # distanceBetweenClusterCenters = (clusters[1].center - clusters[0].center).abs      # TODO use this function?
+    return distanceBetweenClusterAndExample
+  end
+
+  def keepTargetsSymmetrical
+    distanceBetween2TargetsOnNetInputDimension = (clusters[1].center[0] - clusters[0].center[0])
+    target1IsToTheRightOfTarget0 = (distanceBetween2TargetsOnNetInputDimension >= 0.0)
+    symmetricalOffset = distanceBetween2TargetsOnNetInputDimension.abs / 2.0
+
+    if target1IsToTheRightOfTarget0
+      clusters[1].center = Vector[symmetricalOffset]
+      clusters[0].center = Vector[(-1.0 * symmetricalOffset)]
+    else
+      clusters[0].center = Vector[symmetricalOffset]
+      clusters[1].center = Vector[(-1.0 * symmetricalOffset)]
+    end
   end
 
   def calcAccumDeltaWsForLocalFlocking
     inputLinks.each { |inputLink| inputLink.calcAccumDeltaWsForLocalFlocking(localFlockingError) }
   end
-
 
   ## ---------------- Reporting methods ------------------------------
 
@@ -112,7 +126,7 @@ class FlockingNeuron < Neuron
     @maxNumberOfClusteringIterations = args[:maxNumberOfClusteringIterations]
     typeOfClusterer = args[:typeOfClusterer]
     @clusterer = typeOfClusterer.new(args)
-    @flockingTargeter = Targeter.new(self, @clusterer, args)
+    @clusters = @clusterer.clusters
     @dPrime = 0.0
     @trainingSequence = args[:trainingSequence]
   end
@@ -141,7 +155,7 @@ class FlockingOutputNeuron < OutputNeuron
     @maxNumberOfClusteringIterations = args[:maxNumberOfClusteringIterations]
     typeOfClusterer = args[:typeOfClusterer]
     @clusterer = typeOfClusterer.new(args)
-    @flockingTargeter = Targeter.new(self, @clusterer, args)
+    @clusters = @clusterer.clusters
     @dPrime = 0.0
     @trainingSequence = args[:trainingSequence]
   end

@@ -18,7 +18,7 @@ class Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.02,
         :minMSE => 0.0001,
-        :maxNumEpochs => 10,
+        :maxNumEpochs => 100,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
@@ -156,7 +156,7 @@ end
 
 seed = 0
 #20.times do |seed|
-  rSeed = seed + 100
-  experiment = Experiment.new("SelfOrgLearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges", randomNumberSeed = rSeed)
-  experiment.performSimulation()
+rSeed = seed + 100
+experiment = Experiment.new("SelfOrgLearningRateExperiments using correctionFactorForRateAtWhichNeuronsGainChanges", randomNumberSeed = rSeed)
+experiment.performSimulation()
 #end

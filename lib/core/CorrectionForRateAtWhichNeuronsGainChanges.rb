@@ -19,8 +19,8 @@
 require_relative 'Utilities'
 
 module CommonClusteringCode
-  def clustersCenter     # TODO This is a simple approximation IF we want to deal with non-symmetric clusters... Do we want to deal with non-symmetric clusters
-  ( (clusters[0].center[0]).abs + (clusters[1].center[0]).abs ) / 2.0
+  def clustersCenter # TODO This is a simple approximation IF we want to deal with non-symmetric clusters... Do we want to deal with non-symmetric clusters
+    ((clusters[0].center[0]).abs + (clusters[1].center[0]).abs) / 2.0
   end
 end
 
@@ -43,7 +43,7 @@ class AbstractStepTrainer
     q = exp(c)
 
     result = (n * (o + p) * q).abs
-    return correctionFactorsFloor if(result.nan?)
+    return correctionFactorsFloor if (result.nan?)
     return [result, correctionFactorsFloor].max
   end
 end
