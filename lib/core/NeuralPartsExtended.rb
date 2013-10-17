@@ -48,9 +48,9 @@ module CommonClusteringCode
 
   # *** This function should not be called before an entire batch has been processed by the clusterer ***
   def calcLocalFlockingError
-    keepTargetsSymmetrical if(args[:keepTargetsSymmetrical])
+    keepTargetsSymmetrical if (args[:keepTargetsSymmetrical])
     errors = clusters.collect do |aCluster|
-      distanceBetweenClusterAndExample =  aCluster.center[0] - locationOfExample
+      distanceBetweenClusterAndExample = aCluster.center[0] - locationOfExample
       weightedDistance = functionForWeightingDistanceBetweenExampleAndClustersCenter(distanceBetweenClusterAndExample)
       errorTakingExamplesMembershipIntoAccount = weightedDistance * aCluster.membershipWeightForEachExample[exampleNumber]
     end

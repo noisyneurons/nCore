@@ -128,6 +128,55 @@ class AbstractStepTrainer
     return mseBeforeBackProp, mseAfterBackProp
   end
 
+  def performNormalizedBackPropTrainingWithExtraMeasures
+    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
+    acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForHigherLayerError }
+    mseBeforeBackProp = calcMSE # assumes squared error for each example and output neuron is stored in NeuronRecorder
+    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+    mseAfterBackProp, netInputs = calcMeanSumSquaredErrorsAndNetInputs # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
+
+
+    maxChangesInExampleGainsInEachLayer
+    return mseBeforeBackProp, mseAfterBackProp
+  end
+
+  def measureChangesInExampleGainsInEachLayer
+
+    maxLogGainChangeForEachLayer = outputErrorAdaptingLayers.collect do |aLayer|
+
+      maxGainRatioForLayer = nil
+      aLayer.each do |aNeuron|
+        mostRecentGains, previousGains = recentAndPastExampleGains(aNeuron)
+        maxGainRatioForLayer = calculateMaxGainRatio(mostRecentGains, previousGains)
+      end
+      maxGainRatioForLayer
+    end
+
+
+  end
+
+  def calculateMaxGainRatio(mostRecentGains, previousGains)
+    gainRatios = []
+    previousGains.each_with_index do |previousGain, index|
+      mostRecentGain = mostRecentGains[index]
+      gainRatios << (previousGain / mostRecentGain) if (previousGain >= mostRecentGain)
+      gainRatios << (mostRecentGain / previousGain) if (previousGain < mostRecentGain)
+    end
+    maxGainRatioForLayer = gainRatios.max
+  end
+
+  def recentAndPastExampleGains(aNeuron)
+    withinEpochMeasures = aNeuron.metricRecorder.withinEpochMeasures
+
+    previousGains = withinEpochMeasures.collect do |measuresForAnExample|
+      aNeuron.ioDerivativeFromNetInput(measuresForAnExample[:netInput])
+    end
+    mostRecentGains = aNeuron.storedNetInputs.collect do |aNetInput|
+      aNeuron.ioDerivativeFromNetInput(aNetInput)
+    end
+    return mostRecentGains, previousGains
+  end
+
   def adaptToLocalFlockError
     STDERR.puts "Generating neurons and adapting neurons are not one in the same.  This is NOT local flocking!!" if (flockErrorGeneratingNeurons != flockErrorAdaptingNeurons)
     flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = flockingLearningRate }
@@ -189,10 +238,12 @@ class AbstractStepTrainer
   end
 
   def calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
+    clearStoredNetInputs
     squaredErrors = []
     numberOfExamples.times do |exampleNumber|
       propagateAcrossEntireNetwork(exampleNumber)
       squaredErrors << calcWeightedErrorMetricForExample()
+      storeNetInputsForExample
     end
     sse = squaredErrors.flatten.reduce(:+)
     return (sse / (numberOfExamples * numberOfOutputNeurons))
@@ -252,6 +303,14 @@ class AbstractStepTrainer
 
   def propagateAcrossEntireNetwork(exampleNumber)
     allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+  end
+
+  def clearStoredNetInputs
+    allNeuronsInOneArray.each { |aNeuron| aNeuron.clearStoredNetInputs }
+  end
+
+  def storeNetInputsForExample
+    allNeuronsInOneArray.each { |aNeuron| aNeuron.storeNetInputForExample }
   end
 
   def backpropagateAcrossEntireNetwork
@@ -449,7 +508,6 @@ class TrainingSupervisor3LayersOutputNeuronLocalFlocking < TrainingSupervisorBas
     self.stepTrainer = StepTrainerForLocalFlockingAndOutputError2.new(examples, neuronGroups, trainingSequence, args)
   end
 end
-
 
 
 #class WeightChangeNormalizer

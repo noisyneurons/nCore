@@ -59,9 +59,9 @@ module CommonNeuronCalculations
     return (neuronsOutput * (1.0 - neuronsOutput))
   end
 
-  def ioDerivative(aNetInput)
-    return ioDerivativeFromOutput(ioFunction(aNetInput))
-  end
+  #def ioDerivative(aNetInput)
+  #  return ioDerivativeFromOutput(ioFunction(aNetInput))
+  #end
 
   def ioDerivativeFromNetInput(aNetInput) # TODO speed this up.  Use sage to get the simpler analytical expression.
     return ioDerivativeFromOutput(ioFunction(aNetInput))
