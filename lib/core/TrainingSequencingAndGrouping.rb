@@ -10,6 +10,7 @@ class AbstractNeuronGroups
                 :adaptingNeurons, :neuronsWhoseClustersNeedToBeSeeded,
                 :outputErrorGeneratingLayers, :outputErrorGeneratingNeurons
 
+
   def initialize(network)
     @allNeuronLayers = network.allNeuronLayers
     @inputLayer = allNeuronLayers.first
@@ -27,14 +28,16 @@ class AbstractNeuronGroups
     self.outputErrorAdaptingNeurons = outputErrorAdaptingLayers.flatten unless (outputErrorAdaptingLayers.nil?)
     self.flockErrorGeneratingNeurons = flockErrorGeneratingLayers.flatten unless (flockErrorGeneratingLayers.nil?)
     self.flockErrorAdaptingNeurons = flockErrorAdaptingLayers.flatten unless (flockErrorAdaptingLayers.nil?)
+    self.bpFlockErrorAdaptingNeurons = bpFlockErrorAdaptingLayers.flatten unless (bpFlockErrorAdaptingLayers.nil?)
   end
 end
 
 
 #####
-class NeuronGroupsTrivial < AbstractNeuronGroups
+class NeuronGroupsForSingleLayerNetwork < AbstractNeuronGroups
   attr_accessor :outputErrorAdaptingLayers, :flockErrorGeneratingLayers, :flockErrorAdaptingLayers,
-                :outputErrorAdaptingNeurons, :flockErrorGeneratingNeurons, :flockErrorAdaptingNeurons
+                :outputErrorAdaptingNeurons, :flockErrorGeneratingNeurons, :flockErrorAdaptingNeurons,
+                :bpFlockErrorAdaptingNeurons, :bpFlockErrorAdaptingLayers
 
   def nameTrainingGroups
     self.layersWithInputLinks = [outputLayer]
@@ -49,7 +52,7 @@ class NeuronGroupsTrivial < AbstractNeuronGroups
 end
 
 
-class NeuronGroupsHiddenNeuronLocalFlockingError < NeuronGroupsTrivial
+class NeuronGroupsHiddenLayerLocalFlocking < NeuronGroupsForSingleLayerNetwork
   def nameTrainingGroups
     hiddenLayer = allNeuronLayers[1]
     self.layersWithInputLinks = [hiddenLayer, outputLayer]
@@ -64,7 +67,7 @@ class NeuronGroupsHiddenNeuronLocalFlockingError < NeuronGroupsTrivial
 end
 
 
-class NeuronGroupsAllLocalFlockingLayers < NeuronGroupsTrivial
+class NeuronGroups3LayersAllLocalFlockingLayers < NeuronGroupsForSingleLayerNetwork
   def nameTrainingGroups
     hiddenLayer = allNeuronLayers[1]
     self.layersWithInputLinks = [hiddenLayer, outputLayer]
@@ -79,7 +82,7 @@ class NeuronGroupsAllLocalFlockingLayers < NeuronGroupsTrivial
 end
 
 
-class NeuronGroups3LayersOutputNeuronLocalFlocking < NeuronGroupsTrivial
+class NeuronGroups3LayersOutputLayerLocalFlocking < NeuronGroupsForSingleLayerNetwork
   def nameTrainingGroups
     hiddenLayer = allNeuronLayers[1]
     self.layersWithInputLinks = [hiddenLayer, outputLayer]
@@ -94,28 +97,18 @@ class NeuronGroups3LayersOutputNeuronLocalFlocking < NeuronGroupsTrivial
 end
 
 
-#####
-class NeuronGroupsBPofFlockError < AbstractNeuronGroups
-  attr_accessor :outputErrorAdaptingLayers, :flockErrorGeneratingLayers, :flockErrorAdaptingLayers,
-                :outputErrorAdaptingNeurons, :flockErrorGeneratingNeurons, :flockErrorAdaptingNeurons
-
+class NeuronGroups3LayersOutputLocalAndBPFlocking < NeuronGroupsForSingleLayerNetwork
   def nameTrainingGroups
     hiddenLayer = allNeuronLayers[1]
     self.layersWithInputLinks = [hiddenLayer, outputLayer]
 
     self.outputErrorAdaptingLayers = layersWithInputLinks
-    self.flockErrorGeneratingLayers = [hiddenLayer]
-    self.flockErrorAdaptingLayers = [hiddenLayer]
+    self.flockErrorGeneratingLayers = [outputLayer]
+    self.flockErrorAdaptingLayers = [outputLayer]
+    self.bpFlockErrorAdaptingLayers = [hiddenLayer]
 
     self.layersWhoseClustersNeedToBeSeeded = flockErrorGeneratingLayers
     setNeuronGroupNames()
-  end
-
-  def setNeuronGroupNames
-    super
-    self.outputErrorAdaptingNeurons = outputErrorAdaptingLayers.flatten unless (outputErrorAdaptingLayers.nil?)
-    self.flockErrorGeneratingNeurons = flockErrorGeneratingLayers.flatten unless (flockErrorGeneratingLayers.nil?)
-    self.flockErrorAdaptingNeurons = flockErrorAdaptingLayers.flatten unless (flockErrorAdaptingLayers.nil?)
   end
 end
 

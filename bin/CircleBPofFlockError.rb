@@ -37,9 +37,9 @@ class Experiment
         :intervalForSavingTrainingData => 1000,
 
         # Flocking Parameters...
-        :flockingLearningRate => -0.001, # -0.0002,
-        # :learningRateForBackPropedFlockingError => -0.002,
-        :maxFlockingIterationsCount => 100, # 2000,
+        :flockingLearningRate => -0.01, # -0.0002,
+        :bpFlockingLearningRate => -0.002,
+        :maxFlockingIterationsCount => 30, # 2000,
         :targetFlockIterationsCount => 20,
         :ratioDropInMSE => 0.95,
         :ratioDropInMSEForFlocking => 0.96,
@@ -110,7 +110,7 @@ class Experiment
 
   def createNetworkAndTrainer
     network = Flocking3LayerNetwork.new(args)
-    theTrainer = TrainingSupervisor3LayersOutputNeuronLocalFlocking.new(examples, network, args)
+    theTrainer = TrainSuperCircleProblemBPFlockAndLocFlockAtOutputNeuron.new(examples, network, args)
     return network, theTrainer
   end
 end
