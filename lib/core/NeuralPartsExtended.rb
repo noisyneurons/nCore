@@ -202,8 +202,7 @@ class FlockingLink < Link
   end
 
   def calcDeltaW
-    STDERR.puts " ERROR Link.calcDeltaW called"
-    # self.deltaW = learningRate * outputNeuron.error * inputNeuron.output
+    STDERR.puts " ERROR from a FlockingLink: The method 'calcDeltaW' was called!"
   end
 end
 

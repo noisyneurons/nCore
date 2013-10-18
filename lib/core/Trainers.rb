@@ -57,6 +57,7 @@ class AbstractStepTrainer
                 :outputErrorAdaptingLayers, :flockErrorGeneratingLayers, :flockErrorAdaptingLayers,
                 :outputErrorAdaptingNeurons, :flockErrorGeneratingNeurons, :flockErrorAdaptingNeurons,
                 :bpFlockErrorAdaptingNeurons, :bpFlockErrorAdaptingLayers,
+                :bpFlockErrorGeneratingNeurons, :bpFlockErrorGeneratingLayers,
 
                 :maxFlockingIterationsCount, :flockingLearningRate,
                 :flockingIterationsCount, :accumulatedAbsoluteFlockingErrors,
@@ -98,11 +99,13 @@ class AbstractStepTrainer
     @flockErrorGeneratingLayers = neuronGroups.flockErrorGeneratingLayers
     @flockErrorAdaptingLayers = neuronGroups.flockErrorAdaptingLayers
     @bpFlockErrorAdaptingLayers = neuronGroups.bpFlockErrorAdaptingLayers
+    @bpFlockErrorGeneratingLayers = neuronGroups.bpFlockErrorGeneratingLayers
 
     @outputErrorAdaptingNeurons = neuronGroups.outputErrorAdaptingNeurons
     @flockErrorGeneratingNeurons = neuronGroups.flockErrorGeneratingNeurons
     @flockErrorAdaptingNeurons = neuronGroups.flockErrorAdaptingNeurons
     @bpFlockErrorAdaptingNeurons = neuronGroups.bpFlockErrorAdaptingNeurons
+    @bpFlockErrorGeneratingNeurons = neuronGroups.bpFlockErrorGeneratingLayers
   end
 
   def train(trials)
@@ -183,7 +186,7 @@ class AbstractStepTrainer
     flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = flockingLearningRate }
     flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 } # accumulatedAbsoluteFlockingError is a metric used for global control and monitoring
     acrossExamplesAccumulateFlockingErrorDeltaWs
-    self.accumulatedAbsoluteFlockingErrors = calcAccumulatedAbsoluteFlockingErrors()
+    self.accumulatedAbsoluteFlockingErrors = calcAccumulatedAbsoluteFlockingErrors(flockErrorGeneratingNeurons)
     flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight } #if (determineIfWeNeedToReduceFlockingError)
   end
 
@@ -212,7 +215,7 @@ class AbstractStepTrainer
     localFlockingError = aNeuron.calcLocalFlockingError
   end
 
-  def calcAccumulatedAbsoluteFlockingErrors
+  def calcAccumulatedAbsoluteFlockingErrors(flockErrorGeneratingNeurons)
     flockErrorGeneratingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
   end
 
@@ -412,7 +415,7 @@ class StepTrainCircleProblemLocFlockAtOutputNeuron < AbstractStepTrainer
     flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 } # accumulatedAbsoluteFlockingError is a metric used for global control and monitoring
     acrossExamplesAccumulateFlockingErrorDeltaWs
     mseBeforeFlocking = calcMSE # assumes squared error for each example and output neuron is stored in NeuronRecorder
-    self.accumulatedAbsoluteFlockingErrors = calcAccumulatedAbsoluteFlockingErrors()
+    self.accumulatedAbsoluteFlockingErrors = calcAccumulatedAbsoluteFlockingErrors(flockErrorGeneratingNeurons)
     flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
     mseAfterFlocking = calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
                                                                                                   # std("flocking\t", [mseBeforeFlocking, mseAfterFlocking])
@@ -433,7 +436,7 @@ class StepTrainCircleProblemBPFlockAndLocFlockAtOutputNeuron < StepTrainCirclePr
 
       initialMSEatBeginningOfBPOELoop = loopForBackPropOfOutputError()
       loopForLocalFlocking(initialMSEatBeginningOfBPOELoop)
-      loopForBackPropOfFlockingError(initialMSEatBeginningOfBPOELoop)
+      #loopForBackPropOfFlockingError(initialMSEatBeginningOfBPOELoop)
 
     end
     return calcMSE, accumulatedAbsoluteFlockingErrors
@@ -444,11 +447,9 @@ class StepTrainCircleProblemBPFlockAndLocFlockAtOutputNeuron < StepTrainCirclePr
     maxBPFlockingIterationsCount = args[:maxBPFlockingIterationsCount]
     targetBPFlockIterationsCount = args[:targetBPFlockIterationsCount]
 
-    # zeroOutFlockingLinksMomentumMemoryStore
     flockCount = 0
     until ((flockCount += 1) > maxBPFlockingIterationsCount)
-      bpFlockErrorAdaptingNeurons.each { |aNeuron| aNeuron.inputLinks.each { |aLink| aLink.store = 0.0 } } # zeroOutFlockingLinksMomentumMemoryStore
-      recenterEachNeuronsClusters(flockErrorGeneratingNeurons)
+      recenterEachNeuronsClusters(bpFlockErrorGeneratingNeurons)
       mseBeforeFlocking, mseAfterFlocking = adaptToBPofFlockErrorWithExtraMeasures()
       recordAndIncrementEpochs
       break if (mseAfterFlocking > mseMaxAllowedAfterBPFlocking)
@@ -463,26 +464,26 @@ class StepTrainCircleProblemBPFlockAndLocFlockAtOutputNeuron < StepTrainCirclePr
 
   def adaptToBPofFlockErrorWithExtraMeasures
     bpFlockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = bpFlockingLearningRate }
-    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 } # accumulatedAbsoluteFlockingError is a metric used for global control and monitoring
+    bpFlockErrorGeneratingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 }
     acrossExamplesAccumulateBackPropedFlockingErrorDeltaWs
     mseBeforeFlocking = calcMSE # assumes squared error for each example and output neuron is stored in NeuronRecorder
-    self.accumulatedAbsoluteFlockingErrors = calcAccumulatedAbsoluteFlockingErrors()
+    self.accumulatedAbsoluteFlockingErrors = calcAccumulatedAbsoluteFlockingErrors(bpFlockErrorGeneratingNeurons)
     bpFlockErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-    mseAfterFlocking = calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
-                                                                                                  # std("flocking\t", [mseBeforeFlocking, mseAfterFlocking])
+    mseAfterFlocking = calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder                                                                                                 # std("flocking\t", [mseBeforeFlocking, mseAfterFlocking])
     return mseBeforeFlocking, mseAfterFlocking
   end
 
   def acrossExamplesAccumulateBackPropedFlockingErrorDeltaWs
-
-
-    acrossExamplesAccumulateDeltaWs(flockErrorAdaptingNeurons) do |aNeuron, dataRecord|
+    acrossExamplesAccumulateDeltaWs(bpFlockErrorGeneratingNeurons) do |aNeuron, dataRecord|
       dataRecord[:localFlockingError] = calcNeuronsLocalFlockingError(aNeuron)
+      aNeuron.backPropagate {|higherError, localFlockingError| localFlockingError }
+      bpFlockErrorAdaptingNeurons.each do |anAdaptingNeuron|
+        anAdaptingNeuron.backPropagate
+        anAdaptingNeuron.calcAccumDeltaWsForHigherLayerError
+      end
       aNeuron.calcAccumDeltaWsForLocalFlocking
     end
-
   end
-
 
   def recordAndIncrementEpochs
     flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }

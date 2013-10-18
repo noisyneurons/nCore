@@ -28,7 +28,7 @@ end
 class AbstractStepTrainer
   include Math
 
-  def calcAccumulatedAbsoluteFlockingErrors
+  def calcAccumulatedAbsoluteFlockingErrors(flockErrorGeneratingNeurons)
     flockErrorGeneratingNeurons.collect { |aNeuron| (aNeuron.accumulatedAbsoluteFlockingError * correctionFactorForRateAtWhichNeuronsGainChanges(aNeuron.clustersCenter)) }
   end
 
