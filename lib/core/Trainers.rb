@@ -59,7 +59,7 @@ class AbstractStepTrainer
                 :bpFlockErrorAdaptingNeurons, :bpFlockErrorAdaptingLayers,
                 :bpFlockErrorGeneratingNeurons, :bpFlockErrorGeneratingLayers,
 
-                :maxFlockingIterationsCount, :flockingLearningRate,
+                :maxFlockingIterationsCount, :flockingLearningRate, :bpFlockingLearningRate,
                 :flockingIterationsCount, :accumulatedAbsoluteFlockingErrors,
                 :accumulatedExampleImportanceFactors, :absFlockingErrorsOld
 
@@ -81,6 +81,7 @@ class AbstractStepTrainer
     @flockingIterationsCount = 0
     @accumulatedExampleImportanceFactors = nil
     @flockingLearningRate = args[:flockingLearningRate]
+    @bpFlockingLearningRate = args[:bpFlockingLearningRate]
     @maxFlockingIterationsCount = args[:maxFlockingIterationsCount]
   end
 
@@ -105,7 +106,7 @@ class AbstractStepTrainer
     @flockErrorGeneratingNeurons = neuronGroups.flockErrorGeneratingNeurons
     @flockErrorAdaptingNeurons = neuronGroups.flockErrorAdaptingNeurons
     @bpFlockErrorAdaptingNeurons = neuronGroups.bpFlockErrorAdaptingNeurons
-    @bpFlockErrorGeneratingNeurons = neuronGroups.bpFlockErrorGeneratingLayers
+    @bpFlockErrorGeneratingNeurons = neuronGroups.bpFlockErrorGeneratingNeurons
   end
 
   def train(trials)
@@ -197,13 +198,13 @@ class AbstractStepTrainer
     end
   end
 
-  def acrossExamplesAccumulateDeltaWs(adaptingNeurons)
+  def acrossExamplesAccumulateDeltaWs(neurons)
     clearEpochAccumulationsInAllNeurons()
     numberOfExamples.times do |exampleNumber|
       propagateAcrossEntireNetwork(exampleNumber)
       backpropagateAcrossEntireNetwork()
       calcWeightedErrorMetricForExample()
-      adaptingNeurons.each do |aNeuron|
+      neurons.each do |aNeuron|
         dataRecord = aNeuron.recordResponsesForExample
         yield(aNeuron, dataRecord, exampleNumber)
         aNeuron.dbStoreDetailedData
@@ -254,8 +255,8 @@ class AbstractStepTrainer
     distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
   end
 
-  def recenterEachNeuronsClusters(flockErrorGeneratingNeurons)
-    dispersions = flockErrorGeneratingNeurons.collect { |aNeuron| aNeuron.clusterAllResponses } # TODO Perhaps we might only need to clusterAllResponses every K epochs?
+  def recenterEachNeuronsClusters(arrayOfNeurons)
+    dispersions = arrayOfNeurons.collect { |aNeuron| aNeuron.clusterAllResponses } # TODO Perhaps we might only need to clusterAllResponses every K epochs?
   end
 
   def seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)
@@ -436,7 +437,7 @@ class StepTrainCircleProblemBPFlockAndLocFlockAtOutputNeuron < StepTrainCirclePr
 
       initialMSEatBeginningOfBPOELoop = loopForBackPropOfOutputError()
       loopForLocalFlocking(initialMSEatBeginningOfBPOELoop)
-      #loopForBackPropOfFlockingError(initialMSEatBeginningOfBPOELoop)
+      loopForBackPropOfFlockingError(initialMSEatBeginningOfBPOELoop)
 
     end
     return calcMSE, accumulatedAbsoluteFlockingErrors
@@ -476,12 +477,11 @@ class StepTrainCircleProblemBPFlockAndLocFlockAtOutputNeuron < StepTrainCirclePr
   def acrossExamplesAccumulateBackPropedFlockingErrorDeltaWs
     acrossExamplesAccumulateDeltaWs(bpFlockErrorGeneratingNeurons) do |aNeuron, dataRecord|
       dataRecord[:localFlockingError] = calcNeuronsLocalFlockingError(aNeuron)
-      aNeuron.backPropagate {|higherError, localFlockingError| localFlockingError }
+      aNeuron.backPropagate { |higherError, localFlockingError| localFlockingError }
       bpFlockErrorAdaptingNeurons.each do |anAdaptingNeuron|
         anAdaptingNeuron.backPropagate
         anAdaptingNeuron.calcAccumDeltaWsForHigherLayerError
       end
-      aNeuron.calcAccumDeltaWsForLocalFlocking
     end
   end
 

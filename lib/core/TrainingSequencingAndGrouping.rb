@@ -8,7 +8,11 @@ class AbstractNeuronGroups
                 :layersWithInputLinks, :adaptingLayers, :layersWhoseClustersNeedToBeSeeded,
                 :neuronsWithInputLinks, :neuronsWithInputLinksInReverseOrder,
                 :adaptingNeurons, :neuronsWhoseClustersNeedToBeSeeded,
-                :outputErrorGeneratingLayers, :outputErrorGeneratingNeurons
+                :outputErrorGeneratingLayers, :outputErrorGeneratingNeurons,
+                :outputErrorAdaptingLayers, :flockErrorGeneratingLayers, :flockErrorAdaptingLayers,
+                :outputErrorAdaptingNeurons, :flockErrorGeneratingNeurons, :flockErrorAdaptingNeurons,
+                :bpFlockErrorAdaptingNeurons, :bpFlockErrorAdaptingLayers,
+                :bpFlockErrorGeneratingNeurons, :bpFlockErrorGeneratingLayers
 
 
   def initialize(network)
@@ -36,10 +40,10 @@ end
 
 #####
 class NeuronGroupsForSingleLayerNetwork < AbstractNeuronGroups
-  attr_accessor :outputErrorAdaptingLayers, :flockErrorGeneratingLayers, :flockErrorAdaptingLayers,
-                :outputErrorAdaptingNeurons, :flockErrorGeneratingNeurons, :flockErrorAdaptingNeurons,
-                :bpFlockErrorAdaptingNeurons, :bpFlockErrorAdaptingLayers,
-                :bpFlockErrorGeneratingNeurons, :bpFlockErrorGeneratingLayers
+  #attr_accessor :outputErrorAdaptingLayers, :flockErrorGeneratingLayers, :flockErrorAdaptingLayers,
+  #              :outputErrorAdaptingNeurons, :flockErrorGeneratingNeurons, :flockErrorAdaptingNeurons,
+  #              :bpFlockErrorAdaptingNeurons, :bpFlockErrorAdaptingLayers,
+  #              :bpFlockErrorGeneratingNeurons, :bpFlockErrorGeneratingLayers
 
   def nameTrainingGroups
     self.layersWithInputLinks = [outputLayer]
