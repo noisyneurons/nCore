@@ -13,13 +13,14 @@ require_relative '../lib/core/TrainingSequencingAndGrouping'
 require_relative '../lib/core/Trainers.rb'
 
 class Experiment
-  attr_accessor :descriptionOfExperiment, :taskID, :randomNumberSeed, :experimentLogger, :examples, :numberOfExamples, :args, :trainingSequence
+  attr_accessor :descriptionOfExperiment, :taskID, :jobID, :randomNumberSeed, :experimentLogger, :examples, :numberOfExamples, :args, :trainingSequence
   include ExampleDistribution
 
   def initialize(descriptionOfExperiment, baseRandomNumberSeed)
     @descriptionOfExperiment = descriptionOfExperiment
     @taskID = ((ENV['SGE_TASK_ID']).to_i) || 0
     @randomNumberSeed = baseRandomNumberSeed + (taskID * 10000)
+    @jobID = ((ENV['JOB_ID']).to_i) || 0
     srand(randomNumberSeed)
     @experimentLogger = ExperimentLogger.new(descriptionOfExperiment)
     $globalExperimentNumber = experimentLogger.experimentNumber
@@ -30,38 +31,10 @@ class Experiment
     @args[:trainingSequence] = trainingSequence
   end
 
-
-  #def clusterParams
-  #
-  #  taskID = 0   # default when not running under SGE batch on the cluster -- SGE assigns SGE_TASK_ID
-  #  taskID = ((ENV['SGE_TASK_ID']).to_i) unless(ENV['SGE_TASK_ID'].nil?)
-  #
-  #  seedBase = 740 # BEWARE: This # is used for both filename and randomseed initialization
-  #  randomSeed = 0 + seedBase + taskID
-  #  srand(randomSeed)
-  #  outputFilename = "./inputDataOther/RateIntensity#{randomSeed}.txt"  # randomSeed is used as a dummy neuron number
-  #
-  #  OLDER:::::
-  #
-  #      taskID = 0   # default when not running under SGE batch on the cluster -- SGE assigns SGE_TASK_ID
-  #  taskID = ((ENV['SGE_TASK_ID']).to_i) unless(ENV['SGE_TASK_ID'].nil?)
-  #  specification.taskID = taskID
-  #
-  #  seedBase = 656
-  #  specification.randomSeedBase = seedBase + (taskID * 10000)
-  #  specification.randomSeed = specification.randomSeedBase
-  #
-  #  outputFile = File.new("output/#{specification.experimentName}Summary#{specification.randomSeedBase}.txt", "a")
-  #  outputHeaderFile = File.new("output/Header#{specification.experimentName}Summary.txt", "w")
-  #  outputHeaderFile.print "Condition\tSigma\tTau\tMeanFitness\tStdDeviation\tAverageSigma\tSigmaStdDeviation\trandomSeedBase\tMedianFitness\tMinimumFitness\tMaximumFitness\taverageNumberOfEvaluations\n"; outputHeaderFile.flush
-  #
-  #end
-
   def setParameters
     @args = {
         :experimentNumber => $globalExperimentNumber,
         :descriptionOfExperiment => descriptionOfExperiment,
-        # :rng => Random.new(randomNumberSeed),  currently unnecessary
 
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.02,
@@ -114,7 +87,12 @@ class Experiment
     return nil
   end
 
-  def reportTrainingResults(neuronToDisplay, accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, network, startingTime)
+  def reportTrainingResults(neuronToDisplay, accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime)
+    puts "\n\n_________________________________________________________________________________________________________"
+    STDERR.puts "ExperimentNumber=\t#{$globalExperimentNumber}"
+    puts "ExperimentNumber=\t#{$globalExperimentNumber}"
+    puts "GridEngineJobID=\t#{jobID}\n\n"
+
     puts network
 
     lastTestingMSE = nil
@@ -160,7 +138,8 @@ class Experiment
 
     puts "\n\n############ SnapShotData #############"
     dataToStoreLongTerm = {:experimentNumber => $globalExperimentNumber, :descriptionOfExperiment => descriptionOfExperiment,
-                           :network => network, :time => Time.now, :elapsedTime => (Time.now - startingTime),
+                           :gridTaskID => self.taskID, :gridJobID => self.jobID, :network => network,
+                           :time => Time.now, :elapsedTime => (Time.now - startingTime),
                            :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE,
                            :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors
     }
@@ -169,10 +148,10 @@ class Experiment
     keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(10) }
     unless (keysToRecords.empty?)
       puts
-      puts "Number\tLastEpoch\tTrainMSE\t\tTestMSE\t\t\tAccumulatedAbsoluteFlockingErrors\t\t\tTime\t\t\t\tDescription"
+      puts "Number\tLastEpoch\tTrainMSE\t\tTestMSE\t\t\tAccumulatedAbsoluteFlockingErrors\t\t\tTime\t\tTaskID\t\t\t\tDescription"
       keysToRecords.each do |keyToOneRecord|
         recordHash = SnapShotData.values(keyToOneRecord)
-        puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t\t#{recordHash[:trainMSE]}\t#{recordHash[:testMSE]}\t\t\t#{recordHash[:accumulatedAbsoluteFlockingErrors]}\t\t\t#{recordHash[:time]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
+        puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t\t#{recordHash[:trainMSE]}\t\t#{recordHash[:testMSE]}\t\t\t#{recordHash[:accumulatedAbsoluteFlockingErrors]}\t\t\t#{recordHash[:time]}\t\t\t#{recordHash[:taskID]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
       end
 
       # recordHash = SnapShotData.values(keysToRecords.last)
@@ -189,12 +168,13 @@ class Experiment
 ###################################### perform Learning/Training  ##########################################
 
     startingTime = Time.now
-    lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors = theTrainer.train
+    lastEpoch, lastTrainingMSE, lastTestingMSE, accumulatedAbsoluteFlockingErrors = theTrainer.train
 
 ############################## reporting results....
 
     neuronToDisplay = 2
-    reportTrainingResults(neuronToDisplay, accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, network, startingTime)
+    reportTrainingResults(neuronToDisplay, accumulatedAbsoluteFlockingErrors, descriptionOfExperiment,
+                          lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime)
 
 ############################## clean-up....
     experimentLogger.deleteTemporaryDataRecordsInDB()

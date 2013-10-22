@@ -118,7 +118,8 @@ class AbstractStepTrainer
       dbStoreTrainingData()
       trainingSequence.nextEpoch
     end
-    return calcMSE, accumulatedAbsoluteFlockingErrors
+    testMSE = calcTestingMeanSquaredErrors
+    return calcMSE, testMSE, accumulatedAbsoluteFlockingErrors
   end
 
   def performStandardBackPropTraining
@@ -358,7 +359,8 @@ class StepTrainCircleProblemLocFlockAtOutputNeuron < AbstractStepTrainer
       initialMSEatBeginningOfBPOELoop = loopForBackPropOfOutputError()
       loopForLocalFlocking(initialMSEatBeginningOfBPOELoop)
     end
-    return calcMSE, accumulatedAbsoluteFlockingErrors
+    testMSE = calcTestingMeanSquaredErrors
+    return calcMSE, testMSE, accumulatedAbsoluteFlockingErrors
   end
 
   def loopForBackPropOfOutputError
@@ -440,7 +442,8 @@ class StepTrainCircleProblemBPFlockAndLocFlockAtOutputNeuron < StepTrainCirclePr
       loopForBackPropOfFlockingError(initialMSEatBeginningOfBPOELoop)
 
     end
-    return calcMSE, accumulatedAbsoluteFlockingErrors
+    testMSE = calcTestingMeanSquaredErrors
+    return calcMSE, testMSE, accumulatedAbsoluteFlockingErrors
   end
 
   def loopForBackPropOfFlockingError(initialMSEatBeginningOfBPOELoop)
@@ -484,12 +487,6 @@ class StepTrainCircleProblemBPFlockAndLocFlockAtOutputNeuron < StepTrainCirclePr
       end
     end
   end
-
-  def recordAndIncrementEpochs
-    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
-    dbStoreTrainingData()
-    trainingSequence.nextEpoch
-  end
 end
 
 
@@ -532,11 +529,11 @@ class TrainingSupervisorBase
     mse = 1e20
     numTrials = 50
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
-      mse, accumulatedAbsoluteFlockingErrors = stepTrainer.train(numTrials)
+      mse, testMSE, accumulatedAbsoluteFlockingErrors = stepTrainer.train(numTrials)
     end
     arrayOfNeuronsToPlot = [network.outputLayer[0]]
     plotTrainingResults(arrayOfNeuronsToPlot)
-    return trainingSequence.epochs, mse, accumulatedAbsoluteFlockingErrors
+    return trainingSequence.epochs, mse, testMSE, accumulatedAbsoluteFlockingErrors
   end
 
   def plotTrainingResults(arrayOfNeuronsToPlot)

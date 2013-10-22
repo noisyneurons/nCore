@@ -4,25 +4,6 @@
 require_relative 'Utilities'
 
 module RecordingAndPlottingRoutines
-
-  #def measureNeuralResponsesForTesting
-  #  neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
-  #  numberOfExamples.times do |exampleNumber|
-  #    allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-  #    outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
-  #    neuronsWithInputLinks.each { |aNeuron| aNeuron.recordResponsesForExample }
-  #  end
-  #  mse = network.calcNetworksMeanSquareError
-  #end
-
-  #def oneForwardPassEpoch(testingExamples)
-  #  trainingExamples = args[:examples]
-  #  distributeSetOfExamples(testingExamples)
-  #  testMSE = measureNeuralResponsesForTesting
-  #  distributeSetOfExamples(trainingExamples) # restore training examples
-  #  return testMSE
-  #end
-
   def generatePlotForEachNeuron(arrayOfNeuronsToPlot)
     arrayOfNeuronsToPlot.each do |theNeuron|
       xAry, yAry = getZeroXingExampleSet(theNeuron)
@@ -102,8 +83,8 @@ class ExperimentLogger
   $redis.setnx("experimentNumber", 0)
 
   def deleteTemporaryDataRecordsInDB
-    TrainingData.deleteData(experimentNumber)
-    TrainingData.deleteEntireIndex!
+    #TrainingData.deleteData(experimentNumber)
+    #TrainingData.deleteEntireIndex!
     NeuronData.deleteData(experimentNumber)
     NeuronData.deleteEntireIndex!
     DetailedNeuronData.deleteData(experimentNumber)
@@ -117,10 +98,15 @@ class ExperimentLogger
   def initialize(experimentDescription = nil)
     @experimentNumber = $redis.incr("experimentNumber")
     @descriptionOfExperiment = descriptionOfExperiment
+    $redis.rpush("experimentsToPostProcess", experimentNumber)
   end
 
   def save
-    $redis.save
+    begin
+      $redis.save
+    rescue Exception
+      STDERR.puts "redis store was already being saved!"
+    end
   end
 end
 
@@ -380,6 +366,8 @@ class SimulationDataStoreManager
   end
 end
 
+
+
 #def recordResponsesForEpoch
 #  if (trainingSequence.timeToRecordData)
 #    determineCentersOfClusters()
@@ -410,4 +398,25 @@ end
 #    cluster0Center = 0.0
 #    cluster1Center = 0.0
 #  end
+#end
+
+
+
+#module RecordingAndPlottingRoutines
+#def measureNeuralResponsesForTesting
+#  neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
+#  numberOfExamples.times do |exampleNumber|
+#    allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+#    outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
+#    neuronsWithInputLinks.each { |aNeuron| aNeuron.recordResponsesForExample }
+#  end
+#  mse = network.calcNetworksMeanSquareError
+#end
+
+#def oneForwardPassEpoch(testingExamples)
+#  trainingExamples = args[:examples]
+#  distributeSetOfExamples(testingExamples)
+#  testMSE = measureNeuralResponsesForTesting
+#  distributeSetOfExamples(trainingExamples) # restore training examples
+#  return testMSE
 #end
