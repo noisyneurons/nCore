@@ -11,7 +11,7 @@ class Experiment
 
   def setParameters
     @args = {
-        :experimentNumber => ExperimentLogger.number,
+        :experimentNumber => $globalExperimentNumber,
         :descriptionOfExperiment => descriptionOfExperiment,
         :rng => Random.new(randomNumberSeed),
 
@@ -83,7 +83,7 @@ class Experiment
     puts "\n\n############ NeuronData #############"
     keysToRecords = []
     NeuronData.lookup_values(:epochs).each do |epochNumber|
-      keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber, neuron: neuronToDisplay}) }
+      keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: $globalExperimentNumber, epochs: epochNumber, neuron: neuronToDisplay}) }
     end
     keysToRecords.reject! { |recordKey| recordKey.empty? }
     neuronDataRecords = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) } unless (keysToRecords.empty?)
@@ -99,7 +99,7 @@ class Experiment
       netInputs = []
       epochsArray << epochNumber.to_i
       DetailedNeuronData.lookup_values(:exampleNumber).each do |anExampleNumber|
-        aRecordKey = DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber, neuron: neuronToDisplay, exampleNumber: anExampleNumber}) }
+        aRecordKey = DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: $globalExperimentNumber, epochs: epochNumber, neuron: neuronToDisplay, exampleNumber: anExampleNumber}) }
         unless (aRecordKey.empty?)
 
           aHash = DetailedNeuronData.values(aRecordKey)
@@ -120,7 +120,7 @@ class Experiment
 
 
     puts "\n\n############ TrainingData #############"
-    keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: ExperimentLogger.number}) }
+    keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: $globalExperimentNumber}) }
     keysToRecords.reject! { |recordKey| recordKey.empty? }
     trainingDataRecords = keysToRecords.collect { |recordKey| TrainingData.values(recordKey) } unless (keysToRecords.empty?)
     puts trainingDataRecords
@@ -128,7 +128,7 @@ class Experiment
     theOutputNeuron = network.allNeuronLayers[1][0]
 
     puts "\n\n############ SnapShotData #############"
-    dataToStoreLongTerm = {:experimentNumber => ExperimentLogger.number, :descriptionOfExperiment => descriptionOfExperiment,
+    dataToStoreLongTerm = {:experimentNumber => $globalExperimentNumber, :descriptionOfExperiment => descriptionOfExperiment,
                            :network => network, :time => Time.now, :elapsedTime => (Time.now - startingTime),
                            :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE,
                            :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors,

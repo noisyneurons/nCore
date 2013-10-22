@@ -9,15 +9,13 @@ class Experiment
   def setParameters
 
     args = {
-        :experimentNumber => ExperimentLogger.number,
+        :experimentNumber => experimentLogger.experimentNumber,
         :descriptionOfExperiment => descriptionOfExperiment,
-        :rng => Random.new(randomNumberSeed),
 
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.3, # 0.03,
         :minMSE => 0.001,
-        :maxNumEpochs => 80e3,
-
+        :maxNumEpochs => 2e3, # 80e3,
 
         # Network Architecture and initial weights
         :numberOfInputNeurons => 2,

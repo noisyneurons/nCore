@@ -13,14 +13,16 @@ require_relative '../lib/core/TrainingSequencingAndGrouping'
 require_relative '../lib/core/Trainers.rb'
 
 class Experiment
-  attr_accessor :descriptionOfExperiment, :randomNumberSeed, :experimentLogger, :examples, :numberOfExamples, :args, :trainingSequence
+  attr_accessor :descriptionOfExperiment, :taskID, :randomNumberSeed, :experimentLogger, :examples, :numberOfExamples, :args, :trainingSequence
   include ExampleDistribution
 
-  def initialize(descriptionOfExperiment, randomNumberSeed)
+  def initialize(descriptionOfExperiment, baseRandomNumberSeed)
     @descriptionOfExperiment = descriptionOfExperiment
-    @randomNumberSeed = randomNumberSeed
+    @taskID = ((ENV['SGE_TASK_ID']).to_i) || 0
+    @randomNumberSeed = baseRandomNumberSeed + (taskID * 10000)
     srand(randomNumberSeed)
     @experimentLogger = ExperimentLogger.new(descriptionOfExperiment)
+    $globalExperimentNumber = experimentLogger.experimentNumber
     @args = self.setParameters
     @examples = createTrainingSet
     createTestingSet
@@ -28,11 +30,38 @@ class Experiment
     @args[:trainingSequence] = trainingSequence
   end
 
+
+  #def clusterParams
+  #
+  #  taskID = 0   # default when not running under SGE batch on the cluster -- SGE assigns SGE_TASK_ID
+  #  taskID = ((ENV['SGE_TASK_ID']).to_i) unless(ENV['SGE_TASK_ID'].nil?)
+  #
+  #  seedBase = 740 # BEWARE: This # is used for both filename and randomseed initialization
+  #  randomSeed = 0 + seedBase + taskID
+  #  srand(randomSeed)
+  #  outputFilename = "./inputDataOther/RateIntensity#{randomSeed}.txt"  # randomSeed is used as a dummy neuron number
+  #
+  #  OLDER:::::
+  #
+  #      taskID = 0   # default when not running under SGE batch on the cluster -- SGE assigns SGE_TASK_ID
+  #  taskID = ((ENV['SGE_TASK_ID']).to_i) unless(ENV['SGE_TASK_ID'].nil?)
+  #  specification.taskID = taskID
+  #
+  #  seedBase = 656
+  #  specification.randomSeedBase = seedBase + (taskID * 10000)
+  #  specification.randomSeed = specification.randomSeedBase
+  #
+  #  outputFile = File.new("output/#{specification.experimentName}Summary#{specification.randomSeedBase}.txt", "a")
+  #  outputHeaderFile = File.new("output/Header#{specification.experimentName}Summary.txt", "w")
+  #  outputHeaderFile.print "Condition\tSigma\tTau\tMeanFitness\tStdDeviation\tAverageSigma\tSigmaStdDeviation\trandomSeedBase\tMedianFitness\tMinimumFitness\tMaximumFitness\taverageNumberOfEvaluations\n"; outputHeaderFile.flush
+  #
+  #end
+
   def setParameters
     @args = {
-        :experimentNumber => ExperimentLogger.number,
+        :experimentNumber => $globalExperimentNumber,
         :descriptionOfExperiment => descriptionOfExperiment,
-        :rng => Random.new(randomNumberSeed),
+        # :rng => Random.new(randomNumberSeed),  currently unnecessary
 
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.02,
@@ -95,7 +124,7 @@ class Experiment
     puts "\n\n############ NeuronData #############"
     keysToRecords = []
     NeuronData.lookup_values(:epochs).each do |epochNumber|
-      keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber, neuron: neuronToDisplay}) }
+      keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: $globalExperimentNumber, epochs: epochNumber, neuron: neuronToDisplay}) }
     end
     neuronDataRecords = nil
     unless (keysToRecords.empty?)
@@ -109,7 +138,7 @@ class Experiment
     keysToRecords = []
     DetailedNeuronData.lookup_values(:epochs).each do |epochNumber|
       DetailedNeuronData.lookup_values(:exampleNumber).each do |anExampleNumber|
-        keysToRecords << DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber, neuron: neuronToDisplay, exampleNumber: anExampleNumber}) }
+        keysToRecords << DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: $globalExperimentNumber, epochs: epochNumber, neuron: neuronToDisplay, exampleNumber: anExampleNumber}) }
       end
     end
     unless (keysToRecords.empty?)
@@ -120,7 +149,7 @@ class Experiment
 
 
     puts "\n\n############ TrainingData #############"
-    keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: ExperimentLogger.number}) }
+    keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: $globalExperimentNumber}) }
     trainingDataRecords = nil
     unless (keysToRecords.empty?)
       keysToRecords.reject! { |recordKey| recordKey.empty? }
@@ -130,7 +159,7 @@ class Experiment
 
 
     puts "\n\n############ SnapShotData #############"
-    dataToStoreLongTerm = {:experimentNumber => ExperimentLogger.number, :descriptionOfExperiment => descriptionOfExperiment,
+    dataToStoreLongTerm = {:experimentNumber => $globalExperimentNumber, :descriptionOfExperiment => descriptionOfExperiment,
                            :network => network, :time => Time.now, :elapsedTime => (Time.now - startingTime),
                            :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE,
                            :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors

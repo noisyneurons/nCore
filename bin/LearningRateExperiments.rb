@@ -51,7 +51,7 @@ class Experiment
     randomNumberSeed = 0
 
     @args = {
-        :experimentNumber => ExperimentLogger.number,
+        :experimentNumber => $globalExperimentNumber,
         :descriptionOfExperiment => descriptionOfExperiment,
         :rng => Random.new(randomNumberSeed),
 
@@ -129,7 +129,7 @@ lastTestingMSE = nil
 
 puts "############ Include Example Numbers #############"
 4000.times do |epochNumber|
-  selectedData = DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: ExperimentLogger.number, epochs: epochNumber,
+  selectedData = DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: $globalExperimentNumber, epochs: epochNumber,
                                                                                         neuron: 2}) }
   puts "For epoch number=\t#{epochNumber}" unless (selectedData.empty?)
 
@@ -143,7 +143,7 @@ displayAndPlotResults(args, accumulatedAbsoluteFlockingErrors, dataStoreManager,
 
 SnapShotData.new(descriptionOfExperiment, network, Time.now, lastEpoch, lastTrainingMSE, lastTestingMSE)
 
-selectedData = SnapShotData.lookup { |q| q[:experimentNumber_epochs].eq({experimentNumber: ExperimentLogger.number, epochs: lastEpoch}) }
+selectedData = SnapShotData.lookup { |q| q[:experimentNumber_epochs].eq({experimentNumber: $globalExperimentNumber, epochs: lastEpoch}) }
 
 selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
 unless (selectedData.empty?)
@@ -155,8 +155,8 @@ unless (selectedData.empty?)
   end
 end
 
-DetailedNeuronData.deleteData(ExperimentLogger.number)
-NeuronData.deleteData(ExperimentLogger.number)
+DetailedNeuronData.deleteData($globalExperimentNumber)
+NeuronData.deleteData($globalExperimentNumber)
 
 experiment.save
 

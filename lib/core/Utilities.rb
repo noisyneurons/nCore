@@ -8,13 +8,10 @@ require 'redis'
 require 'hiredis'
 require 'yaml'
 
-theComputersName = Socket.gethostname
+# theComputersName = Socket.gethostname
 
-$currentHost = if (theComputersName == "MakeASadSongMuchBetter")
-                 "localhost"
-               else
-                 "master"
-               end
+$currentHost = "localhost"
+$currentHost = "master" unless(ENV['SGE_TASK_ID'].nil?)
 
 $redis = Redis.new(:host => $currentHost)
 

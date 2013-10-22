@@ -36,8 +36,7 @@ def plotMSEvsEpochNumber(mseVsEpochMeasurements)
 end
 
 def plotDotsWhereOutputGtPt5(x, y, aNeuron, epochNumber)
-  aPlotter = Plotter.new(title="Zero Xing for Neuron #{aNeuron.id} at epoch #{epochNumber}", "input 0", "input 1", plotOutputFilenameBase = "#{Dir.pwd}/../../plots/zeroXingPlot_N#{aNeuron.id}_E#{epochNumber}")
-#  aPlotter = Plotter.new(title="Zero Xing for Neuron #{aNeuron.id} at epoch #{epochNumber}", "input 0", "input 1", plotOutputFilenameBase = "/home/mark/Code/Ruby/NN2012/plots/zeroXingPlot_N#{aNeuron.id}_E#{epochNumber}")
+  aPlotter = Plotter.new(title="Zero Xing for Neuron #{aNeuron.id} at epoch #{epochNumber}", "input 0", "input 1", plotOutputFilenameBase = "#{Dir.home}/Code/Ruby/NN2012/plots/zeroXingPlot_N#{aNeuron.id}_E#{epochNumber}")
   aPlotter.plot(x, y)
 end
 
@@ -55,7 +54,7 @@ class Plotter
     @xLabel = xLabel
     @yLabel = yLabel
     aFilename = (title.gsub(/\s+/, ""))[0..25] #  Simple way to generate a filename from the title...
-    @plotOutputFilenameBase = plotOutputFilenameBase || ("#{Dir.pwd}/../../plots/" + aFilename)
+    @plotOutputFilenameBase = plotOutputFilenameBase ||= ("#{Dir.pwd}/../../plots/" + aFilename)
     @deviceSetup = deviceSetup
     @subTitle = subTitle
     @parameterLabel = parameterLabel
@@ -388,6 +387,7 @@ class Plotter
 
   def createImageFile
     baseDirectory = "#{Dir.pwd}/../../"
+
     Dir.chdir(baseDirectory) do
       plotProgramToRun = "#{baseDirectory}/gnuplot/bin/wgnuplot_pipes.exe" if (OS.windows?)
       plotProgramToRun = "gnuplot" if (OS.linux?)

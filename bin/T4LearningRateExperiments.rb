@@ -8,7 +8,7 @@ class Experiment
   def setParameters
 
     @args = {
-        :experimentNumber => ExperimentLogger.number,
+        :experimentNumber => $globalExperimentNumber,
         :descriptionOfExperiment => descriptionOfExperiment,
         :rng => Random.new(randomNumberSeed),
 

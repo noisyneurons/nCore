@@ -97,21 +97,16 @@ end
 #############################
 
 class ExperimentLogger
-  attr_reader :descriptionOfExperiment, :args
+  attr_reader :descriptionOfExperiment, :experimentNumber, :args
 
   $redis.setnx("experimentNumber", 0)
-  @@number = $redis.get("experimentNumber")
-
-  def ExperimentLogger.number
-    @@number
-  end
 
   def deleteTemporaryDataRecordsInDB
-    TrainingData.deleteData(ExperimentLogger.number)
+    TrainingData.deleteData(experimentNumber)
     TrainingData.deleteEntireIndex!
-    NeuronData.deleteData(ExperimentLogger.number)
+    NeuronData.deleteData(experimentNumber)
     NeuronData.deleteEntireIndex!
-    DetailedNeuronData.deleteData(ExperimentLogger.number)
+    DetailedNeuronData.deleteData(experimentNumber)
     DetailedNeuronData.deleteEntireIndex!
   end
 
@@ -120,8 +115,7 @@ class ExperimentLogger
   end
 
   def initialize(experimentDescription = nil)
-    $redis.incr("experimentNumber")
-    @@number = "#{@@number.to_i + 1}"
+    @experimentNumber = $redis.incr("experimentNumber")
     @descriptionOfExperiment = descriptionOfExperiment
   end
 
@@ -207,7 +201,7 @@ class DetailedNeuronData
   def initialize(detailedNeuronDataToRecord)
     @id = @@ID
     @@ID += 1
-    @experimentNumber = ExperimentLogger.number
+    @experimentNumber = $globalExperimentNumber
     @epochs = detailedNeuronDataToRecord[:epochs]
     @neuron = detailedNeuronDataToRecord[:neuronID]
     @exampleNumber = detailedNeuronDataToRecord[:exampleNumber]
@@ -251,7 +245,7 @@ class NeuronData
   def initialize(neuronDataToRecord)
     @id = @@ID
     @@ID += 1
-    @experimentNumber = ExperimentLogger.number
+    @experimentNumber = $globalExperimentNumber
     @neuron = neuronDataToRecord[:neuronID]
     @epochs = neuronDataToRecord[:epochs]
     $redis.set(neuronDataKey, YAML.dump(neuronDataToRecord))
@@ -294,7 +288,7 @@ class TrainingData
   def initialize(trainingDataToRecord)
     @id = @@ID
     @@ID += 1
-    @experimentNumber = ExperimentLogger.number
+    @experimentNumber = $globalExperimentNumber
     @epochs = trainingDataToRecord[:epochs]
     $redis.set(trainingDataKey, YAML.dump(trainingDataToRecord))
     index!
@@ -336,7 +330,7 @@ module DBAccess
       trainMSE = calcMeanSumSquaredErrors
       testMSE = calcTestingMeanSquaredErrors
       puts "epoch number = #{args[:epochs]}\ttrainMSE = #{trainMSE}\ttestMSE = #{testMSE}"
-      aHash = {:experimentNumber => ExperimentLogger.number, :epochs => args[:epochs], :mse => trainMSE, :testMSE => testMSE, :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors}
+      aHash = {:experimentNumber => $globalExperimentNumber, :epochs => args[:epochs], :mse => trainMSE, :testMSE => testMSE, :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors}
       TrainingData.new(aHash)
     end
   end
