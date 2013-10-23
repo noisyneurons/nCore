@@ -120,6 +120,8 @@ end
 
 ###################################### START of Main Learning  ##########################################
 
-experiment = Experiment.new("Job1ForCircleBPofFlockError", randomNumberSeed=0)
+randomNumberSeed = 1
+
+experiment = Experiment.new("Job2ForCircleBPofFlockError", randomNumberSeed)
 
 experiment.performSimulation()

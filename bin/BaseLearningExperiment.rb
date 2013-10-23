@@ -20,10 +20,14 @@ class Experiment
     @descriptionOfExperiment = descriptionOfExperiment
     @taskID = ((ENV['SGE_TASK_ID']).to_i) || 0
     @randomNumberSeed = baseRandomNumberSeed + (taskID * 10000)
-    @jobID = ((ENV['JOB_ID']).to_i) || 0
-    #@jobName = ENV['JOB_NAME'] || "NotNamed"
-    @jobName = descriptionOfExperiment[0...10]
     srand(randomNumberSeed)
+
+    puts "sleeping"  unless($currentHost == "localhost")
+    sleep(rand * 30)  unless($currentHost == "localhost")
+
+    @jobID = ((ENV['JOB_ID']).to_i) || 0
+    @jobName = descriptionOfExperiment[0...10]
+
     @experimentLogger = ExperimentLogger.new(descriptionOfExperiment, jobName)
     $globalExperimentNumber = experimentLogger.experimentNumber
     @args = self.setParameters

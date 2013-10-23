@@ -95,13 +95,9 @@ class ExperimentLogger
     $redis.del("experimentNumber")
   end
 
-  def initialize(experimentDescription = nil, jobName = "NotNamed")
+  def initialize(descriptionOfExperiment = nil, jobName = "NotNamed")
     @experimentNumber = $redis.incr("experimentNumber")
     @descriptionOfExperiment = descriptionOfExperiment
-
-    end; end; end
-  HIIII     find the job name !!!!
-
     $redis.rpush("#{jobName}List", experimentNumber)
   end
 
