@@ -315,7 +315,7 @@ module DBAccess
     if recordOrNot?(savingInterval)
       trainMSE = calcMeanSumSquaredErrors
       testMSE = calcTestingMeanSquaredErrors
-      puts "epoch number = #{args[:epochs]}\ttrainMSE = #{trainMSE}\ttestMSE = #{testMSE}"
+      puts "epoch number = #{args[:epochs]}\ttrainMSE = #{trainMSE}\ttestMSE = #{testMSE}"  unless($currentHost == "master")
       aHash = {:experimentNumber => $globalExperimentNumber, :epochs => args[:epochs], :mse => trainMSE, :testMSE => testMSE, :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors}
       TrainingData.new(aHash)
     end

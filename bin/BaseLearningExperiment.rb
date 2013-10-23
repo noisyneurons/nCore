@@ -138,7 +138,7 @@ class Experiment
 
     puts "\n\n############ SnapShotData #############"
     dataToStoreLongTerm = {:experimentNumber => $globalExperimentNumber, :descriptionOfExperiment => descriptionOfExperiment,
-                           :gridTaskID => self.taskID, :gridJobID => self.jobID, :network => network,
+                           :gridTaskID => self.taskID, :gridJobID => self.jobID, :network => network, :args => args,
                            :time => Time.now, :elapsedTime => (Time.now - startingTime),
                            :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE,
                            :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors
