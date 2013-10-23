@@ -19,7 +19,7 @@ class Experiment
 
         # Network Architecture and initial weights
         :numberOfInputNeurons => 2,
-        :numberOfHiddenNeurons => 20, # 20,
+        :numberOfHiddenNeurons => 20,
         :numberOfOutputNeurons => 1,
         :weightRange => 1.0,
         :typeOfLink => FlockingLink,
@@ -32,7 +32,7 @@ class Experiment
         # Recording and database parameters
         :intervalForSavingNeuronData => 10000,
         :intervalForSavingDetailedNeuronData => 10000,
-        :intervalForSavingTrainingData => 100,
+        :intervalForSavingTrainingData => 1000,
 
         # Flocking Parameters...
         :flockingLearningRate => -0.01, # -0.0002,
@@ -120,6 +120,6 @@ end
 
 ###################################### START of Main Learning  ##########################################
 
-experiment = Experiment.new("CircleBPofFlockError using correctionFactorForRateAtWhichNeuronsGainChanges", randomNumberSeed=0)
+experiment = Experiment.new("Job1ForCircleBPofFlockError", randomNumberSeed=0)
 
 experiment.performSimulation()

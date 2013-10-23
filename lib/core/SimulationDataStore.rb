@@ -95,10 +95,14 @@ class ExperimentLogger
     $redis.del("experimentNumber")
   end
 
-  def initialize(experimentDescription = nil)
+  def initialize(experimentDescription = nil, jobName = "NotNamed")
     @experimentNumber = $redis.incr("experimentNumber")
     @descriptionOfExperiment = descriptionOfExperiment
-    $redis.rpush("experimentsToPostProcess", experimentNumber)
+
+    end; end; end
+  HIIII     find the job name !!!!
+
+    $redis.rpush("#{jobName}List", experimentNumber)
   end
 
   def save
@@ -315,7 +319,7 @@ module DBAccess
     if recordOrNot?(savingInterval)
       trainMSE = calcMeanSumSquaredErrors
       testMSE = calcTestingMeanSquaredErrors
-      puts "epoch number = #{args[:epochs]}\ttrainMSE = #{trainMSE}\ttestMSE = #{testMSE}"  unless($currentHost == "master")
+      puts "epoch number = #{args[:epochs]}\ttrainMSE = #{trainMSE}\ttestMSE = #{testMSE}" # unless($currentHost == "master")
       aHash = {:experimentNumber => $globalExperimentNumber, :epochs => args[:epochs], :mse => trainMSE, :testMSE => testMSE, :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors}
       TrainingData.new(aHash)
     end

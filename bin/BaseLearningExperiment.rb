@@ -13,7 +13,7 @@ require_relative '../lib/core/TrainingSequencingAndGrouping'
 require_relative '../lib/core/Trainers.rb'
 
 class Experiment
-  attr_accessor :descriptionOfExperiment, :taskID, :jobID, :randomNumberSeed, :experimentLogger, :examples, :numberOfExamples, :args, :trainingSequence
+  attr_accessor :descriptionOfExperiment, :taskID, :jobID, :jobName, :randomNumberSeed, :experimentLogger, :examples, :numberOfExamples, :args, :trainingSequence
   include ExampleDistribution
 
   def initialize(descriptionOfExperiment, baseRandomNumberSeed)
@@ -21,8 +21,10 @@ class Experiment
     @taskID = ((ENV['SGE_TASK_ID']).to_i) || 0
     @randomNumberSeed = baseRandomNumberSeed + (taskID * 10000)
     @jobID = ((ENV['JOB_ID']).to_i) || 0
+    #@jobName = ENV['JOB_NAME'] || "NotNamed"
+    @jobName = descriptionOfExperiment[0...10]
     srand(randomNumberSeed)
-    @experimentLogger = ExperimentLogger.new(descriptionOfExperiment)
+    @experimentLogger = ExperimentLogger.new(descriptionOfExperiment, jobName)
     $globalExperimentNumber = experimentLogger.experimentNumber
     @args = self.setParameters
     @examples = createTrainingSet
@@ -95,7 +97,6 @@ class Experiment
 
     puts network
 
-    lastTestingMSE = nil
     puts "lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE"
     puts lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE
 
@@ -148,10 +149,10 @@ class Experiment
     keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(10) }
     unless (keysToRecords.empty?)
       puts
-      puts "Number\tLastEpoch\tTrainMSE\t\tTestMSE\t\t\tAccumulatedAbsoluteFlockingErrors\t\t\tTime\t\tTaskID\t\t\t\tDescription"
+      puts "Number\tLastEpoch\t\tTrainMSE\t\t\tTestMSE\t\t\tAccumulatedAbsoluteFlockingErrors\t\t\t\tTime\t\tTaskID\t\t\t\t\tDescription"
       keysToRecords.each do |keyToOneRecord|
         recordHash = SnapShotData.values(keyToOneRecord)
-        puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t\t#{recordHash[:trainMSE]}\t\t#{recordHash[:testMSE]}\t\t\t#{recordHash[:accumulatedAbsoluteFlockingErrors]}\t\t\t#{recordHash[:time]}\t\t\t#{recordHash[:taskID]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
+        puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t\t#{recordHash[:trainMSE]}\t\t#{recordHash[:testMSE]}\t\t\t#{recordHash[:accumulatedAbsoluteFlockingErrors]}\t\t\t#{recordHash[:time]}\t\t\t#{recordHash[:gridTaskID]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
       end
 
       # recordHash = SnapShotData.values(keysToRecords.last)

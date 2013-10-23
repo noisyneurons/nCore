@@ -5,7 +5,10 @@ require_relative 'BaseLearningExperiment'
 require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 
 puts "\n\n############ TrainingData #############"
-experimentNumbers = $redis.lrange("experimentsToPostProcess", 0, -1)
+
+find the most recent job name using SnapShotData  !!!!  Then equate it to jobName for next statement
+
+experimentNumbers = $redis.lrange("#{jobName}List", 0, -1)
 puts experimentNumbers
 
 unless (experimentNumbers.empty?)
@@ -26,8 +29,15 @@ unless (experimentNumbers.empty?)
     minimums << testMSEsForExperiment.min
     lastTestMSEs << testMSEsForExperiment.last
   end
+
   puts minimums
+  puts
   puts lastTestMSEs
+  puts
+
+  ratios = []
+  minimums.each_with_index {|aMinimum, index| ratios << (aMinimum / lastTestMSEs[index]) }
+  puts ratios
 end
 
 

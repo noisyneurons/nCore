@@ -359,6 +359,7 @@ class StepTrainCircleProblemLocFlockAtOutputNeuron < AbstractStepTrainer
       initialMSEatBeginningOfBPOELoop = loopForBackPropOfOutputError()
       loopForLocalFlocking(initialMSEatBeginningOfBPOELoop)
     end
+
     testMSE = calcTestingMeanSquaredErrors
     return calcMSE, testMSE, accumulatedAbsoluteFlockingErrors
   end
@@ -436,12 +437,11 @@ class StepTrainCircleProblemBPFlockAndLocFlockAtOutputNeuron < StepTrainCirclePr
     self.accumulatedAbsoluteFlockingErrors = []
 
     while (trainingSequence.stillMoreEpochs)
-
       initialMSEatBeginningOfBPOELoop = loopForBackPropOfOutputError()
       loopForLocalFlocking(initialMSEatBeginningOfBPOELoop)
       loopForBackPropOfFlockingError(initialMSEatBeginningOfBPOELoop)
-
     end
+
     testMSE = calcTestingMeanSquaredErrors
     return calcMSE, testMSE, accumulatedAbsoluteFlockingErrors
   end
@@ -527,6 +527,8 @@ class TrainingSupervisorBase
 
   def train
     mse = 1e20
+    testMSE = nil
+    accumulatedAbsoluteFlockingErrors = nil
     numTrials = 50
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
       mse, testMSE, accumulatedAbsoluteFlockingErrors = stepTrainer.train(numTrials)
