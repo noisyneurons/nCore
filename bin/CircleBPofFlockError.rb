@@ -15,7 +15,7 @@ class Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.3, # 0.03,
         :minMSE => 0.001,
-        :maxNumEpochs => 80e3,
+        :maxNumEpochs => 100e3,
 
         # Network Architecture and initial weights
         :numberOfInputNeurons => 2,
@@ -35,15 +35,15 @@ class Experiment
         :intervalForSavingTrainingData => 1000,
 
         # Flocking Parameters...
-        :flockingLearningRate => -0.01, # -0.0002,
-        :bpFlockingLearningRate => -0.002,
-        :maxFlockingIterationsCount => 30, # 2000,
+        :flockingLearningRate => -0.009, # -0.0002,
+        :bpFlockingLearningRate => -0.063,
+        :maxFlockingIterationsCount => 60, # 2000,
         :targetFlockIterationsCount => 20,
         :ratioDropInMSE => 0.95,
         :ratioDropInMSEForFlocking => 0.96,
         # :maxAbsFlockingErrorsPerExample => 0.2, #  0.04 / numberOfExamples = 0.005
         :ratioDropInMSEForBPFlocking => 0.98,
-        :maxBPFlockingIterationsCount => 30,
+        :maxBPFlockingIterationsCount => 60,
         :targetBPFlockIterationsCount => 20,
 
 
@@ -122,6 +122,6 @@ end
 
 randomNumberSeed = 1
 
-experiment = Experiment.new("Job2ForCircleBPofFlockError", randomNumberSeed)
+experiment = Experiment.new("Job3ForCircleBPofFlockError", randomNumberSeed)
 
 experiment.performSimulation()

@@ -392,8 +392,8 @@ class StepTrainCircleProblemLocFlockAtOutputNeuron < AbstractStepTrainer
     end
 
     if (maxFlockingIterationsCount > 0)
-      self.flockingLearningRate = flockingLearningRate * 0.707 if (flockCount < targetFlockIterationsCount)
-      self.flockingLearningRate = flockingLearningRate * 1.414 if (flockCount > targetFlockIterationsCount)
+      self.flockingLearningRate = flockingLearningRate *  (1.0/1.05)  if (flockCount < targetFlockIterationsCount)
+      self.flockingLearningRate = flockingLearningRate * 1.05 if (flockCount > targetFlockIterationsCount)
       puts "flockCount=\t#{flockCount}\tflockLearningRate=\t#{flockingLearningRate}"
     end
   end
@@ -460,8 +460,8 @@ class StepTrainCircleProblemBPFlockAndLocFlockAtOutputNeuron < StepTrainCirclePr
     end
 
     if (maxBPFlockingIterationsCount > 0)
-      self.bpFlockingLearningRate = bpFlockingLearningRate * 0.707 if (flockCount < targetBPFlockIterationsCount)
-      self.bpFlockingLearningRate = bpFlockingLearningRate * 1.414 if (flockCount > targetBPFlockIterationsCount)
+      self.bpFlockingLearningRate = bpFlockingLearningRate * (1.0/1.05) if (flockCount < targetBPFlockIterationsCount)
+      self.bpFlockingLearningRate = bpFlockingLearningRate * 1.05 if (flockCount > targetBPFlockIterationsCount)
       puts "bpFlockCount=\t#{flockCount}\tbpFlockingLearningRate\t#{bpFlockingLearningRate}"
     end
   end
