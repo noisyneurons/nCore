@@ -16,13 +16,13 @@ descriptionOfLastExperiment = lastSnapShotDataRecord[:descriptionOfExperiment]
 jobName = descriptionOfLastExperiment[0...10]
 #  jobName = "Job2ForCir"
 
-filename = "#{Dir.home}/Code/Ruby/NN2012/analysisResults/PostProcessing_#{$currentHost}_#{jobName}"
+experimentNumbers = $redis.lrange("#{jobName}List", 0, -1)
+
+filename = "#{Dir.home}/Code/Ruby/NN2012/analysisResults/PostProcessing_#{jobName}_ExpNum#{experimentNumbers.first}"
 File.open(filename, "w") do |fileOut|
   fileOut.puts "\n\n############ Analysis of Simulation Output #############"
 
   fileOut.puts "jobName=\t #{jobName}"
-
-  experimentNumbers = $redis.lrange("#{jobName}List", 0, -1)
   fileOut.puts experimentNumbers
 
   unless (experimentNumbers.empty?)
