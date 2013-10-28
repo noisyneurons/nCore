@@ -21,7 +21,7 @@ class Experiment
         :numberOfInputNeurons => 2,
         :numberOfHiddenNeurons => 20,
         :numberOfOutputNeurons => 1,
-        :weightRange => 0.1,
+        :weightRange => 1.0,
         :typeOfLink => FlockingLink,
 
         # Training Set parameters
@@ -40,7 +40,7 @@ class Experiment
         :maxFlockingIterationsCount => 60, # 2000,
         :targetFlockIterationsCount => 20,
         :ratioDropInMSE => 0.95,
-        :ratioDropInMSEForFlocking => 0.98, # 0.96,
+        :ratioDropInMSEForFlocking => 0.96,
         # :maxAbsFlockingErrorsPerExample => 0.2, #  0.04 / numberOfExamples = 0.005
         :ratioDropInMSEForBPFlocking => 0.98,
         :maxBPFlockingIterationsCount => 60,
@@ -120,8 +120,8 @@ end
 
 ###################################### START of Main Learning  ##########################################
 
-randomNumberSeed = 1
+randomNumberSeed = 2
 
-experiment = Experiment.new("Job6CNoFlockError", randomNumberSeed)
+experiment = Experiment.new("J8BpFlWtR1", randomNumberSeed)
 
 experiment.performSimulation()
