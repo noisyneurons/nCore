@@ -607,6 +607,8 @@ class TrainSuperCircleProblemBPFlockAndLocFlockAtOutputNeuron < TrainingSupervis
 end
 
 
+
+
 #class WeightChangeNormalizer
 #  attr_accessor :layer, :weightChangeSetPoint
 #
