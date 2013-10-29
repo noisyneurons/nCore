@@ -6,7 +6,7 @@ MiniTest::Reporters.use!
 ## ../nCore/test/TestDataSet.rb
 #
 
-require_relative  '../lib/core/DataSet'
+require_relative '../lib/core/DataSet'
 
 Tolerance = 0.00001
 

@@ -8,7 +8,7 @@ require 'test/unit'
 require 'minitest/unit'
 require 'minitest/mock'
 
-require_relative  '../lib/core/NeuralPartsExtended'
+require_relative '../lib/core/NeuralPartsExtended'
 
 Tolerance = 0.00001
 ############################################################      N
@@ -54,7 +54,7 @@ class TestOfFlockingNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
     puts "#{@metricRecorder.vectorizeEpochMeasures}"
     @aFlockingNeuron.clusterer.clusters.each_with_index do |aCluster, clusterNumber|
       puts "Cluster #{clusterNumber} center= #{aCluster.center};  dispersion= #{aCluster.dispersion(@vectorizedTestData)}"
-      puts "\t\t\tCluster Weightings= #{aCluster.exampleMembershipWeightsForCluster}"
+      puts "\t\t\tCluster Weightings= #{aCluster.membershipWeightForEachExample}"
     end
   end
 
@@ -127,7 +127,7 @@ class Test2OfFlockingNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
     puts "#{@metricRecorder.vectorizeEpochMeasures}"
     @aFlockingNeuron.clusterer.clusters.each_with_index do |aCluster, clusterNumber|
       puts "Cluster #{clusterNumber} center= #{aCluster.center};  dispersion= #{aCluster.dispersion(@vectorizedTestData)}"
-      puts "\t\t\tCluster Weightings= #{aCluster.exampleMembershipWeightsForCluster}"
+      puts "\t\t\tCluster Weightings= #{aCluster.membershipWeightForEachExample}"
     end
   end
 
@@ -167,10 +167,10 @@ class Test2OfFlockingNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
     @aFlockingNeuron.exampleNumber = exampleNumber
     actualNetInput = (@vectorizedTestData[exampleNumber])[0]
 
-    clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsLocationFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
+    clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
     expectedFlockingError = clustersApproximationOfLocationOfExamplesNetInput - actualNetInput
 
-    @aFlockingNeuron.calcLocalFlockingError{}
+    @aFlockingNeuron.calcLocalFlockingError {}
     assert_equal(expectedFlockingError, @aFlockingNeuron.localFlockingError, "flocking error for given example and neuron are incorrect")
 
     @metricRecorder.verify
@@ -185,10 +185,10 @@ class Test2OfFlockingNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
 
       @aFlockingNeuron.exampleNumber = exampleNumber
       actualNetInput = (@vectorizedTestData[exampleNumber])[0]
-      clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsLocationFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
+      clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
       expectedFlockingError = clustersApproximationOfLocationOfExamplesNetInput - actualNetInput
 
-      @aFlockingNeuron.calcLocalFlockingError{}
+      @aFlockingNeuron.calcLocalFlockingError {}
 
       assert_equal(expectedFlockingError, @aFlockingNeuron.localFlockingError, "flocking error for given example and neuron are incorrect")
       @metricRecorder.verify
@@ -240,7 +240,7 @@ class TestOfFlockingOutputNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
     puts "#{@metricRecorder.vectorizeEpochMeasures}"
     @aFlockingNeuron.clusterer.clusters.each_with_index do |aCluster, clusterNumber|
       puts "Cluster #{clusterNumber} center= #{aCluster.center};  dispersion= #{aCluster.dispersion(@vectorizedTestData)}"
-      puts "\t\t\tCluster Weightings= #{aCluster.exampleMembershipWeightsForCluster}"
+      puts "\t\t\tCluster Weightings= #{aCluster.membershipWeightForEachExample}"
     end
   end
 
@@ -313,7 +313,7 @@ class Test2OfFlockingOutputNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
     puts "#{@metricRecorder.vectorizeEpochMeasures}"
     @aFlockingNeuron.clusterer.clusters.each_with_index do |aCluster, clusterNumber|
       puts "Cluster #{clusterNumber} center= #{aCluster.center};  dispersion= #{aCluster.dispersion(@vectorizedTestData)}"
-      puts "\t\t\tCluster Weightings= #{aCluster.exampleMembershipWeightsForCluster}"
+      puts "\t\t\tCluster Weightings= #{aCluster.membershipWeightForEachExample}"
     end
   end
 
@@ -353,10 +353,10 @@ class Test2OfFlockingOutputNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
     @aFlockingNeuron.exampleNumber = exampleNumber
     actualNetInput = (@vectorizedTestData[exampleNumber])[0]
 
-    clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsLocationFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
+    clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
     expectedFlockingError = clustersApproximationOfLocationOfExamplesNetInput - actualNetInput
 
-    @aFlockingNeuron.calcLocalFlockingError{}
+    @aFlockingNeuron.calcLocalFlockingError {}
     assert_equal(expectedFlockingError, @aFlockingNeuron.localFlockingError, "flocking error for given example and neuron are incorrect")
 
     @metricRecorder.verify
@@ -371,10 +371,10 @@ class Test2OfFlockingOutputNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
 
       @aFlockingNeuron.exampleNumber = exampleNumber
       actualNetInput = (@vectorizedTestData[exampleNumber])[0]
-      clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsLocationFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
+      clustersApproximationOfLocationOfExamplesNetInput = @aFlockingNeuron.clusterer.estimatePointsClusterCenterFromItsFractionalMembershipToEachCluster(exampleNumber)[0]
       expectedFlockingError = clustersApproximationOfLocationOfExamplesNetInput - actualNetInput
 
-      @aFlockingNeuron.calcLocalFlockingError{}
+      @aFlockingNeuron.calcLocalFlockingError {}
 
       assert_equal(expectedFlockingError, @aFlockingNeuron.localFlockingError, "flocking error for given example and neuron are incorrect")
       @metricRecorder.verify

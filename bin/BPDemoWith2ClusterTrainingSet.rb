@@ -1,10 +1,10 @@
 ### VERSION "nCore"
 ## ../nCore/bin/BPDemoWith2ClusterTrainingSet.rb
 
-require_relative  '../lib/core/DataSet'
-require_relative  '../lib/core/NeuralParts'
-require_relative  '../lib/core/NetworkFactories'
-require_relative  '../lib/plot/CorePlottingCode'
+require_relative '../lib/core/DataSet'
+require_relative '../lib/core/NeuralParts'
+require_relative '../lib/core/NetworkFactories'
+require_relative '../lib/plot/CorePlottingCode'
 
 include ExampleDistribution
 
@@ -32,7 +32,7 @@ args = {:learningRate => 0.3, #1.0,
         :numberOfExamples => numberOfExamples
 }
 
-aLearningNetwork = LearningNetwork.new(args)
+aLearningNetwork = BaseNetwork.new(args)
 allNeuronLayers = aLearningNetwork.createSimpleLearningANN
 
 puts "Bias Neuron output= #{aLearningNetwork.theBiasNeuron.output}"

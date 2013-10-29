@@ -99,7 +99,7 @@ args = {:learningRate => 0.003, #1.0,
         :exampleVectorLength => 2,
         :delta => 0.001,
         :maxNumberOfClusteringIterations => 100,
-        :flockLearningRate => -0.1  # 0.0#
+        :flockLearningRate => -0.1 # 0.0#
 }
 
 aLearningNetwork = AutocoderFlockingNetwork.new(args)
@@ -143,7 +143,7 @@ while (mse > 0.01 && epochNumber < 10**5)
   end
   neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
   flockingNeurons.each { |aNeuron| aNeuron.clusterAllResponses } ## Required for calculation of flocking error on subsequent epoch
-  # std("epoch number ", epochNumber)
+                                                                 # std("epoch number ", epochNumber)
   mse = aLearningNetwork.calcNetworksMeanSquareError
   if (epochNumber.modulo(100) == 0)
     puts "At Epoch # #{epochNumber} Network's MSE=\t#{aLearningNetwork.calcNetworksMeanSquareError}\n\n" # if (epochNumber.modulo(100) == 0)

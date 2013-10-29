@@ -1,11 +1,8 @@
 ### VERSION "nCore"
 ## ../nCore/lib/plot/CorePlottingCode.rb
 
-require_relative  '../core/Utilities'
+require_relative '../core/Utilities'
 require_relative '../../../rgplot/lib/gnuplotMOD'
-
-
-
 
 # NOTES:
 
@@ -20,26 +17,26 @@ require_relative '../../../rgplot/lib/gnuplotMOD'
 
 ############ Recent Additions to Plotting Section (uses a specialized library) #########################
 
-def plotMSEvsEpochNumber(aLearningNetwork)
-  mseVsEpochMeasurements = aLearningNetwork.measures
-  std("measures=\t", mseVsEpochMeasurements)
+#def plotMSEvsEpochNumber(aLearningNetwork)
+#  mseVsEpochMeasurements = aLearningNetwork.measures
+#  std("measures=\t", mseVsEpochMeasurements)
+#  x = mseVsEpochMeasurements.collect { |aMeasure| aMeasure[:epochs] }
+#  y = mseVsEpochMeasurements.collect { |aMeasure| aMeasure[:mse] }
+#
+#  aPlotter = Plotter.new(title="Training Error", "Number of Epochs", "Error on Training Set", plotOutputFilenameBase = "#{Dir.home}/Code/Ruby/NN2012/plots/xyPlot")
+#  aPlotter.plot(x, y)
+#end
+
+
+def plotMSEvsEpochNumber(mseVsEpochMeasurements)
   x = mseVsEpochMeasurements.collect { |aMeasure| aMeasure[:epochs] }
   y = mseVsEpochMeasurements.collect { |aMeasure| aMeasure[:mse] }
-
-  #puts
-  #puts "#{Dir.pwd}/../../plots/xyPlot"
-  #puts
-  #puts "working directory= \t#{Dir.pwd}"
-  #aValue = File.expand_path File.dirname(__FILE__)
-  #puts "working directory= \t#{aValue}"
-  ## aPlotter = Plotter.new(title="Training Error", "Number of Epochs", "Error on Training Set", plotOutputFilenameBase = "/home/mark/Code/Ruby/NN2012/plots/xyPlot")
-
-  aPlotter = Plotter.new(title="Training Error", "Number of Epochs", "Error on Training Set", plotOutputFilenameBase = "#{Dir.pwd}/../../plots/xyPlot")
+  aPlotter = Plotter.new(title="Training Error", "Number of Epochs", "Error on Training Set", plotOutputFilenameBase = "#{Dir.home}/Code/Ruby/NN2012/plots/trainErrorExp#{$globalExperimentNumber}")
   aPlotter.plot(x, y)
 end
 
 def plotDotsWhereOutputGtPt5(x, y, aNeuron, epochNumber)
-  aPlotter = Plotter.new(title="Zero Xing for Neuron #{aNeuron.id} at epoch #{epochNumber}", "input 0", "input 1", plotOutputFilenameBase = "/home/mark/Code/Ruby/NN2012/plots/zeroXingPlot_N#{aNeuron.id}_E#{epochNumber}")
+  aPlotter = Plotter.new(title="Zero Xing for Neuron #{aNeuron.id} at epoch #{epochNumber}", "input 0", "input 1", plotOutputFilenameBase = "#{Dir.home}/Code/Ruby/NN2012/plots/zeroXingPlotExp#{$globalExperimentNumber}_N#{aNeuron.id}_E#{epochNumber}")
   aPlotter.plot(x, y)
 end
 
@@ -47,15 +44,17 @@ end
 ############ ORIGINAL Plotting Section (uses a specialized library) #########################
 class Plotter
   attr_accessor :xMax, :xMin, :yMax, :yMin, :zMax, :zMin
+  include OS
 
   def initialize(title="an XY Plot", xLabel="x", yLabel="y", plotOutputFilenameBase = "#{Dir.pwd}/../../plots/xyPlot",
-      deviceSetup="png font arial 18 size 1024,768 xffffff x000000 x404040 xff0000 xffa500 x66cdaa xcdb5cd xadd8e6 x0000ff xdda0dd x9500d3",
+      #deviceSetup="png font arial 18 size 1024,768 xffffff x000000 x404040 xff0000 xffa500 x66cdaa xcdb5cd xadd8e6 x0000ff xdda0dd x9500d3",
+      deviceSetup="png font arial 18 size 1024,768 #ffffff #000000 #404040 #ff0000 #ffa500 #66cdaa #cdb5cd #add8e6 #0000ff #dda0dd #9500d3",
       subTitle="", parameterLabel="")
     @title = title
     @xLabel = xLabel
     @yLabel = yLabel
     aFilename = (title.gsub(/\s+/, ""))[0..25] #  Simple way to generate a filename from the title...
-    @plotOutputFilenameBase = plotOutputFilenameBase || ("#{Dir.pwd}/../../plots/" + aFilename)
+    @plotOutputFilenameBase = plotOutputFilenameBase ||= ("#{Dir.pwd}/../../plots/" + aFilename)
     @deviceSetup = deviceSetup
     @subTitle = subTitle
     @parameterLabel = parameterLabel
@@ -124,6 +123,35 @@ class Plotter
     end
     createImageFile()
   end
+
+  ########################### 2-D plot of training and test error vs. epoch number   #################################
+  def plotNetInputs(epochsArray, examplesNetInputs)
+    numberOfExamples = examplesNetInputs.length
+    @yMax, @yMin = determineScales(examplesNetInputs.flatten)
+    File.open(@plotFilename, "w") do |gp|
+      Gnuplot::Plot.new(gp) do |plot|
+        plot.title "#{@title}"
+        plot.xlabel "#{@xLabel}"
+        plot.ylabel "#{@yLabel}"
+        plot.key "right top"
+        plot.yrange "[#{@yMin}:#{@yMax}]"
+        #plot.size "square"
+
+        plot.terminal @deviceSetup
+        plot.output @plotImageFilename
+        numberOfExamples.times do |exampleNumber|
+          plot.data << Gnuplot::DataSet.new([epochsArray, (examplesNetInputs[exampleNumber])]) do |ds|
+            #ds.with = "points"
+            ds.with = "lines lt #{exampleNumber + 1}"
+            ds.linewidth = 3
+            ds.title = "#{exampleNumber}"
+          end
+        end
+      end
+    end
+    createImageFile()
+  end
+
 
   ########################### Similar 2-D plots: Variables vs. epoch number   #################################
   def plotHyperplaneMeasuresVsEpoch(epochNumber, angleInRadians, averageOfAbsoluteWeights)
@@ -347,26 +375,26 @@ class Plotter
     createImageFile()
   end
 
-  def createImageFileWindows
-    currentDirectory = "/home/mark/Code/Ruby/NN2012"
-    Dir.chdir(currentDirectory) do
-      ENV['RB_GNUPLOT'] = "#{currentDirectory}/gnuplot/bin/wgnuplot_pipes.exe"
-      plotProgramToRun = "#{currentDirectory}/gnuplot/bin/wgnuplot_pipes.exe"
-      system("#{plotProgramToRun} #{@plotFilename}")
-    end
-    return @plotImageFilename
-  end
+  #def createImageFileWindows
+  #  currentDirectory = "/home/mark/Code/Ruby/NN2012"
+  #  Dir.chdir(currentDirectory) do
+  #    ENV['RB_GNUPLOT'] = "#{currentDirectory}/gnuplot/bin/wgnuplot_pipes.exe"
+  #    plotProgramToRun = "#{currentDirectory}/gnuplot/bin/wgnuplot_pipes.exe"
+  #    system("#{plotProgramToRun} #{@plotFilename}")
+  #  end
+  #  return @plotImageFilename
+  #end
 
   def createImageFile
-    baseDirectory =  "#{Dir.pwd}/../../"
+    baseDirectory = "#{Dir.pwd}/../../"
+
     Dir.chdir(baseDirectory) do
-      plotProgramToRun = "#{baseDirectory}/gnuplot/bin/wgnuplot_pipes.exe"  # For Windows
-      # plotProgramToRun = "gnuplot"  # For Linux
+      plotProgramToRun = "#{baseDirectory}/gnuplot/bin/wgnuplot_pipes.exe" if (OS.windows?)
+      plotProgramToRun = "gnuplot" if (OS.linux?)
       system("#{plotProgramToRun} #{@plotFilename}")
     end
     return @plotImageFilename
   end
-
 
 
   def createAnimatedGnuplotFile(arrayOfXArrays, arrayOfYArrays, arrayOfdeltaxArrays=nil, arrayOfdeltayArrays=nil)
@@ -751,3 +779,5 @@ class Plotter
   end
 
 end
+
+

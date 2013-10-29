@@ -2,10 +2,10 @@
 ## ../nCore/bin/AutocoderBPDemo.rb
 # Purpose:  Simple backprop autocoder implementation. -- to build-up to and compare with flocking version.
 
-require_relative  '../lib/core/DataSet'
-require_relative  '../lib/core/NeuralParts'
-require_relative  '../lib/core/NetworkFactories'
-require_relative  '../lib/plot/CorePlottingCode'
+require_relative '../lib/core/DataSet'
+require_relative '../lib/core/NeuralParts'
+require_relative '../lib/core/NetworkFactories'
+require_relative '../lib/plot/CorePlottingCode'
 
 srand(0)
 

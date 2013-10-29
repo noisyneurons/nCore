@@ -7,10 +7,10 @@ require 'test/unit'
 require 'minitest/reporters'
 MiniTest::Reporters.use!
 
-require_relative  '../lib/core/DataSet'
-require_relative  '../lib/core/NeuralParts'
-require_relative  '../lib/core/NetworkFactories'
-require_relative  '../lib/plot/CorePlottingCode'
+require_relative '../lib/core/DataSet'
+require_relative '../lib/core/NeuralParts'
+require_relative '../lib/core/NetworkFactories'
+require_relative '../lib/plot/CorePlottingCode'
 
 include ExampleDistribution
 
@@ -19,7 +19,7 @@ include ExampleDistribution
 class FunctionalBackpropXORTest < MiniTest::Unit::TestCase
   def setup
     srand(0) # For a '0' argument normally takes 6053 epochs to reach error criteria of 0.01
-# add the training examples...
+             # add the training examples...
     @examples = []
     @examples << {:inputs => [0.0, 0.0], :targets => [0.1], :exampleNumber => 0}
     @examples << {:inputs => [0.0, 1.0], :targets => [0.9], :exampleNumber => 1}
@@ -37,7 +37,7 @@ class FunctionalBackpropXORTest < MiniTest::Unit::TestCase
              :numberOfExamples => @numberOfExamples
     }
 
-    @aLearningNetwork = LearningNetwork.new(nil, @args)
+    @aLearningNetwork = BaseNetwork.new(nil, @args)
     @allNeuronLayers = @aLearningNetwork.createSimpleLearningANN
   end
 

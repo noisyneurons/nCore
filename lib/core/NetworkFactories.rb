@@ -3,7 +3,6 @@
 
 require_relative 'Utilities'
 
-############################################################      N
 module NeuronToNeuronConnection
   def connect_layer_to_another(sendingLayer, receivingLayer, args)
     sendingLayer.each { |sendingNeuron| connectToAllNeuronsInReceivingLayer(sendingNeuron, receivingLayer, args) }
@@ -72,51 +71,25 @@ module NeuronToNeuronConnection
     outputLinks.delete(theCommonLink)
     inputLinks.delete(theCommonLink)
   end
-
 end
 
-############################################################      N
-class LearningNetwork
-  attr_accessor :dataStoreManager, :args, :allNeuronLayers, :theBiasNeuron, :mse,
-                :allNeuronsInOneArray, :inputLayer, :hiddenLayer, :outputLayer,
-                :hiddenLayer1, :hiddenLayer2, :hiddenLayer3, :allHiddenLayers,
-                :neuronsWithInputLinks,:neuronsWithInputLinksInReverseOrder,
-                :numberOfExamples, :epochNumber,
-                :networkMeanSquaredError, :networkRecorder
+############################################################
+class BaseNetwork
+  attr_accessor :args, :allNeuronLayers, :theBiasNeuron,
+                :inputLayer, :outputLayer
 
-  def initialize(dataStoreManager, args)
-    @dataStoreManager = dataStoreManager
+  def initialize(args)
     @args = args
-    @mse = nil
     @allNeuronLayers = []
     NeuronBase.zeroID
     @theBiasNeuron = BiasNeuron.new(args)
     NeuronBase.zeroID
-    @numberOfExamples = @args[:numberOfExamples]
+    createSimpleLearningANN
   end
 
   def createSimpleLearningANN
-    @networkRecorder = NetworkRecorder.new(self, args)
     createAllLayersOfNeurons()
     connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
-    return allNeuronLayers
-  end
-
-  def calcNetworksMeanSquareError
-    outputLayer = allNeuronLayers.last
-    sse = outputLayer.inject(0.0) { |sum, anOutputNeuron| sum + anOutputNeuron.calcSumOfSquaredErrors }
-    numberOfOutputNeurons = outputLayer.length
-    self.mse = (sse / (numberOfOutputNeurons * numberOfExamples))
-  end
-
-  # Secondary Importance:
-
-  def recordResponses
-    networkRecorder.recordResponses
-  end
-
-  def measures
-    networkRecorder.measures
   end
 
   def to_s
@@ -132,21 +105,6 @@ class LearningNetwork
 
   include NeuronToNeuronConnection
 
-  #def createAllLayersOfNeurons
-  #  self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
-  #  self.allNeuronLayers << inputLayer
-  #
-  #  numberOfHiddenNeurons = args[:numberOfHiddenNeurons]
-  #  if (numberOfHiddenNeurons > 0)
-  #    self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron= Neuron, numberOfHiddenNeurons)
-  #    self.allNeuronLayers << hiddenLayer1
-  #  end
-  #
-  #  self.outputLayer = createAndConnectLayer(hiddenLayer1, typeOfNeuron = OutputNeuron, args[:numberOfOutputNeurons])
-  #  self.allNeuronLayers << outputLayer
-  #  return allNeuronLayers
-  #end
-
   def createAndConnectLayer(inputToLayer, typeOfNeuronInLayer, numberOfNeurons)
     layer = createArrayOfNeurons(typeOfNeuronInLayer, numberOfNeurons, args)
     connect_layer_to_another(inputToLayer, layer, args) unless (inputToLayer.nil?) # input neurons do not receive any inputs from other neurons
@@ -154,7 +112,7 @@ class LearningNetwork
   end
 
   def connectAllNeuronsToBiasNeuronExceptForThe(inputNeurons)
-  addLinksFromBiasNeuronToHiddenAndOutputNeurons(allNeuronLayers.flatten - inputNeurons)
+    addLinksFromBiasNeuronToHiddenAndOutputNeurons(allNeuronLayers.flatten - inputNeurons)
   end
 
   def addLinksFromBiasNeuronToHiddenAndOutputNeurons(singleArrayOfAllNeuronsToReceiveBiasInput)
@@ -162,7 +120,7 @@ class LearningNetwork
   end
 end # Base network
 
-class SimpleFlockingNeuronNetwork < LearningNetwork
+class SimpleFlockingNeuronNetwork < BaseNetwork # TODO this is identical, except in name, to  SimpleFlockingNetwork
 
   def createAllLayersOfNeurons
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
@@ -170,87 +128,33 @@ class SimpleFlockingNeuronNetwork < LearningNetwork
 
     self.outputLayer = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
     self.allNeuronLayers << outputLayer
-
-    self.allNeuronsInOneArray = allNeuronLayers.flatten
-    self.neuronsWithInputLinks = outputLayer
-    self.neuronsWithInputLinksInReverseOrder = neuronsWithInputLinks.reverse
-
-    return allNeuronLayers
-  end
-
-end # Used for main: "SimplestFlockingDemo2.rb"
-
-class AnalogyNetwork < LearningNetwork
-
-  def createAllLayersOfNeurons
-    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
-    self.allNeuronLayers << inputLayer
-
-    self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron= FlockingNeuron, args[:layer1NumberOfHiddenNeurons])
-    self.allNeuronLayers << hiddenLayer1
-
-    self.hiddenLayer2 = createAndConnectLayer((inputLayer + hiddenLayer1), typeOfNeuron= FlockingNeuron, args[:layer2NumberOfHiddenNeurons])
-    self.allNeuronLayers << hiddenLayer2
-
-    self.hiddenLayer3 = createAndConnectLayer((inputLayer + hiddenLayer2), typeOfNeuron= FlockingNeuron, args[:layer3NumberOfHiddenNeurons])
-    self.allNeuronLayers << hiddenLayer3
-
-    self.outputLayer = createAndConnectLayer(hiddenLayer1, typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
-    self.allNeuronLayers << outputLayer
-
-    self.allNeuronsInOneArray = allNeuronLayers.flatten
-    self.neuronsWithInputLinks = outputLayer
-    self.neuronsWithInputLinksInReverseOrder = neuronsWithInputLinks.reverse
-
-    return allNeuronLayers
-  end
-
-  def createSimpleLearningANN
-    @networkRecorder = NetworkRecorder.new(self, args)
-    createAllLayersOfNeurons()
-    connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
-    return allNeuronLayers
-  end
-
-end # Used for main: "Analogy4Class.rb"
-
-class AnalogyNetworkNoJumpLinks < AnalogyNetwork
-  def createAllLayersOfNeurons
-    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
-    self.allNeuronLayers << inputLayer
-
-    self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron= FlockingNeuron, args[:layer1NumberOfHiddenNeurons])
-    self.allNeuronLayers << hiddenLayer1
-
-    self.hiddenLayer2 = createAndConnectLayer(hiddenLayer1, typeOfNeuron= FlockingNeuron, args[:layer2NumberOfHiddenNeurons])
-    self.allNeuronLayers << hiddenLayer2
-
-    self.hiddenLayer3 = createAndConnectLayer(hiddenLayer2, typeOfNeuron= FlockingNeuron, args[:layer3NumberOfHiddenNeurons])
-    self.allNeuronLayers << hiddenLayer3
-
-    self.outputLayer = createAndConnectLayer(hiddenLayer1, typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
-    self.allNeuronLayers << outputLayer
-    return allNeuronLayers
-  end
-end # Used for a variation of main: "Analogy4Class.rb"
-
-############################################################      N
-class NetworkRecorder
-  attr_accessor :network, :args, :measures
-
-  def initialize(network, args)
-    @network = network
-    @args = args
-    @measures = []
-    @trainingSequence = nil
-  end
-
-  def trainingSequence
-    @trainingSequence ||= TrainingSequence.instance
-  end
-
-  def recordResponses
-    measures << {:mse => network.mse, :epochs => trainingSequence.epochs} if (trainingSequence.timeToRecordData)
   end
 end
+
+class Flocking1LayerNetwork < BaseNetwork
+
+  def createAllLayersOfNeurons
+    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
+    self.allNeuronLayers << inputLayer
+
+    self.outputLayer = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
+    self.allNeuronLayers << outputLayer
+  end
+end
+
+class Flocking3LayerNetwork < BaseNetwork
+
+  def createAllLayersOfNeurons
+    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
+    self.allNeuronLayers << inputLayer
+
+    hiddenLayer = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingNeuron, args[:numberOfHiddenNeurons])
+    self.allNeuronLayers << hiddenLayer
+
+    self.outputLayer = createAndConnectLayer(hiddenLayer, typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
+    self.allNeuronLayers << outputLayer
+  end
+end
+
+
 

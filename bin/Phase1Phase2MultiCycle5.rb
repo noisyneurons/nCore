@@ -83,9 +83,9 @@ end
 #class Trainer4Class
 #  def designateNeuronGroups
 #    neuronsCreatingFlockingError = hiddenLayer
-#    neuronsAdaptingToLocalFlockingError = hiddenLayer
+#    adaptingNeurons = hiddenLayer
 #    neuronsAdaptingToBackPropedFlockingError = []
-#    return neuronsCreatingFlockingError, neuronsAdaptingToLocalFlockingError, neuronsAdaptingToBackPropedFlockingError
+#    return neuronsCreatingFlockingError, adaptingNeurons, neuronsAdaptingToBackPropedFlockingError
 #  end
 #end
 
@@ -104,8 +104,8 @@ class FlockingNeuronRecorder ##  TODO temporary
   end
 
   def quickReportOfExampleWeightings(epochDataToRecord)
-    neuron.clusterer.clusters.each_with_index do |cluster, numberOfCluster|
-      cluster.exampleMembershipWeightsForCluster.each { |exampleWeight| puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
+    neuron.clusters.each_with_index do |cluster, numberOfCluster|
+      cluster.membershipWeightForEachExample.each { |exampleWeight| puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
       puts
     end
   end
@@ -175,7 +175,7 @@ def setParameters(descriptionOfExperiment)
 
       :learningRateNoFlockPhase1 => 3.0,
       :learningRateLocalFlockPhase2 => -0.005,
-      :learningRateBPOutputErrorPhase2  => 0.5,
+      :learningRateBPOutputErrorPhase2 => 0.5,
 
       :phase1Epochs => 10,
       :phase2Epochs => 10,
@@ -208,7 +208,7 @@ def setParameters(descriptionOfExperiment)
       :symmetricalCenters => false, # if true, speed is negatively affected
 
       # Inner Numeric Constraints
-      :minDistanceAllowed => 1.0e-30,
+      :floorToPreventOverflow => 1.0e-30,
       :leadingFactor => 1.0 # 1.02,
   }
 end

@@ -1,7 +1,7 @@
 ## NNMeasure.rb
 
-require_relative  '../core/NeuralParts'
-require_relative  'CorePlottingCode'
+require_relative '../core/NeuralParts'
+require_relative 'CorePlottingCode'
 
 ################################### TrainingAndMeasurementTriggers ##########################
 # This effectively the "VIEW" base class for the MVC architecture.
@@ -266,7 +266,7 @@ class BPandFlockingError < TrainingAndMeasurementTriggers
       if ((flockIterationNumber == 0) || (flockIterationNumber == @specification.numberOfFlockingIterations-1))
         exampleNumber = network.example.exampleNumber
         numNeurons = network.layersForLocalFlocking[0].nnComponents.length
-        std("numNeuronsInLayer=\t", numNeurons)    if(exampleNumber == 0)
+        std("numNeuronsInLayer=\t", numNeurons) if (exampleNumber == 0)
         cluster = @theNeuronToExamine.clusterer.determineClusterAssociatedWithExample(exampleNumber)
         clusterNumber = cluster.clusterNumber
         #       @measuresWithinAnEpoch << [@theNeuronToExamine.examplesFlockingError.abs, @theNeuronToExamine.error.abs]
@@ -468,8 +468,8 @@ class BothErrorsVsNetInputAndFlockingViewClusterPlots < TrainingAndMeasurementTr
       exampleNumber = network.example.exampleNumber
       cluster = @theNeuronToExamine.clusterer.determineClusterAssociatedWithExample(exampleNumber)
 
-      unless (cluster.measures.has_key?('BeforeFlocking'))  # Do we need to init hash values to arrays
-        # YES, Init hash values to arrays:
+      unless (cluster.measures.has_key?('BeforeFlocking')) # Do we need to init hash values to arrays
+                                                           # YES, Init hash values to arrays:
         cluster.measures['BeforeFlocking'] = []
         cluster.measures['EndOfFlocking'] = []
         cluster.measures['CenterOfFlock'] = []

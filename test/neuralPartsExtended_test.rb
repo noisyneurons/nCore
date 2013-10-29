@@ -6,7 +6,7 @@ require 'minitest/mock'
 require 'minitest/reporters'
 MiniTest::Reporters.use!
 
-require_relative  '../lib/core/NeuralPartsExtended'
+require_relative '../lib/core/NeuralPartsExtended'
 
 Tolerance = 0.00001
 
@@ -15,11 +15,12 @@ Tolerance = 0.00001
 ##### and any other Misc Fixtures... #######################
 
 class NeuronBase
-  def postInitialize; end  # ignore error message that is normally called.
+  def postInitialize;
+  end # ignore error message that is normally called.
 end
 class OutputNeuron
-  public  :calcWeightedErrorMetricForExample
-    attr_accessor :exampleNumber
+  public :calcWeightedErrorMetricForExample
+  attr_accessor :exampleNumber
 end
 ############################################################
 ############################################################

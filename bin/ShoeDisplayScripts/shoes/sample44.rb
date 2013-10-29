@@ -23,8 +23,8 @@ Shoes.app height: 260, width: 250 do
 
   def clock_hand(time, sw, unit=30, color=black)
     radius_local = unit == 30 ? @radius : @radius - 15
-    _x = radius_local * Math.sin( time * Math::PI / unit )
-    _y = radius_local * Math.cos( time * Math::PI / unit )
+    _x = radius_local * Math.sin(time * Math::PI / unit)
+    _y = radius_local * Math.cos(time * Math::PI / unit)
     stroke color
     strokewidth sw
     line @centerx, @centery, @centerx + _x, @centery - _y, hidden: true
@@ -37,18 +37,18 @@ Shoes.app height: 260, width: 250 do
     @msg = para '', margin: 4, align: 'center'
   end
   hour, min, sec = [], [], []
-  12.times{|i| 5.times{|j| hour << clock_hand(i+(j/5.0), 8, 6)}}
-  60.times{|i| 4.times{|j| min << clock_hand(i+(j/4.0), 5)}}
-  60.times{|i| 8.times{|j| sec << clock_hand(i+(j/8.0), 2, 30, red)}}
+  12.times { |i| 5.times { |j| hour << clock_hand(i+(j/5.0), 8, 6) } }
+  60.times { |i| 4.times { |j| min << clock_hand(i+(j/4.0), 5) } }
+  60.times { |i| 8.times { |j| sec << clock_hand(i+(j/8.0), 2, 30, red) } }
 
   animate 8 do |i|
     t = Time.new
     h, m, s, u = t.hour, t.min, t.sec, t.usec
     if i % 8 == 0
       @msg.text = fg(t.strftime("%a"), tr_color("#666")) +
-        fg(t.strftime(" %b %d, %Y "), tr_color("#ccc")) +
-        strong(fg(t.strftime("%I:%M"), white)) +
-        fg(t.strftime(".%S"), tr_color("#666"))
+          fg(t.strftime(" %b %d, %Y "), tr_color("#ccc")) +
+          strong(fg(t.strftime("%I:%M"), white)) +
+          fg(t.strftime(".%S"), tr_color("#666"))
     end
     t = h*5+m/12; hour[(t-1)%60].hide; hour[t%60].show
     t = m*4+s/15; min[(t-1)%240].hide; min[t%240].show

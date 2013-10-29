@@ -1,40 +1,20 @@
 ### VERSION "nCore"
 ## ../nCore/bin/LearningRateExperiments.rb
 # Purpose:  To quantitatively explore the simplest clustering w/o supervision.
-# This is a simplified and significantly reorganized version of 'Phase1Phase2MultiCycle.rb'
+# This is a simplified and significantly reorganized version of 'Phase1Phase2MultiCycle.rb
 
-require 'yaml'
+require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
 require_relative '../lib/core/NeuralParts'
 require_relative '../lib/core/NeuralPartsExtended'
+# require_relative '../lib/core/ExampleImportanceMods'    # TODO where should this go?
 require_relative '../lib/core/NetworkFactories'
 require_relative '../lib/plot/CorePlottingCode'
 require_relative '../lib/core/SimulationDataStore'
 require_relative '../lib/core/Trainers.rb'
+# require_relative '../lib/core/ExampleImportanceMods'    # TODO where should this go?
+require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 
-################################ Mods for reporting
-class FlockingNeuronRecorder ##  TODO temporary
-  def recordResponsesForEpoch
-    if (trainingSequence.timeToRecordData)
-      determineCentersOfClusters()
-      epochDataToRecord = ({:epochNumber => dataStoreManager.epochNumber, :neuronID => neuron.id,
-                            :wt1 => neuron.inputLinks[0].weight, :wt2 => neuron.inputLinks[1].weight,
-                            :cluster0Center => @cluster0Center, :cluster1Center => @cluster1Center,
-                            :dPrime => neuron.dPrime})
-      quickReportOfExampleWeightings(epochDataToRecord)
-      # epochDataSet.insert(epochDataToRecord)
-    end
-  end
-
-  def quickReportOfExampleWeightings(epochDataToRecord)
-    neuron.clusterer.clusters.each_with_index do |cluster, numberOfCluster|
-      cluster.exampleMembershipWeightsForCluster.each { |exampleWeight| puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
-      puts
-      puts "NumExamples=\t#{cluster.numExamples}\tNum Membership Weights=\t#{cluster.exampleMembershipWeightsForCluster.length}"
-    end
-  end
-end
-####################### Mods for reporting
 
 def createTrainingSet(args)
   include ExampleDistribution
@@ -47,7 +27,8 @@ def createTrainingSet(args)
   examples << {:inputs => [-1.0, -2.0], :targets => [0.0], :exampleNumber => 5, :class => 0}
   examples << {:inputs => [-1.0, -3.0], :targets => [0.0], :exampleNumber => 6, :class => 0}
   examples << {:inputs => [-1.0, -4.0], :targets => [0.0], :exampleNumber => 7, :class => 0}
-  examples
+  STDERR.puts "****************Incorrect Number of Examples Specified!! ************************" if (args[:numberOfExamples] != examples.length)
+  return examples
 end
 
 def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
@@ -61,90 +42,121 @@ def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
 
 #############################  plotting and visualization....
   plotMSEvsEpochNumber(network)
-
-  dataSetFromJoin = dataStoreManager.joinDataSets # joinForShoesDisplay
-  dataStoreManager.transferDataSetToVisualizer(dataSetFromJoin, args)
 end
 
-def setParameters(descriptionOfExperiment)
-  # You can greatly speed things up (but with a penalty of poorer flocking) by increasing
-  # bpLearningRate and flockLearningRate by 100.  Then 'correcting' flockLearningRate by
-  # reducing it by 5-10
+class Experiment
+  def setParameters
 
-  numberOfExamples = 8
-  randomNumberSeed = 0
-  args = {
-      :descriptionOfExperiment => descriptionOfExperiment,
-      :rng => Random.new(randomNumberSeed),
+    numberOfExamples = 8
+    randomNumberSeed = 0
 
-      :learningRateNoFlockPhase1 => 1.0,
-      :learningRateLocalFlockPhase2 => 1.0,
-      :maxHistory => 8,
-      :searchRangeRatio => 2.0,
+    @args = {
+        :experimentNumber => $globalExperimentNumber,
+        :descriptionOfExperiment => descriptionOfExperiment,
+        :rng => Random.new(randomNumberSeed),
 
-      :phase1Epochs => 100,
-      :phase2Epochs => 0, #2,
+        :phase1Epochs => 10000,
+        :phase2Epochs => 0,
 
-      # Stop training parameters
-      :minMSE => 0.001,
-      :maxNumEpochs => 4e3,
+        # training parameters re. Output Error
+        :outputErrorLearningRate => 0.02,
+        :minMSE => 0.0001,
+        :maxNumEpochs => 4e3,
 
-      # Network Architecture
-      :numberOfInputNeurons => 2,
-      :numberOfHiddenNeurons => 0,
-      :numberOfOutputNeurons => 1,
-      :weightRange => 1.0,
-      :typeOfLink => FlockingLink,
+        # Network Architecture
+        :numberOfInputNeurons => 2,
+        :numberOfHiddenNeurons => 0,
+        :numberOfOutputNeurons => 1,
+        :weightRange => 1.0,
+        :typeOfLink => FlockingLink,
 
-      # Training Set parameters
-      :numberOfExamples => numberOfExamples,
+        # Training Set parameters
+        :numberOfExamples => numberOfExamples,
 
-      # Recording and database parameters
-      :numberOfEpochsBetweenStoringDBRecords => 100,
+        # Recording and database parameters
+        :numberOfEpochsBetweenStoringDBRecords => 100,
 
-      # Flocking Parameters...
-      :typeOfClusterer => DynamicClusterer,
-      :numberOfClusters => 2,
-      :m => 2.0,
-      :numExamples => numberOfExamples,
-      :exampleVectorLength => 2,
-      :delta => 1e-3,
-      :maxNumberOfClusteringIterations => 100,
-      :symmetricalCenters => false, # if true, speed is negatively affected
-      :leadingFactor => 1.0, # 1.02, #   1.0
+        # Flocking Parameters...
+        :flockingLearningRate => -0.002,
+        :maxFlockingIterationsCount => 2000, # 3800, # 2000,
+        :maxAbsFlockingErrorsPerExample => 0.002, # 0.00000000000001, #0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
 
-      # Inner Numeric Constraints
-      :minDistanceAllowed => 1e-30
+        :typeOfClusterer => DynamicClusterer,
+        :numberOfClusters => 2,
+        :m => 2.0,
+        :numExamples => numberOfExamples,
+        :exampleVectorLength => 1,
+        :delta => 1e-2,
+        :maxNumberOfClusteringIterations => 10,
+        :symmetricalCenters => true, # if true, speed is negatively affected
 
-  }
+        # Inner Numeric Constraints -- used to floating point under or overflow
+        :floorToPreventOverflow => 1e-30
+    }
+  end
 end
 
-###################################### Start of Main ##########################################
+###################################### START of Main Learning  ##########################################
+######################## Specify data store and experiment description....
+
 srand(0)
-descriptionOfExperiment = "SimpleAdjustableLearningRateTrainerMultiFlockIterations Reference Run"
-args = setParameters(descriptionOfExperiment)
+descriptionOfExperiment = "SimpleAdjustableLearningRateTrainerMultiFlockIterations Reference Run NUMBER 2"
+experiment = ExperimentLogger.new(descriptionOfExperiment)
+args = experiment.setParameters
+# dataStoreManager = SimulationDataStoreManager.create
+args[:dataStoreManager] = dataStoreManager = SimulationDataStoreManager.new(args)
+args[:trainingSequence] = trainingSequence = TrainingSequence.new(args)
 
 ############################### create training set...
 examples = createTrainingSet(args)
 
-######################## Specify data store and experiment description....
-databaseFilename = "acrossEpochsSequel" #  = ""
-dataStoreManager = SimulationDataStoreManager.create(databaseFilename, examples, args)
-
 ######################## Create Network....
-network = SimpleFlockingNeuronNetwork.new(dataStoreManager, args)
+network = SimpleFlockingNeuronNetwork.new(dataStoreManager, args) # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
 puts network
 
-############################### train ...
-trainingSequence = TrainingSequence.create(network, args)
+############################### Create Trainer ...
 theTrainer = SimpleAdjustableLearningRateTrainer.new(trainingSequence, network, args)
 
-arrayOfNeuronsForIOPlots = nil
-lastEpoch, lastTrainingMSE, dPrimes = theTrainer.simpleLearningWithFlocking(examples, arrayOfNeuronsForIOPlots)
+arrayOfNeuronsToPlot = nil
+lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors = theTrainer.simpleLearningWithFlocking(examples)
+theTrainer.displayTrainingResults(arrayOfNeuronsToPlot)
 
 lastTestingMSE = nil
-theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, dPrimes)
+# theTrainer.storeEndOfTrainingMeasures(lastEpoch, lastTrainingMSE, lastTestingMSE, accumulatedAbsoluteFlockingErrors)
 
-displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch, lastTestingMSE,
+###################################### END of Main Learning ##########################################
+
+
+puts "############ Include Example Numbers #############"
+4000.times do |epochNumber|
+  selectedData = DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: $globalExperimentNumber, epochs: epochNumber,
+                                                                                        neuron: 2}) }
+  puts "For epoch number=\t#{epochNumber}" unless (selectedData.empty?)
+
+  selectedData.each { |itemKey| puts DetailedNeuronData.values(itemKey) } unless (selectedData.empty?)
+
+end
+puts "####################################"
+
+displayAndPlotResults(args, accumulatedAbsoluteFlockingErrors, dataStoreManager, lastEpoch, lastTestingMSE,
                       lastTrainingMSE, network, theTrainer, trainingSequence)
+
+SnapShotData.new(descriptionOfExperiment, network, Time.now, lastEpoch, lastTrainingMSE, lastTestingMSE)
+
+selectedData = SnapShotData.lookup { |q| q[:experimentNumber_epochs].eq({experimentNumber: $globalExperimentNumber, epochs: lastEpoch}) }
+
+selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
+unless (selectedData.empty?)
+  puts
+  puts "Number\tDescription\tLastEpoch\tTrainMSE\tTestMSE\tTime"
+  selectedData.each do |aSelectedExperiment|
+    aHash = SnapShotData.values(aSelectedExperiment)
+    puts "#{aHash[:experimentNumber]}\t#{aHash[:descriptionOfExperiment]}\t#{aHash[:epochs]}\t#{aHash[:trainMSE]}\t#{aHash[:testMSE]}\t#{aHash[:time]}"
+  end
+end
+
+DetailedNeuronData.deleteData($globalExperimentNumber)
+NeuronData.deleteData($globalExperimentNumber)
+
+experiment.save
 

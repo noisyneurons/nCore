@@ -97,7 +97,7 @@ class Trainer
         aNeuron.recordResponsesForExampleToDB(dataRecorded)
       end
 
-      # neuronsAdaptingToLocalFlockingError.each { |aNeuron| aNeuron.calcDeltaWsAndAccumulate { |errorFromUpperLayers, localFlockError| errorFromUpperLayers - localFlockError } }
+      # adaptingNeurons.each { |aNeuron| aNeuron.calcDeltaWsAndAccumulate { |errorFromUpperLayers, localFlockError| errorFromUpperLayers - localFlockError } }
       neuronsAdaptingToLocalFlockingError.each do |aNeuron|
         aNeuron.calcDeltaWsAndAccumulate do |errorFromUpperLayers, localFlockError|
           aNeuron.upperErAry << errorFromUpperLayers.abs
@@ -126,7 +126,7 @@ class FlockingNeuronRecorder ##  TODO temporary
 
   def quickReportOfExampleWeightings(epochDataToRecord)
     neuron.clusterer.clusters.each_with_index do |cluster, numberOfCluster|
-      cluster.exampleMembershipWeightsForCluster.each { |exampleWeight| puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
+      cluster.membershipWeightForEachExample.each { |exampleWeight| puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
       puts
       puts "NumExamples=\t#{cluster.numExamples}\tNum Membership Weights=\t#{cluster.exampleMembershipWeightsForCluster.length}"
     end
@@ -204,7 +204,7 @@ def setParameters
       :symmetricalCenters => false, # if true, speed is negatively affected
 
       # Inner Numeric Constraints
-      :minDistanceAllowed => 1e-30
+      :floorToPreventOverflow => 1e-30
   }
 end
 

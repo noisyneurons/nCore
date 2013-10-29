@@ -6,11 +6,11 @@
 demoToPerform = "simpleLearningWithFlocking"
 # Choices are:  simpleLearningWithFlocking, learningWithFocusedFlocking, learningWithMomentumAndFocusedFlocking
 
-require_relative  '../../lib/core/DataSet'
-require_relative  '../../lib/core/NeuralParts'
-require_relative  '../../lib/core/NeuralPartsExtended'
-require_relative  '../../lib/core/NetworkFactories'
-require_relative  '../../lib/plot/CorePlottingCode'
+require_relative '../../lib/core/DataSet'
+require_relative '../../lib/core/NeuralParts'
+require_relative '../../lib/core/NeuralPartsExtended'
+require_relative '../../lib/core/NetworkFactories'
+require_relative '../../lib/plot/CorePlottingCode'
 
 ####################### TEMP Experiment  #########################      N
 class NeuronRecorder
@@ -28,7 +28,7 @@ end
 def createMultiClassTrainingSet(numberOfExamples, rightShiftUpper2Classes = 0.0)
   include ExampleDistribution
 
-  xStart = [-1.0+rightShiftUpper2Classes, 1.0+rightShiftUpper2Classes, -1.0, 1.0]    # assumes clockwise numbering of classes, from 10:30 being class 0
+  xStart = [-1.0+rightShiftUpper2Classes, 1.0+rightShiftUpper2Classes, -1.0, 1.0] # assumes clockwise numbering of classes, from 10:30 being class 0
   yStart = [1.0, 1.0, -1.0, -1.0]
 
 
@@ -61,10 +61,10 @@ def createMultiClassTrainingSet(numberOfExamples, rightShiftUpper2Classes = 0.0)
   examples
 end
 
-def  createXORTrainingSet(numberOfExamples, rightShiftUpper2Classes)
+def createXORTrainingSet(numberOfExamples, rightShiftUpper2Classes)
   include ExampleDistribution
 
-  xStart = [-1.0+rightShiftUpper2Classes, 1.0+rightShiftUpper2Classes, 1.0, -1.0]    # assumes clockwise numbering of classes, from 10:30 being class 0
+  xStart = [-1.0+rightShiftUpper2Classes, 1.0+rightShiftUpper2Classes, 1.0, -1.0] # assumes clockwise numbering of classes, from 10:30 being class 0
   yStart = [1.0, 1.0, -1.0, -1.0]
 
 
@@ -102,7 +102,7 @@ end
 def create3inputMultiClassTrainingSet(numberOfExamples, rightShiftUpper2Classes = 0.0)
   include ExampleDistribution
 
-  xStart = [-1.0+rightShiftUpper2Classes, 1.0+rightShiftUpper2Classes, -1.0, 1.0]    # assumes clockwise numbering of classes, from 10:30 being class 0
+  xStart = [-1.0+rightShiftUpper2Classes, 1.0+rightShiftUpper2Classes, -1.0, 1.0] # assumes clockwise numbering of classes, from 10:30 being class 0
   yStart = [1.0, 1.0, -1.0, -1.0]
   zStart = [0.0, 1.0, 2.0, 3.0]
 
@@ -228,7 +228,7 @@ def epochWithRecenteringOfClustersUsingMomentum(epochsSinceBeginningOfCycle, aLe
     neuronsWithInputLinks.each { |aNeuron| aNeuron.recordExampleMeasurements }
     flockingNeurons.each { |aNeuron| aNeuron.calcLocalFlockingError { |dataForReport| periodicallyDisplayContentsOfHash(dataForReport, epochNumber, interval=phase1Epochs) } } if (epochNumber > 0)
     neuronsWithInputLinks.each { |aNeuron| aNeuron.calcDeltaWsAndAccumulate { |bpError, flockError|
-              bpError + aNeuron.augmentFlockingErrorUsingMomentum(flockError, alpha, exampleNumber) } }
+      bpError + aNeuron.augmentFlockingErrorUsingMomentum(flockError, alpha, exampleNumber) } }
   end
   neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
   flockingNeurons.each { |aNeuron| aNeuron.initializeClusterCenters } if (epochNumber == 0)
@@ -251,8 +251,8 @@ def epochNoClusterRecenteringUsingMomentum(epochsSinceBeginningOfCycle, aLearnin
     outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
     neuronsWithInputLinks.each { |aNeuron| aNeuron.recordExampleMeasurements }
     flockingNeurons.each { |aNeuron| aNeuron.calcLocalFlockingError { |dataForReport| periodicallyDisplayContentsOfHash(dataForReport, epochNumber, interval=phase1Epochs) } } if (epochNumber > 0)
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.calcDeltaWsAndAccumulate  { |bpError, flockError|
-              bpError + aNeuron.augmentFlockingErrorUsingMomentum(flockError, alpha, exampleNumber) } }
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.calcDeltaWsAndAccumulate { |bpError, flockError|
+      bpError + aNeuron.augmentFlockingErrorUsingMomentum(flockError, alpha, exampleNumber) } }
   end
   neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
 
@@ -297,12 +297,12 @@ def learningWithFocusedFlocking(phase1Epochs, phase2Epochs, aLearningNetwork,
 
     if (phase1Epochs > 0)
       if (epochsSinceBeginningOfCycle >= phase1Epochs)
-        puts aLearningNetwork if(phase1)
+        puts aLearningNetwork if (phase1)
         phase1 = false
-        flockingNeurons.each { |aNeuron| aNeuron.bpLearningRate = 0.0 }   #TODO WARNING: BP LEARNING Will Still Occur with regular neurons!!
+        flockingNeurons.each { |aNeuron| aNeuron.bpLearningRate = 0.0 } #TODO WARNING: BP LEARNING Will Still Occur with regular neurons!!
       end
       if (epochsSinceBeginningOfCycle >= phase1PlusPhase2Epochs)
-        puts aLearningNetwork unless(phase1)
+        puts aLearningNetwork unless (phase1)
         phase1 = true
         epochsSinceBeginningOfCycle = 0
         flockingNeurons.each { |aNeuron| aNeuron.bpLearningRate = args[:bpLearningRate] }
@@ -312,7 +312,7 @@ def learningWithFocusedFlocking(phase1Epochs, phase2Epochs, aLearningNetwork,
     if (phase1)
       mse, epochNumber, epochsSinceBeginningOfCycle = epochWithRecenteringOfClusters(epochsSinceBeginningOfCycle, aLearningNetwork, dataArray, allNeuronsInOneArray, epochNumber, flockingNeurons, neuronsWithInputLinks, neuronsWithInputLinksInReverseOrder, numberOfExamples, outputLayer, phase1Epochs, args)
 
-      flockingNeurons.each { |aNeuron| aNeuron.bpLearningRate = 0.0 }   #TODO WARNING: BP LEARNING Will Still Occur with regular neurons!!
+      flockingNeurons.each { |aNeuron| aNeuron.bpLearningRate = 0.0 } #TODO WARNING: BP LEARNING Will Still Occur with regular neurons!!
       epochsOfFlockingOnly.times do
         mse, epochNumber, epochsSinceBeginningOfCycle = epochNoClusterRecentering(epochsSinceBeginningOfCycle, aLearningNetwork, dataArray, allNeuronsInOneArray, epochNumber, flockingNeurons, neuronsWithInputLinks, neuronsWithInputLinksInReverseOrder, numberOfExamples, outputLayer, phase1Epochs, args)
       end
@@ -337,12 +337,12 @@ def learningWithMomentumAndFocusedFlocking(phase1Epochs, phase2Epochs, aLearning
 
     if (phase1Epochs > 0)
       if (epochsSinceBeginningOfCycle >= phase1Epochs)
-        puts aLearningNetwork if(phase1)
+        puts aLearningNetwork if (phase1)
         phase1 = false
-        flockingNeurons.each { |aNeuron| aNeuron.bpLearningRate = 0.0 }   #TODO WARNING: BP LEARNING Will Still Occur with regular neurons!!
+        flockingNeurons.each { |aNeuron| aNeuron.bpLearningRate = 0.0 } #TODO WARNING: BP LEARNING Will Still Occur with regular neurons!!
       end
       if (epochsSinceBeginningOfCycle >= phase1PlusPhase2Epochs)
-        puts aLearningNetwork unless(phase1)
+        puts aLearningNetwork unless (phase1)
         phase1 = true
         epochsSinceBeginningOfCycle = 0
         flockingNeurons.each { |aNeuron| aNeuron.bpLearningRate = args[:bpLearningRate] }
@@ -352,7 +352,7 @@ def learningWithMomentumAndFocusedFlocking(phase1Epochs, phase2Epochs, aLearning
     if (phase1)
       mse, epochNumber, epochsSinceBeginningOfCycle = epochWithRecenteringOfClusters(epochsSinceBeginningOfCycle, aLearningNetwork, dataArray, allNeuronsInOneArray, epochNumber, flockingNeurons, neuronsWithInputLinks, neuronsWithInputLinksInReverseOrder, numberOfExamples, outputLayer, phase1Epochs, args)
 
-      flockingNeurons.each { |aNeuron| aNeuron.bpLearningRate = 0.0 }   #TODO WARNING: BP LEARNING Will Still Occur with regular neurons!!
+      flockingNeurons.each { |aNeuron| aNeuron.bpLearningRate = 0.0 } #TODO WARNING: BP LEARNING Will Still Occur with regular neurons!!
       epochsOfFlockingOnly.times do
         mse, epochNumber, epochsSinceBeginningOfCycle = epochNoClusterRecenteringUsingMomentum(epochsSinceBeginningOfCycle, aLearningNetwork, dataArray, allNeuronsInOneArray, epochNumber, flockingNeurons, neuronsWithInputLinks, neuronsWithInputLinksInReverseOrder, numberOfExamples, outputLayer, phase1Epochs, args)
       end
@@ -393,7 +393,7 @@ args = {:learningRate => 1.0,
         :numberOfClusters => 2,
         :m => 1.1, # 2.0,               # 2.0
         :numExamples => numberOfExamples,
-        :exampleVectorLength => 1,  # 2  #This interacts with NeuronRecorder.vectorizeEpochMeasures(anArray)
+        :exampleVectorLength => 1, # 2  #This interacts with NeuronRecorder.vectorizeEpochMeasures(anArray)
         :delta => 0.001,
         :maxNumberOfClusteringIterations => 100,
         :flockLearningRate => -0.01 # -0.001 #-0.01 seems to be good with or without momentum (using alpha=0.5)

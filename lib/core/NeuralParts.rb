@@ -28,11 +28,11 @@ module CommonNeuronCalculations
   end
 
   def learningRate=(aLearningRate)
-    inputLinks.each {|aLink| aLink.learningRate = aLearningRate}
+    inputLinks.each { |aLink| aLink.learningRate = aLearningRate }
   end
 
   def randomizeLinkWeights
-  inputLinks.each {|anInputLink| anInputLink.randomizeWeightWithinTheRange(anInputLink.weightRange)}
+    inputLinks.each { |anInputLink| anInputLink.randomizeWeightWithinTheRange(anInputLink.weightRange) }
   end
 
   protected
@@ -59,11 +59,11 @@ module CommonNeuronCalculations
     return (neuronsOutput * (1.0 - neuronsOutput))
   end
 
-  def ioDerivative(aNetInput)
-    return ioDerivativeFromOutput(ioFunction(aNetInput))
-  end
+  #def ioDerivative(aNetInput)
+  #  return ioDerivativeFromOutput(ioFunction(aNetInput))
+  #end
 
-  def ioDerivativeFromNetInput(aNetInput)
+  def ioDerivativeFromNetInput(aNetInput) # TODO speed this up.  Use sage to get the simpler analytical expression.
     return ioDerivativeFromOutput(ioFunction(aNetInput))
   end
 end
@@ -268,12 +268,13 @@ end
 
 class Link
   attr_accessor :inputNeuron, :outputNeuron, :weight, :weightAtBeginningOfTraining,
-                :learningRate, :deltaWAccumulated, :deltaW, :weightRange
+                :learningRate, :deltaWAccumulated, :deltaW, :weightRange, :args
 
   def initialize(inputNeuron, outputNeuron, args)
     @inputNeuron = inputNeuron
     @outputNeuron = outputNeuron
-    @learningRate = args[:learningRate]
+    @args = args
+    @learningRate = args[:learningRate] || 1.0
     @weightRange = args[:weightRange]
     randomizeWeightWithinTheRange(weightRange)
     @deltaW = 0.0
@@ -325,8 +326,11 @@ class NeuronRecorder
     @withinEpochMeasures = []
   end
 
+  def dataToRecord
+    {:neuronID => neuron.id, :netInput => neuron.netInput, :error => neuron.error, :exampleNumber => neuron.exampleNumber}
+  end
+
   def recordResponsesForExample
-    dataToRecord = {:netInput => neuron.netInput, :error => neuron.error, :exampleNumber => neuron.exampleNumber}
     self.withinEpochMeasures << dataToRecord
     return dataToRecord
   end
@@ -337,10 +341,8 @@ class NeuronRecorder
 end
 
 class OutputNeuronRecorder < NeuronRecorder
-  def recordResponsesForExample
-    dataToRecord = {:netInput => neuron.netInput, :error => neuron.error, :exampleNumber => neuron.exampleNumber,
-                    :weightedErrorMetric => neuron.weightedErrorMetric}
-    self.withinEpochMeasures << dataToRecord
-    return dataToRecord
+  def dataToRecord
+    {:netInput => neuron.netInput, :error => neuron.error, :exampleNumber => neuron.exampleNumber,
+     :weightedErrorMetric => neuron.weightedErrorMetric}
   end
 end

@@ -1,37 +1,36 @@
 # Utilities.rb
 
+require 'rubygems'
 require 'mathn'
 require 'matrix'
+require 'relix'
+require 'redis'
+require 'hiredis'
+require 'yaml'
 
-############################# DATA GENERATION ###########################
+# theComputersName = Socket.gethostname
 
-class DataGenerator
-  attr_reader :arrayOfExamples
+$currentHost = "localhost"
+$currentHost = "master" unless(ENV['SGE_TASK_ID'].nil?)
+$redis = Redis.new(:host => $currentHost)
 
-  def initialize(arrayOf2DInputSeedArrays, numberOfExamplesPerClass = 1, increment = 1.0)
-    numberOfClasses = arrayOf2DInputSeedArrays.length
-    @arrayOfExamples = []
-    arrayOf2DInputSeedArrays.each_with_index do |seedArray, indexToOutputDimensionToSet|
-      anExample = nil
-      inputs = seedArray.clone
-      numberOfExamplesPerClass.times do |i|
-        outputs = Array.new(numberOfClasses) { 0.0 }
-        outputs[indexToOutputDimensionToSet] = 1.0
-        anExample = Example.new(inputs, outputs)
-        @arrayOfExamples << anExample
-        inputs = inputs.clone
-        inputs[1] += increment
-      end
-    end
+############################# MODULES ###########################
+
+module OS
+  def OS.windows?
+    (/cygwin|mswin|mingw|bccwin|wince|emx/ =~ RUBY_PLATFORM) != nil
   end
 
-  def arrayOfExamples
-    @arrayOfExamples.each_with_index do |anExample, exampleNumber|
-      inputs = anExample[0]
-      outputs = anExample[1]
-      puts "#{exampleNumber}\tinputs= #{inputs};\toutputs= #{outputs};"
-    end
-    return @arrayOfExamples
+  def OS.mac?
+    (/darwin/ =~ RUBY_PLATFORM) != nil
+  end
+
+  def OS.unix?
+    !OS.windows?
+  end
+
+  def OS.linux?
+    OS.unix? and not OS.mac?
   end
 end
 
@@ -62,38 +61,6 @@ def periodicallyDisplayContentsOfHash(hashWithData, epochNumber, interval)
     STDOUT.puts
   end
 end
-
-################## ExampleList ROTATION of 2-D Inputs ###########################
-
-def extractArrayOfExampleInputVectors(exampleList)
-  arrayOfInputRows = []
-  exampleList.each do |inputTarget|
-    inputRow = inputTarget[0]
-    arrayOfInputRows << inputRow
-  end
-  return arrayOfInputRows
-end
-
-def reconstructExampleListUsingNewInputs(originalExampleList, rotatedMatrix)
-  arrayOfInputs = rotatedMatrix.to_a
-  originalExampleList.each_with_index do |example, exampleNumber|
-    example[0] = arrayOfInputs[exampleNumber]
-  end
-  return originalExampleList
-end
-
-def createRotationMatrix(angleInDegrees) # for CLOCKWISE Rotations!!
-  angleInRadians = angleInDegrees * ((2.0*Math::PI)/360.0)
-  s = Math.sin(angleInRadians)
-  c = Math.cos(angleInRadians)
-  # puts "angleInRadians= #{angleInRadians}\ts= #{s}\tc= #{c}\t    "
-  rotationMatrix = Matrix[[c, -s], [s, c]]
-  # puts "rotationMatrix= #{rotationMatrix} "
-  return rotationMatrix
-end
-
-
-
 
 
 #TODO Subclass Vector and add these methods to the subclass
@@ -145,7 +112,24 @@ class Object
   def present?
     !blank?
   end
+
+  def deep_clone
+    return @deep_cloning_obj if @deep_cloning
+    @deep_cloning_obj = clone
+    @deep_cloning_obj.instance_variables.each do |var|
+      val = @deep_cloning_obj.instance_variable_get(var)
+      begin
+        @deep_cloning = true
+        val = val.deep_clone
+      rescue TypeError
+        next
+      ensure
+        @deep_cloning = false
+      end
+      @deep_cloning_obj.instance_variable_set(var, val)
+    end
+    deep_cloning_obj = @deep_cloning_obj
+    @deep_cloning_obj = nil
+    deep_cloning_obj
+  end
 end
-
-
-
