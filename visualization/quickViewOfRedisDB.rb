@@ -1,6 +1,6 @@
 # '~/Code/Ruby/NN2012/nCore/visualization/quickViewOfRedisDB.rb'
 
-require_relative '..lib/core/Utilities'
+require_relative '../lib/core/Utilities'
 
 #theComputersName = Socket.gethostname
 #
