@@ -1,16 +1,13 @@
 require 'redis'
 
-# Notes: PutLoveInYourHeart (:host => "192.168.1.128", :port => 8765)
-# Notes: MakeASadSongMuchBetter (:host => "192.168.1.127", :port => 8765) Wired
-# Notes: MakeASadSongMuchBetter (:host => "192.168.1.131", :port => 8765) Wireless
+require_relative '../lib/core/Utilities'
+
+$redis = Redis.new(:host => $currentHost)
 
 
-# redis = Redis.new # (:host => "192.168.1.131", :port => 8765)
-redis = Redis.new(:host => "ec2-54-224-56-245.compute-1.amazonaws.com")
-
-#anArray = [1,2,3,4,5]
-#x = Marshal.dump(anArray)
-#redis.set("myKey", x)
+anArray = [1,2,3,4,5]
+x = Marshal.dump(anArray)
+redis.set("myKey", x)
 y = redis.get("myKey")
 maybeAnArray = Marshal.load(y)
 puts "maybeAnArray=\t#{maybeAnArray.class}"

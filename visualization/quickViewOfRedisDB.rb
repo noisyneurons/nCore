@@ -1,6 +1,6 @@
 # '~/Code/Ruby/NN2012/nCore/visualization/quickViewOfRedisDB.rb'
 
-require_relative '../bin/lib/Utilities'
+require_relative '..lib/core/Utilities'
 
 #theComputersName = Socket.gethostname
 #
@@ -10,11 +10,11 @@ require_relative '../bin/lib/Utilities'
 #currentHost = "ip-10-145-223-204.ec2.internal" # master internal dns
 #currentHost = "ip-10-164-60-198.ec2.internal" # node001 internal dns
 
-currentHost = "master"
+#currentHost = "master"
 #currentHost = "node001"
 #currentHost = "localhost"
 
-$redis = Redis.new(:host => currentHost)
+$redis = Redis.new(:host => $currentHost)
 
 experimentNumber = $redis.get("experimentNumber")
 puts "Next Experiment Number=\t #{experimentNumber}\n\n"
