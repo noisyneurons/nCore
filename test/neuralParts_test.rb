@@ -3,8 +3,8 @@
 
 require 'test/unit'
 require 'mocha/setup'
-require 'minitest/reporters'
-MiniTest::Reporters.use!
+# require 'minitest/reporters'
+# MiniTest::Reporters.use!
 
 require_relative '../lib/core/NeuralParts'
 
@@ -275,7 +275,7 @@ class TestNeuron < MiniTest::Unit::TestCase
   def test_backPropagate
     @neuron.outputLinks.clear
     @neuron.outputLinks << DummyLink.new << DummyLink.new << DummyLink.new
-    assert_equal((3.0*0.61)* self.ioDerivative(netInput = 0.0), @neuron.backPropagate, "incorrect computation in backPropagate method")
+    assert_equal((3.0*0.61) * self.ioDerivativeFromNetInput(netInput = 0.0), @neuron.backPropagate, "incorrect computation in backPropagate method")
   end
 
   def test_calcDeltaWsAndAccumulate

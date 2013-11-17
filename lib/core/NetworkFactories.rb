@@ -156,5 +156,25 @@ class Flocking3LayerNetwork < BaseNetwork
   end
 end
 
+class DeepRecurrentNetwork < BaseNetwork
+
+  def createAllLayersOfNeurons
+    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
+    self.allNeuronLayers << inputLayer
+    previousLayer = inputLayer
+
+    args[:numberOfHiddenLayers].times do
+      hiddenLayer = createAndConnectLayer(previousLayer, typeOfNeuron = FlockingNeuron, args[:numberOfHiddenNeurons])
+      self.allNeuronLayers << hiddenLayer
+      previousLayer = hiddenLayer
+    end
+
+    self.outputLayer = createAndConnectLayer(hiddenLayer, typeOfNeuron = LinearOutputNeuron, args[:numberOfOutputNeurons])
+    self.allNeuronLayers << outputLayer
+  end
+end
+
+
+
 
 

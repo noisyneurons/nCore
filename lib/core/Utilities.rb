@@ -73,13 +73,13 @@ end
 
 #	##########################  Array Extensions ##################
 class Array
-  def shuffle
-    sort { rand <=> 0.5 }
-  end
-
-  def shuffle!
-    replace shuffle
-  end
+  #def shuffle
+  #  sort { rand <=> 0.5 }
+  #end
+  #
+  #def shuffle!
+  #  replace shuffle
+  #end
 
   def mean
     sumOfArray = self.inject { |sum, n| sum + n }

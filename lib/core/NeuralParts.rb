@@ -78,9 +78,9 @@ module LinearIOFunction
     return 1.0
   end
 
-  def ioDerivative(aNetInput)
-    return 1.0
-  end
+  #def ioDerivative(aNetInput)
+  #  return 1.0
+  #end
 
   def ioDerivativeFromNetInput(aNetInput)
     return 1.0
