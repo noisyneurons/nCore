@@ -41,6 +41,7 @@ class Experiment
     @args = {
         :experimentNumber => $globalExperimentNumber,
         :descriptionOfExperiment => descriptionOfExperiment,
+        :randomNumberSeed => randomNumberSeed,
 
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.02,
@@ -177,8 +178,7 @@ class Experiment
 
 ############################## reporting results....
 
-    neuronToDisplay = 2
-    reportTrainingResults(neuronToDisplay, accumulatedAbsoluteFlockingErrors, descriptionOfExperiment,
+    reportTrainingResults(args[:neuronToDisplay], accumulatedAbsoluteFlockingErrors, descriptionOfExperiment,
                           lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime)
 
 ############################## clean-up....

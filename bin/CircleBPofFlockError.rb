@@ -30,9 +30,11 @@ class Experiment
         :firstExamplesAngleToXAxisForTesting => 15.0,
 
         # Recording and database parameters
+        :neuronToDisplay => 2,
         :intervalForSavingNeuronData => 10000,
         :intervalForSavingDetailedNeuronData => 10000,
         :intervalForSavingTrainingData => 1000,
+
 
         # Flocking Parameters...
         :flockingLearningRate => -0.009, # -0.0002,
@@ -120,8 +122,8 @@ end
 
 ###################################### START of Main Learning  ##########################################
 
-randomNumberSeed = 2
+baseRandomNumberSeed = 2
 
-experiment = Experiment.new("J9BpFlWtR1", randomNumberSeed)
+experiment = Experiment.new("J9BpFlWtR1", baseRandomNumberSeed)
 
 experiment.performSimulation()

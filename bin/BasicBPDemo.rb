@@ -3,37 +3,71 @@
 ## Simple backprop demo. For XOR, and given parameters, requires 2080 epochs to converge.
 ##                       For OR, and given parameters, requires 166 epochs to converge.
 
-require_relative '../lib/core/DataSet'
-require_relative '../lib/core/NeuralParts'
-require_relative '../lib/core/NetworkFactories'
-require_relative '../lib/plot/CorePlottingCode'
+require_relative 'BaseLearningExperiment'
+require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 
-include ExampleDistribution
+class Experiment
 
-srand(0) # For a '0' argument normally takes 6053 epochs to reach error criteria of 0.01
+  def setParameters
+    @args = {
+        :experimentNumber => $globalExperimentNumber,
+        :descriptionOfExperiment => descriptionOfExperiment,
+        :randomNumberSeed => randomNumberSeed,
 
-# add the training examples...
-examples = []
-examples << {:inputs => [0.0, 0.0], :targets => [0.1], :exampleNumber => 0}
-examples << {:inputs => [0.0, 1.0], :targets => [0.9], :exampleNumber => 1}
-examples << {:inputs => [1.0, 0.0], :targets => [0.9], :exampleNumber => 2}
-examples << {:inputs => [1.0, 1.0], :targets => [0.1], :exampleNumber => 3}
+        # training parameters re. Output Error
+        :outputErrorLearningRate => 1.0,
+        :minMSE => 0.001,
+        :maxNumEpochs => 4e3,
 
-numberOfExamples = examples.length
-
-####################################################################
-args = {:learningRate => 1.0,
-        :weightRange => 1.0,
+        # Network Architecture
         :numberOfInputNeurons => 2,
         :numberOfHiddenNeurons => 3,
         :numberOfOutputNeurons => 1,
-        :numberOfExamples => numberOfExamples
-}
+        :weightRange => 1.0,
+        :typeOfLink => Link,
+
+        # Training Set parameters
+        :numberOfExamples => 4,
+
+        # Recording and database parameters
+        :neuronToDisplay => 2,
+        :intervalForSavingNeuronData => 100,
+        :intervalForSavingDetailedNeuronData => 1000,
+        :intervalForSavingTrainingData => 100
+    }
+  end
+
+  def createTrainingSet
+    examples = []
+    examples << {:inputs => [0.0, 0.0], :targets => [0.1], :exampleNumber => 0, :class => 0}
+    examples << {:inputs => [0.0, 1.0], :targets => [0.9], :exampleNumber => 1, :class => 1}
+    examples << {:inputs => [1.0, 0.0], :targets => [0.9], :exampleNumber => 2, :class => 1}
+    examples << {:inputs => [1.0, 1.0], :targets => [0.1], :exampleNumber => 3, :class => 0}
+    return examples
+  end
+
+  def createNetworkAndTrainer
+    network = StandardBP3LayerNetwork.new(args)
+    theTrainer = StandardBPTrainer.new(examples, network, args)
+    return network, theTrainer
+  end
+end
+
+
+###################################### START of Main Learning  ##########################################
+
+baseRandomNumberSeed = 0
+
+experiment = Experiment.new("BasicBPDemo1", baseRandomNumberSeed)
+
+experiment.performSimulation()
+
+
+
 
 aLearningNetwork = BaseNetwork.new(args)
 allNeuronLayers = aLearningNetwork.createSimpleLearningANN
 
-puts "Bias Neuron output= #{aLearningNetwork.theBiasNeuron.output}"
 
 allNeuronsInOneArray = allNeuronLayers.flatten
 inputLayer = allNeuronLayers[0]
