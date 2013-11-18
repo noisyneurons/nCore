@@ -3,8 +3,8 @@
 
 require 'test/unit'
 require 'minitest/mock'
-require 'minitest/reporters'
-MiniTest::Reporters.use!
+# require 'minitest/reporters'
+# MiniTest::Reporters.use!
 
 require_relative '../lib/core/NeuralPartsExtended'
 

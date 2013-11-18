@@ -1,10 +1,9 @@
-require "test/unit"
-require 'minitest/reporters'
-MiniTest::Reporters.use!
-
 ### VERSION "nCore"
 ## ../nCore/test/TestDataSet.rb
-#
+
+require "test/unit"
+# require 'minitest/reporters'
+# MiniTest::Reporters.use!
 
 require_relative '../lib/core/DataSet'
 

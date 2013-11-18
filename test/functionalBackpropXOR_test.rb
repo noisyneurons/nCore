@@ -4,8 +4,8 @@
 # unit testing is done on those neural libraries.
 
 require 'test/unit'
-require 'minitest/reporters'
-MiniTest::Reporters.use!
+# require 'minitest/reporters'
+# MiniTest::Reporters.use!
 
 require_relative '../lib/core/DataSet'
 require_relative '../lib/core/NeuralParts'
@@ -13,7 +13,6 @@ require_relative '../lib/core/NetworkFactories'
 require_relative '../lib/plot/CorePlottingCode'
 
 include ExampleDistribution
-
 
 ############################################################
 class FunctionalBackpropXORTest < MiniTest::Unit::TestCase
@@ -37,7 +36,7 @@ class FunctionalBackpropXORTest < MiniTest::Unit::TestCase
              :numberOfExamples => @numberOfExamples
     }
 
-    @aLearningNetwork = BaseNetwork.new(nil, @args)
+    @aLearningNetwork = BaseNetwork.new(@args)
     @allNeuronLayers = @aLearningNetwork.createSimpleLearningANN
   end
 

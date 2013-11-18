@@ -4,8 +4,8 @@
 # unit testing is done on the neural libraries: NeuralParts, DataSet, Learners, NeuronToNeuronConnections, WeightedClustering
 
 require 'test/unit'
-require 'minitest/reporters'
-MiniTest::Reporters.use!
+# require 'minitest/reporters'
+# MiniTest::Reporters.use!
 
 require_relative '../lib/core/DataSet'
 require_relative '../lib/core/NeuralParts'
@@ -23,8 +23,8 @@ class FunctionNetworkFactoriesTest < MiniTest::Unit::TestCase
              :numberOfHiddenNeurons => 3,
              :numberOfOutputNeurons => 1
     }
-    @aLearningNetwork = BaseNetwork.new(nil, @args)
-    @aCreatedLearningNetwork = BaseNetwork.new(nil, @args)
+    @aLearningNetwork = BaseNetwork.new(@args)
+    @aCreatedLearningNetwork = BaseNetwork.new(@args)
 
     @allNeuronLayers = @aCreatedLearningNetwork.createSimpleLearningANN
   end

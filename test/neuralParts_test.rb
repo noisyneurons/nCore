@@ -3,8 +3,8 @@
 
 require 'test/unit'
 require 'mocha/setup'
-# require 'minitest/reporters'
-# MiniTest::Reporters.use!
+#require 'minitest/reporters'
+#MiniTest::Reporters.use!
 
 require_relative '../lib/core/NeuralParts'
 
@@ -18,6 +18,7 @@ class NeuronBase
   def postInitialize;
   end # ignore error message that is normally called.
 end
+
 class OutputNeuron
   public :calcWeightedErrorMetricForExample
   attr_accessor :exampleNumber
@@ -300,7 +301,7 @@ end
 ##############################################################
 class TestMetricRecorder < MiniTest::Unit::TestCase
   def setup
-    @neuron = stub(:netInput => 1.0, :error => 1.5, :exampleNumber => 1)
+    @neuron = stub(:id => 111, :netInput => 1.0, :error => 1.5, :exampleNumber => 1)
     @aMetricRecorder = NeuronRecorder.new(@neuron, {})
   end
 
