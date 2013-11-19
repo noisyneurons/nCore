@@ -392,7 +392,7 @@ class StepTrainCircleProblemLocFlockAtOutputNeuron < AbstractStepTrainer
     end
 
     if (maxFlockingIterationsCount > 0)
-      self.flockingLearningRate = flockingLearningRate *  (1.0/1.05)  if (flockCount < targetFlockIterationsCount)
+      self.flockingLearningRate = flockingLearningRate * (1.0/1.05) if (flockCount < targetFlockIterationsCount)
       self.flockingLearningRate = flockingLearningRate * 1.05 if (flockCount > targetFlockIterationsCount)
       puts "flockCount=\t#{flockCount}\tflockLearningRate=\t#{flockingLearningRate}"
     end
@@ -489,7 +489,6 @@ class StepTrainCircleProblemBPFlockAndLocFlockAtOutputNeuron < StepTrainCirclePr
   end
 end
 
-
 class StepTrainerForFlockingAndOutputError < AbstractStepTrainer
   def innerTrainingLoop
     unless (flockingShouldOccur?(accumulatedAbsoluteFlockingErrors))
@@ -529,7 +528,7 @@ class TrainingSupervisorBase
     mse = 1e20
     testMSE = nil
     accumulatedAbsoluteFlockingErrors = nil
-    numTrials = 50
+    numTrials = 10
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
       mse, testMSE, accumulatedAbsoluteFlockingErrors = stepTrainer.train(numTrials)
     end
@@ -542,6 +541,15 @@ class TrainingSupervisorBase
     generatePlotForEachNeuron(arrayOfNeuronsToPlot) if arrayOfNeuronsToPlot.present?
   end
 end
+
+
+class StandardBPTrainingSupervisor < TrainingSupervisorBase
+  def postInitialize
+    self.neuronGroups = NeuronGroupsFor3LayerBPNetwork.new(network)
+    self.stepTrainer = StepTrainerForOutputErrorBPOnly.new(examples, neuronGroups, trainingSequence, args)
+  end
+end
+
 
 class TrainingSuperONLYLocalFlocking < TrainingSupervisorBase
   def postInitialize
@@ -605,8 +613,6 @@ class TrainSuperCircleProblemBPFlockAndLocFlockAtOutputNeuron < TrainingSupervis
     self.stepTrainer = StepTrainCircleProblemBPFlockAndLocFlockAtOutputNeuron.new(examples, neuronGroups, trainingSequence, args)
   end
 end
-
-
 
 
 #class WeightChangeNormalizer

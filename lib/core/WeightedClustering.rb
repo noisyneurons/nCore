@@ -19,13 +19,13 @@ class DynamicClusterer
 
   def initialize(args)
     @args = args
-    @floorToPreventOverflow = args[:floorToPreventOverflow] ||= 1.0e-10
+    @floorToPreventOverflow = args[:floorToPreventOverflow] || 1e-60
     @min = floorToPreventOverflow
     @max = 1.0 - floorToPreventOverflow
-    @numberOfClusters = args[:numberOfClusters]
-    @m = args[:m]
+    @numberOfClusters = args[:numberOfClusters] || 2
+    @m = args[:m] || 2.0
     @numExamples = args[:numExamples]
-    @exampleVectorLength = args[:exampleVectorLength]
+    @exampleVectorLength = args[:exampleVectorLength] || 1
     @delta = args[:delta] # clustering is finished if we don't have to move any cluster more than a distance of delta (Euclidian distance measure or?)
     @maxNumberOfClusteringIterations = args[:maxNumberOfClusteringIterations]
     @clusters = Array.new(numberOfClusters) { |clusterNumber| Cluster.new(m, numExamples, exampleVectorLength, clusterNumber) }

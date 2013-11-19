@@ -120,6 +120,21 @@ class BaseNetwork
   end
 end # Base network
 
+class Standard3LayerNetwork < BaseNetwork
+
+  def createAllLayersOfNeurons
+    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
+    self.allNeuronLayers << inputLayer
+
+    hiddenLayer = createAndConnectLayer(inputLayer, typeOfNeuron = Neuron, args[:numberOfHiddenNeurons])
+    self.allNeuronLayers << hiddenLayer
+
+    self.outputLayer = createAndConnectLayer(hiddenLayer, typeOfNeuron = OutputNeuron, args[:numberOfOutputNeurons])
+    self.allNeuronLayers << outputLayer
+  end
+end
+
+
 class SimpleFlockingNeuronNetwork < BaseNetwork # TODO this is identical, except in name, to  SimpleFlockingNetwork
 
   def createAllLayersOfNeurons
@@ -155,6 +170,8 @@ class Flocking3LayerNetwork < BaseNetwork
     self.allNeuronLayers << outputLayer
   end
 end
+
+
 
 class DeepRecurrentNetwork < BaseNetwork
 

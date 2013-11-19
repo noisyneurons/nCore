@@ -27,23 +27,30 @@ class AbstractNeuronGroups
     self.neuronsWithInputLinks = layersWithInputLinks.flatten
     self.neuronsWithInputLinksInReverseOrder = neuronsWithInputLinks.reverse
     self.allNeuronsInOneArray = inputLayer + neuronsWithInputLinks
-    self.neuronsWhoseClustersNeedToBeSeeded = layersWhoseClustersNeedToBeSeeded.flatten unless (layersWhoseClustersNeedToBeSeeded.nil?)
-    self.outputErrorGeneratingNeurons = outputErrorGeneratingLayers.flatten unless (outputErrorGeneratingLayers.nil?)
-    self.outputErrorAdaptingNeurons = outputErrorAdaptingLayers.flatten unless (outputErrorAdaptingLayers.nil?)
-    self.flockErrorGeneratingNeurons = flockErrorGeneratingLayers.flatten unless (flockErrorGeneratingLayers.nil?)
-    self.flockErrorAdaptingNeurons = flockErrorAdaptingLayers.flatten unless (flockErrorAdaptingLayers.nil?)
-    self.bpFlockErrorAdaptingNeurons = bpFlockErrorAdaptingLayers.flatten unless (bpFlockErrorAdaptingLayers.nil?)
-    self.bpFlockErrorGeneratingNeurons = bpFlockErrorGeneratingLayers.flatten unless (bpFlockErrorGeneratingLayers.nil?)
+    self.neuronsWhoseClustersNeedToBeSeeded = layersWhoseClustersNeedToBeSeeded.flatten
+    self.outputErrorGeneratingNeurons = (outputErrorGeneratingLayers || []).flatten
+    self.outputErrorAdaptingNeurons = (outputErrorAdaptingLayers || []).flatten
+    self.flockErrorGeneratingNeurons = (flockErrorGeneratingLayers || []).flatten
+    self.flockErrorAdaptingNeurons = (flockErrorAdaptingLayers || []).flatten
+    self.bpFlockErrorAdaptingNeurons = (bpFlockErrorAdaptingLayers || []).flatten
+    self.bpFlockErrorGeneratingNeurons = (bpFlockErrorGeneratingLayers || []).flatten
+  end
+end
+
+
+class NeuronGroupsFor3LayerBPNetwork <  AbstractNeuronGroups
+  def nameTrainingGroups
+    hiddenLayer = allNeuronLayers[1]
+    self.layersWithInputLinks = [hiddenLayer, outputLayer]
+    self.outputErrorAdaptingLayers = layersWithInputLinks
+    self.layersWhoseClustersNeedToBeSeeded = []
+    setNeuronGroupNames()
   end
 end
 
 
 #####
 class NeuronGroupsForSingleLayerNetwork < AbstractNeuronGroups
-  #attr_accessor :outputErrorAdaptingLayers, :flockErrorGeneratingLayers, :flockErrorAdaptingLayers,
-  #              :outputErrorAdaptingNeurons, :flockErrorGeneratingNeurons, :flockErrorAdaptingNeurons,
-  #              :bpFlockErrorAdaptingNeurons, :bpFlockErrorAdaptingLayers,
-  #              :bpFlockErrorGeneratingNeurons, :bpFlockErrorGeneratingLayers
 
   def nameTrainingGroups
     self.layersWithInputLinks = [outputLayer]

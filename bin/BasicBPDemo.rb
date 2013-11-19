@@ -24,10 +24,12 @@ class Experiment
         :numberOfHiddenNeurons => 3,
         :numberOfOutputNeurons => 1,
         :weightRange => 1.0,
-        :typeOfLink => Link,
+        # :typeOfLink => Link,
+        :typeOfLink => FlockingLink,
 
         # Training Set parameters
-        :numberOfExamples => 4,
+        :numberOfExamples => (numExamples = 4),
+        :numExamples => numExamples,
 
         # Recording and database parameters
         :neuronToDisplay => 2,
@@ -47,8 +49,8 @@ class Experiment
   end
 
   def createNetworkAndTrainer
-    network = StandardBP3LayerNetwork.new(args)
-    theTrainer = StandardBPTrainer.new(examples, network, args)
+    network = Flocking3LayerNetwork.new(args)  # we rally don't use the flocking part of the network here!
+    theTrainer = StandardBPTrainingSupervisor.new(examples, network, args)
     return network, theTrainer
   end
 end
@@ -63,50 +65,8 @@ experiment = Experiment.new("BasicBPDemo1", baseRandomNumberSeed)
 experiment.performSimulation()
 
 
-
-
-aLearningNetwork = BaseNetwork.new(args)
-allNeuronLayers = aLearningNetwork.createSimpleLearningANN
-
-
-allNeuronsInOneArray = allNeuronLayers.flatten
-inputLayer = allNeuronLayers[0]
-hiddenLayer = allNeuronLayers[1]
-outputLayer = allNeuronLayers[2]
-
-neuronsWithInputLinks = hiddenLayer + outputLayer
-neuronsWithInputLinksInReverseOrder = neuronsWithInputLinks.reverse
-
-distributeDataToInputAndOutputNeurons(examples, [allNeuronLayers.first, allNeuronLayers.last])
-
-mse = 1.0
-epochNumber = 0
-while (mse > 0.01)
-  neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
-  neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
-  numberOfExamples.times do |exampleNumber|
-    allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-    neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
-    outputLayer.each { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.calcDeltaWsAndAccumulate }
-    outputLayer.each { |aNeuron| aNeuron.recordResponsesForExample }
-  end
-  neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
-  mse = aLearningNetwork.calcNetworksMeanSquareError
-
-  if (epochNumber.modulo(100) == 0)
-    puts "At Epoch # #{epochNumber} Network's MSE=\t#{aLearningNetwork.calcNetworksMeanSquareError}\n\n" if (epochNumber.modulo(100) == 0)
-    aLearningNetwork.recordResponses
-  end
-
-  epochNumber += 1
-end
-puts "At Epoch # #{epochNumber} Network's MSE=\t#{mse}\n\n"
-
-#puts aLearningNetwork
-
-mseVsEpochMeasurements = aLearningNetwork.measures
-x = mseVsEpochMeasurements.collect { |aMeasure| aMeasure[:epochNumber] }
-y = mseVsEpochMeasurements.collect { |aMeasure| aMeasure[:networkMSE] }
-aPlotter = Plotter.new
-aPlotter.plot(x, y)
+#mseVsEpochMeasurements = aLearningNetwork.measures
+#x = mseVsEpochMeasurements.collect { |aMeasure| aMeasure[:epochNumber] }
+#y = mseVsEpochMeasurements.collect { |aMeasure| aMeasure[:networkMSE] }
+#aPlotter = Plotter.new
+#aPlotter.plot(x, y)
