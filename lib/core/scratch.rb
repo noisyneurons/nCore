@@ -1,20 +1,70 @@
-require_relative 'Utilities'
+require 'forwardable'
 
-def dominantExamplesForCluster
-  (0..numExamples).find_all { |i| membershipWeightForEachExample[i] >= 0.5 }
+class DummyLink
+  attr_accessor :aWeight
+  def initialize(aWeight)
+    @aWeight = aWeight
+  end
+
+  def plusOne
+    self.aWeight = aWeight + 1.0
+  end
+end
+
+class WrappedWeight
+  attr_reader :value
+  def initialize(aValueForTheWeight)
+    @value = aValueForTheWeight
+  end
+
+  def +(aValue)
+    @value = @value + aValue
+    return self
+  end
+
 end
 
 
-numExamples = 3
-membershipWeightForEachExample = [0.55, 0.6, 0.0]
 
-puts (0...numExamples).to_a.find_all { |i| membershipWeightForEachExample[i] >= 0.5 }
+aWrappedWeight = WrappedWeight.new(5.0)
+puts aWrappedWeight
 
-puts (0...numExamples).find_all { |i| membershipWeightForEachExample[i] >= 0.5 }
+link1 = DummyLink.new(aWrappedWeight)
+link2 = DummyLink.new(aWrappedWeight)
 
-puts (0...numExamples).to_a
+link1.plusOne
+puts link1.aWeight.value
+link2.plusOne
+puts link2.aWeight.value
+puts link1.aWeight.value
+link1.plusOne
+puts link2.aWeight.value
+puts link1.aWeight.value
 
-puts [0, 1, 2]
 
 
-(1..3).each { |ii| puts ii }
+
+
+
+
+#
+#class WrappedWeight  < DelegateClass(Float)
+#  attr_accessor :theWeight
+#
+#  def initialize(theWeight)
+#    @theWeight = theWeight
+#  end
+#
+#  def self
+#    return theWeight
+#  end
+#
+#  def addOne
+#    self.aFloat = theWeight + 1.0
+#  end
+#end
+#
+#wrapW = WrappedWeight.new(5.0)
+#wrapW = wrapW + wrapW
+#
+#puts wrapW.self.to_s

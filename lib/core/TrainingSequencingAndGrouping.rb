@@ -37,8 +37,8 @@ class AbstractNeuronGroups
   end
 end
 
-
-class NeuronGroupsFor3LayerBPNetwork <  AbstractNeuronGroups
+#####
+class NeuronGroupsFor3LayerBPNetwork < AbstractNeuronGroups
   def nameTrainingGroups
     hiddenLayer = allNeuronLayers[1]
     self.layersWithInputLinks = [hiddenLayer, outputLayer]
@@ -49,7 +49,6 @@ class NeuronGroupsFor3LayerBPNetwork <  AbstractNeuronGroups
 end
 
 
-#####
 class NeuronGroupsForSingleLayerNetwork < AbstractNeuronGroups
 
   def nameTrainingGroups

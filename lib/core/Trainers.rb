@@ -44,6 +44,7 @@ module FlockingDecisionRoutines # TODO If one neuron does NOT meet criteria, all
   end
 end
 
+######
 class AbstractStepTrainer
   attr_accessor :examples, :numberOfExamples, :neuronGroups, :trainingSequence,
                 :args, :numberOfOutputNeurons,
@@ -314,6 +315,13 @@ class AbstractStepTrainer
   end
 end
 
+class StepTrainerForOutputErrorBPOnly < AbstractStepTrainer
+  def innerTrainingLoop
+    performStandardBackPropTraining()
+    self.accumulatedAbsoluteFlockingErrors = []
+    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
+  end
+end
 
 class StepTrainerForONLYLocalFlocking < AbstractStepTrainer
   def innerTrainingLoop
@@ -321,14 +329,6 @@ class StepTrainerForONLYLocalFlocking < AbstractStepTrainer
     zeroOutFlockingLinksMomentumMemoryStore
     recenterEachNeuronsClusters(flockErrorGeneratingNeurons)
     adaptToLocalFlockError()
-    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
-  end
-end
-
-class StepTrainerForOutputErrorBPOnly < AbstractStepTrainer
-  def innerTrainingLoop
-    performStandardBackPropTraining()
-    self.accumulatedAbsoluteFlockingErrors = []
     flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
   end
 end
@@ -542,14 +542,12 @@ class TrainingSupervisorBase
   end
 end
 
-
 class StandardBPTrainingSupervisor < TrainingSupervisorBase
   def postInitialize
     self.neuronGroups = NeuronGroupsFor3LayerBPNetwork.new(network)
     self.stepTrainer = StepTrainerForOutputErrorBPOnly.new(examples, neuronGroups, trainingSequence, args)
   end
 end
-
 
 class TrainingSuperONLYLocalFlocking < TrainingSupervisorBase
   def postInitialize
@@ -594,7 +592,6 @@ class TrainingSupervisorAllLocalFlockingLayers < TrainingSupervisorBase
   end
 end
 
-
 class TrainSuperCircleProblemLocFlockAtOutputNeuron < TrainingSupervisorBase
   include RecordingAndPlottingRoutines
 
@@ -603,7 +600,6 @@ class TrainSuperCircleProblemLocFlockAtOutputNeuron < TrainingSupervisorBase
     self.stepTrainer = StepTrainCircleProblemLocFlockAtOutputNeuron.new(examples, neuronGroups, trainingSequence, args)
   end
 end
-
 
 class TrainSuperCircleProblemBPFlockAndLocFlockAtOutputNeuron < TrainingSupervisorBase
   include RecordingAndPlottingRoutines

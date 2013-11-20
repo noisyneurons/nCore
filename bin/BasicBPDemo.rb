@@ -24,7 +24,6 @@ class Experiment
         :numberOfHiddenNeurons => 3,
         :numberOfOutputNeurons => 1,
         :weightRange => 1.0,
-        # :typeOfLink => Link,
         :typeOfLink => FlockingLink,
 
         # Training Set parameters
@@ -49,7 +48,7 @@ class Experiment
   end
 
   def createNetworkAndTrainer
-    network = Flocking3LayerNetwork.new(args)  # we rally don't use the flocking part of the network here!
+    network = Flocking3LayerNetwork.new(args)  # we rally don't use the flocking part of the network here! -- but we need...
     theTrainer = StandardBPTrainingSupervisor.new(examples, network, args)
     return network, theTrainer
   end

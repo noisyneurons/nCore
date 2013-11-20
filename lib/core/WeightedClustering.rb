@@ -6,9 +6,6 @@
 
 require_relative 'Utilities'
 
-# Globals, Constants
-INFINITY = 1.0/0
-
 
 class DynamicClusterer
   protected

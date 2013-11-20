@@ -316,6 +316,24 @@ class Link
 end
 
 
+class CoupledWeight
+  attr_reader :internalWeight
+
+  def initialize
+     @internalWeight = nil
+  end
+
+  def weight
+    return internalWeight
+  end
+
+  def weight(aValue)
+      @internalWeight = aValue
+  end
+
+end
+
+
 ############################################################      N
 class NeuronRecorder
   attr_accessor :neuron, :args, :withinEpochMeasures

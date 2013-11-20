@@ -171,8 +171,6 @@ class Flocking3LayerNetwork < BaseNetwork
   end
 end
 
-
-
 class DeepRecurrentNetwork < BaseNetwork
 
   def createAllLayersOfNeurons

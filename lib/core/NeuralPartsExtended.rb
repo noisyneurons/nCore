@@ -124,7 +124,7 @@ class FlockingNeuron < Neuron
     @metricRecorder= FlockingNeuronRecorder.new(self, args)
     @exampleNumber = nil
     @maxNumberOfClusteringIterations = args[:maxNumberOfClusteringIterations]
-    typeOfClusterer = args[:typeOfClusterer]  || DynamicClusterer
+    typeOfClusterer = args[:typeOfClusterer] || DynamicClusterer
     @clusterer = typeOfClusterer.new(args)
     @clusters = @clusterer.clusters
     @dPrime = 0.0

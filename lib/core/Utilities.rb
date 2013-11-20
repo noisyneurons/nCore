@@ -8,7 +8,8 @@ require 'redis'
 require 'hiredis'
 require 'yaml'
 
-# theComputersName = Socket.gethostname
+# Globals, Constants
+INFINITY = 1.0/0
 
 $currentHost = "localhost"
 $currentHost = "master" unless(ENV['SGE_TASK_ID'].nil?)
@@ -73,13 +74,6 @@ end
 
 #	##########################  Array Extensions ##################
 class Array
-  #def shuffle
-  #  sort { rand <=> 0.5 }
-  #end
-  #
-  #def shuffle!
-  #  replace shuffle
-  #end
 
   def mean
     sumOfArray = self.inject { |sum, n| sum + n }
