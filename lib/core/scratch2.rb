@@ -1,71 +1,87 @@
-require_relative 'Utilities'
-require 'relix'
-require 'yaml'
-
-$redis = Redis.new
-# $redis.flushdb
-
-class SnapShotData
-  include Relix
-  attr_accessor :id, :experimentNumber, :experimentDescription, :network, :time, :epochs, :trainMSE, :testMSE
-
-  relix do
-    primary_key :dataKey
-    ordered :experimentNumber
-    multi :experimentNumber_epochs, on: %w(experimentNumber epochs)
-    # multi :experimentNumber, index_values: true
+class DummyLink
+  def initialize(aWeightObject)
+    @weight = aWeightObject
   end
 
-  @@ID = 0
-
-  def SnapShotData.deleteTable
-    ary = $redis.keys("SSD*")
-    ary.each { |item| $redis.del(item) }
-    ary = $redis.keys("SnapShotData*")
-    ary.each { |item| $redis.del(item) }
+  def weight
+    case @weight
+      when Float
+        return @weight
+      when WrappedWeight
+        return @weight.value
+      else
+        raise TypeError.new("Wrong Class for link's weight:  #{@weight.inspect} ")
+    end
   end
 
-
-  def initialize(experimentDescription, network, time, epochs, trainMSE, testMSE = 0.0)
-    @id = @@ID
-    @@ID += 1
-    @experimentNumber = ExperimentLogger.number
-
-    @experimentDescription = experimentDescription
-    @network = network
-    @time = time
-    @epochs = epochs
-    @trainMSE = trainMSE
-    @testMSE = testMSE
-
-    snapShotHash = {:experimentNumber => experimentNumber, :experimentDescription => experimentDescription,
-                    :network => network,
-                    :time => time,
-                    :epochs => epochs,
-                    :trainMSE => trainMSE,
-                    :testMSE => testMSE
-    }
-
-    $redis.set(dataKey, YAML.dump(snapShotHash))
-    index!
+  def weight=(someObject)
+    case @weight
+      when Float
+        @weight = someObject
+      when WrappedWeight
+        raise TypeError.new("Wrong Class used to set link's weight #{someObject.inspect} ") unless (someObject.class == Float)
+        @weight.value = someObject
+      else
+        raise TypeError.new("Wrong Class for link's weight #{@weight.inspect} ")
+    end
+    return someObject
   end
 
-  def dataKey
-    "SSD#{experimentNumber}.#{id}"
+  def plusOne
+    self.weight = weight + 1.0
   end
 
-  def SnapShotData.values(key)
-    YAML.load($redis.get(key))
+  def plusOneReversed
+    self.weight = 1.0 + weight
   end
+
+  def tellMe
+    puts @weight.class
+  end
+
 end
 
 
-selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
-unless (selectedData.empty?)
-  puts
-  puts "Number\tDescription\tLastEpoch\tTrainMSE\tTestMSE\tTime"
-  selectedData.each do |aSelectedExperiment|
-    aHash = SnapShotData.values(aSelectedExperiment)
-    puts "#{aHash[:experimentNumber]}\t#{aHash[:descriptionOfExperiment]}\t#{aHash[:epochs]}\t#{aHash[:trainMSE]}\t#{aHash[:testMSE]}\t#{aHash[:time]}"
+class WrappedWeight
+  attr_accessor :value
+
+  def initialize(aValueForTheWeight)
+    @value = aValueForTheWeight
   end
 end
+
+aWrappedWeight = WrappedWeight.new(5.0)
+
+
+puts DummyLink.new(8.0).weight
+puts DummyLink.new(aWrappedWeight).weight
+
+aLink = DummyLink.new(9.0)
+aLink.plusOne
+puts aLink.weight
+aLink.tellMe
+puts
+
+
+tieWeight = WrappedWeight.new(20.0)
+aLink.weight = tieWeight
+aLink.plusOne
+puts aLink.weight
+aLink.plusOneReversed
+puts aLink.weight
+aLink.tellMe
+
+
+
+
+puts
+aLink2 = DummyLink.new(tieWeight)
+aLink2.plusOne
+puts aLink2.weight
+aLink2.plusOneReversed
+puts aLink2.weight
+aLink2.tellMe
+
+
+puts aLink.weight
+puts aLink2.weight

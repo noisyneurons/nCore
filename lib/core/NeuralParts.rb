@@ -265,9 +265,17 @@ class LinearOutputNeuron < OutputNeuron
   include LinearIOFunction
 end
 
+class WrappedWeight
+  attr_accessor :value
+
+  def initialize(aValueForTheWeight)
+    @value = aValueForTheWeight
+  end
+end
+
 
 class Link
-  attr_accessor :inputNeuron, :outputNeuron, :weight, :weightAtBeginningOfTraining,
+  attr_accessor :inputNeuron, :outputNeuron, :weightAtBeginningOfTraining,
                 :learningRate, :deltaWAccumulated, :deltaW, :weightRange, :args
 
   def initialize(inputNeuron, outputNeuron, args)
@@ -275,11 +283,39 @@ class Link
     @outputNeuron = outputNeuron
     @args = args
     @learningRate = args[:learningRate] || 1.0
+    @weight = 0.0
     @weightRange = args[:weightRange]
     randomizeWeightWithinTheRange(weightRange)
     @deltaW = 0.0
     @deltaWAccumulated = 0.0
   end
+
+
+  def weight
+    case @weight
+      when Float
+        return @weight
+      when WrappedWeight
+        return @weight.value
+      else
+        raise TypeError.new("Wrong Class for link's weight:  #{@weight.inspect} ")
+    end
+  end
+
+
+  def weight=(someObject)
+    case @weight
+      when Float
+        @weight = someObject
+      when WrappedWeight
+        raise TypeError.new("Wrong Class used to set link's weight #{someObject.inspect} ") unless (someObject.class == Float)
+        @weight.value = someObject
+      else
+        raise TypeError.new("Wrong Class for link's weight #{@weight.inspect} ")
+    end
+    return someObject
+  end
+
 
   def calcDeltaWAndAccumulate
     self.deltaWAccumulated += calcDeltaW
@@ -320,7 +356,7 @@ class CoupledWeight
   attr_reader :internalWeight
 
   def initialize
-     @internalWeight = nil
+    @internalWeight = nil
   end
 
   def weight
@@ -328,7 +364,7 @@ class CoupledWeight
   end
 
   def weight(aValue)
-      @internalWeight = aValue
+    @internalWeight = aValue
   end
 
 end
