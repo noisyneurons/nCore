@@ -7,6 +7,7 @@ require_relative 'BaseLearningExperiment'
 require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 
 class Experiment
+  include NeuronToNeuronConnection
 
   def setParameters
     @args = {
@@ -63,9 +64,3 @@ experiment = Experiment.new("BasicBPDemo1", baseRandomNumberSeed)
 
 experiment.performSimulation()
 
-
-#mseVsEpochMeasurements = aLearningNetwork.measures
-#x = mseVsEpochMeasurements.collect { |aMeasure| aMeasure[:epochNumber] }
-#y = mseVsEpochMeasurements.collect { |aMeasure| aMeasure[:networkMSE] }
-#aPlotter = Plotter.new
-#aPlotter.plot(x, y)

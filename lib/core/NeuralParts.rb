@@ -265,14 +265,6 @@ class LinearOutputNeuron < OutputNeuron
   include LinearIOFunction
 end
 
-class WrappedWeight
-  attr_accessor :value
-
-  def initialize(aValueForTheWeight)
-    @value = aValueForTheWeight
-  end
-end
-
 
 class Link
   attr_accessor :inputNeuron, :outputNeuron, :weightAtBeginningOfTraining,
@@ -290,24 +282,22 @@ class Link
     @deltaWAccumulated = 0.0
   end
 
-
   def weight
     case @weight
       when Float
         return @weight
-      when WrappedWeight
+      when SharedWeight
         return @weight.value
       else
         raise TypeError.new("Wrong Class for link's weight:  #{@weight.inspect} ")
     end
   end
 
-
   def weight=(someObject)
     case @weight
       when Float
         @weight = someObject
-      when WrappedWeight
+      when SharedWeight
         raise TypeError.new("Wrong Class used to set link's weight #{someObject.inspect} ") unless (someObject.class == Float)
         @weight.value = someObject
       else
@@ -315,7 +305,6 @@ class Link
     end
     return someObject
   end
-
 
   def calcDeltaWAndAccumulate
     self.deltaWAccumulated += calcDeltaW
@@ -352,23 +341,13 @@ class Link
 end
 
 
-class CoupledWeight
-  attr_reader :internalWeight
+class SharedWeight
+  attr_accessor :value
 
-  def initialize
-    @internalWeight = nil
+  def initialize(aValueForTheWeight)
+    @value = aValueForTheWeight
   end
-
-  def weight
-    return internalWeight
-  end
-
-  def weight(aValue)
-    @internalWeight = aValue
-  end
-
 end
-
 
 ############################################################      N
 class NeuronRecorder
