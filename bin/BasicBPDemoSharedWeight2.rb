@@ -1,5 +1,5 @@
 ### VERSION "nCore"
-## ../nCore/bin/BasicBPDemoSharedWeight.rb
+## ../nCore/bin/BasicBPDemoSharedWeight2.rb
 ## Simple backprop demo. For XOR, and given parameters, requires 2080 epochs to converge.
 ##                       For OR, and given parameters, requires 166 epochs to converge.
 
@@ -53,8 +53,8 @@ class Experiment
 
     sendingLayer = network.inputLayer
     receivingLayer = hiddenLayer = network.allNeuronLayers[1]
-    numberOfGroups = 2
-    shareWeightsBetweenNGroups(sendingLayer, receivingLayer, numberOfGroups)
+    numberOfNeuronsInEachGroup = 2
+    shareWeightsAmongNeuronsInAGroup(sendingLayer, receivingLayer, numberOfNeuronsInEachGroup)
 
     theTrainer = StandardBPTrainingSupervisor.new(examples, network, args)
     return network, theTrainer
