@@ -48,8 +48,8 @@ module NeuronToNeuronConnection
   end
 
   def shareWeightsAmongNeuronsInAGroup(sendingLayer, receivingLayer, numberOfNeuronsInEachGroup)
-    STDERR.puts "Error: Number of neurons in receiving layer does not divide evenly by #{numberOfNeuronsInAGroup}" unless ((receivingLayer.length % numberOfNeuronsInAGroup) == 0)
-    receivingLayer.each_slice(numberOfNeuronsInAGroup) do |aGroupOfReceivingNeurons|
+    STDERR.puts "Error: Number of neurons in receiving layer does not divide evenly by #{numberOfNeuronsInEachGroup}" unless ((receivingLayer.length % numberOfNeuronsInEachGroup) == 0)
+    receivingLayer.each_slice(numberOfNeuronsInEachGroup) do |aGroupOfReceivingNeurons|
       shareWeightsBetweenNGroups(sendingLayer, aGroupOfReceivingNeurons, numberOfNeuronsInEachGroup)
     end
   end
