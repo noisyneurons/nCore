@@ -37,7 +37,41 @@ class AbstractNeuronGroups
   end
 end
 
+
 #####
+class AGroupsForThreeClass2HiddenLayers < AbstractNeuronGroups
+  def nameTrainingGroups
+    hiddenLayer1 = allNeuronLayers[1]
+
+    self.layersWithInputLinks = [hiddenLayer1, outputLayer]
+
+    self.outputErrorAdaptingLayers = layersWithInputLinks
+    self.flockErrorGeneratingLayers = []
+    self.flockErrorAdaptingLayers = []
+
+    self.layersWhoseClustersNeedToBeSeeded = flockErrorGeneratingLayers
+    setNeuronGroupNames()
+  end
+end
+
+
+class BGroupsForThreeClass2HiddenLayers < AbstractNeuronGroups
+  def nameTrainingGroups
+    hiddenLayer1 = allNeuronLayers[1]
+    hiddenLayer2 = allNeuronLayers[2]
+
+    self.layersWithInputLinks = [hiddenLayer1, hiddenLayer2, outputLayer]
+
+    self.outputErrorAdaptingLayers = layersWithInputLinks
+    self.flockErrorGeneratingLayers = [hiddenLayer2]
+    self.flockErrorAdaptingLayers = [hiddenLayer2]
+
+    self.layersWhoseClustersNeedToBeSeeded = flockErrorGeneratingLayers
+    setNeuronGroupNames()
+  end
+end
+
+
 class NeuronGroupsFor3LayerBPNetwork < AbstractNeuronGroups
   def nameTrainingGroups
     hiddenLayer = allNeuronLayers[1]
@@ -72,6 +106,23 @@ class NeuronGroupsHiddenLayerLocalFlocking < NeuronGroupsForSingleLayerNetwork
     self.outputErrorAdaptingLayers = layersWithInputLinks
     self.flockErrorGeneratingLayers = [hiddenLayer]
     self.flockErrorAdaptingLayers = [hiddenLayer]
+
+    self.layersWhoseClustersNeedToBeSeeded = flockErrorGeneratingLayers
+    setNeuronGroupNames()
+  end
+end
+
+
+class GroupsForThreeClass2HiddenLayers < AbstractNeuronGroups
+  def nameTrainingGroups
+    hiddenLayer1 = allNeuronLayers[1]
+    hiddenLayer2 = allNeuronLayers[2]
+
+    self.layersWithInputLinks = [hiddenLayer1, hiddenLayer2, outputLayer]
+
+    self.outputErrorAdaptingLayers = layersWithInputLinks
+    self.flockErrorGeneratingLayers = [hiddenLayer2]
+    self.flockErrorAdaptingLayers = [hiddenLayer2]
 
     self.layersWhoseClustersNeedToBeSeeded = flockErrorGeneratingLayers
     setNeuronGroupNames()

@@ -22,8 +22,8 @@ class Experiment
     @randomNumberSeed = baseRandomNumberSeed + (taskID * 10000)
     srand(randomNumberSeed)
 
-    puts "sleeping"  unless($currentHost == "localhost")
-    sleep(rand * 30)  unless($currentHost == "localhost")
+    puts "sleeping" unless ($currentHost == "localhost")
+    sleep(rand * 30) unless ($currentHost == "localhost")
 
     @jobID = ((ENV['JOB_ID']).to_i) || 0
     @jobName = descriptionOfExperiment[0...10]
@@ -151,13 +151,17 @@ class Experiment
     }
     SnapShotData.new(dataToStoreLongTerm)
 
-    keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(10) }
+    keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(400) }
     unless (keysToRecords.empty?)
       puts
       puts "Number\tLastEpoch\t\tTrainMSE\t\t\tTestMSE\t\t\tAccumulatedAbsoluteFlockingErrors\t\t\t\tTime\t\tTaskID\t\t\t\t\tDescription"
       keysToRecords.each do |keyToOneRecord|
-        recordHash = SnapShotData.values(keyToOneRecord)
-        puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t\t#{recordHash[:trainMSE]}\t\t#{recordHash[:testMSE]}\t\t\t#{recordHash[:accumulatedAbsoluteFlockingErrors]}\t\t\t#{recordHash[:time]}\t\t\t#{recordHash[:gridTaskID]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
+        begin
+          recordHash = SnapShotData.values(keyToOneRecord)
+          puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t\t#{recordHash[:trainMSE]}\t\t#{recordHash[:testMSE]}\t\t\t#{recordHash[:accumulatedAbsoluteFlockingErrors]}\t\t\t#{recordHash[:time]}\t\t\t#{recordHash[:gridTaskID]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
+        rescue
+          puts "problem in yaml conversion"
+        end
       end
 
       # recordHash = SnapShotData.values(keysToRecords.last)

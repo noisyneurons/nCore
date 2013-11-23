@@ -54,6 +54,12 @@ module NeuronToNeuronConnection
     end
   end
 
+  def deleteRecurrentSelfConnections(lowerLayerNeurons, upperLayerNeurons)
+    lowerLayerNeurons.each_with_index do |aLowerLayerNeuron, indexToNeuron|
+      deleteCommonLinkBetweenNeurons(aLowerLayerNeuron, upperLayerNeurons[indexToNeuron])
+    end
+  end
+
   private
 
   def connectToAllNeuronsInReceivingLayer(sendingNeuron, receivingLayer, args)
@@ -145,6 +151,29 @@ class BaseNetwork
   end
 end # Base network
 
+class Recurrent2HiddenLayerNetworkSpecial < BaseNetwork
+
+  def createAllLayersOfNeurons
+    STDERR.puts "Error: number of neurons in hidden layers are not identical" if(numberOfHiddenLayer1Neurons != numberOfHiddenLayer2Neurons)
+
+
+    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
+    self.allNeuronLayers << inputLayer
+
+    hiddenLayer1Neurons = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingNeuron, args[:numberOfHiddenLayer1Neurons])
+    self.allNeuronLayers << hiddenLayer1Neurons
+
+    hiddenLayer2Neurons = createAndConnectLayer((inputLayer + hiddenLayer1Neurons), typeOfNeuron = FlockingNeuron, args[:numberOfHiddenLayer2Neurons])
+    self.allNeuronLayers << hiddenLayer2Neurons
+
+    # to create just cross-connections between 2 hidden layers of a "simulated recurrent net" we need to delete ALL (direct recurrent: N1out to N1in connections)
+    deleteRecurrentSelfConnections(hiddenLayer1Neurons, hiddenLayer2Neurons)
+
+    self.outputLayer = createAndConnectLayer((hiddenLayer1Neurons + hiddenLayer2Neurons), typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
+    self.allNeuronLayers << outputLayer
+  end
+end
+
 class Standard3LayerNetwork < BaseNetwork
 
   def createAllLayersOfNeurons
@@ -158,7 +187,6 @@ class Standard3LayerNetwork < BaseNetwork
     self.allNeuronLayers << outputLayer
   end
 end
-
 
 class SimpleFlockingNeuronNetwork < BaseNetwork # TODO this is identical, except in name, to  SimpleFlockingNetwork
 
@@ -196,24 +224,25 @@ class Flocking3LayerNetwork < BaseNetwork
   end
 end
 
-class DeepRecurrentNetwork < BaseNetwork
 
-  def createAllLayersOfNeurons
-    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
-    self.allNeuronLayers << inputLayer
-    previousLayer = inputLayer
-
-    args[:numberOfHiddenLayers].times do
-      hiddenLayer = createAndConnectLayer(previousLayer, typeOfNeuron = FlockingNeuron, args[:numberOfHiddenNeurons])
-      self.allNeuronLayers << hiddenLayer
-      previousLayer = hiddenLayer
-    end
-
-    self.outputLayer = createAndConnectLayer(hiddenLayer, typeOfNeuron = LinearOutputNeuron, args[:numberOfOutputNeurons])
-    self.allNeuronLayers << outputLayer
-  end
-end
-
+#class DeepRecurrentNetwork < BaseNetwork  # TODO a number of things wrong here.  Needs to be corrected.
+#
+#  def createAllLayersOfNeurons
+#    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
+#    self.allNeuronLayers << inputLayer
+#    previousLayer = inputLayer
+#
+#    args[:numberOfHiddenLayers].times do
+#      hiddenLayer = createAndConnectLayer(previousLayer, typeOfNeuron = FlockingNeuron, args[:numberOfHiddenNeurons])
+#      self.allNeuronLayers << hiddenLayer
+#      previousLayer = hiddenLayer
+#    end
+#
+#    self.outputLayer = createAndConnectLayer(hiddenLayer, typeOfNeuron = LinearOutputNeuron, args[:numberOfOutputNeurons])
+#    self.allNeuronLayers << outputLayer
+#  end
+#end
+#
 
 
 

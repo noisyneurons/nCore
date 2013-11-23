@@ -22,7 +22,7 @@ class Experiment
 
         # Network Architecture
         :numberOfInputNeurons => 2,
-        :numberOfHiddenNeurons => 8,
+        :numberOfHiddenNeurons => 2,
         :numberOfOutputNeurons => 3,
         :weightRange => 1.0,
         :typeOfLink => FlockingLink,
@@ -53,10 +53,10 @@ class Experiment
   def createNetworkAndTrainer
     network = Flocking3LayerNetwork.new(args) # we rally don't use the flocking part of the network here! -- but we need...
 
-    #sendingLayer = network.inputLayer
-    #receivingLayer = hiddenLayer = network.allNeuronLayers[1]
-    #numberOfNeuronsInEachGroup = 2
-    #shareWeightsAmongNeuronsInAGroup(sendingLayer, receivingLayer, numberOfNeuronsInEachGroup)
+    sendingLayer = network.inputLayer
+    receivingLayer = hiddenLayer = network.allNeuronLayers[1]
+    numberOfNeuronsInEachGroup = 2
+    shareWeightsAmongNeuronsInAGroup(sendingLayer, receivingLayer, numberOfNeuronsInEachGroup)
 
     theTrainer = StandardBPTrainingSupervisor.new(examples, network, args)
     return network, theTrainer
@@ -69,7 +69,7 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("3ClassUnS8", baseRandomNumberSeed)
+experiment = Experiment.new("3Class2Shared2", baseRandomNumberSeed)
 
 experiment.performSimulation()
 

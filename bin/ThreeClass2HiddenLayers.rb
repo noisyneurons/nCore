@@ -1,5 +1,5 @@
 ### VERSION "nCore"
-## ../nCore/bin/BasicBPDemoSharedWeight.rb
+## ../nCore/bin/ThreeClass2HiddenLayers.rb
 ## Simple backprop demo. For XOR, and given parameters, requires 2080 epochs to converge.
 ##                       For OR, and given parameters, requires 166 epochs to converge.
 
@@ -22,13 +22,14 @@ class Experiment
 
         # Network Architecture
         :numberOfInputNeurons => 2,
-        :numberOfHiddenNeurons => 6,
-        :numberOfOutputNeurons => 1,
+        :numberOfHiddenLayer1Neurons => 2,
+        :numberOfHiddenLayer2Neurons => 2,
+        :numberOfOutputNeurons => 3,
         :weightRange => 1.0,
         :typeOfLink => FlockingLink,
 
         # Training Set parameters
-        :numberOfExamples => (numExamples = 4),
+        :numberOfExamples => (numExamples = 6),
         :numExamples => numExamples,
 
         # Recording and database parameters
@@ -41,20 +42,23 @@ class Experiment
 
   def createTrainingSet
     examples = []
-    examples << {:inputs => [0.0, 0.0], :targets => [0.1], :exampleNumber => 0, :class => 0}
-    examples << {:inputs => [0.0, 1.0], :targets => [0.9], :exampleNumber => 1, :class => 1}
-    examples << {:inputs => [1.0, 0.0], :targets => [0.9], :exampleNumber => 2, :class => 1}
-    examples << {:inputs => [1.0, 1.0], :targets => [0.1], :exampleNumber => 3, :class => 0}
+    examples << {:inputs => [0.0, 0.0], :targets => [1.0, 0.0, 0.0], :exampleNumber => 0, :class => 0}
+    examples << {:inputs => [1.0, 0.0], :targets => [1.0, 0.0, 0.0], :exampleNumber => 1, :class => 0}
+    examples << {:inputs => [0.0, 1.0], :targets => [0.0, 1.0, 0.0], :exampleNumber => 2, :class => 1}
+    examples << {:inputs => [1.0, 1.0], :targets => [0.0, 1.0, 0.0], :exampleNumber => 3, :class => 1}
+    examples << {:inputs => [0.0, 2.0], :targets => [0.0, 0.0, 1.0], :exampleNumber => 4, :class => 2}
+    examples << {:inputs => [1.0, 2.0], :targets => [0.0, 0.0, 1.0], :exampleNumber => 5, :class => 2}
     return examples
   end
 
   def createNetworkAndTrainer
-    network = Flocking3LayerNetwork.new(args) # we rally don't use the flocking part of the network here! -- but we need...
+    network = Flocking4LayerNetwork.new(args) # we rally don't use the flocking part of the network here! -- but we need...
 
-    sendingLayer = network.inputLayer
-    receivingLayer = hiddenLayer = network.allNeuronLayers[1]
-    numberOfGroups = 2
-    shareWeightsBetweenNGroups(sendingLayer, receivingLayer, numberOfGroups)
+    # TODO inter-layer sharing -- NOT intra-layer sharing as performed by the code immediately below:
+    #sendingLayer = network.inputLayer
+    #receivingLayer = hiddenLayer = network.allNeuronLayers[1]
+    #numberOfNeuronsInEachGroup = 2
+    #shareWeightsAmongNeuronsInAGroup(sendingLayer, receivingLayer, numberOfNeuronsInEachGroup)
 
     theTrainer = StandardBPTrainingSupervisor.new(examples, network, args)
     return network, theTrainer
@@ -67,7 +71,7 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("SharedWBPD1", baseRandomNumberSeed)
+experiment = Experiment.new("3Cls2Hid2Shared", baseRandomNumberSeed)
 
 experiment.performSimulation()
 
