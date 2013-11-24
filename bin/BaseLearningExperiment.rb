@@ -151,7 +151,7 @@ class Experiment
     }
     SnapShotData.new(dataToStoreLongTerm)
 
-    keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(400) }
+    keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(100) }
     unless (keysToRecords.empty?)
       puts
       puts "Number\tLastEpoch\t\tTrainMSE\t\t\tTestMSE\t\t\tAccumulatedAbsoluteFlockingErrors\t\t\t\tTime\t\tTaskID\t\t\t\t\tDescription"

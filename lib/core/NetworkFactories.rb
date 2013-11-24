@@ -127,8 +127,11 @@ module NeuronToNeuronConnection
 
   def zeroWeightInCommonLink(outputLinks, inputLinks)
     theCommonLink = findTheConnectingLink(inputLinks, outputLinks)
-    puts "Value NIL............................................" if (theCommonLink.nil?)
-    theCommonLink.weight = 0.0 unless (theCommonLink.nil?)
+    if (theCommonLink.nil?)
+      STDERR.puts "Possible ERROR: No common link between 2 Neurons"
+    else
+      theCommonLink.weight = 0.0
+    end
   end
 
   def giveEachLinkArrayASingleSharedWeight(groupedLinks)
@@ -146,23 +149,27 @@ end
 class BaseNetwork
   attr_accessor :args, :allNeuronLayers, :theBiasNeuron,
                 :inputLayer, :outputLayer
+  include NeuronToNeuronConnection
 
   def initialize(args)
     @args = args
     @allNeuronLayers = []
     NeuronBase.zeroID
     @theBiasNeuron = BiasNeuron.new(args)
-    NeuronBase.zeroID
     createSimpleLearningANN
   end
 
   def createSimpleLearningANN
-    createAllLayersOfNeurons()
-    connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
+    createStandardNetworkWithStandardFullyConnectedArchitecture
+    modificationsToStandardNetworkArchitecture
+  end
+
+  def modificationsToStandardNetworkArchitecture
   end
 
   def to_s
-    description = "Neural Network Architecture and Parameters:"
+    description = "Neural Network Architecture and Parameters:\n"
+    description += "#{theBiasNeuron}\n"
     allNeuronLayers.each_with_index do |aLayer, index|
       description += "\n\nLayer #{index}\n"
       aLayer.each { |aNeuron| description += aNeuron.to_s }
@@ -171,8 +178,6 @@ class BaseNetwork
   end
 
   protected
-
-  include NeuronToNeuronConnection
 
   def createAndConnectLayer(inputToLayer, typeOfNeuronInLayer, numberOfNeurons)
     layer = createArrayOfNeurons(typeOfNeuronInLayer, numberOfNeurons, args)
@@ -190,37 +195,43 @@ class BaseNetwork
 end # Base network
 
 class Recurrent2HiddenLayerNetworkSpecial < BaseNetwork
+  attr_accessor  :hiddenLayer1, :hiddenLayer2
 
-  def createAllLayersOfNeurons
+  def createStandardNetworkWithStandardFullyConnectedArchitecture
     STDERR.puts "Error: number of neurons in hidden layers are not identical" if (args[:numberOfHiddenLayer1Neurons] != args[:numberOfHiddenLayer2Neurons])
 
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
     self.allNeuronLayers << inputLayer
 
-    hiddenLayer1Neurons = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingNeuron, args[:numberOfHiddenLayer1Neurons])
-    self.allNeuronLayers << hiddenLayer1Neurons
+    self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingNeuron, args[:numberOfHiddenLayer1Neurons])
+    self.allNeuronLayers << hiddenLayer1
 
-    hiddenLayer2Neurons = createAndConnectLayer((inputLayer + hiddenLayer1Neurons), typeOfNeuron = FlockingNeuron, args[:numberOfHiddenLayer2Neurons])
-    self.allNeuronLayers << hiddenLayer2Neurons
+    self.hiddenLayer2 = createAndConnectLayer((inputLayer + hiddenLayer1), typeOfNeuron = FlockingNeuron, args[:numberOfHiddenLayer2Neurons])
+    self.allNeuronLayers << hiddenLayer2
 
-    # Set inter-hidden-layer weights to zero
-    zeroWeightInCommonLink(hiddenLayer1Neurons, hiddenLayer2Neurons)
+    self.outputLayer = createAndConnectLayer((hiddenLayer1 + hiddenLayer2), typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
+    self.allNeuronLayers << outputLayer
 
-    # Weight Sharing code
-    shareWeightBetweenCorrespondingLinks(inputLayer, hiddenLayer1Neurons, inputLayer, hiddenLayer2Neurons)
+    connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
+  end
+
+  def modificationsToStandardNetworkArchitecture
+   # Weight Sharing code
+    inputLayerIncludingLinkFromBias = inputLayer + [theBiasNeuron]
+    shareWeightBetweenCorrespondingLinks(inputLayerIncludingLinkFromBias, hiddenLayer1,
+                                         inputLayerIncludingLinkFromBias, hiddenLayer2)
+
+    ## Set inter-hidden-layer weights to zero
+    zeroWeightsInLinksBetweenNeurons(hiddenLayer1, hiddenLayer2)
 
     # to create just cross-connections between 2 hidden layers of a "simulated recurrent net" we need to delete ALL (direct recurrent: N1out to N1in connections)
-    deleteRecurrentSelfConnections(hiddenLayer1Neurons, hiddenLayer2Neurons)
-
-
-    self.outputLayer = createAndConnectLayer((hiddenLayer1Neurons + hiddenLayer2Neurons), typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
-    self.allNeuronLayers << outputLayer
+    deleteRecurrentSelfConnections(hiddenLayer1, hiddenLayer2)
   end
 end
 
 class Standard3LayerNetwork < BaseNetwork
 
-  def createAllLayersOfNeurons
+  def createStandardNetworkWithStandardFullyConnectedArchitecture
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
     self.allNeuronLayers << inputLayer
 
@@ -229,34 +240,40 @@ class Standard3LayerNetwork < BaseNetwork
 
     self.outputLayer = createAndConnectLayer(hiddenLayer, typeOfNeuron = OutputNeuron, args[:numberOfOutputNeurons])
     self.allNeuronLayers << outputLayer
+
+    connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
   end
 end
 
 class SimpleFlockingNeuronNetwork < BaseNetwork # TODO this is identical, except in name, to  SimpleFlockingNetwork
 
-  def createAllLayersOfNeurons
+  def createStandardNetworkWithStandardFullyConnectedArchitecture
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
     self.allNeuronLayers << inputLayer
 
     self.outputLayer = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
     self.allNeuronLayers << outputLayer
+
+    connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
   end
 end
 
 class Flocking1LayerNetwork < BaseNetwork
 
-  def createAllLayersOfNeurons
+  def createStandardNetworkWithStandardFullyConnectedArchitecture
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
     self.allNeuronLayers << inputLayer
 
     self.outputLayer = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
     self.allNeuronLayers << outputLayer
+
+    connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
   end
 end
 
 class Flocking3LayerNetwork < BaseNetwork
 
-  def createAllLayersOfNeurons
+  def createStandardNetworkWithStandardFullyConnectedArchitecture
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
     self.allNeuronLayers << inputLayer
 
@@ -265,6 +282,8 @@ class Flocking3LayerNetwork < BaseNetwork
 
     self.outputLayer = createAndConnectLayer(hiddenLayer, typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
     self.allNeuronLayers << outputLayer
+
+    connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
   end
 end
 

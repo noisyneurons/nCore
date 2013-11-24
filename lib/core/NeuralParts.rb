@@ -196,10 +196,10 @@ end
 
 
 class BiasNeuron < NeuronBase
-  attr_accessor :outputLinks
+  attr_reader :outputLinks
 
   def postInitialize
-    @id = :BiasNeuron
+    #@id = -1
     @outputLinks = []
     @output = 1.0
   end
