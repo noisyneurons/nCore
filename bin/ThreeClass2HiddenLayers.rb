@@ -52,14 +52,8 @@ class Experiment
   end
 
   def createNetworkAndTrainer
-    network = Flocking4LayerNetwork.new(args) # we rally don't use the flocking part of the network here! -- but we need...
-
-    # TODO inter-layer sharing -- NOT intra-layer sharing as performed by the code immediately below:
-    #sendingLayer = network.inputLayer
-    #receivingLayer = hiddenLayer = network.allNeuronLayers[1]
-    #numberOfNeuronsInEachGroup = 2
-    #shareWeightsAmongNeuronsInAGroup(sendingLayer, receivingLayer, numberOfNeuronsInEachGroup)
-
+    network = Recurrent2HiddenLayerNetworkSpecial.new(args) # we rally don't use the flocking part of the network here! -- but we need...
+    puts network.to_s
     theTrainer = StandardBPTrainingSupervisor.new(examples, network, args)
     return network, theTrainer
   end
@@ -73,5 +67,7 @@ baseRandomNumberSeed = 0
 
 experiment = Experiment.new("3Cls2Hid2Shared", baseRandomNumberSeed)
 
-experiment.performSimulation()
+experiment.createNetworkAndTrainer
+
+#experiment.performSimulation()
 

@@ -15,7 +15,7 @@ class Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.3, # 0.03,
         :minMSE => 0.001,
-        :maxNumEpochs => 12e3, # 120e3
+        :maxNumEpochs => 2e3, # 120e3
 
         # Network Architecture and initial weights
         :numberOfInputNeurons => 2,

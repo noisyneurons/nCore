@@ -29,34 +29,42 @@ module NeuronToNeuronConnection
     end
   end
 
-  def shareWeightsBetweenNGroups(sendingLayer, receivingLayer, numberOfGroups)
-    lengthOfReceivingLayer = receivingLayer.length
-    STDERR.puts "Error: Number of neurons in receiving layer does not divide evenly by #{numberOfGroups}" unless ((lengthOfReceivingLayer % numberOfGroups) == 0)
-    sliceSize = lengthOfReceivingLayer / numberOfGroups
+  def shareWeightBetweenCorrespondingLinks(sendingLayer1, receivingLayer1, sendingLayer2, receivingLayer2)
+    arrayOfLinks1 = retrieveLinksBetweenGroupsOfNeurons(sendingLayer1, receivingLayer1)
+    arrayOfLinks2 = retrieveLinksBetweenGroupsOfNeurons(sendingLayer2, receivingLayer2)
+    STDERR.puts "Error: Number of links in the 2 groups are unequal." unless (arrayOfLinks1.length == arrayOfLinks2.length)
+    arrayOfLinkArrays = arrayOfLinks1.zip(arrayOfLinks2)
+    giveEachLinkArrayASingleSharedWeight(arrayOfLinkArrays)
+  end
 
-    arraysOfLinksToShareWeights = []
-    receivingLayer.each_slice(sliceSize) { |partOfReceivingLayer| arraysOfLinksToShareWeights << retrieveLinksBetweenGroupsOfNeurons(sendingLayer, partOfReceivingLayer) }
-    groupedLinks = arraysOfLinksToShareWeights.pop.zip(arraysOfLinksToShareWeights.flatten)
+  #def shareWeightsBetweenNGroups(sendingLayer, receivingLayer, numberOfGroups)  # TODO not sure this will be correct in all use cases
+  #  lengthOfReceivingLayer = receivingLayer.length
+  #  STDERR.puts "Error: Number of neurons in receiving layer does not divide evenly by #{numberOfGroups}" unless ((lengthOfReceivingLayer % numberOfGroups) == 0)
+  #  sliceSize = lengthOfReceivingLayer / numberOfGroups
+  #
+  #  arraysOfLinksToShareWeights = []
+  #  receivingLayer.each_slice(sliceSize) { |partOfReceivingLayer| arraysOfLinksToShareWeights << retrieveLinksBetweenGroupsOfNeurons(sendingLayer, partOfReceivingLayer) }
+  #  groupedLinks = arraysOfLinksToShareWeights.pop.zip(arraysOfLinksToShareWeights.flatten)
+  #
+  #  giveEachLinkArrayASingleSharedWeight(groupedLinks)
+  #end
+  #
+  #def shareWeightsAmongNeuronsInAGroup(sendingLayer, receivingLayer, numberOfNeuronsInEachGroup)
+  #  STDERR.puts "Error: Number of neurons in receiving layer does not divide evenly by #{numberOfNeuronsInEachGroup}" unless ((receivingLayer.length % numberOfNeuronsInEachGroup) == 0)
+  #  receivingLayer.each_slice(numberOfNeuronsInEachGroup) do |aGroupOfReceivingNeurons|
+  #    shareWeightsBetweenNGroups(sendingLayer, aGroupOfReceivingNeurons, numberOfNeuronsInEachGroup)
+  #  end
+  #end
 
-    groupedLinks.each do |aGroupOfLinksToShareASingleWeight|
-      firstLinkOfGroup = aGroupOfLinksToShareASingleWeight[0]
-      aSharedWeight = SharedWeight.new(firstLinkOfGroup.weight)
-      aGroupOfLinksToShareASingleWeight.each do |aLink|
-        aLink.weight = aSharedWeight
-      end
+  def deleteRecurrentSelfConnections(sendingLayerNeurons, receivingLayerNeurons)
+    sendingLayerNeurons.each_with_index do |aSendingLayerNeuron, indexToNeuron|
+      deleteCommonLinkBetweenNeurons(aSendingLayerNeuron, receivingLayerNeurons[indexToNeuron])
     end
   end
 
-  def shareWeightsAmongNeuronsInAGroup(sendingLayer, receivingLayer, numberOfNeuronsInEachGroup)
-    STDERR.puts "Error: Number of neurons in receiving layer does not divide evenly by #{numberOfNeuronsInEachGroup}" unless ((receivingLayer.length % numberOfNeuronsInEachGroup) == 0)
-    receivingLayer.each_slice(numberOfNeuronsInEachGroup) do |aGroupOfReceivingNeurons|
-      shareWeightsBetweenNGroups(sendingLayer, aGroupOfReceivingNeurons, numberOfNeuronsInEachGroup)
-    end
-  end
-
-  def deleteRecurrentSelfConnections(lowerLayerNeurons, upperLayerNeurons)
-    lowerLayerNeurons.each_with_index do |aLowerLayerNeuron, indexToNeuron|
-      deleteCommonLinkBetweenNeurons(aLowerLayerNeuron, upperLayerNeurons[indexToNeuron])
+  def zeroWeightsConnecting(sendingLayerNeurons, receivingLayerNeurons)
+    sendingLayerNeurons.each_with_index do |aSendingLayerNeuron, indexToNeuron|
+      zeroWeightInLinkBetweenNeurons(aSendingLayerNeuron, receivingLayerNeurons[indexToNeuron])
     end
   end
 
@@ -96,11 +104,41 @@ module NeuronToNeuronConnection
   end
 
   def deleteCommonLink(outputLinks, inputLinks)
+    theCommonLink = findTheConnectingLink(inputLinks, outputLinks)
+    outputLinks.delete(theCommonLink)
+    inputLinks.delete(theCommonLink)
+  end
+
+  def findTheConnectingLink(inputLinks, outputLinks)
     theCommonLink = outputLinks.find do |anOutputLink|
       inputLinks.find { |anInputLink| anInputLink == anOutputLink }
     end
-    outputLinks.delete(theCommonLink)
-    inputLinks.delete(theCommonLink)
+  end
+
+  def zeroWeightsInLinksBetweenNeurons(sendingNeurons, receivingNeurons)
+    sendingNeurons.each do |aSendingNeuron|
+      receivingNeurons.each do |aReceivingNeuron|
+        outputLinks = aSendingNeuron.outputLinks
+        inputLinks = aReceivingNeuron.inputLinks
+        zeroWeightInCommonLink(outputLinks, inputLinks)
+      end
+    end
+  end
+
+  def zeroWeightInCommonLink(outputLinks, inputLinks)
+    theCommonLink = findTheConnectingLink(inputLinks, outputLinks)
+    puts "Value NIL............................................" if (theCommonLink.nil?)
+    theCommonLink.weight = 0.0 unless (theCommonLink.nil?)
+  end
+
+  def giveEachLinkArrayASingleSharedWeight(groupedLinks)
+    groupedLinks.each do |aGroupOfLinksToShareASingleWeight|
+      firstLinkOfGroup = aGroupOfLinksToShareASingleWeight[0]
+      aSharedWeight = SharedWeight.new(firstLinkOfGroup.weight)
+      aGroupOfLinksToShareASingleWeight.each do |aLink|
+        aLink.weight = aSharedWeight
+      end
+    end
   end
 end
 
@@ -154,8 +192,7 @@ end # Base network
 class Recurrent2HiddenLayerNetworkSpecial < BaseNetwork
 
   def createAllLayersOfNeurons
-    STDERR.puts "Error: number of neurons in hidden layers are not identical" if(numberOfHiddenLayer1Neurons != numberOfHiddenLayer2Neurons)
-
+    STDERR.puts "Error: number of neurons in hidden layers are not identical" if (args[:numberOfHiddenLayer1Neurons] != args[:numberOfHiddenLayer2Neurons])
 
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
     self.allNeuronLayers << inputLayer
@@ -166,8 +203,15 @@ class Recurrent2HiddenLayerNetworkSpecial < BaseNetwork
     hiddenLayer2Neurons = createAndConnectLayer((inputLayer + hiddenLayer1Neurons), typeOfNeuron = FlockingNeuron, args[:numberOfHiddenLayer2Neurons])
     self.allNeuronLayers << hiddenLayer2Neurons
 
+    # Set inter-hidden-layer weights to zero
+    zeroWeightInCommonLink(hiddenLayer1Neurons, hiddenLayer2Neurons)
+
+    # Weight Sharing code
+    shareWeightBetweenCorrespondingLinks(inputLayer, hiddenLayer1Neurons, inputLayer, hiddenLayer2Neurons)
+
     # to create just cross-connections between 2 hidden layers of a "simulated recurrent net" we need to delete ALL (direct recurrent: N1out to N1in connections)
     deleteRecurrentSelfConnections(hiddenLayer1Neurons, hiddenLayer2Neurons)
+
 
     self.outputLayer = createAndConnectLayer((hiddenLayer1Neurons + hiddenLayer2Neurons), typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
     self.allNeuronLayers << outputLayer
