@@ -317,19 +317,22 @@ end
 
 class StepT3ClassLocalFlock  < AbstractStepTrainer
 
-  def train(trials)
+  def train(nLoops)
     distributeSetOfExamples(examples)
     seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO ONLY "seed" when necessary?   # unless(args[:epochs] > 1)
     self.accumulatedAbsoluteFlockingErrors = []
     mseMaxAllowedAfterFlocking = nil
 
+    # nLoops.times do
     while (trainingSequence.stillMoreEpochs)
       initialMSEatBeginningOfBPOELoop = loopForBackPropOfOutputError()
       loopForLocalFlocking(initialMSEatBeginningOfBPOELoop)
     end
 
     testMSE = calcTestingMeanSquaredErrors
-    return calcMSE, testMSE, accumulatedAbsoluteFlockingErrors
+    resultOfCalcMSE = calcMeanSumSquaredErrors # calcMSE  # need to do this because
+    puts "calcMSE= #{resultOfCalcMSE}"
+    return resultOfCalcMSE, testMSE, accumulatedAbsoluteFlockingErrors
   end
 
   def loopForBackPropOfOutputError

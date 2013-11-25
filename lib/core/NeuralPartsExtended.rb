@@ -138,6 +138,16 @@ class FlockingNeuron < Neuron
   end
 end
 
+class FlockingNeuronStepIO < FlockingNeuron
+  def ioFunction(netInput)
+    if(netInput >= 0.0)
+      return 1.0
+    else
+      return 0.0
+    end
+  end
+end
+
 class FlockingOutputNeuron < OutputNeuron
   include CommonClusteringCode
 

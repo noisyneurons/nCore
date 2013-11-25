@@ -152,6 +152,8 @@ class Cluster
   end
 
   def randomlyInitializeExampleMembershipWeights # is this the place for this initialization?
+    #std("numExamples",numExamples)
+    #std("m",m)
     self.membershipWeightForEachExample = Array.new(numExamples) { rand**m } # { rand }  # TODO is it useful to use **m here?  # TODO Alternative:a you could randomly pick an example to be the initial center for the cluster.  Would do this "above the cluster class."
   end
 

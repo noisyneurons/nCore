@@ -35,28 +35,28 @@ class Experiment
         # Recording and database parameters
         :neuronToDisplay => 2,
         :intervalForSavingNeuronData => 100,
-        :intervalForSavingDetailedNeuronData => 1000,
+        :intervalForSavingDetailedNeuronData => 100,
         :intervalForSavingTrainingData => 100,
 
         # Flocking Parameters...
         :flockingLearningRate => -0.01, # -0.0002,
-        :maxFlockingIterationsCount => 30, # 2000,
-        :targetFlockIterationsCount => 20,
+        :maxFlockingIterationsCount => 50, # 2000,
+        :targetFlockIterationsCount => 40,
         :ratioDropInMSE => 0.95,
-        :ratioDropInMSEForFlocking => 0.96,
+        :ratioDropInMSEForFlocking => 0.97,
 
         # Flocker Specs...
         :typeOfClusterer => DynamicClusterer,
         :numberOfClusters => 2,
         :m => 2.0,
-        :numExamples => numberOfExamples,
+        :numExamples => numExamples,
         :exampleVectorLength => 1,
         :delta => 1e-2,
         :maxNumberOfClusteringIterations => 10,
         :keepTargetsSymmetrical => true,
         :targetDivergenceFactor => 1.0,
         :alwaysUseFuzzyClusters => true,
-        :epochsBeforeFlockingAllowed => 0, #  10e1,
+       # :epochsBeforeFlockingAllowed => 300, #  10e1,
 
         # Inner Numeric Constraints -- used to floating point under or overflow
         :floorToPreventOverflow => 1e-60 # 1e-30

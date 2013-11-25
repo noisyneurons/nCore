@@ -191,6 +191,7 @@ class DetailedNeuronData
     @epochs = detailedNeuronDataToRecord[:epochs]
     @neuron = detailedNeuronDataToRecord[:neuronID]
     @exampleNumber = detailedNeuronDataToRecord[:exampleNumber]
+    puts "detailedNeuronDataToRecord = #{detailedNeuronDataToRecord}"
     $redis.set(detailedNeuronDataKey, YAML.dump(detailedNeuronDataToRecord))
     index!
   end

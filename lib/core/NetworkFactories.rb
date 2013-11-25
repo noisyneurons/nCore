@@ -203,6 +203,7 @@ class Recurrent2HiddenLayerNetworkSpecial < BaseNetwork
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
     self.allNeuronLayers << inputLayer
 
+    # self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingNeuronStepIO, args[:numberOfHiddenLayer1Neurons])
     self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingNeuron, args[:numberOfHiddenLayer1Neurons])
     self.allNeuronLayers << hiddenLayer1
 
