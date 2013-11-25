@@ -52,12 +52,11 @@ class Experiment
   end
 
   def createNetworkAndTrainer
-    network = Recurrent2HiddenLayerNetworkSpecial.new(args) # we rally don't use the flocking part of the network here! -- but we need...
+    network = Recurrent2HiddenLayerNetworkSpecial.new(args)
     puts network.to_s
-    theTrainer = StandardBPTrainingSupervisor.new(examples, network, args)
+    theTrainer = ThreeClass2HiddenBPSupervisor.new(examples, network, args)
     return network, theTrainer
   end
-
 end
 
 
@@ -67,7 +66,7 @@ baseRandomNumberSeed = 0
 
 experiment = Experiment.new("3Cls2Hid2Shared", baseRandomNumberSeed)
 
-experiment.createNetworkAndTrainer
+# experiment.createNetworkAndTrainer
 
-#experiment.performSimulation()
+experiment.performSimulation()
 

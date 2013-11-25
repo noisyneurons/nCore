@@ -542,6 +542,14 @@ class TrainingSupervisorBase
   end
 end
 
+class ThreeClass2HiddenBPSupervisor < TrainingSupervisorBase
+  def postInitialize
+    self.neuronGroups = GroupsForThreeClass2HiddenLayersOEBP.new(network)
+    self.stepTrainer = StepTrainerForOutputErrorBPOnly.new(examples, neuronGroups, trainingSequence, args)
+  end
+end
+
+
 class StandardBPTrainingSupervisor < TrainingSupervisorBase
   def postInitialize
     self.neuronGroups = NeuronGroupsFor3LayerBPNetwork.new(network)

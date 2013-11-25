@@ -195,7 +195,7 @@ class OutputNeuron < NeuronBase ## TODO some output neurons could both (1) backp
 end
 
 
-class BiasNeuron < NeuronBase
+class BiasNeuron < NeuronBase    #TODO should make this a singleton class!
   attr_reader :outputLinks
 
   def postInitialize

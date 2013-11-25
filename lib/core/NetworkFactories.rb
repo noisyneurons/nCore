@@ -209,7 +209,8 @@ class Recurrent2HiddenLayerNetworkSpecial < BaseNetwork
     self.hiddenLayer2 = createAndConnectLayer((inputLayer + hiddenLayer1), typeOfNeuron = FlockingNeuron, args[:numberOfHiddenLayer2Neurons])
     self.allNeuronLayers << hiddenLayer2
 
-    self.outputLayer = createAndConnectLayer((hiddenLayer1 + hiddenLayer2), typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
+#    self.outputLayer = createAndConnectLayer((hiddenLayer1 + hiddenLayer2), typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
+    self.outputLayer = createAndConnectLayer(hiddenLayer2, typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
     self.allNeuronLayers << outputLayer
 
     connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
@@ -225,6 +226,7 @@ class Recurrent2HiddenLayerNetworkSpecial < BaseNetwork
     zeroWeightsInLinksBetweenNeurons(hiddenLayer1, hiddenLayer2)
 
     # to create just cross-connections between 2 hidden layers of a "simulated recurrent net" we need to delete ALL (direct recurrent: N1out to N1in connections)
+    # In other words, we delete the connection between a neuron's output and its input. i.e. we eliminate the "cat chases its tail" links.
     deleteRecurrentSelfConnections(hiddenLayer1, hiddenLayer2)
   end
 end
