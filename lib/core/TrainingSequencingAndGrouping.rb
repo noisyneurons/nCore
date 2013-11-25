@@ -39,20 +39,23 @@ end
 
 
 #####
-#class GroupsForThreeClass2HiddenLayersOEBP < AbstractNeuronGroups
-#  def nameTrainingGroups
-#    hiddenLayer1 = allNeuronLayers[1]
-#
-#    self.layersWithInputLinks = [hiddenLayer1, outputLayer]
-#
-#    self.outputErrorAdaptingLayers = layersWithInputLinks
-#    self.flockErrorGeneratingLayers = []
-#    self.flockErrorAdaptingLayers = []
-#
-#    self.layersWhoseClustersNeedToBeSeeded = flockErrorGeneratingLayers
-#    setNeuronGroupNames()
-#  end
-#end
+
+class GroupsForThreeClass2HiddenLocalFlock < AbstractNeuronGroups
+  def nameTrainingGroups
+    hiddenLayer1 = allNeuronLayers[1]
+    hiddenLayer2 = allNeuronLayers[2]
+
+    self.layersWithInputLinks = [hiddenLayer1, hiddenLayer2, outputLayer]
+
+    self.outputErrorAdaptingLayers = [hiddenLayer2, outputLayer]
+    self.flockErrorGeneratingLayers = [hiddenLayer2]
+    self.flockErrorAdaptingLayers = [hiddenLayer2]
+
+    self.layersWhoseClustersNeedToBeSeeded = flockErrorGeneratingLayers
+    setNeuronGroupNames()
+  end
+end
+
 
 
 class GroupsForThreeClass2HiddenLayersOEBP < AbstractNeuronGroups
@@ -145,7 +148,7 @@ class NeuronGroups3LayersAllLocalFlockingLayers < NeuronGroupsForSingleLayerNetw
 end
 
 
-class NeuronGroups3LayersOutputLayerLocalFlocking < NeuronGroupsForSingleLayerNetwork
+class CircleGroups3LayersOutputLayerLocalFlocking < NeuronGroupsForSingleLayerNetwork
   def nameTrainingGroups
     hiddenLayer = allNeuronLayers[1]
     self.layersWithInputLinks = [hiddenLayer, outputLayer]

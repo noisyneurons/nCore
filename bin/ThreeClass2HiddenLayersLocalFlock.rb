@@ -1,5 +1,5 @@
 ### VERSION "nCore"
-## ../nCore/bin/ThreeClass2HiddenLayers.rb
+## ../nCore/bin/ThreeClass2HiddenLayersLocalFlock.rb
 ## Simple backprop demo. For XOR, and given parameters, requires 2080 epochs to converge.
 ##                       For OR, and given parameters, requires 166 epochs to converge.
 
@@ -36,7 +36,30 @@ class Experiment
         :neuronToDisplay => 2,
         :intervalForSavingNeuronData => 100,
         :intervalForSavingDetailedNeuronData => 1000,
-        :intervalForSavingTrainingData => 100
+        :intervalForSavingTrainingData => 100,
+
+        # Flocking Parameters...
+        :flockingLearningRate => -0.01, # -0.0002,
+        :maxFlockingIterationsCount => 30, # 2000,
+        :targetFlockIterationsCount => 20,
+        :ratioDropInMSE => 0.95,
+        :ratioDropInMSEForFlocking => 0.96,
+
+        # Flocker Specs...
+        :typeOfClusterer => DynamicClusterer,
+        :numberOfClusters => 2,
+        :m => 2.0,
+        :numExamples => numberOfExamples,
+        :exampleVectorLength => 1,
+        :delta => 1e-2,
+        :maxNumberOfClusteringIterations => 10,
+        :keepTargetsSymmetrical => true,
+        :targetDivergenceFactor => 1.0,
+        :alwaysUseFuzzyClusters => true,
+        :epochsBeforeFlockingAllowed => 0, #  10e1,
+
+        # Inner Numeric Constraints -- used to floating point under or overflow
+        :floorToPreventOverflow => 1e-60 # 1e-30
     }
   end
 
@@ -53,8 +76,8 @@ class Experiment
 
   def createNetworkAndTrainer
     network = Recurrent2HiddenLayerNetworkSpecial.new(args)
-    puts network.to_s
-    theTrainer = ThreeClass2HiddenBPSupervisor.new(examples, network, args)
+    # puts network.to_s
+    theTrainer = ThreeClass2HiddenSupervisorLocalFlock.new(examples, network, args)
     return network, theTrainer
   end
 end
@@ -64,9 +87,7 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("3Cls2Hid2Shared", baseRandomNumberSeed)
-
-# experiment.createNetworkAndTrainer
+experiment = Experiment.new("3Cls2HidLocal ThreeClass2HiddenLayersLocalFlock", baseRandomNumberSeed)
 
 experiment.performSimulation()
 

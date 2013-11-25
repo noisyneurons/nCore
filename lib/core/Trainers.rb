@@ -315,6 +315,86 @@ class AbstractStepTrainer
   end
 end
 
+class StepT3ClassLocalFlock  < AbstractStepTrainer
+
+  def train(trials)
+    distributeSetOfExamples(examples)
+    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO ONLY "seed" when necessary?   # unless(args[:epochs] > 1)
+    self.accumulatedAbsoluteFlockingErrors = []
+    mseMaxAllowedAfterFlocking = nil
+
+    while (trainingSequence.stillMoreEpochs)
+      initialMSEatBeginningOfBPOELoop = loopForBackPropOfOutputError()
+      loopForLocalFlocking(initialMSEatBeginningOfBPOELoop)
+    end
+
+    testMSE = calcTestingMeanSquaredErrors
+    return calcMSE, testMSE, accumulatedAbsoluteFlockingErrors
+  end
+
+  def loopForBackPropOfOutputError
+    saveInitialMSE = true
+    adaptToOutputError = true
+    while (adaptToOutputError)
+      mseBeforeBackProp, mseAfterBackProp = performStandardBackPropTrainingWithExtraMeasures()
+      initialMSEatBeginningOfBPOELoop = mseBeforeBackProp if (saveInitialMSE)
+      saveInitialMSE = false
+      adaptToOutputError = (initialMSEatBeginningOfBPOELoop * args[:ratioDropInMSE]) < mseAfterBackProp
+      recordAndIncrementEpochs
+    end
+    initialMSEatBeginningOfBPOELoop
+  end
+
+  def loopForLocalFlocking(initialMSEatBeginningOfBPOELoop)
+    mseMaxAllowedAfterLocalFlocking = initialMSEatBeginningOfBPOELoop * args[:ratioDropInMSEForFlocking]
+    maxFlockingIterationsCount = args[:maxFlockingIterationsCount]
+    targetFlockIterationsCount = args[:targetFlockIterationsCount]
+    # zeroOutFlockingLinksMomentumMemoryStore
+    flockCount = 0
+    until ((flockCount += 1) > maxFlockingIterationsCount)
+      zeroOutFlockingLinksMomentumMemoryStore
+      recenterEachNeuronsClusters(flockErrorGeneratingNeurons)
+      mseBeforeFlocking, mseAfterFlocking = adaptToLocalFlockErrorWithExtraMeasures()
+      recordAndIncrementEpochs
+      break if (mseAfterFlocking > mseMaxAllowedAfterLocalFlocking)
+    end
+
+    if (maxFlockingIterationsCount > 0)
+      self.flockingLearningRate = flockingLearningRate * (1.0/1.05) if (flockCount < targetFlockIterationsCount)
+      self.flockingLearningRate = flockingLearningRate * 1.05 if (flockCount > targetFlockIterationsCount)
+      puts "flockCount=\t#{flockCount}\tflockLearningRate=\t#{flockingLearningRate}"
+    end
+  end
+
+  def recordAndIncrementEpochs
+    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
+    dbStoreTrainingData()
+    trainingSequence.nextEpoch
+  end
+
+  def performStandardBackPropTrainingWithExtraMeasures
+    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
+    acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForHigherLayerError }
+    mseBeforeBackProp = calcMSE # assumes squared error for each example and output neuron is stored in NeuronRecorder
+    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+    mseAfterBackProp = calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
+    return mseBeforeBackProp, mseAfterBackProp
+  end
+
+  def adaptToLocalFlockErrorWithExtraMeasures
+    STDERR.puts "Generating neurons and adapting neurons are not one in the same.  This is NOT local flocking!!" if (flockErrorGeneratingNeurons != flockErrorAdaptingNeurons)
+    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = flockingLearningRate }
+    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 } # accumulatedAbsoluteFlockingError is a metric used for global control and monitoring
+    acrossExamplesAccumulateFlockingErrorDeltaWs
+    mseBeforeFlocking = calcMSE # assumes squared error for each example and output neuron is stored in NeuronRecorder
+    self.accumulatedAbsoluteFlockingErrors = calcAccumulatedAbsoluteFlockingErrors(flockErrorGeneratingNeurons)
+    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+    mseAfterFlocking = calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
+                                                                                                  # std("flocking\t", [mseBeforeFlocking, mseAfterFlocking])
+    return mseBeforeFlocking, mseAfterFlocking
+  end
+end
+
 class StepTrainerForOutputErrorBPOnly < AbstractStepTrainer
   def innerTrainingLoop
     performStandardBackPropTraining()
@@ -504,7 +584,9 @@ class StepTrainerForFlockingAndOutputError < AbstractStepTrainer
 end
 
 
-######
+###################################################################
+###################################################################
+
 class TrainingSupervisorBase
   attr_accessor :examples, :network, :args, :neuronGroups, :stepTrainer, :trainingSequence, :startTime, :elapsedTime, :minMSE
   include RecordingAndPlottingRoutines
@@ -542,13 +624,19 @@ class TrainingSupervisorBase
   end
 end
 
-class ThreeClass2HiddenBPSupervisor < TrainingSupervisorBase
+class ThreeClass2HiddenSupervisorLocalFlock < TrainingSupervisorBase
+  def postInitialize
+    self.neuronGroups = GroupsForThreeClass2HiddenLocalFlock.new(network)
+    self.stepTrainer = StepT3ClassLocalFlock.new(examples, neuronGroups, trainingSequence, args)
+  end
+end
+
+class ThreeClass2HiddenSupervisorOEBP < TrainingSupervisorBase
   def postInitialize
     self.neuronGroups = GroupsForThreeClass2HiddenLayersOEBP.new(network)
     self.stepTrainer = StepTrainerForOutputErrorBPOnly.new(examples, neuronGroups, trainingSequence, args)
   end
 end
-
 
 class StandardBPTrainingSupervisor < TrainingSupervisorBase
   def postInitialize
@@ -604,7 +692,7 @@ class TrainSuperCircleProblemLocFlockAtOutputNeuron < TrainingSupervisorBase
   include RecordingAndPlottingRoutines
 
   def postInitialize
-    self.neuronGroups = NeuronGroups3LayersOutputLayerLocalFlocking.new(network)
+    self.neuronGroups = CircleGroups3LayersOutputLayerLocalFlocking.new(network)
     self.stepTrainer = StepTrainCircleProblemLocFlockAtOutputNeuron.new(examples, neuronGroups, trainingSequence, args)
   end
 end
