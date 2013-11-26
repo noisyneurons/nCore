@@ -18,7 +18,7 @@ class Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 1.0,
         :minMSE => 0.001,
-        :maxNumEpochs => 4e3,
+        :maxNumEpochs => 1e3,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
@@ -33,15 +33,15 @@ class Experiment
         :numExamples => numExamples,
 
         # Recording and database parameters
-        :neuronToDisplay => 2,
-        :intervalForSavingNeuronData => 100,
-        :intervalForSavingDetailedNeuronData => 100,
+        :neuronToDisplay => 3,
+        :intervalForSavingNeuronData => 10000,
+        :intervalForSavingDetailedNeuronData => 10000,
         :intervalForSavingTrainingData => 100,
 
         # Flocking Parameters...
         :flockingLearningRate => -0.01, # -0.0002,
-        :maxFlockingIterationsCount => 50, # 2000,
-        :targetFlockIterationsCount => 40,
+        :maxFlockingIterationsCount => 30, # 2000,
+        :targetFlockIterationsCount => 20,
         :ratioDropInMSE => 0.95,
         :ratioDropInMSEForFlocking => 0.97,
 
@@ -52,11 +52,12 @@ class Experiment
         :numExamples => numExamples,
         :exampleVectorLength => 1,
         :delta => 1e-2,
-        :maxNumberOfClusteringIterations => 10,
+        :maxNumberOfClusteringIterations => 20,
         :keepTargetsSymmetrical => true,
         :targetDivergenceFactor => 1.0,
         :alwaysUseFuzzyClusters => true,
-       # :epochsBeforeFlockingAllowed => 300, #  10e1,
+       # :epochsBeforeFlockingAllowed => 300, #  10e1, no longer used??
+       :maxLargestEuclidianDistanceMovedThatIsWOErrorMsg => 0.01,
 
         # Inner Numeric Constraints -- used to floating point under or overflow
         :floorToPreventOverflow => 1e-60 # 1e-30

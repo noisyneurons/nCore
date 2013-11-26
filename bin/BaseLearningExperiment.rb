@@ -77,7 +77,8 @@ class Experiment
         :maxNumberOfClusteringIterations => 10,
         :keepTargetsSymmetrical => true,
         :alwaysUseFuzzyClusters => true,
-        :epochsBeforeFlockingAllowed => 200,
+         :maxLargestEuclidianDistanceMovedThatIsWOErrorMsg => 0.01,
+        #:epochsBeforeFlockingAllowed => 200,  ?? no longer in use??
 
         # Inner Numeric Constraints -- used to floating point under or overflow
         :floorToPreventOverflow => 1e-60
@@ -151,7 +152,7 @@ class Experiment
     }
     SnapShotData.new(dataToStoreLongTerm)
 
-    keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(40) }
+    keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(10) }
     unless (keysToRecords.empty?)
       puts
       puts "Number\tLastEpoch\t\tTrainMSE\t\t\tTestMSE\t\t\tAccumulatedAbsoluteFlockingErrors\t\t\t\tTime\t\tTaskID\t\t\t\t\tDescription"

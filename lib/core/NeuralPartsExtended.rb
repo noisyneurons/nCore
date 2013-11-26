@@ -41,8 +41,8 @@ module CommonClusteringCode
   def clusterAllResponses
     arrayOfVectorsRepresentingPointsInSpace = metricRecorder.vectorizeEpochMeasures
     dummy, iterationNumber, largestEuclidianDistanceMoved = clusterer.clusterData(arrayOfVectorsRepresentingPointsInSpace)
-    STDERR.puts "exceeded max number of clustering iterations.  Maximum number=  #{maxNumberOfClusteringIterations}" if (iterationNumber > maxNumberOfClusteringIterations)
-    STDERR.puts "too big a 'move'. The move was=  #{largestEuclidianDistanceMoved}" if (largestEuclidianDistanceMoved > 0.01)
+    STDERR.puts "exceeded max number of clustering iterations.  Maximum number=  #{maxNumberOfClusteringIterations}" if (iterationNumber == (maxNumberOfClusteringIterations - 1))
+    STDERR.puts "too big a 'move'. The move was=  #{largestEuclidianDistanceMoved}" if (largestEuclidianDistanceMoved > args[:maxLargestEuclidianDistanceMovedThatIsWOErrorMsg])
     return iterationNumber
   end
 

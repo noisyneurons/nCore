@@ -33,13 +33,15 @@ class DynamicClusterer
   end
 
   def clusterData(points)
+    theNumberOfIterationsRequiredToMeetDeltaCriteria = nil
     largestEuclidianDistanceMoved = 0.0
     maxNumberOfClusteringIterations.times do |iterationNumber|
       forEachExampleDetermineItsFractionalMembershipInEachCluster(points)
       largestEuclidianDistanceMoved = recenterClusters(points)
-      return [clusters, iterationNumber, largestEuclidianDistanceMoved] if (largestEuclidianDistanceMoved < delta) # We are finished when the maximum change in any cluster's center was less that 'delta'
+      theNumberOfIterationsRequiredToMeetDeltaCriteria = iterationNumber
+      return [clusters, theNumberOfIterationsRequiredToMeetDeltaCriteria, largestEuclidianDistanceMoved] if (largestEuclidianDistanceMoved < delta) # We are finished when the maximum change in any cluster's center was less that 'delta'
     end
-    return [clusters, maxNumberOfClusteringIterations, largestEuclidianDistanceMoved]
+    return [clusters, theNumberOfIterationsRequiredToMeetDeltaCriteria, largestEuclidianDistanceMoved]
   end
 
   def examplesFractionalMembershipInEachCluster(pointNumber) # This is just a "recall" routine.. since the calculations have already been done...

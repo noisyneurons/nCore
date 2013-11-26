@@ -315,9 +315,9 @@ class AbstractStepTrainer
   end
 end
 
-class StepT3ClassLocalFlock  < AbstractStepTrainer
+class StepT3ClassLocalFlock < AbstractStepTrainer
 
-  def train(nLoops)
+  def train(nLoops) # TODO nLoops currently unused
     distributeSetOfExamples(examples)
     seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO ONLY "seed" when necessary?   # unless(args[:epochs] > 1)
     self.accumulatedAbsoluteFlockingErrors = []
@@ -345,14 +345,19 @@ class StepT3ClassLocalFlock  < AbstractStepTrainer
       adaptToOutputError = (initialMSEatBeginningOfBPOELoop * args[:ratioDropInMSE]) < mseAfterBackProp
       recordAndIncrementEpochs
     end
-    initialMSEatBeginningOfBPOELoop
+    puts "loopForBackPropOfOutputError  ======   initialMSEatBeginningOfBPOELoop =\t#{initialMSEatBeginningOfBPOELoop}\tmseAfterBackProp =\t#{mseAfterBackProp}\tBP MSE RATIO= #{mseAfterBackProp/initialMSEatBeginningOfBPOELoop}"
+   initialMSEatBeginningOfBPOELoop
   end
 
   def loopForLocalFlocking(initialMSEatBeginningOfBPOELoop)
     mseMaxAllowedAfterLocalFlocking = initialMSEatBeginningOfBPOELoop * args[:ratioDropInMSEForFlocking]
     maxFlockingIterationsCount = args[:maxFlockingIterationsCount]
     targetFlockIterationsCount = args[:targetFlockIterationsCount]
+
+    #mseAfterFlocking = 0.0
+    #while (mseAfterFlocking < mseMaxAllowedAfterLocalFlocking)
     # zeroOutFlockingLinksMomentumMemoryStore
+    mseAfterFlocking = nil
     flockCount = 0
     until ((flockCount += 1) > maxFlockingIterationsCount)
       zeroOutFlockingLinksMomentumMemoryStore
@@ -362,11 +367,15 @@ class StepT3ClassLocalFlock  < AbstractStepTrainer
       break if (mseAfterFlocking > mseMaxAllowedAfterLocalFlocking)
     end
 
-    if (maxFlockingIterationsCount > 0)
+    STDERR.puts "Error: Flocking Did NOT meet MSE target; Actual MSE RATIO: #{mseAfterFlocking/initialMSEatBeginningOfBPOELoop}" unless(mseAfterFlocking > mseMaxAllowedAfterLocalFlocking)
+
+    if (maxFlockingIterationsCount > 0) #  && didNotMeetMSETarget)
       self.flockingLearningRate = flockingLearningRate * (1.0/1.05) if (flockCount < targetFlockIterationsCount)
       self.flockingLearningRate = flockingLearningRate * 1.05 if (flockCount > targetFlockIterationsCount)
-      puts "flockCount=\t#{flockCount}\tflockLearningRate=\t#{flockingLearningRate}"
+      puts "loopForLocalFlocking ------- flockCount=\t#{flockCount}\tflockLearningRate=\t#{flockingLearningRate}\tmseAfterFlocking = \t#{mseAfterFlocking}"
     end
+    #end
+
   end
 
   def recordAndIncrementEpochs
