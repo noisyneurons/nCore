@@ -47,6 +47,7 @@ class Experiment
         :outputErrorLearningRate => 0.02,
         :minMSE => 0.0001,
         :maxNumEpochs => 4e3,
+        :numLoops => 10,
 
         # Network Architecture
         :numberOfInputNeurons => 2,

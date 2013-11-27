@@ -17,8 +17,9 @@ class Experiment
 
         # training parameters re. Output Error
         :outputErrorLearningRate => 1.0,
-        :minMSE => 0.001,
-        :maxNumEpochs => 1e3,
+        :minMSE => 0.00001,
+        :maxNumEpochs => 4e3,
+        :numLoops => 500,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
@@ -35,15 +36,15 @@ class Experiment
         # Recording and database parameters
         :neuronToDisplay => 3,
         :intervalForSavingNeuronData => 10000,
-        :intervalForSavingDetailedNeuronData => 10000,
+        :intervalForSavingDetailedNeuronData => 700,
         :intervalForSavingTrainingData => 100,
 
         # Flocking Parameters...
-        :flockingLearningRate => -0.01, # -0.0002,
+        :flockingLearningRate => -0.01, # -0.01, # -0.0002,
         :maxFlockingIterationsCount => 30, # 2000,
         :targetFlockIterationsCount => 20,
-        :ratioDropInMSE => 0.01, # 0.95,
-        :ratioDropInMSEForFlocking => 0.015, # 0.97,
+        :ratioDropInMSE => 0.95, # 0.01, # 0.95,
+        :ratioDropInMSEForFlocking => 0.97, # 0.015, # 0.97,
 
         # Flocker Specs...
         :typeOfClusterer => DynamicClusterer,
@@ -52,7 +53,7 @@ class Experiment
         :numExamples => numExamples,
         :exampleVectorLength => 1,
         :delta => 1e-2,
-        :maxNumberOfClusteringIterations => 20,
+        :maxNumberOfClusteringIterations => 30,
         :keepTargetsSymmetrical => true,
         :targetDivergenceFactor => 1.0,
         :alwaysUseFuzzyClusters => true,

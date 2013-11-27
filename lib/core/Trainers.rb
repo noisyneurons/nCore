@@ -328,10 +328,18 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
     self.accumulatedAbsoluteFlockingErrors = []
     mseMaxAllowedAfterFlocking = nil
 
+    mseAfterBackProp = 1e20
+    while (mseAfterBackProp > 0.1)
+      mseBeforeBackProp, mseAfterBackProp = performStandardBackPropTrainingWithExtraMeasures()
+      recordAndIncrementEpochs
+    end
+
     # nLoops.times do
-    while (trainingSequence.stillMoreEpochs)
+    loopCount = 0
+    while (loopCount < nLoops && trainingSequence.stillMoreEpochs)
       initialMSEatBeginningOfBPOELoop = loopForBackPropOfOutputError()
       loopForLocalFlocking(initialMSEatBeginningOfBPOELoop)
+      loopCount += 1
     end
 
     testMSE = calcTestingMeanSquaredErrors
@@ -351,7 +359,7 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
       recordAndIncrementEpochs
     end
     puts "loopForBackPropOfOutputError  ======   initialMSEatBeginningOfBPOELoop =\t#{initialMSEatBeginningOfBPOELoop}\tmseAfterBackProp =\t#{mseAfterBackProp}\tBP MSE RATIO= #{mseAfterBackProp/initialMSEatBeginningOfBPOELoop}"
-   initialMSEatBeginningOfBPOELoop
+    initialMSEatBeginningOfBPOELoop
   end
 
   def loopForLocalFlocking(initialMSEatBeginningOfBPOELoop)
@@ -370,7 +378,7 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
       break if (mseAfterFlocking > mseMaxAllowedAfterLocalFlocking)
     end
 
-    STDERR.puts "Error: Flocking Did NOT meet MSE target; Actual MSE RATIO: #{mseAfterFlocking/initialMSEatBeginningOfBPOELoop}" unless(mseAfterFlocking > mseMaxAllowedAfterLocalFlocking)
+    STDERR.puts "Error: Flocking Did NOT meet MSE target; Actual MSE RATIO: #{mseAfterFlocking/initialMSEatBeginningOfBPOELoop}" unless (mseAfterFlocking > mseMaxAllowedAfterLocalFlocking)
 
     if (maxFlockingIterationsCount > 0)
       self.flockingLearningRate = flockingLearningRate * (1.0/1.05) if (flockCount < targetFlockIterationsCount)
@@ -625,9 +633,9 @@ class TrainingSupervisorBase
     mse = 1e20
     testMSE = nil
     accumulatedAbsoluteFlockingErrors = nil
-    numTrials = 10
+    numLoops = args[:numLoops]
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
-      mse, testMSE, accumulatedAbsoluteFlockingErrors = stepTrainer.train(numTrials)
+      mse, testMSE, accumulatedAbsoluteFlockingErrors = stepTrainer.train(numLoops)
     end
     arrayOfNeuronsToPlot = [network.outputLayer[0]]
     plotTrainingResults(arrayOfNeuronsToPlot)
@@ -644,6 +652,20 @@ class ThreeClass2HiddenSupervisorLocalFlock < TrainingSupervisorBase
     self.neuronGroups = GroupsForThreeClass2HiddenLocalFlock.new(network)
     self.stepTrainer = StepT3ClassLocalFlock.new(examples, neuronGroups, trainingSequence, args)
   end
+
+  def train
+    mse = 1e20
+    testMSE = nil
+    accumulatedAbsoluteFlockingErrors = nil
+    numLoops = args[:numLoops]
+    # while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
+    mse, testMSE, accumulatedAbsoluteFlockingErrors = stepTrainer.train(numLoops)
+    # end
+    arrayOfNeuronsToPlot = [network.outputLayer[0]]
+    plotTrainingResults(arrayOfNeuronsToPlot)
+    return trainingSequence.epochs, mse, testMSE, accumulatedAbsoluteFlockingErrors
+  end
+
 end
 
 class ThreeClass2HiddenSupervisorOEBP < TrainingSupervisorBase
