@@ -329,7 +329,7 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
     mseMaxAllowedAfterFlocking = nil
 
     mseAfterBackProp = 1e20
-    while (mseAfterBackProp > 0.1)
+    while (mseAfterBackProp > 0.01)
       mseBeforeBackProp, mseAfterBackProp = performStandardBackPropTrainingWithExtraMeasures()
       recordAndIncrementEpochs
     end
@@ -405,6 +405,7 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
 
   def adaptToLocalFlockErrorWithExtraMeasures
     STDERR.puts "Generating neurons and adapting neurons are not one in the same.  This is NOT local flocking!!" if (flockErrorGeneratingNeurons != flockErrorAdaptingNeurons)
+    #outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }
     flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }
     linksBetweenHidden2Layers.each { |aLink| aLink.learningRate = flockingLearningRate }
     flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 } # accumulatedAbsoluteFlockingError is a metric used for global control and monitoring

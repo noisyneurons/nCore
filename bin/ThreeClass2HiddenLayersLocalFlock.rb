@@ -18,7 +18,7 @@ class Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 1.0,
         :minMSE => 0.00001,
-        :maxNumEpochs => 4e3,
+        :maxNumEpochs => 1e3,
         :numLoops => 500,
 
         # Network Architecture
@@ -41,7 +41,7 @@ class Experiment
 
         # Flocking Parameters...
         :flockingLearningRate => -0.01, # -0.01, # -0.0002,
-        :maxFlockingIterationsCount => 30, # 2000,
+        :maxFlockingIterationsCount => 300, # 2000,
         :targetFlockIterationsCount => 20,
         :ratioDropInMSE => 0.95, # 0.01, # 0.95,
         :ratioDropInMSEForFlocking => 0.97, # 0.015, # 0.97,
