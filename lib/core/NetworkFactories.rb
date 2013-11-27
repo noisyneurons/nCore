@@ -37,25 +37,6 @@ module NeuronToNeuronConnection
     giveEachLinkArrayASingleSharedWeight(arrayOfLinkArrays)
   end
 
-  #def shareWeightsBetweenNGroups(sendingLayer, receivingLayer, numberOfGroups)  # TODO not sure this will be correct in all use cases
-  #  lengthOfReceivingLayer = receivingLayer.length
-  #  STDERR.puts "Error: Number of neurons in receiving layer does not divide evenly by #{numberOfGroups}" unless ((lengthOfReceivingLayer % numberOfGroups) == 0)
-  #  sliceSize = lengthOfReceivingLayer / numberOfGroups
-  #
-  #  arraysOfLinksToShareWeights = []
-  #  receivingLayer.each_slice(sliceSize) { |partOfReceivingLayer| arraysOfLinksToShareWeights << retrieveLinksBetweenGroupsOfNeurons(sendingLayer, partOfReceivingLayer) }
-  #  groupedLinks = arraysOfLinksToShareWeights.pop.zip(arraysOfLinksToShareWeights.flatten)
-  #
-  #  giveEachLinkArrayASingleSharedWeight(groupedLinks)
-  #end
-  #
-  #def shareWeightsAmongNeuronsInAGroup(sendingLayer, receivingLayer, numberOfNeuronsInEachGroup)
-  #  STDERR.puts "Error: Number of neurons in receiving layer does not divide evenly by #{numberOfNeuronsInEachGroup}" unless ((receivingLayer.length % numberOfNeuronsInEachGroup) == 0)
-  #  receivingLayer.each_slice(numberOfNeuronsInEachGroup) do |aGroupOfReceivingNeurons|
-  #    shareWeightsBetweenNGroups(sendingLayer, aGroupOfReceivingNeurons, numberOfNeuronsInEachGroup)
-  #  end
-  #end
-
   def deleteRecurrentSelfConnections(sendingLayerNeurons, receivingLayerNeurons)
     sendingLayerNeurons.each_with_index do |aSendingLayerNeuron, indexToNeuron|
       deleteCommonLinkBetweenNeurons(aSendingLayerNeuron, receivingLayerNeurons[indexToNeuron])
@@ -88,13 +69,7 @@ module NeuronToNeuronConnection
   def retrieveLinkBetween(aSendingNeuron, aReceivingNeuron)
     outputLinks = aSendingNeuron.outputLinks
     inputLinks = aReceivingNeuron.inputLinks
-    theCommonLink = findCommonLink(outputLinks, inputLinks)
-  end
-
-  def findCommonLink(outputLinks, inputLinks)
-    theCommonLink = outputLinks.find do |anOutputLink|
-      inputLinks.find { |anInputLink| anInputLink == anOutputLink }
-    end
+    theCommonLink = findTheConnectingLink(inputLinks, outputLinks)
   end
 
   def deleteCommonLinkBetweenNeurons(aSendingNeuron, aReceivingNeuron)
@@ -195,7 +170,7 @@ class BaseNetwork
 end # Base network
 
 class Recurrent2HiddenLayerNetworkSpecial < BaseNetwork
-  attr_accessor  :hiddenLayer1, :hiddenLayer2
+  attr_accessor  :hiddenLayer1, :hiddenLayer2, :linksBetweenHidden2Layers
 
   def createStandardNetworkWithStandardFullyConnectedArchitecture
     STDERR.puts "Error: number of neurons in hidden layers are not identical" if (args[:numberOfHiddenLayer1Neurons] != args[:numberOfHiddenLayer2Neurons])
@@ -210,7 +185,6 @@ class Recurrent2HiddenLayerNetworkSpecial < BaseNetwork
     self.hiddenLayer2 = createAndConnectLayer((inputLayer + hiddenLayer1), typeOfNeuron = FlockingNeuron, args[:numberOfHiddenLayer2Neurons])
     self.allNeuronLayers << hiddenLayer2
 
-#    self.outputLayer = createAndConnectLayer((hiddenLayer1 + hiddenLayer2), typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
     self.outputLayer = createAndConnectLayer(hiddenLayer2, typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
     self.allNeuronLayers << outputLayer
 
@@ -223,8 +197,8 @@ class Recurrent2HiddenLayerNetworkSpecial < BaseNetwork
     shareWeightBetweenCorrespondingLinks(inputLayerIncludingLinkFromBias, hiddenLayer1,
                                          inputLayerIncludingLinkFromBias, hiddenLayer2)
 
-    ## Set inter-hidden-layer weights to zero
-    zeroWeightsInLinksBetweenNeurons(hiddenLayer1, hiddenLayer2)
+    linksBetweenHidden2Layers = retrieveLinksBetweenGroupsOfNeurons(hiddenLayer1, hiddenLayer2)
+    linksBetweenHidden2Layers.each {|aLink| aLink.weight = 0.0}   ## Set inter-hidden-layer weights to zero
 
     # to create just cross-connections between 2 hidden layers of a "simulated recurrent net" we need to delete ALL (direct recurrent: N1out to N1in connections)
     # In other words, we delete the connection between a neuron's output and its input. i.e. we eliminate the "cat chases its tail" links.

@@ -64,6 +64,7 @@ class AbstractStepTrainer
                 :flockingIterationsCount, :accumulatedAbsoluteFlockingErrors,
                 :accumulatedExampleImportanceFactors, :absFlockingErrorsOld
 
+  include NeuronToNeuronConnection
   include ExampleDistribution
   include FlockingDecisionRoutines
   include DBAccess
@@ -316,9 +317,13 @@ class AbstractStepTrainer
 end
 
 class StepT3ClassLocalFlock < AbstractStepTrainer
+  attr_accessor :linksBetweenHidden2Layers
 
   def train(nLoops) # TODO nLoops currently unused
     distributeSetOfExamples(examples)
+    hiddenLayer1 = allNeuronLayers[1]; hiddenLayer2 = allNeuronLayers[2]
+    self.linksBetweenHidden2Layers = retrieveLinksBetweenGroupsOfNeurons(hiddenLayer1, hiddenLayer2)
+
     seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO ONLY "seed" when necessary?   # unless(args[:epochs] > 1)
     self.accumulatedAbsoluteFlockingErrors = []
     mseMaxAllowedAfterFlocking = nil
@@ -354,8 +359,6 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
     maxFlockingIterationsCount = args[:maxFlockingIterationsCount]
     targetFlockIterationsCount = args[:targetFlockIterationsCount]
 
-    #mseAfterFlocking = 0.0
-    #while (mseAfterFlocking < mseMaxAllowedAfterLocalFlocking)
     # zeroOutFlockingLinksMomentumMemoryStore
     mseAfterFlocking = nil
     flockCount = 0
@@ -369,13 +372,11 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
 
     STDERR.puts "Error: Flocking Did NOT meet MSE target; Actual MSE RATIO: #{mseAfterFlocking/initialMSEatBeginningOfBPOELoop}" unless(mseAfterFlocking > mseMaxAllowedAfterLocalFlocking)
 
-    if (maxFlockingIterationsCount > 0) #  && didNotMeetMSETarget)
+    if (maxFlockingIterationsCount > 0)
       self.flockingLearningRate = flockingLearningRate * (1.0/1.05) if (flockCount < targetFlockIterationsCount)
       self.flockingLearningRate = flockingLearningRate * 1.05 if (flockCount > targetFlockIterationsCount)
       puts "loopForLocalFlocking ------- flockCount=\t#{flockCount}\tflockLearningRate=\t#{flockingLearningRate}\tmseAfterFlocking = \t#{mseAfterFlocking}"
     end
-    #end
-
   end
 
   def recordAndIncrementEpochs
@@ -386,6 +387,7 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
 
   def performStandardBackPropTrainingWithExtraMeasures
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
+    linksBetweenHidden2Layers.each { |aLink| aLink.learningRate = 0.0 }
     acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForHigherLayerError }
     mseBeforeBackProp = calcMSE # assumes squared error for each example and output neuron is stored in NeuronRecorder
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
@@ -395,7 +397,8 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
 
   def adaptToLocalFlockErrorWithExtraMeasures
     STDERR.puts "Generating neurons and adapting neurons are not one in the same.  This is NOT local flocking!!" if (flockErrorGeneratingNeurons != flockErrorAdaptingNeurons)
-    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = flockingLearningRate }
+    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }
+    linksBetweenHidden2Layers.each { |aLink| aLink.learningRate = flockingLearningRate }
     flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 } # accumulatedAbsoluteFlockingError is a metric used for global control and monitoring
     acrossExamplesAccumulateFlockingErrorDeltaWs
     mseBeforeFlocking = calcMSE # assumes squared error for each example and output neuron is stored in NeuronRecorder

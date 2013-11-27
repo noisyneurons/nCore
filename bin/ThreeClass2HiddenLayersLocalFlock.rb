@@ -42,8 +42,8 @@ class Experiment
         :flockingLearningRate => -0.01, # -0.0002,
         :maxFlockingIterationsCount => 30, # 2000,
         :targetFlockIterationsCount => 20,
-        :ratioDropInMSE => 0.95,
-        :ratioDropInMSEForFlocking => 0.97,
+        :ratioDropInMSE => 0.01, # 0.95,
+        :ratioDropInMSEForFlocking => 0.015, # 0.97,
 
         # Flocker Specs...
         :typeOfClusterer => DynamicClusterer,
@@ -56,8 +56,8 @@ class Experiment
         :keepTargetsSymmetrical => true,
         :targetDivergenceFactor => 1.0,
         :alwaysUseFuzzyClusters => true,
-       # :epochsBeforeFlockingAllowed => 300, #  10e1, no longer used??
-       :maxLargestEuclidianDistanceMovedThatIsWOErrorMsg => 0.01,
+        # :epochsBeforeFlockingAllowed => 300, #  10e1, no longer used??
+        :maxLargestEuclidianDistanceMovedThatIsWOErrorMsg => 0.01,
 
         # Inner Numeric Constraints -- used to floating point under or overflow
         :floorToPreventOverflow => 1e-60 # 1e-30
