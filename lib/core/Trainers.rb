@@ -329,7 +329,9 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
     mseMaxAllowedAfterFlocking = nil
 
     initialMSEatBeginningOfBPOELoop = loopForBackPropOfOutputError(ratioDropInMSE = 0.01) { firstBackPropTrainingIterations }
+    puts "------------------------------------------------------------------------------------Right after first Back Prop loop"
     loopForLocalFlocking(initialMSEatBeginningOfBPOELoop, ratioDropInMSEForFlocking = 0.015) { firstLocalFlockingIterations }
+    puts "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXRight after first local flocking loop"
 
     # nLoops.times do
     loopCount = 0
