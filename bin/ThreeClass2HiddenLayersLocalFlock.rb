@@ -18,7 +18,7 @@ class Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 1.0,
         :minMSE => 0.00001,
-        :maxNumEpochs => 1e3,
+        :maxNumEpochs => 2e3,
         :numLoops => 500,
 
         # Network Architecture
@@ -36,7 +36,7 @@ class Experiment
         # Recording and database parameters
         :neuronToDisplay => 3,
         :intervalForSavingNeuronData => 10000,
-        :intervalForSavingDetailedNeuronData => 700,
+        :intervalForSavingDetailedNeuronData => 500,
         :intervalForSavingTrainingData => 100,
 
         # Flocking Parameters...
