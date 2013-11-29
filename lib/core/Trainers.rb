@@ -328,17 +328,21 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
     self.accumulatedAbsoluteFlockingErrors = []
     mseMaxAllowedAfterFlocking = nil
 
-    mseAfterBackProp = 1e20
-    while (mseAfterBackProp > 0.01)
-      mseBeforeBackProp, mseAfterBackProp = performStandardBackPropTrainingWithExtraMeasures()
-      recordAndIncrementEpochs
-    end
+    #mseBeforeBackProp = nil
+    #mseAfterBackProp = 1e20
+    #while (mseAfterBackProp > 0.01)
+    #  mseBeforeBackProp, mseAfterBackProp = firstBackPropTrainingIterations()
+    #  recordAndIncrementEpochs
+    #end
+
+    initialMSEatBeginningOfBPOELoop = loopForBackPropOfOutputError() { firstBackPropTrainingIterations() }
+    loopForLocalFlocking(initialMSEatBeginningOfBPOELoop) { firstLocalFlockingIterations }
 
     # nLoops.times do
     loopCount = 0
     while (loopCount < nLoops && trainingSequence.stillMoreEpochs)
-      initialMSEatBeginningOfBPOELoop = loopForBackPropOfOutputError()
-      loopForLocalFlocking(initialMSEatBeginningOfBPOELoop)
+      initialMSEatBeginningOfBPOELoop = loopForBackPropOfOutputError { performStandardBackPropTrainingWithExtraMeasures() }
+      loopForLocalFlocking(initialMSEatBeginningOfBPOELoop) { adaptToLocalFlockErrorWithExtraMeasures() }
       loopCount += 1
     end
 
@@ -352,7 +356,7 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
     saveInitialMSE = true
     adaptToOutputError = true
     while (adaptToOutputError)
-      mseBeforeBackProp, mseAfterBackProp = performStandardBackPropTrainingWithExtraMeasures()
+      mseBeforeBackProp, mseAfterBackProp = yield # performStandardBackPropTrainingWithExtraMeasures()
       initialMSEatBeginningOfBPOELoop = mseBeforeBackProp if (saveInitialMSE)
       saveInitialMSE = false
       adaptToOutputError = (initialMSEatBeginningOfBPOELoop * args[:ratioDropInMSE]) < mseAfterBackProp
@@ -361,6 +365,28 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
     puts "loopForBackPropOfOutputError  ======   initialMSEatBeginningOfBPOELoop =\t#{initialMSEatBeginningOfBPOELoop}\tmseAfterBackProp =\t#{mseAfterBackProp}\tBP MSE RATIO= #{mseAfterBackProp/initialMSEatBeginningOfBPOELoop}"
     initialMSEatBeginningOfBPOELoop
   end
+
+  def firstBackPropTrainingIterations
+    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
+    linksBetweenHidden2Layers.each { |aLink| aLink.learningRate = 0.0 }
+    return oeBackProp()
+  end
+
+  def performStandardBackPropTrainingWithExtraMeasures
+    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }
+    linksBetweenHidden2Layers.each { |aLink| aLink.learningRate = 0.0 }
+    outputLayer.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
+    return oeBackProp()
+  end
+
+  def oeBackProp
+    acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForHigherLayerError }
+    mseBeforeBackProp = calcMSE # assumes squared error for each example and output neuron is stored in NeuronRecorder
+    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+    mseAfterBackProp = calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
+    return mseBeforeBackProp, mseAfterBackProp
+  end
+
 
   def loopForLocalFlocking(initialMSEatBeginningOfBPOELoop)
     mseMaxAllowedAfterLocalFlocking = initialMSEatBeginningOfBPOELoop * args[:ratioDropInMSEForFlocking]
@@ -373,7 +399,7 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
     until ((flockCount += 1) > maxFlockingIterationsCount)
       zeroOutFlockingLinksMomentumMemoryStore
       recenterEachNeuronsClusters(flockErrorGeneratingNeurons)
-      mseBeforeFlocking, mseAfterFlocking = adaptToLocalFlockErrorWithExtraMeasures()
+      mseBeforeFlocking, mseAfterFlocking = yield # adaptToLocalFlockErrorWithExtraMeasures()
       recordAndIncrementEpochs
       break if (mseAfterFlocking > mseMaxAllowedAfterLocalFlocking)
     end
@@ -387,35 +413,36 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
     end
   end
 
-  def recordAndIncrementEpochs
-    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
-    dbStoreTrainingData()
-    trainingSequence.nextEpoch
-  end
-
-  def performStandardBackPropTrainingWithExtraMeasures
-    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
-    linksBetweenHidden2Layers.each { |aLink| aLink.learningRate = 0.0 }
-    acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForHigherLayerError }
-    mseBeforeBackProp = calcMSE # assumes squared error for each example and output neuron is stored in NeuronRecorder
-    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-    mseAfterBackProp = calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
-    return mseBeforeBackProp, mseAfterBackProp
+  def firstLocalFlockingIterations
+    STDERR.puts "Generating neurons and adapting neurons are not one in the same.  This is NOT local flocking!!" if (flockErrorGeneratingNeurons != flockErrorAdaptingNeurons)
+    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }
+    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = flockingLearningRate }
+    linksBetweenHidden2Layers.each { |aLink| aLink.learningRate = flockingLearningRate }
+    return localFlocking
   end
 
   def adaptToLocalFlockErrorWithExtraMeasures
     STDERR.puts "Generating neurons and adapting neurons are not one in the same.  This is NOT local flocking!!" if (flockErrorGeneratingNeurons != flockErrorAdaptingNeurons)
-    #outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }
+    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }
     flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }
     linksBetweenHidden2Layers.each { |aLink| aLink.learningRate = flockingLearningRate }
+    return localFlocking()
+  end
+
+  def localFlocking
     flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 } # accumulatedAbsoluteFlockingError is a metric used for global control and monitoring
     acrossExamplesAccumulateFlockingErrorDeltaWs
     mseBeforeFlocking = calcMSE # assumes squared error for each example and output neuron is stored in NeuronRecorder
     self.accumulatedAbsoluteFlockingErrors = calcAccumulatedAbsoluteFlockingErrors(flockErrorGeneratingNeurons)
     flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-    mseAfterFlocking = calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
-                                                                                                  # std("flocking\t", [mseBeforeFlocking, mseAfterFlocking])
+    mseAfterFlocking = calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder                                                                                                  # std("flocking\t", [mseBeforeFlocking, mseAfterFlocking])
     return mseBeforeFlocking, mseAfterFlocking
+  end
+
+  def recordAndIncrementEpochs
+    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
+    dbStoreTrainingData()
+    trainingSequence.nextEpoch
   end
 end
 
