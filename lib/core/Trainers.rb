@@ -368,9 +368,8 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
   end
 
   def secondBackPropTrainingIterations
-    #outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }
-    linksBetweenHidden2Layers.each { |aLink| aLink.learningRate = 0.0 }
-    outputLayer.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
+    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
+    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }
     return oeBackProp()
   end
 
@@ -381,7 +380,6 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
     mseAfterBackProp = calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
     return mseBeforeBackProp, mseAfterBackProp
   end
-
 
   def loopForLocalFlocking(initialMSEatBeginningOfBPOELoop, ratioDropInMSEForFlocking)
     mseMaxAllowedAfterLocalFlocking = initialMSEatBeginningOfBPOELoop * ratioDropInMSEForFlocking
@@ -411,7 +409,7 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
   def firstLocalFlockingIterations
     STDERR.puts "Generating neurons and adapting neurons are not one in the same.  This is NOT local flocking!!" if (flockErrorGeneratingNeurons != flockErrorAdaptingNeurons)
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }
-    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }
+    # flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }  # unnecessary in this case because previous line covers the flockErrorAdaptingNeurons for this problem
     linksBetweenHidden2Layers.each { |aLink| aLink.learningRate = flockingLearningRate }
     return localFlocking
   end
@@ -420,7 +418,7 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
     STDERR.puts "Generating neurons and adapting neurons are not one in the same.  This is NOT local flocking!!" if (flockErrorGeneratingNeurons != flockErrorAdaptingNeurons)
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }
     flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = flockingLearningRate }
-    linksBetweenHidden2Layers.each { |aLink| aLink.learningRate = flockingLearningRate }
+    # linksBetweenHidden2Layers.each { |aLink| aLink.learningRate = flockingLearningRate }  # unnecessary in this case because previous line covers these flockErrorAdapting Links for this problem
     return localFlocking()
   end
 

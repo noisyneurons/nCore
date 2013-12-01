@@ -79,7 +79,6 @@ class Experiment
         :keepTargetsSymmetrical => true,
         :alwaysUseFuzzyClusters => true,
          :maxLargestEuclidianDistanceMovedThatIsWOErrorMsg => 0.01,
-        #:epochsBeforeFlockingAllowed => 200,  ?? no longer in use??
 
         # Inner Numeric Constraints -- used to floating point under or overflow
         :floorToPreventOverflow => 1e-60

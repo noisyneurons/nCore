@@ -57,7 +57,6 @@ class Experiment
         :keepTargetsSymmetrical => true,
         :targetDivergenceFactor => 1.0,
         :alwaysUseFuzzyClusters => true,
-        # :epochsBeforeFlockingAllowed => 300, #  10e1, no longer used??
         :maxLargestEuclidianDistanceMovedThatIsWOErrorMsg => 0.01,
 
         # Inner Numeric Constraints -- used to floating point under or overflow
@@ -89,7 +88,7 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("3Cls2HidLocal ThreeClass2HiddenLayersLocalFlock", baseRandomNumberSeed)
+experiment = Experiment.new("3ClsR02HidLocal ThreeClass2HiddenLayersLocalFlock", baseRandomNumberSeed)
 
 experiment.performSimulation()
 
