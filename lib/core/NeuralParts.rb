@@ -59,16 +59,11 @@ module CommonNeuronCalculations
     return (neuronsOutput * (1.0 - neuronsOutput))
   end
 
-  #def ioDerivative(aNetInput)
-  #  return ioDerivativeFromOutput(ioFunction(aNetInput))
-  #end
-
   def ioDerivativeFromNetInput(aNetInput) # TODO speed this up.  Use sage to get the simpler analytical expression.
     return ioDerivativeFromOutput(ioFunction(aNetInput))
   end
 end
 
-############################################################
 module LinearIOFunction
   def ioFunction(aNetInput)
     return aNetInput
@@ -78,12 +73,19 @@ module LinearIOFunction
     return 1.0
   end
 
-  #def ioDerivative(aNetInput)
-  #  return 1.0
-  #end
-
   def ioDerivativeFromNetInput(aNetInput)
     return 1.0
+  end
+end
+
+module SymmetricalSigmoidIOFunction
+
+  def ioFunction(aNetInput)
+    return (2.0/(1.0 + Math.exp(-1.0 * aNetInput))) - 1.0
+  end
+
+  def ioDerivativeFromOutput(neuronsOutput)
+    return 2.0 * (neuronsOutput * (1.0 - neuronsOutput))
   end
 end
 
@@ -195,7 +197,7 @@ class OutputNeuron < NeuronBase ## TODO some output neurons could both (1) backp
 end
 
 
-class BiasNeuron < NeuronBase    #TODO should make this a singleton class!
+class BiasNeuron < NeuronBase #TODO should make this a singleton class!
   attr_reader :outputLinks
 
   def postInitialize
@@ -266,6 +268,17 @@ class LinearOutputNeuron < OutputNeuron
 end
 
 
+class SymmetricalNeuron < Neuron
+  include SymmetricalSigmoidIOFunction
+end
+
+
+class SymmetricalOutputNeuron < OutputNeuron
+  include SymmetricalSigmoidIOFunction
+end
+
+
+############################################################
 class Link
   attr_accessor :inputNeuron, :outputNeuron, :weightAtBeginningOfTraining,
                 :learningRate, :deltaWAccumulated, :deltaW, :weightRange, :args

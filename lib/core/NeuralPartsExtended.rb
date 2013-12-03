@@ -177,6 +177,64 @@ class FlockingOutputNeuron < OutputNeuron
   end
 end
 
+
+class FlockingSymmetricalNeuron < SymmetricalNeuron
+  include CommonClusteringCode
+
+  def postInitialize
+    @inputLinks = []
+    @netInput = 0.0
+    self.output = self.ioFunction(@netInput) # Only doing this in case we wish to use this code for recurrent networks
+    @outputLinks = []
+    @higherLayerError = 0.0
+    @errorToBackPropToLowerLayer = 0.0
+    @localFlockingError = 0.0
+    @metricRecorder= FlockingNeuronRecorder.new(self, args)
+    @exampleNumber = nil
+    @maxNumberOfClusteringIterations = args[:maxNumberOfClusteringIterations]
+    typeOfClusterer = args[:typeOfClusterer] || DynamicClusterer
+    @clusterer = typeOfClusterer.new(args)
+    @clusters = @clusterer.clusters
+    @dPrime = 0.0
+    @trainingSequence = args[:trainingSequence]
+  end
+
+  def backPropagate(&block)
+    self.higherLayerError = calcNetError * ioDerivativeFromOutput(output)
+    self.errorToBackPropToLowerLayer = higherLayerError
+    self.errorToBackPropToLowerLayer = yield(higherLayerError, localFlockingError) if (block.present?)
+  end
+end
+
+class FlockingSymmetricalOutputNeuron < SymmetricalOutputNeuron
+  include CommonClusteringCode
+
+  def postInitialize
+    self.output = ioFunction(@netInput = 0.0) # Only doing this in case we wish to use this code for recurrent networks
+    @inputLinks = []
+    @netInput = 0.0
+    @higherLayerError = 0.0
+    @errorToBackPropToLowerLayer = 0.0
+    @localFlockingError = 0.0
+    @arrayOfSelectedData = nil
+    @keyToExampleData = :targets
+    @exampleNumber = nil
+    @metricRecorder= FlockingOutputNeuronRecorder.new(self, args)
+    @maxNumberOfClusteringIterations = args[:maxNumberOfClusteringIterations]
+    typeOfClusterer = args[:typeOfClusterer] || DynamicClusterer
+    @clusterer = typeOfClusterer.new(args)
+    @clusters = @clusterer.clusters
+    @dPrime = 0.0
+    @trainingSequence = args[:trainingSequence]
+  end
+
+  def backPropagate(&block)
+    self.higherLayerError = outputError * ioDerivativeFromOutput(output)
+    self.errorToBackPropToLowerLayer = higherLayerError
+    self.errorToBackPropToLowerLayer = yield(higherLayerError, localFlockingError) if (block.present?)
+  end
+end
+
 ############################################################
 
 class FlockingLink < Link
@@ -255,39 +313,6 @@ class FlockingNeuronRecorder < NeuronRecorder # TODO Need to separate into 2 cla
       end
     end
   end
-
-  #  SAVE SAVE SAVE  SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE  SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE
-  #def recordResponsesForEpoch
-  #  if (trainingSequence.timeToRecordData)
-  #    determineCentersOfClusters()
-  #    epochDataToRecord = ({:epochNumber => dataStoreManager.epochNumber, :neuronID => neuron.id,
-  #                          :wt1 => neuron.inputLinks[0].weight, :wt2 => neuron.inputLinks[1].weight,
-  #                          :cluster0Center => @cluster0Center, :cluster1Center => @cluster1Center,
-  #                          :dPrime => neuron.dPrime})
-  #    quickReportOfExampleWeightings(epochDataToRecord)
-  #    NeuronData.new(epochDataToRecord)
-  #  end
-  #end
-  #
-  #def quickReportOfExampleWeightings(epochDataToRecord)
-  #  neuron.clusters.each_with_index do |cluster, numberOfCluster|
-  #    cluster.membershipWeightForEachExample.each { |exampleWeight| puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
-  #    puts
-  #    puts "NumExamples=\t#{cluster.numExamples}\tNum Membership Weights=\t#{cluster.membershipWeightForEachExample.length}"
-  #  end
-  #end
-  #
-  #def determineCentersOfClusters
-  #  cluster0 = neuron.clusters[0]
-  #  if (cluster0.center.present?)
-  #    @cluster0Center = cluster0.center[0]
-  #    cluster1 = neuron.clusters[1]
-  #    @cluster1Center = cluster1.center[0]
-  #  else
-  #    cluster0Center = 0.0
-  #    cluster1Center = 0.0
-  #  end
-  #end
 end
 
 class FlockingOutputNeuronRecorder < FlockingNeuronRecorder # TODO Need to separate into 2 classes the two concerns currently handled by this class: reporting vs. getting info for 'clusterAllResponses'
@@ -297,3 +322,38 @@ class FlockingOutputNeuronRecorder < FlockingNeuronRecorder # TODO Need to separ
     return aHash
   end
 end
+
+
+
+#  SAVE SAVE SAVE  SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE  SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE
+#def recordResponsesForEpoch
+#  if (trainingSequence.timeToRecordData)
+#    determineCentersOfClusters()
+#    epochDataToRecord = ({:epochNumber => dataStoreManager.epochNumber, :neuronID => neuron.id,
+#                          :wt1 => neuron.inputLinks[0].weight, :wt2 => neuron.inputLinks[1].weight,
+#                          :cluster0Center => @cluster0Center, :cluster1Center => @cluster1Center,
+#                          :dPrime => neuron.dPrime})
+#    quickReportOfExampleWeightings(epochDataToRecord)
+#    NeuronData.new(epochDataToRecord)
+#  end
+#end
+#
+#def quickReportOfExampleWeightings(epochDataToRecord)
+#  neuron.clusters.each_with_index do |cluster, numberOfCluster|
+#    cluster.membershipWeightForEachExample.each { |exampleWeight| puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
+#    puts
+#    puts "NumExamples=\t#{cluster.numExamples}\tNum Membership Weights=\t#{cluster.membershipWeightForEachExample.length}"
+#  end
+#end
+#
+#def determineCentersOfClusters
+#  cluster0 = neuron.clusters[0]
+#  if (cluster0.center.present?)
+#    @cluster0Center = cluster0.center[0]
+#    cluster1 = neuron.clusters[1]
+#    @cluster1Center = cluster1.center[0]
+#  else
+#    cluster0Center = 0.0
+#    cluster1Center = 0.0
+#  end
+#end

@@ -75,18 +75,6 @@ class Experiment
     return examples
   end
 
-  #def createTrainingSet2
-  #  examples = []
-  #  examples << {:inputs => [0.0, 0.0], :targets => [0.8, 0.2, 0.2], :exampleNumber => 0, :class => 0}
-  #  examples << {:inputs => [1.0, 0.0], :targets => [0.8, 0.2, 0.2], :exampleNumber => 1, :class => 0}
-  #  examples << {:inputs => [0.0, 1.0], :targets => [0.2, 0.8, 0.2], :exampleNumber => 2, :class => 1}
-  #  examples << {:inputs => [1.0, 1.0], :targets => [0.2, 0.8, 0.2], :exampleNumber => 3, :class => 1}
-  #  examples << {:inputs => [0.0, 2.0], :targets => [0.2, 0.2, 0.8], :exampleNumber => 4, :class => 2}
-  #  examples << {:inputs => [1.0, 2.0], :targets => [0.2, 0.2, 0.8], :exampleNumber => 5, :class => 2}
-  #  return examples
-  #end
-
-
 
   def createNetworkAndTrainer
     network = Recurrent2HiddenLayerNetworkSpecial.new(args)
@@ -99,9 +87,23 @@ end
 
 ###################################### START of Main Learning  ##########################################
 
-baseRandomNumberSeed = 4
+baseRandomNumberSeed = 1
 
-experiment = Experiment.new("3ClsR02HidLocal ThreeClass2HiddenLayersLocalFlock", baseRandomNumberSeed)
+experiment = Experiment.new('3ClsR02HidLocal ThreeClass2HiddenLayersLocalFlock', baseRandomNumberSeed)
 
 experiment.performSimulation()
+
+
+
+#def createTrainingSet
+#  examples = []
+#  examples << {:inputs => [0.0, 0.0], :targets => [0.8, 0.2, 0.2], :exampleNumber => 0, :class => 0}
+#  examples << {:inputs => [1.0, 0.0], :targets => [0.8, 0.2, 0.2], :exampleNumber => 1, :class => 0}
+#  examples << {:inputs => [0.0, 1.0], :targets => [0.2, 0.8, 0.2], :exampleNumber => 2, :class => 1}
+#  examples << {:inputs => [1.0, 1.0], :targets => [0.2, 0.8, 0.2], :exampleNumber => 3, :class => 1}
+#  examples << {:inputs => [0.0, 2.0], :targets => [0.2, 0.2, 0.8], :exampleNumber => 4, :class => 2}
+#  examples << {:inputs => [1.0, 2.0], :targets => [0.2, 0.2, 0.8], :exampleNumber => 5, :class => 2}
+#  return examples
+#end
+
 

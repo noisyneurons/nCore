@@ -347,7 +347,9 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
       mseAfterBackProp = loopForBackPropOfOutputError(mseOETarget) { secondBackPropTrainingIterations() }
       minMSESoFar = mseAfterBackProp if(mseAfterBackProp < minMSESoFar)
       mseFlockTarget = mseAfterBackProp * args[:ratioIncreaseInMSEForFlocking]
+      beforeAccumulatedAbsoluteFlockingErrors = accumulatedAbsoluteFlockingErrors
       mseAfterFlocking = loopForLocalFlocking(mseFlockTarget) { secondLocalFlockingIterations() }
+      puts "                                                     accumulatedAbsoluteFlockingErrors=\tBEFORE\t#{beforeAccumulatedAbsoluteFlockingErrors}\tAFTER\t#{accumulatedAbsoluteFlockingErrors}"
       minMSESoFar = mseAfterFlocking if(mseAfterFlocking < minMSESoFar)
     end
 
@@ -377,6 +379,7 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
 
   def secondBackPropTrainingIterations
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
+    # flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.25 * args[:outputErrorLearningRate] }
     flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }
     return oeBackProp()
   end
