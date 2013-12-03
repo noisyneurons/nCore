@@ -326,19 +326,29 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
 
     seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO ONLY "seed" when necessary?   # unless(args[:epochs] > 1)
     self.accumulatedAbsoluteFlockingErrors = []
-    mseMaxAllowedAfterFlocking = nil
+    puts "outputLayer=\t#{outputLayer}"
+    minMSESoFar = calcMeanSumSquaredErrors
 
-    initialMSEatBeginningOfBPOELoop = loopForBackPropOfOutputError(ratioDropInMSE = 0.01) { firstBackPropTrainingIterations }
-    puts "------------------------------------------------------------------------------------Right after first Back Prop loop"
-    loopForLocalFlocking(initialMSEatBeginningOfBPOELoop, ratioDropInMSEForFlocking = 0.015) { firstLocalFlockingIterations }
-    puts "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXRight after first local flocking loop"
+    mseOETarget = 0.002
+    mseFlockTarget = 0.003
+
+    mseAfterBackProp = loopForBackPropOfOutputError(mseOETarget) { firstBackPropTrainingIterations }
+    minMSESoFar = mseAfterBackProp if(mseAfterBackProp < minMSESoFar)
+    puts "------------------------------------------------------------------------------------Right after first Back Prop loop, epochs = #{args[:epochs]}"
+    mseAfterFlocking = loopForLocalFlocking(mseFlockTarget) { firstLocalFlockingIterations }
+    minMSESoFar = mseAfterFlocking if(mseAfterFlocking < minMSESoFar)
+    puts "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXRight after first local flocking loop, epochs = #{args[:epochs]}"
+    puts "accumulatedAbsoluteFlockingErrors=\t#{accumulatedAbsoluteFlockingErrors}"
+    puts "outputLayer=\t#{outputLayer}"
 
     # nLoops.times do
-    loopCount = 0
-    while (loopCount < nLoops && trainingSequence.stillMoreEpochs)
-      initialMSEatBeginningOfBPOELoop = loopForBackPropOfOutputError(args[:ratioDropInMSE]) { secondBackPropTrainingIterations() }
-      loopForLocalFlocking(initialMSEatBeginningOfBPOELoop, args[:ratioDropInMSEForFlocking]) { secondLocalFlockingIterations() }
-      loopCount += 1
+    while (trainingSequence.stillMoreEpochs)
+      mseOETarget = minMSESoFar * args[:ratioDropInMSE]
+      mseAfterBackProp = loopForBackPropOfOutputError(mseOETarget) { secondBackPropTrainingIterations() }
+      minMSESoFar = mseAfterBackProp if(mseAfterBackProp < minMSESoFar)
+      mseFlockTarget = mseAfterBackProp * args[:ratioIncreaseInMSEForFlocking]
+      mseAfterFlocking = loopForLocalFlocking(mseFlockTarget) { secondLocalFlockingIterations() }
+      minMSESoFar = mseAfterFlocking if(mseAfterFlocking < minMSESoFar)
     end
 
     testMSE = calcTestingMeanSquaredErrors
@@ -347,18 +357,16 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
     return resultOfCalcMSE, testMSE, accumulatedAbsoluteFlockingErrors
   end
 
-  def loopForBackPropOfOutputError(ratioDropInMSE)
-    saveInitialMSE = true
+  def loopForBackPropOfOutputError(mseOETarget)
+    mseAfterBackProp = nil
     adaptToOutputError = true
     while (adaptToOutputError)
       mseBeforeBackProp, mseAfterBackProp = yield
-      initialMSEatBeginningOfBPOELoop = mseBeforeBackProp if (saveInitialMSE)
-      saveInitialMSE = false
-      adaptToOutputError = (initialMSEatBeginningOfBPOELoop * ratioDropInMSE) < mseAfterBackProp
+      adaptToOutputError = mseOETarget < mseAfterBackProp
       recordAndIncrementEpochs
     end
-    puts "loopForBackPropOfOutputError  ======   initialMSEatBeginningOfBPOELoop =\t#{initialMSEatBeginningOfBPOELoop}\tmseAfterBackProp =\t#{mseAfterBackProp}\tBP MSE RATIO= #{mseAfterBackProp/initialMSEatBeginningOfBPOELoop}"
-    initialMSEatBeginningOfBPOELoop
+    puts "loopForBackPropOfOutputError  ======   initialMSEatBeginningOfBPOELoop =\t#{mseOETarget}\tmseAfterBackProp =\t#{mseAfterBackProp}\tBP MSE RATIO= #{mseAfterBackProp/mseOETarget}"
+    mseAfterBackProp
   end
 
   def firstBackPropTrainingIterations
@@ -381,8 +389,7 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
     return mseBeforeBackProp, mseAfterBackProp
   end
 
-  def loopForLocalFlocking(initialMSEatBeginningOfBPOELoop, ratioDropInMSEForFlocking)
-    mseMaxAllowedAfterLocalFlocking = initialMSEatBeginningOfBPOELoop * ratioDropInMSEForFlocking
+  def loopForLocalFlocking(mseFlockTarget)
     maxFlockingIterationsCount = args[:maxFlockingIterationsCount]
     targetFlockIterationsCount = args[:targetFlockIterationsCount]
 
@@ -394,16 +401,17 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
       recenterEachNeuronsClusters(flockErrorGeneratingNeurons)
       mseBeforeFlocking, mseAfterFlocking = yield
       recordAndIncrementEpochs
-      break if (mseAfterFlocking > mseMaxAllowedAfterLocalFlocking)
+      break if (mseAfterFlocking > mseFlockTarget)
     end
 
-    STDERR.puts "Error: Flocking Did NOT meet MSE target; Actual MSE RATIO: #{mseAfterFlocking/initialMSEatBeginningOfBPOELoop}" unless (mseAfterFlocking > mseMaxAllowedAfterLocalFlocking)
+    STDERR.puts "Error: Flocking Did NOT meet MSE target; Actual MSE RATIO: #{mseAfterFlocking/mseFlockTarget}" unless (mseAfterFlocking > mseFlockTarget)
 
     if (maxFlockingIterationsCount > 0)
       self.flockingLearningRate = flockingLearningRate * (1.0/1.05) if (flockCount < targetFlockIterationsCount)
       self.flockingLearningRate = flockingLearningRate * 1.05 if (flockCount > targetFlockIterationsCount)
       puts "loopForLocalFlocking ------- flockCount=\t#{flockCount}\tflockLearningRate=\t#{flockingLearningRate}\tmseAfterFlocking = \t#{mseAfterFlocking}"
     end
+    mseAfterFlocking
   end
 
   def firstLocalFlockingIterations
@@ -411,14 +419,14 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }
     # flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }  # unnecessary in this case because previous line covers the flockErrorAdaptingNeurons for this problem
     linksBetweenHidden2Layers.each { |aLink| aLink.learningRate = flockingLearningRate }
-    return localFlocking
+    return localFlocking()
   end
 
   def secondLocalFlockingIterations
     STDERR.puts "Generating neurons and adapting neurons are not one in the same.  This is NOT local flocking!!" if (flockErrorGeneratingNeurons != flockErrorAdaptingNeurons)
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = 0.0 }
     flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = flockingLearningRate }
-    # linksBetweenHidden2Layers.each { |aLink| aLink.learningRate = flockingLearningRate }  # unnecessary in this case because previous line covers these flockErrorAdapting Links for this problem
+    linksBetweenHidden2Layers.each { |aLink| aLink.learningRate = flockingLearningRate }  # unnecessary in this case because previous line covers these flockErrorAdapting Links for this problem
     return localFlocking()
   end
 
@@ -477,7 +485,6 @@ class StepTrainCircleProblemLocFlockAtOutputNeuron < AbstractStepTrainer
     distributeSetOfExamples(examples)
     seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO ONLY "seed" when necessary?   # unless(args[:epochs] > 1)
     self.accumulatedAbsoluteFlockingErrors = []
-    mseMaxAllowedAfterFlocking = nil
 
     while (trainingSequence.stillMoreEpochs)
       initialMSEatBeginningOfBPOELoop = loopForBackPropOfOutputError()

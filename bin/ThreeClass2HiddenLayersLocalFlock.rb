@@ -26,7 +26,7 @@ class Experiment
         :numberOfHiddenLayer1Neurons => 2,
         :numberOfHiddenLayer2Neurons => 2,
         :numberOfOutputNeurons => 3,
-        :weightRange => 1.0,
+        :weightRange =>  1.0,
         :typeOfLink => FlockingLink,
 
         # Training Set parameters
@@ -36,7 +36,7 @@ class Experiment
         # Recording and database parameters
         :neuronToDisplay => 3,
         :intervalForSavingNeuronData => 10000,
-        :intervalForSavingDetailedNeuronData => 500,
+        :intervalForSavingDetailedNeuronData => 461,
         :intervalForSavingTrainingData => 100,
 
         # Flocking Parameters...
@@ -44,7 +44,7 @@ class Experiment
         :maxFlockingIterationsCount => 300, # 2000,
         :targetFlockIterationsCount => 20,
         :ratioDropInMSE => 0.95, # 0.01, # 0.95,
-        :ratioDropInMSEForFlocking => 0.97, # 0.015, # 0.97,
+        :ratioIncreaseInMSEForFlocking => 1.02, # 0.97, # 0.015, # 0.97,
 
         # Flocker Specs...
         :typeOfClusterer => DynamicClusterer,
@@ -75,6 +75,19 @@ class Experiment
     return examples
   end
 
+  #def createTrainingSet2
+  #  examples = []
+  #  examples << {:inputs => [0.0, 0.0], :targets => [0.8, 0.2, 0.2], :exampleNumber => 0, :class => 0}
+  #  examples << {:inputs => [1.0, 0.0], :targets => [0.8, 0.2, 0.2], :exampleNumber => 1, :class => 0}
+  #  examples << {:inputs => [0.0, 1.0], :targets => [0.2, 0.8, 0.2], :exampleNumber => 2, :class => 1}
+  #  examples << {:inputs => [1.0, 1.0], :targets => [0.2, 0.8, 0.2], :exampleNumber => 3, :class => 1}
+  #  examples << {:inputs => [0.0, 2.0], :targets => [0.2, 0.2, 0.8], :exampleNumber => 4, :class => 2}
+  #  examples << {:inputs => [1.0, 2.0], :targets => [0.2, 0.2, 0.8], :exampleNumber => 5, :class => 2}
+  #  return examples
+  #end
+
+
+
   def createNetworkAndTrainer
     network = Recurrent2HiddenLayerNetworkSpecial.new(args)
     # puts network.to_s
@@ -86,7 +99,7 @@ end
 
 ###################################### START of Main Learning  ##########################################
 
-baseRandomNumberSeed = 0
+baseRandomNumberSeed = 4
 
 experiment = Experiment.new("3ClsR02HidLocal ThreeClass2HiddenLayersLocalFlock", baseRandomNumberSeed)
 
