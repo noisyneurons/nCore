@@ -18,8 +18,7 @@ class Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 1.0,
         :minMSE => 0.00001,
-        :maxNumEpochs => 2e3,
-        :numLoops => 500,
+        :maxNumEpochs => 4e3,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
@@ -36,15 +35,15 @@ class Experiment
         # Recording and database parameters
         :neuronToDisplay => 3,
         :intervalForSavingNeuronData => 10000,
-        :intervalForSavingDetailedNeuronData => 461,
+        :intervalForSavingDetailedNeuronData => 10000,
         :intervalForSavingTrainingData => 100,
 
         # Flocking Parameters...
-        :flockingLearningRate => -0.01, # -0.01, # -0.0002,
+        :flockingLearningRate => -0.001, # -0.01, # -0.0002,
         :maxFlockingIterationsCount => 300, # 2000,
         :targetFlockIterationsCount => 20,
-        :ratioDropInMSE => 0.95, # 0.01, # 0.95,
-        :ratioIncreaseInMSEForFlocking => 1.02, # 0.97, # 0.015, # 0.97,
+        :ratioDropInMSE => 0.05, #0.95, # 0.01, # 0.95,
+        :ratioIncreaseInMSEForFlocking => 20.0, # 1.02, # 0.97, # 0.015, # 0.97,
 
         # Flocker Specs...
         :typeOfClusterer => DynamicClusterer,
@@ -87,7 +86,7 @@ end
 
 ###################################### START of Main Learning  ##########################################
 
-baseRandomNumberSeed = 1
+baseRandomNumberSeed = 0
 
 experiment = Experiment.new('3ClsR02HidLocal ThreeClass2HiddenLayersLocalFlock', baseRandomNumberSeed)
 

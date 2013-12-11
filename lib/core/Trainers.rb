@@ -329,8 +329,8 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
     puts "outputLayer=\t#{outputLayer}"
     minMSESoFar = calcMeanSumSquaredErrors
 
-    mseOETarget = 0.002
-    mseFlockTarget = 0.003
+    mseOETarget = 0.05
+    mseFlockTarget = 0.1
 
     mseAfterBackProp = loopForBackPropOfOutputError(mseOETarget) { firstBackPropTrainingIterations }
     minMSESoFar = mseAfterBackProp if(mseAfterBackProp < minMSESoFar)
@@ -367,7 +367,7 @@ class StepT3ClassLocalFlock < AbstractStepTrainer
       adaptToOutputError = mseOETarget < mseAfterBackProp
       recordAndIncrementEpochs
     end
-    puts "loopForBackPropOfOutputError  ======   initialMSEatBeginningOfBPOELoop =\t#{mseOETarget}\tmseAfterBackProp =\t#{mseAfterBackProp}\tBP MSE RATIO= #{mseAfterBackProp/mseOETarget}"
+    puts "loopForBackPropOfOutputError  ======   mseBeforeBackProp =\t#{mseBeforeBackProp}\tmseAfterBackProp =\t#{mseAfterBackProp}\tBP MSE RATIO= #{mseAfterBackProp/mseBeforeBackProp}"
     mseAfterBackProp
   end
 
