@@ -62,9 +62,14 @@ module CommonNeuronCalculations
   def ioDerivativeFromNetInput(aNetInput) # TODO speed this up.  Use sage to get the simpler analytical expression.
     return ioDerivativeFromOutput(ioFunction(aNetInput))
   end
+
+  public
 end
 
 module LinearIOFunction
+
+  protected
+
   def ioFunction(aNetInput)
     return aNetInput
   end
@@ -76,9 +81,13 @@ module LinearIOFunction
   def ioDerivativeFromNetInput(aNetInput)
     return 1.0
   end
+
+  public
 end
 
 module SymmetricalSigmoidIOFunction
+
+  protected
 
   def ioFunction(aNetInput)
     return (2.0/(1.0 + Math.exp(-1.0 * aNetInput))) - 1.0
@@ -87,6 +96,8 @@ module SymmetricalSigmoidIOFunction
   def ioDerivativeFromOutput(neuronsOutput)
     return 2.0 * (neuronsOutput * (1.0 - neuronsOutput))
   end
+
+  public
 end
 
 ############################################################
@@ -106,13 +117,28 @@ class NeuronBase
     postInitialize
   end
 
-  def postInitialize
-    STDERR.puts "ERROR: postInitialize in NeuronBase called"
-  end
-
   def to_s
     description = ""
     description += "\n\t#{self.class} Class; ID = #{id}\tOutput= #{output}"
+  end
+end
+
+class BiasNeuron < NeuronBase #TODO should make this a singleton class!
+  attr_reader :outputLinks
+
+  def postInitialize
+    #@id = -1
+    @outputLinks = []
+    @output = 1.0
+  end
+
+  def to_s
+    description = super
+    description += "\t\tNumber of Output Links=\t#{outputLinks.length}\n"
+    outputLinks.each_with_index do |link, linkNumber|
+      description += "\t\t\t\t\t\tOutput Link:\t#{linkNumber}\t#{link}\n"
+    end
+    description
   end
 end
 
@@ -141,8 +167,50 @@ class InputNeuron < NeuronBase
 end
 
 
+class Neuron < NeuronBase
+  attr_accessor :netInput, :inputLinks, :outputLinks, :error, :exampleNumber, :metricRecorder
+  include CommonNeuronCalculations
+
+  def postInitialize
+    @inputLinks = []
+    @netInput = 0.0
+    self.output = self.ioFunction(@netInput) # Only doing this in case we wish to use this code for recurrent networks
+    @outputLinks = []
+    @error = 0.0
+    @metricRecorder= NeuronRecorder.new(self, args)
+    @exampleNumber = nil
+  end
+
+  def propagate(exampleNumber)
+    self.exampleNumber = exampleNumber
+    self.netInput = calcNetInputToNeuron
+    self.output = ioFunction(netInput)
+  end
+
+  def backPropagate
+    self.error = calcNetError * ioDerivativeFromOutput(output)
+  end
+
+  def to_s
+    description = super
+    description += "Net Input=\t#{netInput}\tError=\t#{error}\n"
+    description += "\t\tNumber of Input Links=\t#{inputLinks.length}\n"
+    inputLinks.each_with_index do |link, linkNumber|
+      description += "\t\t\t\t\t\tInput Link:\t#{linkNumber}\t#{link}\n"
+    end
+    description += "\t\tNumber of Output Links=\t#{outputLinks.length}\n"
+    outputLinks.each_with_index do |link, linkNumber|
+      description += "\t\t\t\t\t\tOutput Link:\t#{linkNumber}\t#{link}\n"
+    end
+    return description
+  end
+end
+
+
+
 class OutputNeuron < NeuronBase ## TODO some output neurons could both (1) backprop (actualOutput - target) and/or (2) error backpropagated from subsequent layers!!
   attr_accessor :inputLinks, :netInput, :arrayOfSelectedData, :exampleNumber, :keyToExampleData, :target, :error, :outputError, :weightedErrorMetric, :metricRecorder
+  include CommonNeuronCalculations
 
   # TODO  may want to have "output neuron" send OUTPUT connections to other neurons OR NOT!
 
@@ -192,69 +260,6 @@ class OutputNeuron < NeuronBase ## TODO some output neurons could both (1) backp
     end
     description
   end
-
-  include CommonNeuronCalculations
-end
-
-
-class BiasNeuron < NeuronBase #TODO should make this a singleton class!
-  attr_reader :outputLinks
-
-  def postInitialize
-    #@id = -1
-    @outputLinks = []
-    @output = 1.0
-  end
-
-  def to_s
-    description = super
-    description += "\t\tNumber of Output Links=\t#{outputLinks.length}\n"
-    outputLinks.each_with_index do |link, linkNumber|
-      description += "\t\t\t\t\t\tOutput Link:\t#{linkNumber}\t#{link}\n"
-    end
-    description
-  end
-end
-
-
-class Neuron < NeuronBase
-  attr_accessor :netInput, :inputLinks, :outputLinks, :error, :exampleNumber, :metricRecorder
-
-  def postInitialize
-    @inputLinks = []
-    @netInput = 0.0
-    self.output = self.ioFunction(@netInput) # Only doing this in case we wish to use this code for recurrent networks
-    @outputLinks = []
-    @error = 0.0
-    @metricRecorder= NeuronRecorder.new(self, args)
-    @exampleNumber = nil
-  end
-
-  def propagate(exampleNumber)
-    self.exampleNumber = exampleNumber
-    self.netInput = calcNetInputToNeuron
-    self.output = ioFunction(netInput)
-  end
-
-  def backPropagate
-    self.error = calcNetError * ioDerivativeFromOutput(output)
-  end
-
-  def to_s
-    description = super
-    description += "Net Input=\t#{netInput}\tError=\t#{error}\n"
-    description += "\t\tNumber of Input Links=\t#{inputLinks.length}\n"
-    inputLinks.each_with_index do |link, linkNumber|
-      description += "\t\t\t\t\t\tInput Link:\t#{linkNumber}\t#{link}\n"
-    end
-    description += "\t\tNumber of Output Links=\t#{outputLinks.length}\n"
-    outputLinks.each_with_index do |link, linkNumber|
-      description += "\t\t\t\t\t\tOutput Link:\t#{linkNumber}\t#{link}\n"
-    end
-    return description
-  end
-
-  include CommonNeuronCalculations
 end
 
 
