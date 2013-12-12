@@ -4,8 +4,6 @@
 require_relative 'Utilities'
 require_relative 'NeuralParts'
 
-### temp     comment
-
 class NeuronSOM < Neuron
   attr_accessor :relevance
 
