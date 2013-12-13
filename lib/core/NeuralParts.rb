@@ -6,6 +6,7 @@ require_relative 'Utilities'
 ############################################################
 module CommonNeuronCalculations
   public
+  attr_accessor :netInput, :inputLinks, :error, :exampleNumber, :metricRecorder
 
   def calcDeltaWsAndAccumulate
     inputLinks.each { |inputLink| inputLink.calcDeltaWAndAccumulate }
@@ -168,7 +169,7 @@ end
 
 
 class Neuron < NeuronBase
-  attr_accessor :netInput, :inputLinks, :outputLinks, :error, :exampleNumber, :metricRecorder
+  attr_accessor :outputLinks
   include CommonNeuronCalculations
 
   def postInitialize
@@ -207,9 +208,8 @@ class Neuron < NeuronBase
 end
 
 
-
 class OutputNeuron < NeuronBase ## TODO some output neurons could both (1) backprop (actualOutput - target) and/or (2) error backpropagated from subsequent layers!!
-  attr_accessor :inputLinks, :netInput, :arrayOfSelectedData, :exampleNumber, :keyToExampleData, :target, :error, :outputError, :weightedErrorMetric, :metricRecorder
+  attr_accessor :arrayOfSelectedData, :keyToExampleData, :target, :outputError, :weightedErrorMetric
   include CommonNeuronCalculations
 
   # TODO  may want to have "output neuron" send OUTPUT connections to other neurons OR NOT!
