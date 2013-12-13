@@ -3,14 +3,30 @@
 
 require_relative 'Utilities'
 require_relative 'NeuralParts'
+require_relative 'SOMWeightedClustering'
 
 module CommonNeuronCalculations
   public
+  def recordResponsesForEpoch
+    metricRecorder.recordResponsesForEpoch
+  end
 end
 
 
 class NeuronSOM < Neuron
   attr_accessor :relevance, :targetNetInput
+  include SOMClusteringCode
+
+  def postInitialize
+    super
+    @metricRecorder= SOMNeuronRecorder.new(self, args)
+    @maxNumberOfClusteringIterations = args[:maxNumberOfClusteringIterations]
+    typeOfClusterer = args[:typeOfClusterer] || DynamicClusterer
+    @clusterer = typeOfClusterer.new(args)
+    @clusters = @clusterer.clusters
+    @dPrime = 0.0
+    @trainingSequence = args[:trainingSequence]
+  end
 
   def propagate(exampleNumber)
     super(exampleNumber)
@@ -23,26 +39,12 @@ class NeuronSOM < Neuron
   end
 
   def determineTargetForNetInput
-    findClosestTarget(determinePossibleTargets())
+    closestTarget= determinePossibleTargets.min_by { |aTarget| (aTarget - netInput).abs }
   end
 
-  def determinePossibleTargets
+  def determinePossibleTargets # Can come from flocking code...
     [0.0]
   end
-
-  def findClosestTarget(possibleTargets)
-    closestTarget = nil
-    minimumDistanceToTarget = 1e100
-    possibleTargets.each do |aTarget|
-      distanceToTarget = (aTarget - netInput).abs
-      if (distanceToTarget < minimumDistanceToTarget)
-        minimumDistanceToTarget = distanceToTarget
-        closestTarget = aTarget
-      end
-    end
-    closestTarget
-  end
-
 end
 
 

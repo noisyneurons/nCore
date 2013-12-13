@@ -42,8 +42,8 @@ class Experiment
         :flockingLearningRate => -0.001, # -0.01, # -0.0002,
         :maxFlockingIterationsCount => 300, # 2000,
         :targetFlockIterationsCount => 20,
-        :ratioDropInMSE => 0.05, #0.95, # 0.01, # 0.95,
-        :ratioIncreaseInMSEForFlocking => 20.0, # 1.02, # 0.97, # 0.015, # 0.97,
+        :ratioDropInMSE => 0.9, # 0.05, #0.95, # 0.01, # 0.95,
+        :ratioIncreaseInMSEForFlocking => 1.07, #20.0, # 1.02, # 0.97, # 0.015, # 0.97,
 
         # Flocker Specs...
         :typeOfClusterer => DynamicClusterer,

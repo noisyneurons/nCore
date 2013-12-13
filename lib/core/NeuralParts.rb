@@ -178,8 +178,8 @@ class Neuron < NeuronBase
     self.output = self.ioFunction(@netInput) # Only doing this in case we wish to use this code for recurrent networks
     @outputLinks = []
     @error = 0.0
-    @metricRecorder= NeuronRecorder.new(self, args)
     @exampleNumber = nil
+    @metricRecorder= NeuronRecorder.new(self, args)
   end
 
   def propagate(exampleNumber)

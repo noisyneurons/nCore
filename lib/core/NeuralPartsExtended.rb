@@ -138,23 +138,13 @@ class FlockingNeuron < Neuron
   end
 end
 
-class FlockingNeuronStepIO < FlockingNeuron
-  def ioFunction(netInput)
-    if(netInput >= 0.0)
-      return 1.0
-    else
-      return 0.0
-    end
-  end
-end
-
 class FlockingOutputNeuron < OutputNeuron
   include CommonClusteringCode
 
   def postInitialize
-    self.output = ioFunction(@netInput = 0.0) # Only doing this in case we wish to use this code for recurrent networks
-    @inputLinks = []
     @netInput = 0.0
+    self.output = ioFunction(netInput) # Only doing this in case we wish to use this code for recurrent networks
+    @inputLinks = []
     @higherLayerError = 0.0
     @errorToBackPropToLowerLayer = 0.0
     @localFlockingError = 0.0
@@ -176,6 +166,17 @@ class FlockingOutputNeuron < OutputNeuron
     self.errorToBackPropToLowerLayer = yield(higherLayerError, localFlockingError) if (block.present?)
   end
 end
+
+class FlockingNeuronStepIO < FlockingNeuron
+  def ioFunction(netInput)
+    if(netInput >= 0.0)
+      return 1.0
+    else
+      return 0.0
+    end
+  end
+end
+
 
 
 class FlockingSymmetricalNeuron < SymmetricalNeuron
