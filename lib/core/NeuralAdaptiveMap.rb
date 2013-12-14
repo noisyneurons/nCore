@@ -54,5 +54,4 @@ class LinkSOM < Link
   def adaptSOM(changeInNetInputChangeDesired)
     self.deltaW = somLearningRate * changeInNetInputChangeDesired * inputNeuron.output
   end
-
 end
