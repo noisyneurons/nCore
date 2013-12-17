@@ -15,43 +15,52 @@ end
 
 class NeuronSOM < Neuron
   attr_accessor :relevance, :targetNetInput
-  include SOMClusteringCode
 
   def postInitialize
-    super
+    @inputLinks = []
+    @netInput = 0.0
+    self.output = 0.0
+    @outputLinks = []
+    @exampleNumber = nil
     @metricRecorder= SOMNeuronRecorder.new(self, args)
-    @maxNumberOfClusteringIterations = args[:maxNumberOfClusteringIterations]
-    typeOfClusterer = args[:typeOfClusterer] || DynamicClusterer
-    @clusterer = typeOfClusterer.new(args)
-    @clusters = @clusterer.clusters
-    @dPrime = 0.0
     @trainingSequence = args[:trainingSequence]
   end
 
   def propagate(exampleNumber)
-    super(exampleNumber)
-    self.relevance = ioDerivativeFromOutput(output)
+    self.exampleNumber = exampleNumber
+    self.netInput = euclidianDistanceBetweenInputAndNeuronsWeightVector = calcNetInputToNeuron
+    self.output = euclidianDistanceBetweenInputAndNeuronsWeightVector
   end
 
-  def adaptSOM
-    changeInNetInputChangeDesired = determineTargetForNetInput() - netInput
-    inputLinks.each { |inputLink| inputLink.adaptSOM(changeInNetInputChangeDesired) }
+  def calcNetInputToNeuron
+    sumOfSquaredDifferences = 0.0
+    inputLinks.each { |link| sumOfSquaredDifferences += (link.propagate ** 2.0) }
+    return (sumOfSquaredDifferences ** 0.5)
   end
 
-  def determineTargetForNetInput
-    closestTarget= determinePossibleTargets.min_by { |aTarget| (aTarget - netInput).abs }
+  def adaptWeight(k, lambda, learningRate)
+    # lambda = lambda_i * ( (lambda_f / lambda_i) ** (t / t_max) )
+    h = exp( (-1.0 * k) / lambda )
+    learningRate = learningRate_i * ( (learningRate_f / learningRate_i) ** (t / t_max) )
+    learningRateForNeuronsProximity = learningRate * h
+    inputLinks.each { |inputLink| inputLink.adaptWeight(learningRateForNeuronsProximity) }
   end
 
-  def determinePossibleTargets # Can come from flocking code...
-    [0.0]
-  end
 end
 
 
 class LinkSOM < Link
   attr_accessor :somLearningRate
 
-  def adaptSOM(changeInNetInputChangeDesired)
-    self.deltaW = somLearningRate * changeInNetInputChangeDesired * inputNeuron.output
+  def adaptWeight(k)
+
+    self.deltaW = learningRate * changeInNetInputChangeDesired * inputNeuron.output
+  end
+end
+
+
+class SOMNeuronRecorder < NeuronRecorder
+  def initialize(neuron, args)
+
   end
 end

@@ -143,7 +143,6 @@ class BiasNeuron < NeuronBase #TODO should make this a singleton class!
   end
 end
 
-
 class InputNeuron < NeuronBase
   attr_accessor :outputLinks, :arrayOfSelectedData, :keyToExampleData
 
@@ -166,7 +165,6 @@ class InputNeuron < NeuronBase
     description
   end
 end
-
 
 class Neuron < NeuronBase
   attr_accessor :outputLinks
@@ -206,7 +204,6 @@ class Neuron < NeuronBase
     return description
   end
 end
-
 
 class OutputNeuron < NeuronBase ## TODO some output neurons could both (1) backprop (actualOutput - target) and/or (2) error backpropagated from subsequent layers!!
   attr_accessor :arrayOfSelectedData, :keyToExampleData, :target, :outputError, :weightedErrorMetric
@@ -262,26 +259,21 @@ class OutputNeuron < NeuronBase ## TODO some output neurons could both (1) backp
   end
 end
 
-
 class LinearNeuron < Neuron
   include LinearIOFunction
 end
-
 
 class LinearOutputNeuron < OutputNeuron
   include LinearIOFunction
 end
 
-
 class SymmetricalNeuron < Neuron
   include SymmetricalSigmoidIOFunction
 end
 
-
 class SymmetricalOutputNeuron < OutputNeuron
   include SymmetricalSigmoidIOFunction
 end
-
 
 ############################################################
 class Link
