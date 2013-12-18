@@ -4,7 +4,6 @@
 ##                       For OR, and given parameters, requires 166 epochs to converge.
 
 require_relative 'BaseLearningExperiment'
-require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 
 class Experiment
   include NeuronToNeuronConnection
@@ -18,14 +17,14 @@ class Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 1.0,
         :minMSE => 0.001,
-        :maxNumEpochs => 4e3,
+        :maxNumEpochs => 2e3,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
         :numberOfHiddenNeurons => 3,
         :numberOfOutputNeurons => 1,
         :weightRange => 1.0,
-        :typeOfLink => FlockingLink,
+        :typeOfLink => Link,
 
         # Training Set parameters
         :numberOfExamples => (numExamples = 4),
@@ -49,7 +48,7 @@ class Experiment
   end
 
   def createNetworkAndTrainer
-    network = Flocking3LayerNetwork.new(args)  # we rally don't use the flocking part of the network here! -- but we need...
+    network = Standard3LayerNetwork.new(args)  # we rally don't use the flocking part of the network here! -- but we need...
     theTrainer = StandardBPTrainingSupervisor.new(examples, network, args)
     return network, theTrainer
   end

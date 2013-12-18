@@ -47,7 +47,7 @@ end
 ######
 class AbstractStepTrainer
   attr_accessor :examples, :numberOfExamples, :neuronGroups, :trainingSequence,
-                :args, :numberOfOutputNeurons,
+                :args, :numberOfOutputNeurons, :minMSE,
 
                 :allNeuronLayers, :inputLayer, :outputLayer,
                 :layersWithInputLinks, :layersWhoseClustersNeedToBeSeeded,
@@ -79,6 +79,7 @@ class AbstractStepTrainer
 
     @numberOfOutputNeurons = @outputLayer.length
     @numberOfExamples = args[:numberOfExamples]
+    @minMSE = args[:minMSE]
 
     @flockingIterationsCount = 0
     @accumulatedExampleImportanceFactors = nil
@@ -111,14 +112,16 @@ class AbstractStepTrainer
     @bpFlockErrorGeneratingNeurons = neuronGroups.bpFlockErrorGeneratingNeurons
   end
 
-  def train(trials)
+  def train
     distributeSetOfExamples(examples)
     seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO ONLY "seed" when necessary?   # unless(args[:epochs] > 1)
     self.accumulatedAbsoluteFlockingErrors = []
-    trials.times do
+    mse = 1e100
+    while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
       innerTrainingLoop()
       dbStoreTrainingData()
       trainingSequence.nextEpoch
+      mse = calcMSE
     end
     testMSE = calcTestingMeanSquaredErrors
     return calcMSE, testMSE, accumulatedAbsoluteFlockingErrors
@@ -126,7 +129,7 @@ class AbstractStepTrainer
 
   def performStandardBackPropTraining
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
-    acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForHigherLayerError }
+    acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
   end
 
@@ -664,9 +667,8 @@ class TrainingSupervisorBase
     mse = 1e20
     testMSE = nil
     accumulatedAbsoluteFlockingErrors = nil
-    numLoops = args[:numLoops]
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
-      mse, testMSE, accumulatedAbsoluteFlockingErrors = stepTrainer.train(numLoops)
+      mse, testMSE, accumulatedAbsoluteFlockingErrors = stepTrainer.train
     end
     arrayOfNeuronsToPlot = [network.outputLayer[0]]
     plotTrainingResults(arrayOfNeuronsToPlot)
