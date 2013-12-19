@@ -715,6 +715,14 @@ class StandardBPTrainingSupervisor < TrainingSupervisorBase
   end
 end
 
+
+class BPTrainingSupervisorFor1LayerNet < TrainingSupervisorBase
+  def postInitialize
+    self.neuronGroups = NeuronGroupsFor1LayerBPNetwork.new(network)
+    self.stepTrainer = StepTrainerForOutputErrorBPOnly.new(examples, neuronGroups, trainingSequence, args)
+  end
+end
+
 class TrainingSuperONLYLocalFlocking < TrainingSupervisorBase
   def postInitialize
     self.neuronGroups = NeuronGroupsForSingleLayerNetwork.new(network)

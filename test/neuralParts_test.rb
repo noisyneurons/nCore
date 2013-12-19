@@ -3,9 +3,6 @@
 
 require 'test/unit'
 require 'mocha/setup'
-#require 'minitest/reporters'
-#MiniTest::Reporters.use!
-
 require_relative '../lib/core/NeuralParts'
 
 Tolerance = 0.00001
@@ -85,7 +82,7 @@ end
 
 ############################################################
 class TestOutputNeuron < MiniTest::Unit::TestCase
-  include CommonNeuronCalculations
+
   class DummyLink
     def propagate
       return 3.3
@@ -138,24 +135,24 @@ class TestOutputNeuron < MiniTest::Unit::TestCase
   def test_propagate3
     @outputNeuron.inputLinks= [DummyLink.new, DummyLink.new]
     @outputNeuron.propagate(0)
-    expected = ioFunction(6.6)
-    #std("expected output ",expected)
+    expected = @outputNeuron.ioFunction(6.6)
+    # std("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX    expected output ",expected)
     assert_equal(expected, @outputNeuron.output, "output of the output neuron is incorrect")
   end
 
   def test_backPropagate1
-    @outputNeuron.target = 0.3 # target is 0.3
-    @outputNeuron.output = 0.8
+
     @outputNeuron.outputError = 0.5 # and therefore outputError = 0.5 and ioDerivative = 0.8(1-0.8)= 0.16
+    @outputNeuron.netInput = 0.0
     @outputNeuron.backPropagate # therefore error should be 0.08
-    assert_in_delta(expected=0.08, @outputNeuron.error, (Tolerance * expected).abs, "calculated error is not correct for output neuron")
+    assert_in_delta(expected=0.125, @outputNeuron.error, (Tolerance * expected).abs, "Assuming Standard Sigmoid IO Function!! -- Calculated error is not correct for output neuron")
   end
 
   def test_backPropagate2
     @outputNeuron.inputLinks= [DummyLink.new, DummyLink.new] # netInput should be 6.6 and output should be ioFunction(6.6)
-    @outputNeuron.propagate(2) # target should be 0.3
-    expectedOutputError = ioFunction(6.6) - 0.3
-    expectedError = expectedOutputError * ioDerivativeFromNetInput(6.6)
+    @outputNeuron.propagate(2)
+    expectedOutputError = @outputNeuron.ioFunction(6.6) - 0.3
+    expectedError = expectedOutputError * @outputNeuron.ioDerivativeFromNetInput(6.6)
     @outputNeuron.backPropagate # therefore error should be 0.08
     assert_in_delta(expectedError, @outputNeuron.error, (Tolerance * expectedError).abs, "calculated error is not correct for output neuron")
   end

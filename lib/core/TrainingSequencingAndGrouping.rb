@@ -85,6 +85,15 @@ class NeuronGroupsFor3LayerBPNetwork < AbstractNeuronGroups
   end
 end
 
+class NeuronGroupsFor1LayerBPNetwork   < AbstractNeuronGroups
+  def nameTrainingGroups
+    self.layersWithInputLinks = [outputLayer]
+    self.outputErrorAdaptingLayers = layersWithInputLinks
+    self.layersWhoseClustersNeedToBeSeeded = []
+    setNeuronGroupNames()
+  end
+end
+
 
 class NeuronGroupsForSingleLayerNetwork < AbstractNeuronGroups
 

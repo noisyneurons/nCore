@@ -131,7 +131,7 @@ databaseFilename = "acrossEpochsSequel" #  = ""
 dataStoreManager = SimulationDataStoreManager.create(databaseFilename, examples, args)
 
 ######################## Create Network....
-network = SimpleFlockingNeuronNetwork.new(dataStoreManager, args)
+network = Flocking1LayerNetwork.new(dataStoreManager, args)
 puts network
 
 ############################### train ...

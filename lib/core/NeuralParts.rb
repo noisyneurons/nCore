@@ -6,7 +6,6 @@ require_relative 'Utilities'
 ############################################################
 
 module SigmoidIOFunction
-  protected
 
   def ioFunction(aNetInput)
     return 1.0/(1.0 + Math.exp(-1.0 * aNetInput))
@@ -16,17 +15,14 @@ module SigmoidIOFunction
     return ioDerivativeFromOutput(ioFunction(aNetInput))
   end
 
-  private
   def ioDerivativeFromOutput(neuronsOutput)
     return (neuronsOutput * (1.0 - neuronsOutput))
   end
 
-  public
 end
 
 
 module NonMonotonicIOFunction
-  protected
 
   def ioFunction(aNetInput)
     h(aNetInput, 4)
@@ -52,12 +48,10 @@ module NonMonotonicIOFunction
     Math.exp((-1.0 * x) + s)   /  ((Math.exp((-1.0 * x) + s))   + 1.0)  **  2.0
   end
 
-  public
 end
 
 
 module LinearIOFunction
-  protected
 
   def ioFunction(aNetInput)
     return aNetInput
@@ -67,12 +61,10 @@ module LinearIOFunction
     return 1.0
   end
 
-  public
 end
 
 
 module SymmetricalSigmoidIOFunction
-  protected
 
   def ioFunction(aNetInput)
     return 2.0 * (   (1.0/(1.0 + Math.exp(-1.0 * aNetInput))) - 0.5)
@@ -82,23 +74,21 @@ module SymmetricalSigmoidIOFunction
     return ioDerivativeFromOutput(ioFunction(aNetInput))
   end
 
-  private
   def ioDerivativeFromOutput(neuronsOutput)
     return 2.0 * (neuronsOutput * (1.0 - neuronsOutput))
   end
 
-  public
 end
 
-module NeuralIOFunction
-  include NonMonotonicIOFunction
-end
+#module NeuralIOFunction
+#  include SigmoidIOFunction
+#end
 
 
 module CommonNeuronCalculations
   public
   attr_accessor :netInput, :inputLinks, :error, :exampleNumber, :metricRecorder
-  include NeuralIOFunction
+  include SigmoidIOFunction
 
   def calcDeltaWsAndAccumulate
     inputLinks.each { |inputLink| inputLink.calcDeltaWAndAccumulate }
@@ -128,8 +118,6 @@ module CommonNeuronCalculations
     inputLinks.each { |anInputLink| anInputLink.randomizeWeightWithinTheRange(anInputLink.weightRange) }
   end
 
-  protected
-
   def calcNetInputToNeuron
     netInput = 0.0
     inputLinks.each { |link| netInput += link.propagate }
@@ -143,8 +131,6 @@ module CommonNeuronCalculations
     end
     return netError
   end
-
-  public
 end
 
 

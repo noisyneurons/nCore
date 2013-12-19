@@ -3,6 +3,15 @@
 
 require_relative 'BaseLearningExperiment'
 
+class Neuron
+  include NonMonotonicIOFunction
+end
+
+class OutputNeuron
+  include NonMonotonicIOFunction
+end
+
+
 class Experiment
   include NeuronToNeuronConnection
 
@@ -14,12 +23,12 @@ class Experiment
 
         # training parameters re. Output Error
         :outputErrorLearningRate => 1.0,
-        :minMSE => 0.001,
+        :minMSE => 0.00001,
         :maxNumEpochs => 2e3,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
-        :numberOfHiddenNeurons => 3,
+        # :numberOfHiddenNeurons => 3,
         :numberOfOutputNeurons => 1,
         :weightRange => 1.0,
         :typeOfLink => Link,
@@ -50,8 +59,12 @@ class Experiment
   end
 
   def createNetworkAndTrainer
-    network = Standard3LayerNetwork.new(args)  # we rally don't use the flocking part of the network here! -- but we need...
-    theTrainer = StandardBPTrainingSupervisor.new(examples, network, args)
+    #network = Standard3LayerNetwork.new(args)  # we rally don't use the flocking part of the network here! -- but we need...
+    #theTrainer = StandardBPTrainingSupervisor.new(examples, network, args)
+
+    network = SimplestNeuronNetwork.new(args)  # we rally don't use the flocking part of the network here! -- but we need...
+    theTrainer = BPTrainingSupervisorFor1LayerNet.new(examples, network, args)
+
     return network, theTrainer
   end
 end
@@ -61,7 +74,7 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("SimpleProblemBP", baseRandomNumberSeed)
+experiment = Experiment.new("SigmoidIOSimp1LyrProblemBP  Sigmoid IO function in 1 layer net on simplest 2-D problem", baseRandomNumberSeed)
 
 experiment.performSimulation()
 

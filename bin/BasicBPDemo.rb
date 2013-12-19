@@ -5,6 +5,15 @@
 
 require_relative 'BaseLearningExperiment'
 
+class Neuron
+  include NonMonotonicIOFunction
+end
+
+class OutputNeuron
+  include NonMonotonicIOFunction
+end
+
+
 class Experiment
   include NeuronToNeuronConnection
 
@@ -62,4 +71,3 @@ baseRandomNumberSeed = 0
 experiment = Experiment.new("BasicBPDemo1", baseRandomNumberSeed)
 
 experiment.performSimulation()
-

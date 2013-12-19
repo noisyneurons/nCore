@@ -226,13 +226,14 @@ class Standard3LayerNetwork < BaseNetwork
   end
 end
 
-class SimpleFlockingNeuronNetwork < BaseNetwork # TODO this is identical, except in name, to  SimpleFlockingNetwork
+
+class SimplestNeuronNetwork < BaseNetwork
 
   def createStandardNetworkWithStandardFullyConnectedArchitecture
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
     self.allNeuronLayers << inputLayer
 
-    self.outputLayer = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
+    self.outputLayer = createAndConnectLayer(inputLayer, typeOfNeuron = OutputNeuron, args[:numberOfOutputNeurons])
     self.allNeuronLayers << outputLayer
 
     connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
