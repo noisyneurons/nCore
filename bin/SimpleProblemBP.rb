@@ -61,7 +61,7 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("BasicBPDemo1", baseRandomNumberSeed)
+experiment = Experiment.new("SimpleProblemBP", baseRandomNumberSeed)
 
 experiment.performSimulation()
 

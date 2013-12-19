@@ -15,7 +15,7 @@ class Experiment
         :randomNumberSeed => randomNumberSeed,
 
         # training parameters re. Output Error
-        :outputErrorLearningRate => 1.0,
+        :outputErrorLearningRate => 3.0,
         :minMSE => 0.001,
         :maxNumEpochs => 2e3,
 

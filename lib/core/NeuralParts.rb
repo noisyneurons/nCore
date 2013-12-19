@@ -4,9 +4,101 @@
 require_relative 'Utilities'
 
 ############################################################
+
+module SigmoidIOFunction
+  protected
+
+  def ioFunction(aNetInput)
+    return 1.0/(1.0 + Math.exp(-1.0 * aNetInput))
+  end
+
+  def ioDerivativeFromNetInput(aNetInput) # TODO speed this up.  Use sage to get the simpler analytical expression.
+    return ioDerivativeFromOutput(ioFunction(aNetInput))
+  end
+
+  private
+  def ioDerivativeFromOutput(neuronsOutput)
+    return (neuronsOutput * (1.0 - neuronsOutput))
+  end
+
+  public
+end
+
+
+module NonMonotonicIOFunction
+  protected
+
+  def ioFunction(aNetInput)
+    h(aNetInput, 4)
+  end
+
+  def h(x, s)
+    f(x) + ( -0.5 * (f(x + s) + f(x-s)) ) + 0.5
+  end
+
+  def f(x)
+    1.0 / (1.0 + Math.exp(-1.0 * x))
+  end
+
+  def ioDerivativeFromNetInput(aNetInput)
+    return j(aNetInput, 4.0)
+  end
+
+  def j(x, s)
+    g(x, 0.0) - (0.5 * ( g(x,s) + g(x,(-1.0 * s))))
+  end
+
+  def g(x, s)
+    Math.exp((-1.0 * x) + s)   /  ((Math.exp((-1.0 * x) + s))   + 1.0)  **  2.0
+  end
+
+  public
+end
+
+
+module LinearIOFunction
+  protected
+
+  def ioFunction(aNetInput)
+    return aNetInput
+  end
+
+  def ioDerivativeFromNetInput(aNetInput)
+    return 1.0
+  end
+
+  public
+end
+
+
+module SymmetricalSigmoidIOFunction
+  protected
+
+  def ioFunction(aNetInput)
+    return 2.0 * (   (1.0/(1.0 + Math.exp(-1.0 * aNetInput))) - 0.5)
+  end
+
+  def ioDerivativeFromNetInput(aNetInput) # TODO speed this up.  Use sage to get the simpler analytical expression.
+    return ioDerivativeFromOutput(ioFunction(aNetInput))
+  end
+
+  private
+  def ioDerivativeFromOutput(neuronsOutput)
+    return 2.0 * (neuronsOutput * (1.0 - neuronsOutput))
+  end
+
+  public
+end
+
+module NeuralIOFunction
+  include NonMonotonicIOFunction
+end
+
+
 module CommonNeuronCalculations
   public
   attr_accessor :netInput, :inputLinks, :error, :exampleNumber, :metricRecorder
+  include NeuralIOFunction
 
   def calcDeltaWsAndAccumulate
     inputLinks.each { |inputLink| inputLink.calcDeltaWAndAccumulate }
@@ -52,54 +144,9 @@ module CommonNeuronCalculations
     return netError
   end
 
-  def ioFunction(aNetInput)
-    return 1.0/(1.0 + Math.exp(-1.0 * aNetInput))
-  end
-
-  def ioDerivativeFromOutput(neuronsOutput)
-    return (neuronsOutput * (1.0 - neuronsOutput))
-  end
-
-  def ioDerivativeFromNetInput(aNetInput) # TODO speed this up.  Use sage to get the simpler analytical expression.
-    return ioDerivativeFromOutput(ioFunction(aNetInput))
-  end
-
   public
 end
 
-module LinearIOFunction
-
-  protected
-
-  def ioFunction(aNetInput)
-    return aNetInput
-  end
-
-  def ioDerivativeFromOutput(neuronsOutput)
-    return 1.0
-  end
-
-  def ioDerivativeFromNetInput(aNetInput)
-    return 1.0
-  end
-
-  public
-end
-
-module SymmetricalSigmoidIOFunction
-
-  protected
-
-  def ioFunction(aNetInput)
-    return (2.0/(1.0 + Math.exp(-1.0 * aNetInput))) - 1.0
-  end
-
-  def ioDerivativeFromOutput(neuronsOutput)
-    return 2.0 * (neuronsOutput * (1.0 - neuronsOutput))
-  end
-
-  public
-end
 
 ############################################################
 class NeuronBase
@@ -187,7 +234,7 @@ class Neuron < NeuronBase
   end
 
   def backPropagate
-    self.error = calcNetError * ioDerivativeFromOutput(output)
+    self.error = calcNetError * ioDerivativeFromNetInput(netInput)
   end
 
   def to_s
@@ -205,11 +252,9 @@ class Neuron < NeuronBase
   end
 end
 
-class OutputNeuron < NeuronBase ## TODO some output neurons could both (1) backprop (actualOutput - target) and/or (2) error backpropagated from subsequent layers!!
+class OutputNeuron < NeuronBase
   attr_accessor :arrayOfSelectedData, :keyToExampleData, :target, :outputError, :weightedErrorMetric
   include CommonNeuronCalculations
-
-  # TODO  may want to have "output neuron" send OUTPUT connections to other neurons OR NOT!
 
   def postInitialize
     @netInput = 0.0
@@ -234,7 +279,7 @@ class OutputNeuron < NeuronBase ## TODO some output neurons could both (1) backp
   end
 
   def backPropagate
-    self.error = outputError * ioDerivativeFromOutput(output)
+    self.error = outputError * ioDerivativeFromNetInput(netInput)
   end
 
   def calcSumOfSquaredErrors
@@ -263,17 +308,17 @@ class LinearNeuron < Neuron
   include LinearIOFunction
 end
 
-class LinearOutputNeuron < OutputNeuron
-  include LinearIOFunction
-end
-
-class SymmetricalNeuron < Neuron
-  include SymmetricalSigmoidIOFunction
-end
-
-class SymmetricalOutputNeuron < OutputNeuron
-  include SymmetricalSigmoidIOFunction
-end
+#class LinearOutputNeuron < OutputNeuron
+#  include LinearIOFunction
+#end
+#
+#class SymmetricalNeuron < Neuron
+#  include SymmetricalSigmoidIOFunction
+#end
+#
+#class SymmetricalOutputNeuron < OutputNeuron
+#  include SymmetricalSigmoidIOFunction
+#end
 
 ############################################################
 class Link
