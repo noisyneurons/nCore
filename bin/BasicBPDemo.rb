@@ -57,7 +57,7 @@ class Experiment
   end
 
   def createNetworkAndTrainer
-    network = Standard3LayerNetwork.new(args)  # we rally don't use the flocking part of the network here! -- but we need...
+    network = Standard3LayerNetwork.new(args)
     theTrainer = StandardBPTrainingSupervisor.new(examples, network, args)
     return network, theTrainer
   end
