@@ -100,6 +100,6 @@ end
 
 ###################################### START of Main Learning  ##########################################
 
-experiment = Experiment.new("NonMonHiddenLayerCircleBP the output layer io is sigmoid", randomNumberSeed=0)
+experiment = Experiment.new("L1NonMonCircleBP the output layer io is sigmoid", randomNumberSeed=0)
 
 experiment.performSimulation()
