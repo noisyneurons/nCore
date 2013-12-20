@@ -86,7 +86,7 @@ class Experiment
         examples << anExample
       end
     end
-    STDERR.puts "Error: Incorrect Number of Examples Generated and/or Specified" unless (examples.length == args[:numberOfExamples])
+    STDERR.puts "Error:   Incorrect Number of Examples Generated and/or Specified" unless (examples.length == args[:numberOfExamples])
     examples
   end
 
