@@ -37,7 +37,6 @@ class AbstractNeuronGroups
   end
 end
 
-
 #####
 
 class GroupsForThreeClass2HiddenLocalFlock < AbstractNeuronGroups
@@ -55,8 +54,6 @@ class GroupsForThreeClass2HiddenLocalFlock < AbstractNeuronGroups
     setNeuronGroupNames()
   end
 end
-
-
 
 class GroupsForThreeClass2HiddenLayersOEBP < AbstractNeuronGroups
   def nameTrainingGroups

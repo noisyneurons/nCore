@@ -20,7 +20,6 @@ def createTrainingSet(numberOfExamples)
   xInc = [0.0, 0.0, 0.0, 0.0]
   yInc = [1.0, 1.0, -1.0, -1.0]
 
-  # target = [0.9, 0.9, 0.9, 0.9] # potentially will use this example set for supervised learning.
 
   numberOfClasses = xStart.length
   numberOfExamplesInEachClass = numberOfExamples / numberOfClasses

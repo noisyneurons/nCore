@@ -38,51 +38,53 @@ class Experiment
   end
 
   def setParameters
-    @args = {
-        :experimentNumber => $globalExperimentNumber,
-        :descriptionOfExperiment => descriptionOfExperiment,
-        :randomNumberSeed => randomNumberSeed,
+    self.numberOfExamples =
 
-        # training parameters re. Output Error
-        :outputErrorLearningRate => 0.02,
-        :minMSE => 0.0001,
-        :maxNumEpochs => 4e3,
-        :numLoops => 10,
+        @args = {
+            :experimentNumber => $globalExperimentNumber,
+            :descriptionOfExperiment => descriptionOfExperiment,
+            :randomNumberSeed => randomNumberSeed,
 
-        # Network Architecture
-        :numberOfInputNeurons => 2,
-        :numberOfHiddenNeurons => 0,
-        :numberOfOutputNeurons => 1,
-        :weightRange => 1.0,
-        :typeOfLink => FlockingLink,
+            # training parameters re. Output Error
+            :outputErrorLearningRate => 0.02,
+            :minMSE => 0.0001,
+            :maxNumEpochs => 4e3,
+            :numLoops => 10,
 
-        # Training Set parameters
-        :numberOfExamples => numberOfExamples,
+            # Network Architecture
+            :numberOfInputNeurons => 2,
+            :numberOfHiddenNeurons => 0,
+            :numberOfOutputNeurons => 1,
+            :weightRange => 1.0,
+            :typeOfLink => FlockingLink,
 
-        # Recording and database parameters
-        :intervalForSavingNeuronData => 100,
-        :intervalForSavingDetailedNeuronData => 1000,
-        :intervalForSavingTrainingData => 100,
+            # Training Set parameters
+            :numberOfExamples => (self.numberOfExamples = nil),
 
-        # Flocking Parameters...
-        :flockingLearningRate => -0.002,
-        :maxFlockingIterationsCount => 2000, # 3800, # 2000,
-        :maxAbsFlockingErrorsPerExample => 0.002, # 0.00000000000001, #0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
+            # Recording and database parameters
+            :intervalForSavingNeuronData => 100,
+            :intervalForSavingDetailedNeuronData => 1000,
+            :intervalForSavingTrainingData => 100,
 
-        :typeOfClusterer => DynamicClusterer,
-        :numberOfClusters => 2,
-        :m => 2.0,
-        :numExamples => numberOfExamples,
-        :exampleVectorLength => 1,
-        :delta => 1e-2,
-        :maxNumberOfClusteringIterations => 10,
-        :keepTargetsSymmetrical => true,
-        :alwaysUseFuzzyClusters => true,
-         :maxLargestEuclidianDistanceMovedThatIsWOErrorMsg => 0.01,
+            # Flocking Parameters...
+            :flockingLearningRate => -0.002,
+            :maxFlockingIterationsCount => 2000, # 3800, # 2000,
+            :maxAbsFlockingErrorsPerExample => 0.002, # 0.00000000000001, #0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
 
-        # Inner Numeric Constraints -- used to floating point under or overflow
-        :floorToPreventOverflow => 1e-60
-    }
+            :typeOfClusterer => DynamicClusterer,
+            :numberOfClusters => 2,
+            :m => 2.0,
+            :numExamples => numberOfExamples,
+            :exampleVectorLength => 1,
+            :delta => 1e-2,
+            :maxNumberOfClusteringIterations => 10,
+            :keepTargetsSymmetrical => true,
+            :alwaysUseFuzzyClusters => true,
+            :maxLargestEuclidianDistanceMovedThatIsWOErrorMsg => 0.01,
+
+            # Inner Numeric Constraints -- used to floating point under or overflow
+            :floorToPreventOverflow => 1e-60
+        }
   end
 
   def createTrainingSet
