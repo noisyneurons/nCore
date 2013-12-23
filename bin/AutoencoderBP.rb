@@ -7,10 +7,11 @@ require_relative 'BaseLearningExperiment'
 #class Neuron
 #  include NonMonotonicIOFunction
 #end
-#
-#class OutputNeuron
-#  include NonMonotonicIOFunction
-#end
+
+class OutputNeuron
+  include LinearIOFunction
+end
+
 
 
 class Experiment
@@ -23,13 +24,13 @@ class Experiment
         :randomNumberSeed => randomNumberSeed,
 
         # training parameters re. Output Error
-        :outputErrorLearningRate => 0.3,
+        :outputErrorLearningRate => 0.001,
         :minMSE => 0.001,
         :maxNumEpochs => 6e3,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
-        :numberOfHiddenNeurons => 2,
+        :numberOfHiddenNeurons => 8,
         :numberOfOutputNeurons => 2,
         :weightRange => 1.0,
         :typeOfLink => Link,
@@ -68,7 +69,7 @@ class Experiment
         x = xS + (xI * classExNumb)
         y = yS + (yI * classExNumb)
         aPoint = [x, y]
-        examples << {:inputs => aPoint, :targets => aPoint, :exampleNumber => exampleNumber}
+        examples << {:inputs => aPoint, :targets => aPoint, :exampleNumber => exampleNumber, :class => indexToClass}
         exampleNumber += 1
       end
     end
@@ -89,6 +90,6 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("SigAutoEncoder", baseRandomNumberSeed)
+experiment = Experiment.new("SigAutoEncoder output neuron linear", baseRandomNumberSeed)
 
 experiment.performSimulation()

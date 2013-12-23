@@ -3,9 +3,6 @@
 
 require_relative 'BaseLearningExperiment'
 
-class Neuron
-  include NonMonotonicIOFunction
-end
 
 class OutputNeuron
   include NonMonotonicIOFunction
@@ -28,7 +25,6 @@ class Experiment
 
         # Network Architecture
         :numberOfInputNeurons => 2,
-        # :numberOfHiddenNeurons => 3,
         :numberOfOutputNeurons => 1,
         :weightRange => 1.0,
         :typeOfLink => Link,
@@ -59,8 +55,6 @@ class Experiment
   end
 
   def createNetworkAndTrainer
-    #network = Standard3LayerNetwork.new(args)  # we rally don't use the flocking part of the network here! -- but we need...
-    #theTrainer = StandardBPTrainingSupervisor.new(examples, network, args)
 
     network = SimplestNeuronNetwork.new(args)  # we rally don't use the flocking part of the network here! -- but we need...
     theTrainer = BPTrainingSupervisorFor1LayerNet.new(examples, network, args)

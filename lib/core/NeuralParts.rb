@@ -80,15 +80,12 @@ module SymmetricalSigmoidIOFunction
 
 end
 
-#module NeuralIOFunction
-#  include SigmoidIOFunction
-#end
 
 
 module CommonNeuronCalculations
   public
   attr_accessor :netInput, :inputLinks, :error, :exampleNumber, :metricRecorder
-  include SigmoidIOFunction
+
 
   def calcDeltaWsAndAccumulate
     inputLinks.each { |inputLink| inputLink.calcDeltaWAndAccumulate }
@@ -202,6 +199,7 @@ end
 class Neuron < NeuronBase
   attr_accessor :outputLinks
   include CommonNeuronCalculations
+  include SigmoidIOFunction
 
   def postInitialize
     @inputLinks = []
@@ -241,6 +239,7 @@ end
 class OutputNeuron < NeuronBase
   attr_accessor :arrayOfSelectedData, :keyToExampleData, :target, :outputError, :weightedErrorMetric
   include CommonNeuronCalculations
+  include SigmoidIOFunction
 
   def postInitialize
     @netInput = 0.0
@@ -294,10 +293,10 @@ class LinearNeuron < Neuron
   include LinearIOFunction
 end
 
-#class LinearOutputNeuron < OutputNeuron
-#  include LinearIOFunction
-#end
-#
+class LinearOutputNeuron < OutputNeuron
+  include LinearIOFunction
+end
+
 #class SymmetricalNeuron < Neuron
 #  include SymmetricalSigmoidIOFunction
 #end

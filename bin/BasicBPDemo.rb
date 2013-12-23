@@ -49,10 +49,10 @@ class Experiment
 
   def createTrainingSet
     examples = []
-    examples << {:inputs => [0.0, 0.0], :targets => [0.1], :exampleNumber => 0, :class => 0}
-    examples << {:inputs => [0.0, 1.0], :targets => [0.9], :exampleNumber => 1, :class => 1}
-    examples << {:inputs => [1.0, 0.0], :targets => [0.9], :exampleNumber => 2, :class => 1}
-    examples << {:inputs => [1.0, 1.0], :targets => [0.1], :exampleNumber => 3, :class => 0}
+    examples << {:inputs => [0.0, 0.0], :targets => [0.0], :exampleNumber => 0, :class => 0}
+    examples << {:inputs => [0.0, 1.0], :targets => [1.0], :exampleNumber => 1, :class => 1}
+    examples << {:inputs => [1.0, 0.0], :targets => [1.0], :exampleNumber => 2, :class => 1}
+    examples << {:inputs => [1.0, 1.0], :targets => [0.0], :exampleNumber => 3, :class => 0}
     return examples
   end
 
