@@ -11,7 +11,7 @@ module SigmoidIOFunction
     return 1.0/(1.0 + Math.exp(-1.0 * aNetInput))
   end
 
-  def ioDerivativeFromNetInput(aNetInput) # TODO speed this up.  Use sage to get the simpler analytical expression.
+  def ioDerivativeFromNetInput(aNetInput)
     return ioDerivativeFromOutput(ioFunction(aNetInput))
   end
 
@@ -22,7 +22,41 @@ module SigmoidIOFunction
 end
 
 
-module NonMonotonicIOFunction
+module NonMonotonicIOFunctionShifted
+
+  def ioFunction(x)
+    (1.49786971589547 * (i(x) - 0.166192596930178)) - 0.5
+  end
+
+  def i(x)
+    h(x,4)
+  end
+
+  def h(x, s)
+    f(x) + ( -0.5 * (f(x + s) + f(x-s)) ) + 0.5
+  end
+
+  def f(x)
+    1.0 / (1.0 + Math.exp(-1.0 * x))
+  end
+
+  def ioDerivativeFromNetInput(aNetInput)
+    1.49786971589547 * j(aNetInput, 4.0)
+  end
+
+  def j(x, s)
+    g(x, 0.0) - (0.5 * ( g(x,s) + g(x,(-1.0 * s))))
+  end
+
+  def g(x, s)
+    Math.exp((-1.0 * x) + s)   /  ((Math.exp((-1.0 * x) + s))   + 1.0)  **  2.0
+  end
+
+end
+
+
+
+module NonMonotonicIOFunctionUnShifted
 
   def ioFunction(x)
     1.49786971589547 * (i(x) - 0.166192596930178)
@@ -53,6 +87,8 @@ module NonMonotonicIOFunction
   end
 
 end
+
+
 
 module NonMonotonicIOFunctionOLD
 

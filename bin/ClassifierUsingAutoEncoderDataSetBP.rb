@@ -5,13 +5,12 @@
 require_relative 'BaseLearningExperiment'
 
 class Neuron
-  include NonMonotonicIOFunction
+  include NonMonotonicIOFunctionUnShifted
 end
 
 #class OutputNeuron
 #  include NonMonotonicIOFunction
 #end
-
 
 
 class Experiment
@@ -25,11 +24,11 @@ class Experiment
 
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.1,
-        :minMSE => 0.001,
-        :maxNumEpochs => 6e3,
+        :minMSE => 0.00001, # 0.001,
+        :maxNumEpochs => 12e3,  # 6e3,
 
         # Network Architecture
-        :numberOfInputNeurons => 2,
+        :numberOfInputNeurons => 3,
         :numberOfHiddenNeurons => 2,
         :numberOfOutputNeurons => 4,
         :weightRange => 1.0,
@@ -47,49 +46,50 @@ class Experiment
   end
 
   def createTrainingSet
-    createTrainingSet2Inputs
+    createTrainingSet3Inputs
   end
 
 
-  def createTrainingSet2Inputs
-    xStart = [-1.0, 1.0, -1.0, 1.0]
-    yStart = [1.0, 1.0, -1.0, -1.0]
-    xInc = [0.0, 0.0, 0.0, 0.0]
-    yInc = [1.0, 1.0, -1.0, -1.0]
-
-    numberOfClasses = xStart.length
-    numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
-    exampleNumber = 0
-    xIncrement = 0.0
-    yIncrement = 0.0
-    examples = []
-    numberOfClasses.times do |indexToClass|
-      xS = xStart[indexToClass]
-      xI = xInc[indexToClass]
-      yS = yStart[indexToClass]
-      yI = yInc[indexToClass]
-      numberOfExamplesInEachClass.times do |classExNumb|
-        x = xS + (xI * classExNumb)
-        y = yS + (yI * classExNumb)
-        aPoint = [x, y]
-        desiredOutputs = [0.0, 0.0, 0.0, 0.0]
-        desiredOutputs[indexToClass] = 1.0
-        examples << {:inputs => aPoint, :targets => desiredOutputs, :exampleNumber => exampleNumber, :class => indexToClass}
-        exampleNumber += 1
-      end
-    end
-    STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
-    examples
-  end
+  #def createTrainingSet2Inputs
+  #  xStart = [-1.0, 1.0, -1.0, 1.0]
+  #  yStart = [1.0, 1.0, -1.0, -1.0]
+  #  xInc = [0.0, 0.0, 0.0, 0.0]
+  #  yInc = [1.0, 1.0, -1.0, -1.0]
+  #
+  #  numberOfClasses = xStart.length
+  #  numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
+  #  exampleNumber = 0
+  #  xIncrement = 0.0
+  #  yIncrement = 0.0
+  #  examples = []
+  #  numberOfClasses.times do |indexToClass|
+  #    xS = xStart[indexToClass]
+  #    xI = xInc[indexToClass]
+  #    yS = yStart[indexToClass]
+  #    yI = yInc[indexToClass]
+  #    numberOfExamplesInEachClass.times do |classExNumb|
+  #      x = xS + (xI * classExNumb)
+  #      y = yS + (yI * classExNumb)
+  #      aPoint = [x, y]
+  #      desiredOutputs = [0.0, 0.0, 0.0, 0.0]
+  #      desiredOutputs[indexToClass] = 1.0
+  #      examples << {:inputs => aPoint, :targets => desiredOutputs, :exampleNumber => exampleNumber, :class => indexToClass}
+  #      exampleNumber += 1
+  #    end
+  #  end
+  #  STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
+  #  examples
+  #end
 
 
   def createTrainingSet3Inputs
     xStart = [-1.0, 1.0, -1.0, 1.0]
-    yStart = [1.0, 1.0, -1.0, -1.0]
-    zStart = [1.0, 1.0, 1.0, 1.0]
+    yStart = [1.0, 1.0, -4.0, -4.0]
     xInc = [0.0, 0.0, 0.0, 0.0]
-    yInc = [1.0, 1.0, -1.0, -1.0]
-    zInc = [-1.0, -0.5, 0.5, 1.0]
+    yInc = [1.0, 1.0, 1.0, 1.0]
+    zS = -2.0
+    zI = 1.0
+
 
     numberOfClasses = xStart.length
     numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
@@ -100,8 +100,6 @@ class Experiment
       xI = xInc[indexToClass]
       yS = yStart[indexToClass]
       yI = yInc[indexToClass]
-      zS = zStart[indexToClass]
-      zI = zInc[indexToClass]
 
       numberOfExamplesInEachClass.times do |classExNumb|
         x = xS + (xI * classExNumb)
@@ -132,6 +130,6 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("NonMonClAutoEnc   ClassifierUsingAutocoderDataSetBP", baseRandomNumberSeed)
+experiment = Experiment.new("3dNonMonClAutoEnc   ClassifierUsingAutocoderDataSetBP", baseRandomNumberSeed)
 
 experiment.performSimulation()
