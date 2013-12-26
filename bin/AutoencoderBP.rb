@@ -5,7 +5,7 @@
 require_relative 'BaseLearningExperiment'
 
 class Neuron
-  include NonMonotonicIOFunction
+  include NonMonotonicIOFunctionUnShifted
 end
 
 class OutputNeuron
@@ -26,11 +26,11 @@ class Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.001,
         :minMSE => 0.001,
-        :maxNumEpochs => 6e3,
+        :maxNumEpochs => 12e3,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
-        :numberOfHiddenNeurons => 4,
+        :numberOfHiddenNeurons => 2,
         :numberOfOutputNeurons => 2,
         :weightRange => 1.0,
         :typeOfLink => Link,

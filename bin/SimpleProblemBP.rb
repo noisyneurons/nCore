@@ -5,7 +5,8 @@ require_relative 'BaseLearningExperiment'
 
 
 class OutputNeuron
-  include NonMonotonicIOFunction
+  include NonMonotonicIOFunctionUnShifted
+  #include        NonMonotonicIOFunctionOLD
 end
 
 
@@ -19,9 +20,9 @@ class Experiment
         :randomNumberSeed => randomNumberSeed,
 
         # training parameters re. Output Error
-        :outputErrorLearningRate => 1.0,
-        :minMSE => 0.00001,
-        :maxNumEpochs => 2e3,
+        :outputErrorLearningRate => 0.1,
+        :minMSE => 0.0000001,
+        :maxNumEpochs => 4e3,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
@@ -68,7 +69,7 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("SigmoidIOSimp1LyrProblemBP  Sigmoid IO function in 1 layer net on simplest 2-D problem", baseRandomNumberSeed)
+experiment = Experiment.new("NonMonIO1LayerSimplestProblemBP  NonMonotonicIOFunctionUnShifted IO function in 1 layer net on simplest 2-D problem", baseRandomNumberSeed)
 
 experiment.performSimulation()
 

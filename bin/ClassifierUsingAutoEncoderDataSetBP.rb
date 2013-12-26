@@ -5,7 +5,7 @@
 require_relative 'BaseLearningExperiment'
 
 class Neuron
-  include NonMonotonicIOFunctionShifted
+  include NonMonotonicIOFunctionUnShifted
 end
 
 #class OutputNeuron
@@ -131,6 +131,6 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("3dNonMonClAutoEnc   ClassifierUsingAutocoderDataSetBP", baseRandomNumberSeed)
+experiment = Experiment.new("3DNonMonUnShiftedClAutoEnc   Classifier Using Autocoder DataSet with hidden NonMonUnShifted", baseRandomNumberSeed)
 
 experiment.performSimulation()

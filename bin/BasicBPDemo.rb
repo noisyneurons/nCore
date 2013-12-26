@@ -6,11 +6,11 @@
 require_relative 'BaseLearningExperiment'
 
 class Neuron
-  include NonMonotonicIOFunction
+  include NonMonotonicIOFunctionUnShifted
 end
 
 class OutputNeuron
-  include NonMonotonicIOFunction
+  # include NonMonotonicIOFunctionUnShifted
 end
 
 
@@ -30,7 +30,7 @@ class Experiment
 
         # Network Architecture
         :numberOfInputNeurons => 2,
-        :numberOfHiddenNeurons => 3,
+        :numberOfHiddenNeurons => 2,
         :numberOfOutputNeurons => 1,
         :weightRange => 1.0,
         :typeOfLink => Link,
@@ -68,6 +68,6 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("BasicBPDemo1", baseRandomNumberSeed)
+experiment = Experiment.new("BasicBPDemo1 both layers NonMon", baseRandomNumberSeed)
 
 experiment.performSimulation()
