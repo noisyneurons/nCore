@@ -4,7 +4,7 @@
 #####
 class AbstractNeuronGroups
   attr_accessor :allNeuronLayers, :allNeuronsInOneArray,
-                :inputLayer, :outputLayer,
+                :inputLayer, :outputLayer, :hiddenLayerNeurons, :outputLayerNeurons,
                 :layersWithInputLinks, :adaptingLayers, :layersWhoseClustersNeedToBeSeeded,
                 :neuronsWithInputLinks, :neuronsWithInputLinksInReverseOrder,
                 :adaptingNeurons, :neuronsWhoseClustersNeedToBeSeeded,
@@ -82,7 +82,16 @@ class NeuronGroupsFor3LayerBPNetwork < AbstractNeuronGroups
   end
 end
 
-class NeuronGroupsFor1LayerBPNetwork   < AbstractNeuronGroups
+class NeuronGroupsFor3LayerBPNetworkModLR < NeuronGroupsFor3LayerBPNetwork
+
+  def nameTrainingGroups
+    self.outputLayerNeurons = allNeuronLayers.last
+    self.hiddenLayerNeurons = allNeuronLayers[1]
+    super()
+  end
+end
+
+class NeuronGroupsFor1LayerBPNetwork < AbstractNeuronGroups
   def nameTrainingGroups
     self.layersWithInputLinks = [outputLayer]
     self.outputErrorAdaptingLayers = layersWithInputLinks

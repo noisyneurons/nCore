@@ -59,6 +59,7 @@ class AbstractStepTrainer
                 :outputErrorAdaptingNeurons, :flockErrorGeneratingNeurons, :flockErrorAdaptingNeurons,
                 :bpFlockErrorAdaptingNeurons, :bpFlockErrorAdaptingLayers,
                 :bpFlockErrorGeneratingNeurons, :bpFlockErrorGeneratingLayers,
+                :outputLayerNeurons, :hiddenLayerNeurons,
 
                 :maxFlockingIterationsCount, :flockingLearningRate, :bpFlockingLearningRate,
                 :flockingIterationsCount, :accumulatedAbsoluteFlockingErrors,
@@ -104,6 +105,10 @@ class AbstractStepTrainer
     @flockErrorAdaptingLayers = neuronGroups.flockErrorAdaptingLayers
     @bpFlockErrorAdaptingLayers = neuronGroups.bpFlockErrorAdaptingLayers
     @bpFlockErrorGeneratingLayers = neuronGroups.bpFlockErrorGeneratingLayers
+
+    @outputLayerNeurons = neuronGroups.outputLayerNeurons
+    @hiddenLayerNeurons = neuronGroups.hiddenLayerNeurons
+
 
     @outputErrorAdaptingNeurons = neuronGroups.outputErrorAdaptingNeurons
     @flockErrorGeneratingNeurons = neuronGroups.flockErrorGeneratingNeurons
@@ -461,6 +466,15 @@ class StepTrainerForOutputErrorBPOnly < AbstractStepTrainer
   end
 end
 
+class StepTrainerForOutputErrorBPOnlyModLR  <  StepTrainerForOutputErrorBPOnly
+  def performStandardBackPropTraining
+    outputLayerNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputLayerLearningRate] }
+    hiddenLayerNeurons.each { |aNeuron| aNeuron.learningRate = args[:hiddenLayerLearningRate] }
+    acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
+    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+  end
+end
+
 class StepTrainerForONLYLocalFlocking < AbstractStepTrainer
   def innerTrainingLoop
     self.accumulatedAbsoluteFlockingErrors = []
@@ -715,6 +729,12 @@ class StandardBPTrainingSupervisor < TrainingSupervisorBase
   end
 end
 
+class StandardBPTrainingSupervisorModLR < StandardBPTrainingSupervisor
+  def postInitialize
+    self.neuronGroups = NeuronGroupsFor3LayerBPNetworkModLR.new(network)
+    self.stepTrainer = StepTrainerForOutputErrorBPOnlyModLR.new(examples, neuronGroups, trainingSequence, args)
+  end
+end
 
 class BPTrainingSupervisorFor1LayerNet < TrainingSupervisorBase
   def postInitialize
@@ -722,6 +742,9 @@ class BPTrainingSupervisorFor1LayerNet < TrainingSupervisorBase
     self.stepTrainer = StepTrainerForOutputErrorBPOnly.new(examples, neuronGroups, trainingSequence, args)
   end
 end
+
+
+
 
 class TrainingSuperONLYLocalFlocking < TrainingSupervisorBase
   def postInitialize

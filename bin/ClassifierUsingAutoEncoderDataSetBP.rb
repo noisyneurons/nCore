@@ -5,11 +5,11 @@
 require_relative 'BaseLearningExperiment'
 
 class Neuron
-  include NonMonotonicIOFunctionUnShifted
+  include NonMonotonicIOFunctionShifted
 end
 
 #class OutputNeuron
-#  include NonMonotonicIOFunction
+#  include NonMonotonicIOFunctionUnShifted
 #end
 
 
@@ -23,9 +23,11 @@ class Experiment
         :randomNumberSeed => randomNumberSeed,
 
         # training parameters re. Output Error
-        :outputErrorLearningRate => 0.1,
+        :outputLayerLearningRate => 0.1,
+        :hiddenLayerLearningRate => 0.1,
+        :outputErrorLearningRate => nil,
         :minMSE => 0.00001, # 0.001,
-        :maxNumEpochs => 12e3,  # 6e3,
+        :maxNumEpochs => 3e3,  # 6e3,
 
         # Network Architecture
         :numberOfInputNeurons => 3,
@@ -117,10 +119,9 @@ class Experiment
   end
 
 
-
   def createNetworkAndTrainer
     network = Standard3LayerNetwork.new(args)
-    theTrainer = StandardBPTrainingSupervisor.new(examples, network, args)
+    theTrainer = StandardBPTrainingSupervisorModLR.new(examples, network, args)
     return network, theTrainer
   end
 end
