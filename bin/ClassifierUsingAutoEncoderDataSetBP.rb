@@ -5,7 +5,8 @@
 require_relative 'BaseLearningExperiment'
 
 class Neuron
-  include NonMonotonicIOFunctionUnShifted
+  # include NonMonotonicIOFunctionUnShifted
+  include NonMonotonicIODerivative
 end
 
 #class OutputNeuron
@@ -31,7 +32,7 @@ class Experiment
 
         # Network Architecture
         :numberOfInputNeurons => 3,
-        :numberOfHiddenNeurons => 2,
+        :numberOfHiddenNeurons => 3,
         :numberOfOutputNeurons => 4,
         :weightRange => 1.0,
         :typeOfLink => Link,
@@ -48,49 +49,12 @@ class Experiment
   end
 
   def createTrainingSet
-    createTrainingSet3Inputs
-  end
-
-
-  #def createTrainingSet2Inputs
-  #  xStart = [-1.0, 1.0, -1.0, 1.0]
-  #  yStart = [1.0, 1.0, -1.0, -1.0]
-  #  xInc = [0.0, 0.0, 0.0, 0.0]
-  #  yInc = [1.0, 1.0, -1.0, -1.0]
-  #
-  #  numberOfClasses = xStart.length
-  #  numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
-  #  exampleNumber = 0
-  #  xIncrement = 0.0
-  #  yIncrement = 0.0
-  #  examples = []
-  #  numberOfClasses.times do |indexToClass|
-  #    xS = xStart[indexToClass]
-  #    xI = xInc[indexToClass]
-  #    yS = yStart[indexToClass]
-  #    yI = yInc[indexToClass]
-  #    numberOfExamplesInEachClass.times do |classExNumb|
-  #      x = xS + (xI * classExNumb)
-  #      y = yS + (yI * classExNumb)
-  #      aPoint = [x, y]
-  #      desiredOutputs = [0.0, 0.0, 0.0, 0.0]
-  #      desiredOutputs[indexToClass] = 1.0
-  #      examples << {:inputs => aPoint, :targets => desiredOutputs, :exampleNumber => exampleNumber, :class => indexToClass}
-  #      exampleNumber += 1
-  #    end
-  #  end
-  #  STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
-  #  examples
-  #end
-
-
-  def createTrainingSet3Inputs
     xStart = [-1.0, 1.0, -1.0, 1.0]
     yStart = [1.0, 1.0, -4.0, -4.0]
     xInc = [0.0, 0.0, 0.0, 0.0]
     yInc = [1.0, 1.0, 1.0, 1.0]
-    zS = -2.0
-    zI = 1.0
+    zS = -2.0 # 0.0 # -2.0
+    zI = 1.0 # 0.0 # 1.0
 
 
     numberOfClasses = xStart.length
@@ -116,8 +80,8 @@ class Experiment
     end
     STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
     examples
-  end
 
+  end
 
   def createNetworkAndTrainer
     network = Standard3LayerNetwork.new(args)
@@ -131,6 +95,6 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("3DNonMonUnShiftedClAutoEnc   Classifier Using Autocoder DataSet with hidden NonMonUnShifted", baseRandomNumberSeed)
+experiment = Experiment.new("3DNonMonDerivClAutoEnc   Classifier Using Autocoder DataSet with hidden NonMonUnShifted", baseRandomNumberSeed)
 
 experiment.performSimulation()

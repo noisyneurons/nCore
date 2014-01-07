@@ -5,11 +5,14 @@ require_relative 'BaseLearningExperiment'
 
 class Neuron
   include NonMonotonicIOFunctionUnShifted
+  # include NonMonotonicIODerivative
+
 end
 
-#class OutputNeuron
-#  include NonMonotonicIOFunctionUnShifted
-#end
+class OutputNeuron
+  # include NonMonotonicIOFunctionUnShifted
+  include NonMonotonicIODerivative
+end
 
 
 class Experiment
@@ -100,6 +103,6 @@ end
 
 ###################################### START of Main Learning  ##########################################
 
-experiment = Experiment.new("NonMonL1CircleBP the output layer has sigmoid IO but the output layer has sigmoid", randomNumberSeed=0)
+experiment = Experiment.new("NonMonDerL1CircleBP the output layer has sigmoid IO but the output layer has sigmoid", randomNumberSeed=0)
 
 experiment.performSimulation()

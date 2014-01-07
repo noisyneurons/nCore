@@ -5,7 +5,8 @@
 require_relative 'BaseLearningExperiment'
 
 class Neuron
-  include NonMonotonicIOFunctionUnShifted
+  # include NonMonotonicIOFunctionUnShifted
+  include NonMonotonicIODerivative
 end
 
 class OutputNeuron
@@ -90,6 +91,6 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("NonMonAutoEncoder output neuron linear", baseRandomNumberSeed)
+experiment = Experiment.new("NonMonDerAutoEncoder output neuron linear", baseRandomNumberSeed)
 
 experiment.performSimulation()

@@ -5,8 +5,8 @@ require_relative 'BaseLearningExperiment'
 
 
 class OutputNeuron
-  include NonMonotonicIOFunctionUnShifted
-  #include        NonMonotonicIOFunctionOLD
+  # include NonMonotonicIOFunctionUnShifted
+  include        NonMonotonicIODerivative
 end
 
 
