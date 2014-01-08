@@ -296,7 +296,6 @@ module DBAccess
       aHash.delete(:exampleNumber)
       aHash.delete(:error)
       aHash[:epochs] = args[:epochs]
-      aHash[:accumulatedAbsoluteFlockingError] = accumulatedAbsoluteFlockingError
       NeuronData.new(aHash)
     end
   end
@@ -317,7 +316,7 @@ module DBAccess
       trainMSE = calcMeanSumSquaredErrors
       testMSE = calcTestingMeanSquaredErrors
       puts "epoch number = #{args[:epochs]}\ttrainMSE = #{trainMSE}\ttestMSE = #{testMSE}" # unless($currentHost == "master")
-      aHash = {:experimentNumber => $globalExperimentNumber, :epochs => args[:epochs], :mse => trainMSE, :testMSE => testMSE, :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors}
+      aHash = {:experimentNumber => $globalExperimentNumber, :epochs => args[:epochs], :mse => trainMSE, :testMSE => testMSE}
       TrainingData.new(aHash)
     end
   end

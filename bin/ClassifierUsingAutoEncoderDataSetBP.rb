@@ -1,6 +1,6 @@
 ### VERSION "nCore"
 ## ../nCore/bin/ClassifierUsingAutocoderDataSetBP.rb
-# Purpose:  Simple backprop autocoder implementation.
+# Purpose:  Simple 4-class classifier of data used in 4-cluster AutocoderBP.rb.
 
 require_relative 'BaseLearningExperiment'
 
@@ -9,9 +9,9 @@ class Neuron
   include NonMonotonicIODerivative
 end
 
-#class OutputNeuron
-#  include NonMonotonicIOFunctionUnShifted
-#end
+class OutputNeuron
+  include NonMonotonicIODerivative
+end
 
 
 class Experiment
@@ -28,7 +28,7 @@ class Experiment
         :hiddenLayerLearningRate => 0.1,
         :outputErrorLearningRate => nil,
         :minMSE => 0.00001, # 0.001,
-        :maxNumEpochs => 3e3,  # 6e3,
+        :maxNumEpochs => 2e3,  # 6e3,
 
         # Network Architecture
         :numberOfInputNeurons => 3,
@@ -95,6 +95,6 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("3DNonMonDerivClAutoEnc   Classifier Using Autocoder DataSet with hidden NonMonUnShifted", baseRandomNumberSeed)
+experiment = Experiment.new("3in1hidN4ClAuto   Classifier Using Autocoder DataSet with hidden NonMonUnShifted", baseRandomNumberSeed)
 
 experiment.performSimulation()

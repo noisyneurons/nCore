@@ -54,29 +54,17 @@ class AbstractStepTrainer
     @layersWithInputLinks = neuronGroups.layersWithInputLinks
     @neuronsWithInputLinks = neuronGroups.neuronsWithInputLinks
     @neuronsWithInputLinksInReverseOrder = neuronGroups.neuronsWithInputLinksInReverseOrder
-    @layersWhoseClustersNeedToBeSeeded = neuronGroups.layersWhoseClustersNeedToBeSeeded
-    @neuronsWhoseClustersNeedToBeSeeded = neuronGroups.neuronsWhoseClustersNeedToBeSeeded
 
-    @outputErrorAdaptingLayers = neuronGroups.outputErrorAdaptingLayers
-    @flockErrorGeneratingLayers = neuronGroups.flockErrorGeneratingLayers
-    @flockErrorAdaptingLayers = neuronGroups.flockErrorAdaptingLayers
-    @bpFlockErrorAdaptingLayers = neuronGroups.bpFlockErrorAdaptingLayers
-    @bpFlockErrorGeneratingLayers = neuronGroups.bpFlockErrorGeneratingLayers
 
     @outputLayerNeurons = neuronGroups.outputLayerNeurons
     @hiddenLayerNeurons = neuronGroups.hiddenLayerNeurons
 
-
+    @outputErrorAdaptingLayers = neuronGroups.outputErrorAdaptingLayers
     @outputErrorAdaptingNeurons = neuronGroups.outputErrorAdaptingNeurons
-    @flockErrorGeneratingNeurons = neuronGroups.flockErrorGeneratingNeurons
-    @flockErrorAdaptingNeurons = neuronGroups.flockErrorAdaptingNeurons
-    @bpFlockErrorAdaptingNeurons = neuronGroups.bpFlockErrorAdaptingNeurons
-    @bpFlockErrorGeneratingNeurons = neuronGroups.bpFlockErrorGeneratingNeurons
-  end
+   end
 
   def train
     distributeSetOfExamples(examples)
-    seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded) # TODO ONLY "seed" when necessary?   # unless(args[:epochs] > 1)
     self.accumulatedAbsoluteFlockingErrors = []
     mse = 1e100
     while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
@@ -197,7 +185,7 @@ class AbstractStepTrainer
   end
 
   def calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
-                               #    clearStoredNetInputs
+    #    clearStoredNetInputs
     squaredErrors = []
     numberOfExamples.times do |exampleNumber|
       propagateAcrossEntireNetwork(exampleNumber)
@@ -227,16 +215,16 @@ class AbstractStepTrainer
     dispersions = arrayOfNeurons.collect { |aNeuron| aNeuron.clusterAllResponses } # TODO Perhaps we might only need to clusterAllResponses every K epochs?
   end
 
-  def seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
-    numberOfExamples.times do |exampleNumber|
-      allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-      neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
-      neuronsWithInputLinks.each { |aNeuron| aNeuron.recordResponsesForExample }
-    end
-    neuronsWhoseClustersNeedToBeSeeded.each { |aNeuron| aNeuron.initializeClusterCenters } # TODO is there any case where system should be reinitialized in this manner?
-    recenterEachNeuronsClusters(neuronsWhoseClustersNeedToBeSeeded)
-  end
+  #def seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)
+  #  neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
+  #  numberOfExamples.times do |exampleNumber|
+  #    allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+  #    neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
+  #    neuronsWithInputLinks.each { |aNeuron| aNeuron.recordResponsesForExample }
+  #  end
+  #  neuronsWhoseClustersNeedToBeSeeded.each { |aNeuron| aNeuron.initializeClusterCenters } # TODO is there any case where system should be reinitialized in this manner?
+  #  recenterEachNeuronsClusters(neuronsWhoseClustersNeedToBeSeeded)
+  #end
 
   def zeroOutFlockingLinksMomentumMemoryStore
     flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.inputLinks.each { |aLink| aLink.store = 0.0 } }
@@ -250,7 +238,7 @@ class AbstractStepTrainer
     count = 0
     exampleWeightings.each { |aWeight| count += 1 if (aWeight <= criteria0) }
     exampleWeightings.each { |aWeight| count += 1 if (aWeight > criteria1) }
-                                                                                                     # puts "count=\t #{count}"
+    # puts "count=\t #{count}"
     return true if (count < numberOfExamples)
     return false
   end
@@ -286,19 +274,27 @@ class StepTrainerForOutputErrorBPOnly < AbstractStepTrainer
   def innerTrainingLoop
     performStandardBackPropTraining()
     self.accumulatedAbsoluteFlockingErrors = []
-    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
+    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
   end
 end
 
-class StepTrainerForOutputErrorBPOnlyModLR  <  StepTrainerForOutputErrorBPOnly
+class StepTrainerForOutputErrorBPOnlyModLR < StepTrainerForOutputErrorBPOnly
   def performStandardBackPropTraining
     outputLayerNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputLayerLearningRate] }
+
+    ###
+    #hiddenLayerNeurons[0].learningRate = args[:hiddenLayerLearningRate]
+    #hiddenLayerNeurons[1].learningRate = args[:hiddenLayerLearningRate] / 10.0
+    #hiddenLayerNeurons[2].learningRate = args[:hiddenLayerLearningRate] / 100.0
+
     hiddenLayerNeurons.each { |aNeuron| aNeuron.learningRate = args[:hiddenLayerLearningRate] }
+
+    ###
+
     acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
   end
 end
-
 
 
 ###################################################################
