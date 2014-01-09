@@ -39,11 +39,7 @@ class AbstractStepTrainer
     @numberOfExamples = args[:numberOfExamples]
     @minMSE = args[:minMSE]
 
-    @flockingIterationsCount = 0
     @accumulatedExampleImportanceFactors = nil
-    @flockingLearningRate = args[:flockingLearningRate]
-    @bpFlockingLearningRate = args[:bpFlockingLearningRate]
-    @maxFlockingIterationsCount = args[:maxFlockingIterationsCount]
   end
 
   def specifyGroupsOfLayersAndNeurons
@@ -61,7 +57,7 @@ class AbstractStepTrainer
 
     @outputErrorAdaptingLayers = neuronGroups.outputErrorAdaptingLayers
     @outputErrorAdaptingNeurons = neuronGroups.outputErrorAdaptingNeurons
-   end
+  end
 
   def train
     distributeSetOfExamples(examples)
@@ -278,6 +274,7 @@ class StepTrainerForOutputErrorBPOnly < AbstractStepTrainer
   end
 end
 
+
 class StepTrainerForOutputErrorBPOnlyModLR < StepTrainerForOutputErrorBPOnly
   def performStandardBackPropTraining
     outputLayerNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputLayerLearningRate] }
@@ -344,6 +341,7 @@ class ThreeClass2HiddenSupervisorOEBP < TrainingSupervisorBase
   end
 end
 
+
 class StandardBPTrainingSupervisor < TrainingSupervisorBase
   def postInitialize
     self.neuronGroups = NeuronGroupsFor3LayerBPNetwork.new(network)
@@ -351,12 +349,14 @@ class StandardBPTrainingSupervisor < TrainingSupervisorBase
   end
 end
 
+
 class StandardBPTrainingSupervisorModLR < StandardBPTrainingSupervisor
   def postInitialize
     self.neuronGroups = NeuronGroupsFor3LayerBPNetworkModLR.new(network)
     self.stepTrainer = StepTrainerForOutputErrorBPOnlyModLR.new(examples, neuronGroups, trainingSequence, args)
   end
 end
+
 
 class BPTrainingSupervisorFor1LayerNet < TrainingSupervisorBase
   def postInitialize

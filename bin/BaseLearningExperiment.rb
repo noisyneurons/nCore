@@ -32,7 +32,7 @@ class Experiment
     $globalExperimentNumber = experimentLogger.experimentNumber
     @args = self.setParameters
     @examples = createTrainingSet
-    createTestingSet
+    args[:testingExamples] = createTestingSet
     @trainingSequence = TrainingSequence.new(args)
     @args[:trainingSequence] = trainingSequence
   end

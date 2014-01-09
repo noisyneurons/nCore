@@ -2,6 +2,9 @@
 ## ../nCore/lib/core/DataSet.rb
 
 require_relative 'Utilities'
+require_relative '../../../rubystats/lib/normal_distribution'
+
+
 
 module ExampleDistribution
 

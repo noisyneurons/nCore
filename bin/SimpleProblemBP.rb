@@ -57,7 +57,7 @@ class Experiment
 
   def createNetworkAndTrainer
 
-    network = SimplestNeuronNetwork.new(args)  # we rally don't use the flocking part of the network here! -- but we need...
+    network = Simplest1LayerNet.new(args)  # we rally don't use the flocking part of the network here! -- but we need...
     theTrainer = BPTrainingSupervisorFor1LayerNet.new(examples, network, args)
 
     return network, theTrainer

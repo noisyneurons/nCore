@@ -451,6 +451,11 @@ class Link
   end
 
   def calcDeltaW
+    #std("learningRate",learningRate)
+    #std("outputNeuron.error",outputNeuron.error)
+    #
+    #std("inputNeuron.output",inputNeuron.output)
+
     self.deltaW = learningRate * outputNeuron.error * inputNeuron.output
   end
 

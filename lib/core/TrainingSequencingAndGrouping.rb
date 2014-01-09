@@ -53,6 +53,7 @@ class NeuronGroupsFor3LayerBPNetwork < AbstractNeuronGroups
   end
 end
 
+
 class NeuronGroupsFor3LayerBPNetworkModLR < NeuronGroupsFor3LayerBPNetwork
 
   def nameTrainingGroups
@@ -61,6 +62,7 @@ class NeuronGroupsFor3LayerBPNetworkModLR < NeuronGroupsFor3LayerBPNetwork
     super()
   end
 end
+
 
 class NeuronGroupsFor1LayerBPNetwork < AbstractNeuronGroups
   def nameTrainingGroups
@@ -71,8 +73,8 @@ class NeuronGroupsFor1LayerBPNetwork < AbstractNeuronGroups
 end
 
 
-
 #####
+
 class TrainingSequence
   attr_accessor :args, :epochs, :maxNumberOfEpochs,
                 :stillMoreEpochs, :lastEpoch,
