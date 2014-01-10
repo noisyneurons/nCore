@@ -136,7 +136,12 @@ class SnapShotData
   end
 
   def SnapShotData.deleteEntireIndex!
-    ary = $redis.keys("SnapShotData*")
+    ary = $redis.keys("SSD*")
+    ary.each { |item| $redis.del(item) }
+  end
+
+  def SnapShotData.deleteKey(experimentNumber)
+    ary = $redis.keys("SnapShotData#{experimentNumber}*")
     ary.each { |item| $redis.del(item) }
   end
 

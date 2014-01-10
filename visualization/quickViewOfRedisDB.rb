@@ -1,6 +1,7 @@
 # '~/Code/Ruby/NN2012/nCore/visualization/quickViewOfRedisDB.rb'
 
-require_relative '../lib/core/Utilities'
+#require_relative '../lib/core/Utilities'
+require_relative '../lib/core/SimulationDataStore'
 
 #theComputersName = Socket.gethostname
 #
@@ -16,11 +17,20 @@ require_relative '../lib/core/Utilities'
 
 $redis = Redis.new(:host => $currentHost)
 
+numberOfKeysInDB = $redis.dbsize
+puts "Number of Keys in Current DB=\t#{numberOfKeysInDB}"
+
+
+
 experimentNumber = $redis.get("experimentNumber")
-puts "Next Experiment Number=\t #{experimentNumber}\n\n"
+puts "\nNext Experiment Number=\t #{experimentNumber}\n\n"
 
 arrayOfKeys = $redis.keys("SSD*")
-puts "Number of 'Snap Shot Keys' in Redis database: #{arrayOfKeys.length}"
+puts "Number of 'SSD Keys' in Redis database: #{arrayOfKeys.length}"
+puts "SSD Keys in Redis database: #{arrayOfKeys}\n\n"
+
+arrayOfKeys = $redis.keys("SnapShotData*")
+puts "Number of 'Snap Shot Data Keys' in Redis database: #{arrayOfKeys.length}"
 puts "Snap Shot Keys in Redis database: #{arrayOfKeys}\n\n"
 
 arrayOfKeys = $redis.keys("ND*")
@@ -34,6 +44,11 @@ puts "DetailedNeuronData Keys in Redis database: #{arrayOfKeys}\n\n"
 arrayOfKeys = $redis.keys("TD*")
 puts "Number of 'TrainingData Keys' in Redis database: #{arrayOfKeys.length}"
 puts "TrainingData Keys in Redis database: #{arrayOfKeys}\n\n"
+
+arrayOfKeys = $redis.keys("*")
+puts "Number of Keys in Redis database: #{arrayOfKeys.length}"
+puts "Keys in Redis database: #{arrayOfKeys}\n\n"
+
 
 
 

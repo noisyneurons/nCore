@@ -1,14 +1,38 @@
 # '~/Code/Ruby/NN2012/nCore/visualization/cleanRedisDB.rb'
 
 require_relative '../lib/core/Utilities'
+require_relative '../lib/core/SimulationDataStore'
 
-$redis = Redis.new(:host => currentHost)
+# $redis = Redis.new(:host => currentHost)
 
 experimentNumber = $redis.get("experimentNumber")
 puts "\nNext Experiment Number=\t #{experimentNumber}"
 
 dataStore = SimulationDataStoreManager.new
+
+
+lastExperimentForDeletion = 2039
+#SnapShotData.deleteData(lastExperimentForDeletion)
+#SnapShotData.deleteKey(lastExperimentForDeletion)
+
+#ary = $redis.keys("SnapShotData*")
+#ary.each { |item| $redis.del(item) }
+
+
+#(1..lastExperimentForDeletion).each do |anExperimentNumber|
+#  SnapShotData.deleteData(anExperimentNumber)
+#  SnapShotData.deleteKey(anExperimentNumber)
+#end
+
+$redis.save
+
+STDERR.puts "just after deleting early snapshot keys and data"
+
 dataStore.deleteAllDataAndIndexesExceptSnapShot!
+
+arrayOfKeys = $redis.keys("SSD*")
+puts "Number of 'Snap Shot Keys' in Redis database: #{arrayOfKeys.length}"
+puts "Snap Shot Keys in Redis database: #{arrayOfKeys}\n\n"
 
 
 selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
