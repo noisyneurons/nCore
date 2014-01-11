@@ -95,6 +95,10 @@ class ExperimentLogger
     $redis.del("experimentNumber")
   end
 
+  def ExperimentLogger.initializeExperimentNumber(experimentNumber)
+    $redis.setnx("experimentNumber", experimentNumber)
+  end
+
   def initialize(descriptionOfExperiment = nil, jobName = "NotNamed")
     @experimentNumber = $redis.incr("experimentNumber")
     @descriptionOfExperiment = descriptionOfExperiment

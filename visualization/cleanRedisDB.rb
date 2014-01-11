@@ -1,6 +1,6 @@
 # '~/Code/Ruby/NN2012/nCore/visualization/cleanRedisDB.rb'
+# program not in good condition!!
 
-require_relative '../lib/core/Utilities'
 require_relative '../lib/core/SimulationDataStore'
 
 # $redis = Redis.new(:host => currentHost)

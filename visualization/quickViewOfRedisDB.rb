@@ -1,7 +1,39 @@
 # '~/Code/Ruby/NN2012/nCore/visualization/quickViewOfRedisDB.rb'
+# This program gives you a good idea of the contents of the redis database.
 
-#require_relative '../lib/core/Utilities'
 require_relative '../lib/core/SimulationDataStore'
+
+experimentNumber = $redis.get("experimentNumber")
+puts "\nLast Experiment Number=\t #{experimentNumber}\n\n"
+
+arrayOfKeys = $redis.keys("SnapShotData*")
+puts "Number of 'Snap Shot db Keys' in Redis database: #{arrayOfKeys.length}"
+puts "Snap Shot db Keys in Redis database: #{arrayOfKeys}\n\n"
+
+arrayOfKeys = $redis.keys("SSD*")
+puts "Number of 'SSD Data Keys' in Redis database: #{arrayOfKeys.length}"
+puts "SSD Keys in Redis database: #{arrayOfKeys}\n\n"
+
+arrayOfKeys = $redis.keys("ND*")
+puts "Number of 'ND data Keys' in Redis database: #{arrayOfKeys.length}"
+puts "NeuronData Keys in Redis database: #{arrayOfKeys}\n\n"
+
+arrayOfKeys = $redis.keys("DND*")
+puts "Number of 'DND data Keys' in Redis database: #{arrayOfKeys.length}"
+puts "DetailedNeuronData Keys in Redis database: #{arrayOfKeys}\n\n"
+
+arrayOfKeys = $redis.keys("TrainingData*")
+puts "Number of 'TrainingData db Keys' in Redis database: #{arrayOfKeys.length}"
+puts "TrainingData db Keys in Redis database: #{arrayOfKeys}\n\n"
+
+arrayOfKeys = $redis.keys("TD*")
+puts "Number of 'TD Data Keys' in Redis database: #{arrayOfKeys.length}"
+puts "TD Data Keys in Redis database: #{arrayOfKeys}\n\n"
+
+arrayOfKeys = $redis.keys("*")
+puts "Number of Keys in Redis database: #{arrayOfKeys.length}"
+puts "Keys in Redis database: #{arrayOfKeys}\n\n"
+
 
 #theComputersName = Socket.gethostname
 #
@@ -14,42 +46,5 @@ require_relative '../lib/core/SimulationDataStore'
 #currentHost = "master"
 #currentHost = "node001"
 #currentHost = "localhost"
-
-$redis = Redis.new(:host => $currentHost)
-
-numberOfKeysInDB = $redis.dbsize
-puts "Number of Keys in Current DB=\t#{numberOfKeysInDB}"
-
-
-
-experimentNumber = $redis.get("experimentNumber")
-puts "\nNext Experiment Number=\t #{experimentNumber}\n\n"
-
-arrayOfKeys = $redis.keys("SSD*")
-puts "Number of 'SSD Keys' in Redis database: #{arrayOfKeys.length}"
-puts "SSD Keys in Redis database: #{arrayOfKeys}\n\n"
-
-arrayOfKeys = $redis.keys("SnapShotData*")
-puts "Number of 'Snap Shot Data Keys' in Redis database: #{arrayOfKeys.length}"
-puts "Snap Shot Keys in Redis database: #{arrayOfKeys}\n\n"
-
-arrayOfKeys = $redis.keys("ND*")
-puts "Number of 'NeuronData Keys' in Redis database: #{arrayOfKeys.length}"
-puts "NeuronData Keys in Redis database: #{arrayOfKeys}\n\n"
-
-arrayOfKeys = $redis.keys("DND*")
-puts "Number of 'DetailedNeuronData Keys' in Redis database: #{arrayOfKeys.length}"
-puts "DetailedNeuronData Keys in Redis database: #{arrayOfKeys}\n\n"
-
-arrayOfKeys = $redis.keys("TD*")
-puts "Number of 'TrainingData Keys' in Redis database: #{arrayOfKeys.length}"
-puts "TrainingData Keys in Redis database: #{arrayOfKeys}\n\n"
-
-arrayOfKeys = $redis.keys("*")
-puts "Number of Keys in Redis database: #{arrayOfKeys.length}"
-puts "Keys in Redis database: #{arrayOfKeys}\n\n"
-
-
-
 
 
