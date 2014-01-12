@@ -21,18 +21,18 @@ module SigmoidIOFunction
 
 end
 
-module NonMonotonicIOFunctionUnShifted
+module NonMonotonicIOFunction
 
   def ioFunction(x)
     1.49786971589547 * (i(x) - 0.166192596930178)
   end
 
   def i(x)
-    h(x,4)
+    h(x, 4)
   end
 
   def h(x, s)
-    f(x) + ( -0.5 * (f(x + s) + f(x-s)) ) + 0.5
+    0.5 + f(x) + (-0.5 * (f(x + s) + f(x-s)))
   end
 
   def f(x)
@@ -44,52 +44,91 @@ module NonMonotonicIOFunctionUnShifted
   end
 
   def j(x, s)
-    g(x, 0.0) - (0.5 * ( g(x,s) + g(x,(-1.0 * s))))
+    g(x, 0.0) - (0.5 * (g(x, s) + g(x, (-1.0 * s))))
   end
 
   def g(x, s)
-    Math.exp((-1.0 * x) + s)   /  ((Math.exp((-1.0 * x) + s))   + 1.0)  **  2.0
+    Math.exp((-1.0 * x) + s) / ((Math.exp((-1.0 * x) + s)) + 1.0) ** 2.0
   end
 
 end
 
-module NonMonotonicIODerivative
+
+module PiecewiseLinNonMonIOFunction
+
+  def slope
+    1.0 / 5.0
+  end
 
   def ioFunction(x)
-    f(x)
+    case
+      when x >= 5.0
+        0.5
+      when x >= 2.5
+        (-1.0 * slope * x)  + 1.5
+      when x >= - 2.5
+        (slope * x) + 0.5
+      when x >= -5.0
+        (-1.0 * slope * x)  - 0.5
+      else
+        0.5
+    end
   end
 
-  def f(x)
-    1.0 / (1.0 + Math.exp(-1.0 * x))
-  end
-
-  def ioDerivativeFromNetInput(aNetInput)
-    1.49786971589547 * j(aNetInput, 4.0)
-  end
-
-  def j(x, s)
-    g(x, 0.0) - (0.5 * ( g(x,s) + g(x,(-1.0 * s))))
-  end
-
-  def g(x, s)
-    Math.exp((-1.0 * x) + s)   /  ((Math.exp((-1.0 * x) + s))   + 1.0)  **  2.0
+  def ioDerivativeFromNetInput(x)
+    case
+      when x >= 5.0
+        0.0
+      when x >= 2.5
+        -1.0 * slope
+      when x >= - 2.5
+        slope
+      when x >= -5.0
+        -1.0 * slope
+      else
+        0.0
+    end
   end
 end
 
 
+# ODD Ball function -- BE CAREFUL not to reuse..
+#module NonMonotonicIODerivative
+#
+#  def ioFunction(x)
+#    f(x)
+#  end
+#
+#  def f(x)
+#    1.0 / (1.0 + Math.exp(-1.0 * x))
+#  end
+#
+#  def ioDerivativeFromNetInput(aNetInput)
+#    1.49786971589547 * j(aNetInput, 4.0)
+#  end
+#
+#  def j(x, s)
+#    g(x, 0.0) - (0.5 * (g(x, s) + g(x, (-1.0 * s))))
+#  end
+#
+#  def g(x, s)
+#    Math.exp((-1.0 * x) + s) / ((Math.exp((-1.0 * x) + s)) + 1.0) ** 2.0
+#  end
+#end
 
-module NonMonotonicIOFunctionShifted
+
+module NonMonotonicIOFunctionSymmetrical
 
   def ioFunction(x)
     (1.49786971589547 * (i(x) - 0.166192596930178)) - 0.5
   end
 
   def i(x)
-    h(x,4)
+    h(x, 4)
   end
 
   def h(x, s)
-    f(x) + ( -0.5 * (f(x + s) + f(x-s)) ) + 0.5
+    f(x) + (-0.5 * (f(x + s) + f(x-s))) + 0.5
   end
 
   def f(x)
@@ -101,39 +140,11 @@ module NonMonotonicIOFunctionShifted
   end
 
   def j(x, s)
-    g(x, 0.0) - (0.5 * ( g(x,s) + g(x,(-1.0 * s))))
+    g(x, 0.0) - (0.5 * (g(x, s) + g(x, (-1.0 * s))))
   end
 
   def g(x, s)
-    Math.exp((-1.0 * x) + s)   /  ((Math.exp((-1.0 * x) + s))   + 1.0)  **  2.0
-  end
-
-end
-
-module NonMonotonicIOFunctionOLD
-
-  def ioFunction(aNetInput)
-    h(aNetInput, 4)
-  end
-
-  def h(x, s)
-    f(x) + ( -0.5 * (f(x + s) + f(x-s)) ) + 0.5
-  end
-
-  def f(x)
-    1.0 / (1.0 + Math.exp(-1.0 * x))
-  end
-
-  def ioDerivativeFromNetInput(aNetInput)
-    return j(aNetInput, 4.0)
-  end
-
-  def j(x, s)
-    g(x, 0.0) - (0.5 * ( g(x,s) + g(x,(-1.0 * s))))
-  end
-
-  def g(x, s)
-    Math.exp((-1.0 * x) + s)   /  ((Math.exp((-1.0 * x) + s))   + 1.0)  **  2.0
+    Math.exp((-1.0 * x) + s) / ((Math.exp((-1.0 * x) + s)) + 1.0) ** 2.0
   end
 
 end
@@ -152,10 +163,10 @@ module LinearIOFunction
 
 end
 
-module SymmetricalSigmoidIOFunction
+module SigmoidIOFunctionSymmetrical
 
   def ioFunction(aNetInput)
-    return 2.0 * (   (1.0/(1.0 + Math.exp(-1.0 * aNetInput))) - 0.5)
+    return 2.0 * ((1.0/(1.0 + Math.exp(-1.0 * aNetInput))) - 0.5)
   end
 
   def ioDerivativeFromNetInput(aNetInput) # TODO speed this up.  Use sage to get the simpler analytical expression.
@@ -167,7 +178,6 @@ module SymmetricalSigmoidIOFunction
   end
 
 end
-
 
 
 module CommonNeuronCalculations
@@ -493,7 +503,7 @@ class NeuronRecorder
   end
 
   def dataToRecord
-    {:neuronID => neuron.id, :netInput => neuron.netInput, :error => neuron.error, :exampleNumber => neuron.exampleNumber}
+    {:neuronID => neuron.id, :netInput => neuron.netInput, :output => neuron.output,  :error => neuron.error, :exampleNumber => neuron.exampleNumber}
   end
 
   def recordResponsesForExample
@@ -508,7 +518,7 @@ end
 
 class OutputNeuronRecorder < NeuronRecorder
   def dataToRecord
-    {:netInput => neuron.netInput, :error => neuron.error, :exampleNumber => neuron.exampleNumber,
+    {:netInput => neuron.netInput, :output => neuron.output, :error => neuron.error, :exampleNumber => neuron.exampleNumber,
      :weightedErrorMetric => neuron.weightedErrorMetric}
   end
 end

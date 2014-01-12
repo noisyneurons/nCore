@@ -10,7 +10,8 @@ require_relative 'BaseLearningExperiment'
 #end
 
 class OutputNeuron
-  include NonMonotonicIODerivative
+ #include NonMonotonicIOFunction
+  include PiecewiseLinNonMonIOFunction
 end
 
 
@@ -24,7 +25,7 @@ class Experiment
         :randomNumberSeed => randomNumberSeed,
 
         # training parameters re. Output Error
-        :outputErrorLearningRate => 0.1,
+        :outputErrorLearningRate => 0.001,
         :minMSE => 0.00001, # 0.001,
         :maxNumEpochs => 2e3, # 6e3,
 
@@ -39,7 +40,7 @@ class Experiment
         :numberOfTestingExamples => (numberOfExamples * 1000),
 
         # Recording and database parameters
-        :neuronToDisplay => 2,
+        :neuronToDisplay => 1,
         :intervalForSavingNeuronData => 100,
         :intervalForSavingDetailedNeuronData => 1000,
         :intervalForSavingTrainingData => 100
@@ -47,7 +48,9 @@ class Experiment
   end
 
   def createTrainingSet
-    createSimplest2GaussianClustersForTrainAndTest(numberOfExamples)
+    examples = createSimplest2GaussianClustersForTrainAndTest(numberOfExamples)
+    puts examples
+    examples
   end
 
   def createTestingSet
@@ -55,8 +58,8 @@ class Experiment
   end
 
   def createNetworkAndTrainer
-    network = Simplest1LayerNet.new(args)
-    theTrainer = BPTrainingSupervisorFor1LayerNet.new(examples, network, args)
+    self.network = Simplest1LayerNet.new(args)
+    self.theTrainer = BPTrainingSupervisorFor1LayerNet.new(examples, network, args)
     return network, theTrainer
   end
 
@@ -67,8 +70,8 @@ class Experiment
     numberOfClasses = 2
     numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
 
-    negativeNormalCluster = NormalDistribution.new(-1.0, 0.3)
-    positiveNormalCluster = NormalDistribution.new(1.0, 0.3)
+    negativeNormalCluster = NormalDistribution.new(-1.0, 0.5)
+    positiveNormalCluster = NormalDistribution.new(1.0, 0.5)
 
     arrayOfClassIndexAndClassRNGs = []
 
@@ -100,7 +103,19 @@ end
 ###################################### START of Main Learning  ##########################################
 
 baseRandomNumberSeed = 0
-
-experiment = Experiment.new("NonMon1in1out   2-Class classifier, 2 gaussian clusters with NonMon IO function for simple 1 in 1 out network", baseRandomNumberSeed)
-
+experiment = Experiment.new("Temp   2-Class classifier, 2 gaussian clusters with NonMon IO function for simple 1 in 1 out network", baseRandomNumberSeed)
 experiment.performSimulation()
+
+
+#baseRandomNumberSeed = 0
+#numberOfSimulations = 4
+#
+#numberOfSimulations.times do |i|
+#  multiRunSeed = i + baseRandomNumberSeed
+#  experiment = Experiment.new("J0MonSig1in1out   2-Class classifier, 2 gaussian clusters with NonMon IO function for simple 1 in 1 out network", multiRunSeed)
+#  experiment.performSimulation()
+#end
+#
+#require_relative 'PostProcessing'
+#
+

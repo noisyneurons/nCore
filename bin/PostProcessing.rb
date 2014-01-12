@@ -1,8 +1,8 @@
 ### VERSION "nCore"
 ## ../nCore/bin/PostProcessing.rb
 
-require_relative 'BaseLearningExperiment'
-require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
+#require_relative 'BaseLearningExperiment'
+#require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 
 def median(array)
   sorted = array.sort

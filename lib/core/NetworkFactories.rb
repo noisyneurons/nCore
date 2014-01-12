@@ -140,6 +140,7 @@ class BaseNetwork
   end
 
   def modificationsToStandardNetworkArchitecture
+    self
   end
 
   def to_s
@@ -180,6 +181,7 @@ class Simplest1LayerNet < BaseNetwork
     self.allNeuronLayers << outputLayer
 
     connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
+    self
   end
 end
 

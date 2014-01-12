@@ -79,8 +79,8 @@ class Experiment
       end
     end
     STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
+    puts examples
     examples
-
   end
 
   def createNetworkAndTrainer

@@ -80,6 +80,82 @@ class AbstractStepTrainer
   end
 
 
+
+ def acrossExamplesAccumulateDeltaWs(neurons)
+    clearEpochAccumulationsInAllNeurons()
+    numberOfExamples.times do |exampleNumber|
+      propagateAcrossEntireNetwork(exampleNumber)
+      backpropagateAcrossEntireNetwork()
+      calcWeightedErrorMetricForExample()
+      neurons.each do |aNeuron|
+        dataRecord = aNeuron.recordResponsesForExample
+        yield(aNeuron, dataRecord, exampleNumber)
+        aNeuron.dbStoreDetailedData
+      end
+    end
+  end
+
+  ###------------  Core Support Section ------------------------------
+  #### Also, some refinements and specialized control functions:
+
+  def calcMSE # assumes squared error for each example and output neuron is stored in NeuronRecorder
+    sse = outputLayer.inject(0.0) { |sum, anOutputNeuron| sum + anOutputNeuron.calcSumOfSquaredErrors }
+    return (sse / (numberOfOutputNeurons * numberOfExamples))
+  end
+
+  def calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
+    #    clearStoredNetInputs
+    squaredErrors = []
+    numberOfExamples.times do |exampleNumber|
+      propagateAcrossEntireNetwork(exampleNumber)
+      squaredErrors << calcWeightedErrorMetricForExample()
+      #     storeNetInputsForExample
+    end
+    sse = squaredErrors.flatten.reduce(:+)
+    return (sse / (numberOfExamples * numberOfOutputNeurons))
+  end
+
+  def calcTestingMeanSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
+    testMSE = nil
+    testingExamples = args[:testingExamples]
+    unless (testingExamples.nil?)
+      distributeSetOfExamples(testingExamples)
+      testMSE = calcMeanSumSquaredErrors
+      distributeSetOfExamples(examples)
+    end
+    return testMSE
+  end
+
+  def distributeSetOfExamples(examples)
+    distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
+  end
+
+
+  def clearEpochAccumulationsInAllNeurons
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
+  end
+
+  def propagateAcrossEntireNetwork(exampleNumber)
+    allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+  end
+
+  def clearStoredNetInputs
+    allNeuronsInOneArray.each { |aNeuron| aNeuron.clearStoredNetInputs }
+  end
+
+  def storeNetInputsForExample
+    allNeuronsInOneArray.each { |aNeuron| aNeuron.storeNetInputForExample }
+  end
+
+  def backpropagateAcrossEntireNetwork
+    neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
+  end
+
+  def calcWeightedErrorMetricForExample
+    outputLayer.collect { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
+  end
+
   # BEGIN: CODE FOR AUTOMATIC CONTROL OF LEARNING RATES PER LAYER
   # todo Code for automatic control of learning rates for bp of OE and FE.  Separate gain control per neuron necessary for local flocking. #############
 
@@ -134,135 +210,6 @@ class AbstractStepTrainer
 
   # END CODE FOR AUTOMATIC CONTROL OF LEARNING RATES PER LAYER
 
-  def adaptToLocalFlockError
-    STDERR.puts "Generating neurons and adapting neurons are not one in the same.  This is NOT local flocking!!" if (flockErrorGeneratingNeurons != flockErrorAdaptingNeurons)
-    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = flockingLearningRate }
-    flockErrorGeneratingNeurons.each { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError = 0.0 } # accumulatedAbsoluteFlockingError is a metric used for global control and monitoring
-    acrossExamplesAccumulateFlockingErrorDeltaWs
-    self.accumulatedAbsoluteFlockingErrors = calcAccumulatedAbsoluteFlockingErrors(flockErrorGeneratingNeurons)
-    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight } #if (determineIfWeNeedToReduceFlockingError)
-  end
-
-  def acrossExamplesAccumulateFlockingErrorDeltaWs
-    acrossExamplesAccumulateDeltaWs(flockErrorAdaptingNeurons) do |aNeuron, dataRecord|
-      dataRecord[:localFlockingError] = calcNeuronsLocalFlockingError(aNeuron)
-      aNeuron.calcAccumDeltaWsForLocalFlocking
-    end
-  end
-
-  def acrossExamplesAccumulateDeltaWs(neurons)
-    clearEpochAccumulationsInAllNeurons()
-    numberOfExamples.times do |exampleNumber|
-      propagateAcrossEntireNetwork(exampleNumber)
-      backpropagateAcrossEntireNetwork()
-      calcWeightedErrorMetricForExample()
-      neurons.each do |aNeuron|
-        dataRecord = aNeuron.recordResponsesForExample
-        yield(aNeuron, dataRecord, exampleNumber)
-        aNeuron.dbStoreDetailedData
-      end
-    end
-  end
-
-  def calcNeuronsLocalFlockingError(aNeuron)
-    localFlockingError = aNeuron.calcLocalFlockingError
-  end
-
-  def calcAccumulatedAbsoluteFlockingErrors(flockErrorGeneratingNeurons)
-    flockErrorGeneratingNeurons.collect { |aNeuron| aNeuron.accumulatedAbsoluteFlockingError }
-  end
-
-  ###------------  Core Support Section ------------------------------
-  #### Also, some refinements and specialized control functions:
-
-  def calcMSE # assumes squared error for each example and output neuron is stored in NeuronRecorder
-    sse = outputLayer.inject(0.0) { |sum, anOutputNeuron| sum + anOutputNeuron.calcSumOfSquaredErrors }
-    return (sse / (numberOfOutputNeurons * numberOfExamples))
-  end
-
-  def calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
-    #    clearStoredNetInputs
-    squaredErrors = []
-    numberOfExamples.times do |exampleNumber|
-      propagateAcrossEntireNetwork(exampleNumber)
-      squaredErrors << calcWeightedErrorMetricForExample()
-      #     storeNetInputsForExample
-    end
-    sse = squaredErrors.flatten.reduce(:+)
-    return (sse / (numberOfExamples * numberOfOutputNeurons))
-  end
-
-  def calcTestingMeanSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
-    testMSE = nil
-    testingExamples = args[:testingExamples]
-    unless (testingExamples.nil?)
-      distributeSetOfExamples(testingExamples)
-      testMSE = calcMeanSumSquaredErrors
-      distributeSetOfExamples(examples)
-    end
-    return testMSE
-  end
-
-  def distributeSetOfExamples(examples)
-    distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
-  end
-
-  def recenterEachNeuronsClusters(arrayOfNeurons)
-    dispersions = arrayOfNeurons.collect { |aNeuron| aNeuron.clusterAllResponses } # TODO Perhaps we might only need to clusterAllResponses every K epochs?
-  end
-
-  #def seedClustersInFlockingNeurons(neuronsWhoseClustersNeedToBeSeeded)
-  #  neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
-  #  numberOfExamples.times do |exampleNumber|
-  #    allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-  #    neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
-  #    neuronsWithInputLinks.each { |aNeuron| aNeuron.recordResponsesForExample }
-  #  end
-  #  neuronsWhoseClustersNeedToBeSeeded.each { |aNeuron| aNeuron.initializeClusterCenters } # TODO is there any case where system should be reinitialized in this manner?
-  #  recenterEachNeuronsClusters(neuronsWhoseClustersNeedToBeSeeded)
-  #end
-
-  def zeroOutFlockingLinksMomentumMemoryStore
-    flockErrorAdaptingNeurons.each { |aNeuron| aNeuron.inputLinks.each { |aLink| aLink.store = 0.0 } }
-  end
-
-  def useFuzzyClusters? # TODO Would this be better put 'into each neuron'
-    return true if (args[:alwaysUseFuzzyClusters])
-    exampleWeightings = flockErrorGeneratingNeurons.first.clusters[0].membershipWeightForEachExample # TODO Why is only the first neuron used for this determination?
-    criteria0 = 0.2
-    criteria1 = 1.0 - criteria0
-    count = 0
-    exampleWeightings.each { |aWeight| count += 1 if (aWeight <= criteria0) }
-    exampleWeightings.each { |aWeight| count += 1 if (aWeight > criteria1) }
-    # puts "count=\t #{count}"
-    return true if (count < numberOfExamples)
-    return false
-  end
-
-  def clearEpochAccumulationsInAllNeurons
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
-  end
-
-  def propagateAcrossEntireNetwork(exampleNumber)
-    allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-  end
-
-  def clearStoredNetInputs
-    allNeuronsInOneArray.each { |aNeuron| aNeuron.clearStoredNetInputs }
-  end
-
-  def storeNetInputsForExample
-    allNeuronsInOneArray.each { |aNeuron| aNeuron.storeNetInputForExample }
-  end
-
-  def backpropagateAcrossEntireNetwork
-    neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
-  end
-
-  def calcWeightedErrorMetricForExample
-    outputLayer.collect { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
-  end
 end
 
 

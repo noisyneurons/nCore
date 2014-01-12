@@ -1,18 +1,30 @@
 require_relative 'Utilities'
 
-
-def ioFunction(aNetInput)
-  h(aNetInput, 4)
+def slope
+  1.0 / 5.0
 end
 
-def h(x, s)
-  f(x) + ( -0.5 * (f(x + s) + f(x-s)) ) + 0.5
+
+def ioFunction(x)
+  case
+    when x >= 5.0
+      0.5
+    when x >= 2.5
+      (-1.0 * slope * x)  + 1.5
+    when x >= - 2.5
+      (slope * x) + 0.5
+    when x >= -5.0
+      (-1.0 * slope * x)  - 0.5
+    else
+     0.5
+  end
 end
 
-def f(x)
-  1.0 / (1.0 + Math.exp(-1.0 * x))
-end
 
+
+puts ioFunction(-6.0)
+puts ioFunction(-5.0)
+puts ioFunction(-4.0)
 puts ioFunction(-3.0)
 
 puts ioFunction(-2.5)
@@ -27,23 +39,33 @@ puts ioFunction(2.5)
 
 puts ioFunction(3.0)
 
+puts ioFunction(4.0)
+puts ioFunction(5.0)
+puts ioFunction(6.0)
 
-def ioDerivativeFromNetInput(aNetInput)
-  return j(aNetInput, 4.0)
+
+
+def ioDerivativeFromNetInput(x)
+  case
+    when x >= 5.0
+      0.0
+    when x >= 2.5
+      -1.0 * slope
+    when x >= - 2.5
+      slope
+    when x >= -5.0
+      -1.0 * slope
+    else
+      0.0
+  end
 end
 
-def j(x, s)
-  g(x, 0.0) - (0.5 * ( g(x,s) + g(x,(-1.0 * s))))
-end
-
-def g(x, s)
-  Math.exp((-1.0 * x) + s)   /  ((Math.exp((-1.0 * x) + s))   + 1.0)  **  2.0
-end
 
 puts "\n\n"
 
-puts ioDerivativeFromNetInput(-4.2)
-
+puts ioDerivativeFromNetInput(-6.0)
+puts ioDerivativeFromNetInput(-5.0)
+puts ioDerivativeFromNetInput(-4.0)
 puts ioDerivativeFromNetInput(-3.0)
 
 puts ioDerivativeFromNetInput(-2.5)
@@ -58,4 +80,7 @@ puts ioDerivativeFromNetInput(2.5)
 
 puts ioDerivativeFromNetInput(3.0)
 
-puts ioDerivativeFromNetInput(4.2)
+puts ioDerivativeFromNetInput(4.0)
+puts ioDerivativeFromNetInput(5.0)
+puts ioDerivativeFromNetInput(6.0)
+

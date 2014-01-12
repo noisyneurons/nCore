@@ -13,7 +13,7 @@ require_relative '../lib/core/TrainingSequencingAndGrouping'
 require_relative '../lib/core/Trainers.rb'
 
 class Experiment
-  attr_accessor :descriptionOfExperiment, :taskID, :jobID, :jobName, :randomNumberSeed, :experimentLogger, :examples, :numberOfExamples, :args, :trainingSequence
+  attr_accessor :network, :theTrainer, :descriptionOfExperiment, :taskID, :jobID, :jobName, :randomNumberSeed, :experimentLogger, :examples, :numberOfExamples, :args, :trainingSequence
   include ExampleDistribution
 
   def initialize(descriptionOfExperiment, baseRandomNumberSeed)
@@ -38,53 +38,52 @@ class Experiment
   end
 
   def setParameters
-    self.numberOfExamples =
 
-        @args = {
-            :experimentNumber => $globalExperimentNumber,
-            :descriptionOfExperiment => descriptionOfExperiment,
-            :randomNumberSeed => randomNumberSeed,
+    @args = {
+        :experimentNumber => $globalExperimentNumber,
+        :descriptionOfExperiment => descriptionOfExperiment,
+        :randomNumberSeed => randomNumberSeed,
 
-            # training parameters re. Output Error
-            :outputErrorLearningRate => 0.02,
-            :minMSE => 0.0001,
-            :maxNumEpochs => 4e3,
-            :numLoops => 10,
+        # training parameters re. Output Error
+        :outputErrorLearningRate => 0.02,
+        :minMSE => 0.0001,
+        :maxNumEpochs => 4e3,
+        :numLoops => 10,
 
-            # Network Architecture
-            :numberOfInputNeurons => 2,
-            :numberOfHiddenNeurons => 0,
-            :numberOfOutputNeurons => 1,
-            :weightRange => 1.0,
-            :typeOfLink => FlockingLink,
+        # Network Architecture
+        :numberOfInputNeurons => 2,
+        :numberOfHiddenNeurons => 0,
+        :numberOfOutputNeurons => 1,
+        :weightRange => 1.0,
+        :typeOfLink => FlockingLink,
 
-            # Training Set parameters
-            :numberOfExamples => (self.numberOfExamples = nil),
+        # Training Set parameters
+        :numberOfExamples => (self.numberOfExamples = nil),
 
-            # Recording and database parameters
-            :intervalForSavingNeuronData => 100,
-            :intervalForSavingDetailedNeuronData => 1000,
-            :intervalForSavingTrainingData => 100,
+        # Recording and database parameters
+        :intervalForSavingNeuronData => 100,
+        :intervalForSavingDetailedNeuronData => 1000,
+        :intervalForSavingTrainingData => 100,
 
-            # Flocking Parameters...
-            :flockingLearningRate => -0.002,
-            :maxFlockingIterationsCount => 2000, # 3800, # 2000,
-            :maxAbsFlockingErrorsPerExample => 0.002, # 0.00000000000001, #0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
+        # Flocking Parameters...
+        :flockingLearningRate => -0.002,
+        :maxFlockingIterationsCount => 2000, # 3800, # 2000,
+        :maxAbsFlockingErrorsPerExample => 0.002, # 0.00000000000001, #0.002, # 0.005,   # 0.04 / numberOfExamples = 0.005
 
-            :typeOfClusterer => DynamicClusterer,
-            :numberOfClusters => 2,
-            :m => 2.0,
-            :numExamples => numberOfExamples,
-            :exampleVectorLength => 1,
-            :delta => 1e-2,
-            :maxNumberOfClusteringIterations => 10,
-            :keepTargetsSymmetrical => true,
-            :alwaysUseFuzzyClusters => true,
-            :maxLargestEuclidianDistanceMovedThatIsWOErrorMsg => 0.01,
+        :typeOfClusterer => DynamicClusterer,
+        :numberOfClusters => 2,
+        :m => 2.0,
+        :numExamples => numberOfExamples,
+        :exampleVectorLength => 1,
+        :delta => 1e-2,
+        :maxNumberOfClusteringIterations => 10,
+        :keepTargetsSymmetrical => true,
+        :alwaysUseFuzzyClusters => true,
+        :maxLargestEuclidianDistanceMovedThatIsWOErrorMsg => 0.01,
 
-            # Inner Numeric Constraints -- used to floating point under or overflow
-            :floorToPreventOverflow => 1e-60
-        }
+        # Inner Numeric Constraints -- used to floating point under or overflow
+        :floorToPreventOverflow => 1e-60
+    }
   end
 
   def createTrainingSet
@@ -101,7 +100,7 @@ class Experiment
     puts "\n\n_________________________________________________________________________________________________________"
     STDERR.puts "ExperimentNumber=\t#{$globalExperimentNumber}"
     puts "ExperimentNumber=\t#{$globalExperimentNumber}"
-    puts "GridEngineJobID=\t#{jobID}\n\n"
+    puts " GridEngineJobID= \t#{jobID}\n\n"
 
     puts network
 
@@ -154,7 +153,7 @@ class Experiment
     }
     SnapShotData.new(dataToStoreLongTerm)
 
-    keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(10) }
+    keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(2) }
     unless (keysToRecords.empty?)
       puts
       puts "Number\tLastEpoch\t\tTrainMSE\t\t\tTestMSE\t\t\tAccumulatedAbsoluteFlockingErrors\t\t\t\tTime\t\tTaskID\t\t\t\t\tDescription"
@@ -166,7 +165,6 @@ class Experiment
           puts "problem in yaml conversion"
         end
       end
-
       # recordHash = SnapShotData.values(keysToRecords.last)
     end
 
@@ -176,7 +174,7 @@ class Experiment
   def performSimulation
 
 ######################## Create Network and Trainer ....
-    network, theTrainer = createNetworkAndTrainer
+    self.network, self.theTrainer = createNetworkAndTrainer
 
 ###################################### perform Learning/Training  ##########################################
 
