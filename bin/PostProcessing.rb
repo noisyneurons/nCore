@@ -2,7 +2,6 @@
 ## ../nCore/bin/PostProcessing.rb
 
 require_relative 'BaseLearningExperiment'
-#require_relative '../lib/core/CorrectionForRateAtWhichNeuronsGainChanges'
 
 def median(array)
   sorted = array.sort
@@ -10,35 +9,37 @@ def median(array)
   return (sorted[(len - 1) / 2] + sorted[len / 2]) / 2.0
 end
 
-def minimumsMaximumsAndLastValuesAcrossExperiments(aMeasure, dataFromMultipleExperiments)
-  minimumsOfMeasure = []
-  maximumsOfMeasure = []
-  lastMeasurementsAcrossExperiments = []
+def valuesMeetingACriteriaAcrossExperiments(aMeasure, criteria, dataFromMultipleExperiments)
+  observationsMeetingCriteria = []
+  epochsRequiredToReachCriteriaValues = []
+  indexesInExperimentalData = []
   dataFromMultipleExperiments.each do |anExperiment|
     measuresForExperiment = anExperiment.collect { |aRecord| aRecord[aMeasure] }
-    minimumsOfMeasure << measuresForExperiment.min
-    maximumsOfMeasure << measuresForExperiment.max
-    lastMeasurementsAcrossExperiments << measuresForExperiment.last
+    observationMeetingCriteria = measuresForExperiment.send(criteria)
+    observationsMeetingCriteria << observationMeetingCriteria
+
+    index = measuresForExperiment.find_index(observationMeetingCriteria)
+    epochNumbers = anExperiment.collect { |aRecord| aRecord[:epochs] }
+    numberOfEpochsRequiredToReachCriteriaValue = epochNumbers[index]
+    epochsRequiredToReachCriteriaValues << numberOfEpochsRequiredToReachCriteriaValue
+    indexesInExperimentalData << index
   end
-  return lastMeasurementsAcrossExperiments, minimumsOfMeasure, maximumsOfMeasure
+  return observationsMeetingCriteria, epochsRequiredToReachCriteriaValues, indexesInExperimentalData
 end
 
+def printableStatsForMetricAndCriteria(aMeasure, criteria, dataFromMultipleExperiments)
+  observationsMeetingCriteria, epochsRequiredToReachCriteriaValues, dummy = valuesMeetingACriteriaAcrossExperiments(aMeasure, criteria, dataFromMultipleExperiments)
 
-def printStatsForMetric(aMeasure, dataFromMultipleExperiments, fileOut)
+  aPrintableString = "\n\nThe Metric is '#{aMeasure}' and the Criteria is '#{criteria}'\n"
 
-  lastMeasurementsAcrossExperiments, minimumsOfMeasure, dummy = minimumsMaximumsAndLastValuesAcrossExperiments(aMeasure, dataFromMultipleExperiments)
+  theMedianAcrossAllExperiments = median(observationsMeetingCriteria)
+  aPrintableString += "\nThe Median of the #{criteria} #{aMeasure}s across all experiments is = #{theMedianAcrossAllExperiments}\n"
+  aPrintableString += "The list of all #{criteria} #{aMeasure}s:\n#{observationsMeetingCriteria}\n"
 
-  fileOut.puts "\n\nMEASURE = #{aMeasure} is as follows:\n"
-  theMedianMinimumOfMeasure = median(minimumsOfMeasure)
-  fileOut.puts "\nThe Median of the Minimums = #{theMedianMinimumOfMeasure}\n\n"
-  fileOut.puts "minimums=\t#{minimumsOfMeasure}\n"
-  fileOut.puts "last measurement for each experiment=\t#{lastMeasurementsAcrossExperiments}\n"
-  ratios = []
-  minimumsOfMeasure.each_with_index { |aMinimum, index| ratios << (aMinimum / lastMeasurementsAcrossExperiments[index]) }
-  fileOut.puts "ratio of minimum measure to last measure =\t#{ratios}"
+  theMedianAcrossAllExperiments = median(epochsRequiredToReachCriteriaValues)
+  aPrintableString += "\nThe Median number of epochs required to reach #{criteria} #{aMeasure}s -- across all experiments is = #{theMedianAcrossAllExperiments}\n"
+  aPrintableString += "The list of the number of epochs required to reach #{criteria} #{aMeasure}s:\n#{epochsRequiredToReachCriteriaValues}\n"
 end
-
-
 
 
 keysToLastRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(1) }
@@ -57,9 +58,8 @@ File.open(filename, "w") do |fileOut|
 
   fileOut.puts "jobName=\t #{jobName}"
   fileOut.puts experimentNumbers
-
+  dataFromMultipleExperiments = []
   unless (experimentNumbers.empty?)
-    dataFromMultipleExperiments = []
     experimentNumbers.each do |anExperimentNumber|
       keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: anExperimentNumber}) }
       unless (keysToRecords.empty?)
@@ -69,9 +69,20 @@ File.open(filename, "w") do |fileOut|
     end
 
     [:mse, :testMSE].each do |aMeasure|
-      printStatsForMetric(aMeasure, dataFromMultipleExperiments, fileOut)
+      [:min].each do |aCriteria|
+        aString = printableStatsForMetricAndCriteria(aMeasure, aCriteria, dataFromMultipleExperiments)
+        fileOut.puts aString
+      end
     end
   end
+
+  netInputRequiredToChangeClassificationAcrossExperiments = []
+  observationsMeetingCriteria, epochsRequiredToReachCriteriaValues, indexesInExperimentalData = valuesMeetingACriteriaAcrossExperiments(:testMSE, :min, dataFromMultipleExperiments)
+  dataFromMultipleExperiments.each_with_index do | dataFromAnExperiment, indexToExperiment |
+    dataRecordAtEpochNumberWithMinTestMSE = dataFromAnExperiment[indexesInExperimentalData[indexToExperiment]]
+    netInputRequiredToChangeClassificationAcrossExperiments << dataRecordAtEpochNumberWithMinTestMSE[:biasWeight]
+  end
+
 end
 
 
