@@ -10,8 +10,8 @@ require_relative 'BaseLearningExperiment'
 #end
 
 class OutputNeuron
- #include NonMonotonicIOFunction
-  include PiecewiseLinNonMonIOFunction
+ include NonMonotonicIOFunction
+  #include PiecewiseLinNonMonIOFunction
 end
 
 
