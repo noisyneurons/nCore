@@ -148,11 +148,16 @@ class Experiment
     dataToStoreLongTerm = {:experimentNumber => $globalExperimentNumber, :descriptionOfExperiment => descriptionOfExperiment,
                            :gridTaskID => self.taskID, :gridJobID => self.jobID, :network => network, :args => args,
                            :time => Time.now, :elapsedTime => (Time.now - startingTime),
-                           :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE,
-                           :accumulatedAbsoluteFlockingErrors => accumulatedAbsoluteFlockingErrors
+                           :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE
     }
     SnapShotData.new(dataToStoreLongTerm)
 
+    displayLastSnapShotRecords
+
+    plotMSEvsEpochNumber(trainingDataRecords)
+  end
+
+  def displayLastSnapShotRecords
     keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(2) }
     unless (keysToRecords.empty?)
       puts
@@ -167,8 +172,6 @@ class Experiment
       end
       # recordHash = SnapShotData.values(keysToRecords.last)
     end
-
-    plotMSEvsEpochNumber(trainingDataRecords)
   end
 
   def performSimulation

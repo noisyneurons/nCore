@@ -4,13 +4,9 @@
 
 require_relative 'BaseLearningExperiment'
 
-#class Neuron
-#  # include NonMonotonicIOFunctionUnShifted
-#  include NonMonotonicIODerivative
-#end
 
 class OutputNeuron
-  include NonMonotonicIOFunction
+  #include NonMonotonicIOFunction
   #include PiecewiseLinNonMonIOFunction
 
   def calcWeightedErrorMetricForExample
@@ -33,7 +29,7 @@ class Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.001,
         :minMSE => 0.0, # 0.001,
-        :maxNumEpochs => 2e3, # 6e3,
+        :maxNumEpochs => 6e3, # 6e3,
 
         # Network Architecture
         :numberOfInputNeurons => 1,
@@ -42,6 +38,7 @@ class Experiment
         :typeOfLink => Link,
 
         # Training Set parameters
+        :dataSTD => 1.0,
         :numberOfExamples => (self.numberOfExamples = 16),
         :numberOfTestingExamples => (numberOfExamples * 1000),
 
@@ -67,15 +64,32 @@ class Experiment
     return network, theTrainer
   end
 
-  private
+  protected
+
+  def displayLastSnapShotRecords
+    #keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(2) }
+    #unless (keysToRecords.empty?)
+    #  puts
+    #  puts "Number\tLastEpoch\t\tTrainMSE\t\t\tTestMSE\t\t\tAccumulatedAbsoluteFlockingErrors\t\t\t\tTime\t\tTaskID\t\t\t\t\tDescription"
+    #  keysToRecords.each do |keyToOneRecord|
+    #    begin
+    #      recordHash = SnapShotData.values(keyToOneRecord)
+    #      puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t\t#{recordHash[:trainMSE]}\t\t#{recordHash[:testMSE]}\t\t\t#{recordHash[:accumulatedAbsoluteFlockingErrors]}\t\t\t#{recordHash[:time]}\t\t\t#{recordHash[:gridTaskID]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
+    #    rescue
+    #      puts "problem in yaml conversion"
+    #    end
+    #  end
+    #  # recordHash = SnapShotData.values(keysToRecords.last)
+    #end
+  end
 
   def createSimplest2GaussianClustersForTrainAndTest(numberOfExamples)
     theCreatedExamples = []
     numberOfClasses = 2
     numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
 
-    negativeNormalCluster = NormalDistribution.new(-1.0, 0.5)
-    positiveNormalCluster = NormalDistribution.new(1.0, 0.5)
+    negativeNormalCluster = NormalDistribution.new(-1.0, args[:dataSTD])
+    positiveNormalCluster = NormalDistribution.new(1.0, args[:dataSTD])
 
     arrayOfClassIndexAndClassRNGs = []
 
@@ -106,20 +120,28 @@ end
 
 ###################################### START of Main Learning  ##########################################
 
-baseRandomNumberSeed = 2
-experiment = Experiment.new("Temp3   2-Class classifier, 2 gaussian clusters with NonMon IO function for simple 1 in 1 out network", baseRandomNumberSeed)
+baseRandomNumberSeed = 0
+experiment = Experiment.new("Sig1.0Std1in1out 2-Class classifier, 2 gaussian clusters with Sigmoid IO function for simple 1 in 1 out network", baseRandomNumberSeed)
 experiment.performSimulation()
 
 
 #baseRandomNumberSeed = 0
-#numberOfSimulations = 4
+#numberOfSimulations = 1
 #
 #numberOfSimulations.times do |i|
 #  multiRunSeed = i + baseRandomNumberSeed
-#  experiment = Experiment.new("J0MonSig1in1out   2-Class classifier, 2 gaussian clusters with NonMon IO function for simple 1 in 1 out network", multiRunSeed)
+#  experiment = Experiment.new("Sig0.5Std1in1out 2-Class classifier, 2 gaussian clusters with Sigmoid IO function for simple 1 in 1 out network", multiRunSeed)
 #  experiment.performSimulation()
 #end
 #
-#require_relative 'PostProcessing'
-#
+# require_relative 'PostProcessing'
 
+
+class OutputNeuron
+  include NonMonotonicIOFunction
+  #include PiecewiseLinNonMonIOFunction
+end
+
+baseRandomNumberSeed = 0
+experiment = Experiment.new("NonM1.0Std1in1out 2-Class classifier, 2 gaussian clusters with Sigmoid IO function for simple 1 in 1 out network", baseRandomNumberSeed)
+experiment.performSimulation()

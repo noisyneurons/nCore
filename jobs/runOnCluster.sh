@@ -1,5 +1,5 @@
 #!/bin/bash
 #$ -o ./output
 #$ -e ./error
-ruby1.9.3 ~/Code/Ruby/NN2012/nCore/bin/CircleBP.rb
+ruby1.9.3 ~/Code/Ruby/NN2012/nCore/bin/OneInOneOutBP.rb
 

@@ -77,7 +77,7 @@ class AbstractStepTrainer
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
   end
 
- def acrossExamplesAccumulateDeltaWs(neurons)
+  def acrossExamplesAccumulateDeltaWs(neurons)
     clearEpochAccumulationsInAllNeurons()
     numberOfExamples.times do |exampleNumber|
       propagateAcrossEntireNetwork(exampleNumber)
@@ -109,14 +109,10 @@ class AbstractStepTrainer
     numberOfTestingExamples = args[:numberOfTestingExamples]
     unless (testingExamples.nil?)
       distributeSetOfExamples(testingExamples)
-      testMSE = calcMeanSumSquaredErrorsOfTestSet(numberOfTestingExamples)
+      testMSE = genericCalcMeanSumSquaredErrors(numberOfTestingExamples)
       distributeSetOfExamples(examples)
     end
     return testMSE
-  end
-
-  def calcMeanSumSquaredErrorsOfTestSet(numberOfExamples) # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
-    return genericCalcMeanSumSquaredErrors(numberOfExamples)
   end
 
   def genericCalcMeanSumSquaredErrors(numberOfExamples)
@@ -129,8 +125,6 @@ class AbstractStepTrainer
     sse = squaredErrors.flatten.reduce(:+)
     return (sse / (numberOfExamples * numberOfOutputNeurons))
   end
-
-
 
   def distributeSetOfExamples(examples)
     distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
