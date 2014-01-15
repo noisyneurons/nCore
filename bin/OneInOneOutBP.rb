@@ -10,8 +10,14 @@ require_relative 'BaseLearningExperiment'
 #end
 
 class OutputNeuron
- include NonMonotonicIOFunction
+  include NonMonotonicIOFunction
   #include PiecewiseLinNonMonIOFunction
+
+  def calcWeightedErrorMetricForExample
+    oe = 1.0
+    oe = 0.0 if (outputError.abs < 0.5)
+    self.weightedErrorMetric = oe * oe # Assumes squared error criterion
+  end
 end
 
 
@@ -26,7 +32,7 @@ class Experiment
 
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.001,
-        :minMSE => 0.00001, # 0.001,
+        :minMSE => 0.0, # 0.001,
         :maxNumEpochs => 2e3, # 6e3,
 
         # Network Architecture
@@ -48,9 +54,7 @@ class Experiment
   end
 
   def createTrainingSet
-    examples = createSimplest2GaussianClustersForTrainAndTest(numberOfExamples)
-    puts examples
-    examples
+    createSimplest2GaussianClustersForTrainAndTest(numberOfExamples)
   end
 
   def createTestingSet
@@ -66,7 +70,7 @@ class Experiment
   private
 
   def createSimplest2GaussianClustersForTrainAndTest(numberOfExamples)
-    examples = []
+    theCreatedExamples = []
     numberOfClasses = 2
     numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
 
@@ -90,20 +94,20 @@ class Experiment
         x = randomNumberGenerator.rng
         aPoint = [x]
 
-        examples << {:inputs => aPoint, :targets => desiredOutputs, :exampleNumber => exampleNumber, :class => classIndex}
+        theCreatedExamples << {:inputs => aPoint, :targets => desiredOutputs, :exampleNumber => exampleNumber, :class => classIndex}
         exampleNumber += 1
       end
     end
-    STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
-    examples
+    STDERR.puts "cross-check failed on: 'number of theCreatedExamples'" if (theCreatedExamples.length != (numberOfExamplesInEachClass * numberOfClasses))
+    theCreatedExamples
   end
 end
 
 
 ###################################### START of Main Learning  ##########################################
 
-baseRandomNumberSeed = 0
-experiment = Experiment.new("Temp   2-Class classifier, 2 gaussian clusters with NonMon IO function for simple 1 in 1 out network", baseRandomNumberSeed)
+baseRandomNumberSeed = 2
+experiment = Experiment.new("Temp3   2-Class classifier, 2 gaussian clusters with NonMon IO function for simple 1 in 1 out network", baseRandomNumberSeed)
 experiment.performSimulation()
 
 

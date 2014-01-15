@@ -326,7 +326,7 @@ module DBAccess
       testMSE = calcTestingMeanSquaredErrors
       biasWeight = outputLayer[0].inputLinks[1].weight
       puts "epoch number = #{args[:epochs]}\ttrainMSE = #{trainMSE}\ttestMSE = #{testMSE}\tbiasWeight = #{biasWeight}" # unless($currentHost == "master")
-      aHash = {:experimentNumber => $globalExperimentNumber, :epochs => args[:epochs], :mse => trainMSE, :testMSE => testMSE}
+      aHash = {:experimentNumber => $globalExperimentNumber, :epochs => args[:epochs], :mse => trainMSE, :testMSE => testMSE, :biasWeight => biasWeight}
       TrainingData.new(aHash)
     end
   end

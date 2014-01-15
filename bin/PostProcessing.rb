@@ -39,6 +39,7 @@ def printableStatsForMetricAndCriteria(aMeasure, criteria, dataFromMultipleExper
   theMedianAcrossAllExperiments = median(epochsRequiredToReachCriteriaValues)
   aPrintableString += "\nThe Median number of epochs required to reach #{criteria} #{aMeasure}s -- across all experiments is = #{theMedianAcrossAllExperiments}\n"
   aPrintableString += "The list of the number of epochs required to reach #{criteria} #{aMeasure}s:\n#{epochsRequiredToReachCriteriaValues}\n"
+  aPrintableString += "__________________________________________________________________________"
 end
 
 

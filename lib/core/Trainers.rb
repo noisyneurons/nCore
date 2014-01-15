@@ -38,8 +38,6 @@ class AbstractStepTrainer
     @numberOfOutputNeurons = @outputLayer.length
     @numberOfExamples = args[:numberOfExamples]
     @minMSE = args[:minMSE]
-
-    @accumulatedExampleImportanceFactors = nil
   end
 
   def specifyGroupsOfLayersAndNeurons
@@ -63,7 +61,7 @@ class AbstractStepTrainer
     distributeSetOfExamples(examples)
     self.accumulatedAbsoluteFlockingErrors = []
     mse = 1e100
-    while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
+    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
       innerTrainingLoop()
       dbStoreTrainingData()
       trainingSequence.nextEpoch
@@ -78,8 +76,6 @@ class AbstractStepTrainer
     acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
   end
-
-
 
  def acrossExamplesAccumulateDeltaWs(neurons)
     clearEpochAccumulationsInAllNeurons()
@@ -104,32 +100,41 @@ class AbstractStepTrainer
   end
 
   def calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
-    #    clearStoredNetInputs
-    squaredErrors = []
-    numberOfExamples.times do |exampleNumber|
-      propagateAcrossEntireNetwork(exampleNumber)
-      squaredErrors << calcWeightedErrorMetricForExample()
-      #     storeNetInputsForExample
-    end
-    sse = squaredErrors.flatten.reduce(:+)
-    return (sse / (numberOfExamples * numberOfOutputNeurons))
+    return genericCalcMeanSumSquaredErrors(numberOfExamples)
   end
 
-  def calcTestingMeanSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
+  def calcTestingMeanSquaredErrors
     testMSE = nil
     testingExamples = args[:testingExamples]
+    numberOfTestingExamples = args[:numberOfTestingExamples]
     unless (testingExamples.nil?)
       distributeSetOfExamples(testingExamples)
-      testMSE = calcMeanSumSquaredErrors
+      testMSE = calcMeanSumSquaredErrorsOfTestSet(numberOfTestingExamples)
       distributeSetOfExamples(examples)
     end
     return testMSE
   end
 
+  def calcMeanSumSquaredErrorsOfTestSet(numberOfExamples) # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
+    return genericCalcMeanSumSquaredErrors(numberOfExamples)
+  end
+
+  def genericCalcMeanSumSquaredErrors(numberOfExamples)
+    squaredErrors = []
+    puts "numberOfExamples = #{numberOfExamples}"
+    numberOfExamples.times do |exampleNumber|
+      propagateAcrossEntireNetwork(exampleNumber)
+      squaredErrors << calcWeightedErrorMetricForExample()
+    end
+    sse = squaredErrors.flatten.reduce(:+)
+    return (sse / (numberOfExamples * numberOfOutputNeurons))
+  end
+
+
+
   def distributeSetOfExamples(examples)
     distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
   end
-
 
   def clearEpochAccumulationsInAllNeurons
     neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
@@ -267,7 +272,7 @@ class TrainingSupervisorBase
     mse = 1e20
     testMSE = nil
     accumulatedAbsoluteFlockingErrors = nil
-    while ((mse > minMSE) && trainingSequence.stillMoreEpochs)
+    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
       mse, testMSE, accumulatedAbsoluteFlockingErrors = stepTrainer.train
     end
     arrayOfNeuronsToPlot = [network.outputLayer[0]]
