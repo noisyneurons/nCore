@@ -76,14 +76,6 @@ File.open(filename, "w") do |fileOut|
       end
     end
   end
-
-  netInputRequiredToChangeClassificationAcrossExperiments = []
-  observationsMeetingCriteria, epochsRequiredToReachCriteriaValues, indexesInExperimentalData = valuesMeetingACriteriaAcrossExperiments(:testMSE, :min, dataFromMultipleExperiments)
-  dataFromMultipleExperiments.each_with_index do | dataFromAnExperiment, indexToExperiment |
-    dataRecordAtEpochNumberWithMinTestMSE = dataFromAnExperiment[indexesInExperimentalData[indexToExperiment]]
-    netInputRequiredToChangeClassificationAcrossExperiments << dataRecordAtEpochNumberWithMinTestMSE[:biasWeight]
-  end
-
 end
 
 
