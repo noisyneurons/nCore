@@ -4,8 +4,6 @@
 require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
 require_relative '../lib/core/NeuralParts'
-# require_relative '../lib/core/NeuralPartsExtended'
-# require_relative '../lib/core/ExampleImportanceMods'    # TODO Is this useful???  So far NOT!
 require_relative '../lib/core/NetworkFactories'
 require_relative '../lib/plot/CorePlottingCode'
 require_relative '../lib/core/SimulationDataStore'
@@ -96,7 +94,7 @@ class Experiment
     return nil
   end
 
-  def reportTrainingResults(neuronToDisplay, accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime)
+  def reportTrainingResults(neuronToDisplay, descriptionOfExperiment, lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime)
     puts "\n\n_________________________________________________________________________________________________________"
     STDERR.puts "ExperimentNumber=\t#{$globalExperimentNumber}"
     puts "ExperimentNumber=\t#{$globalExperimentNumber}"
@@ -105,15 +103,19 @@ class Experiment
     puts network
 
     puts "lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE"
-    puts lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE
+    puts lastEpoch, lastTrainingMSE, lastTestingMSE
 
     puts "\n\n############ NeuronData #############"
-    keysToRecords = []
-    NeuronData.lookup_values(:epochs).each do |epochNumber|
-      keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: $globalExperimentNumber, epochs: epochNumber, neuron: neuronToDisplay}) }
-    end
+    #keysToRecords = []
+    #NeuronData.lookup_values(:epochs).each do |epochNumber|
+    #  keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: $globalExperimentNumber, epochs: epochNumber, neuron: neuronToDisplay}) }
+    #end
+    keysToRecords = NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: $globalExperimentNumber, epochs: 100, neuron: neuronToDisplay}) }
+
+    puts "NeuronData number of Records Retrieved= #{keysToRecords.length}"
     neuronDataRecords = nil
     unless (keysToRecords.empty?)
+      # keysToRecords.each { |recordKey| puts "empty" if(recordKey.empty?) }
       keysToRecords.reject! { |recordKey| recordKey.empty? }
       neuronDataRecords = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) }
     end
@@ -127,6 +129,7 @@ class Experiment
         keysToRecords << DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: $globalExperimentNumber, epochs: epochNumber, neuron: neuronToDisplay, exampleNumber: anExampleNumber}) }
       end
     end
+    puts "DetailedNeuronData number of Records Retrieved= #{keysToRecords.length}"
     unless (keysToRecords.empty?)
       keysToRecords.reject! { |recordKey| recordKey.empty? }
       detailedNeuronDataRecords = keysToRecords.collect { |recordKey| DetailedNeuronData.values(recordKey) }
@@ -136,6 +139,8 @@ class Experiment
 
     puts "\n\n############ TrainingData #############"
     keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: $globalExperimentNumber}) }
+    puts "TrainingData number of Records Retrieved= #{keysToRecords.length}"
+
     trainingDataRecords = nil
     unless (keysToRecords.empty?)
       keysToRecords.reject! { |recordKey| recordKey.empty? }
@@ -186,7 +191,7 @@ class Experiment
 
 ############################## reporting results....
 
-    reportTrainingResults(args[:neuronToDisplay], accumulatedAbsoluteFlockingErrors, descriptionOfExperiment,
+    reportTrainingResults(args[:neuronToDisplay], descriptionOfExperiment,
                           lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime)
 
 ############################## clean-up....

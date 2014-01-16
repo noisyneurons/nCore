@@ -518,7 +518,7 @@ end
 
 class OutputNeuronRecorder < NeuronRecorder
   def dataToRecord
-    {:netInput => neuron.netInput, :output => neuron.output, :error => neuron.error, :exampleNumber => neuron.exampleNumber,
+    {:neuronID => neuron.id, :netInput => neuron.netInput, :output => neuron.output, :error => neuron.error, :exampleNumber => neuron.exampleNumber,
      :weightedErrorMetric => neuron.weightedErrorMetric}
   end
 end

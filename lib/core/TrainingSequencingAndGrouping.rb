@@ -57,9 +57,9 @@ end
 class NeuronGroupsFor3LayerBPNetworkModLR < NeuronGroupsFor3LayerBPNetwork
 
   def nameTrainingGroups
+    super()
     self.outputLayerNeurons = allNeuronLayers.last
     self.hiddenLayerNeurons = allNeuronLayers[1]
-    super()
   end
 end
 

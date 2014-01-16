@@ -5,12 +5,11 @@
 require_relative 'BaseLearningExperiment'
 
 class Neuron
-  # include NonMonotonicIOFunctionUnShifted
-  include NonMonotonicIODerivative
+  include NonMonotonicIOFunction
 end
 
 class OutputNeuron
-  include NonMonotonicIODerivative
+  include NonMonotonicIOFunction
 end
 
 
@@ -28,11 +27,11 @@ class Experiment
         :hiddenLayerLearningRate => 0.1,
         :outputErrorLearningRate => nil,
         :minMSE => 0.00001, # 0.001,
-        :maxNumEpochs => 2e3,  # 6e3,
+        :maxNumEpochs => 1100, # 6e3,
 
         # Network Architecture
         :numberOfInputNeurons => 3,
-        :numberOfHiddenNeurons => 3,
+        :numberOfHiddenNeurons => 2,
         :numberOfOutputNeurons => 4,
         :weightRange => 1.0,
         :typeOfLink => Link,
@@ -41,7 +40,7 @@ class Experiment
         :numberOfExamples => (self.numberOfExamples = 16),
 
         # Recording and database parameters
-        :neuronToDisplay => 2,
+        :neuronToDisplay => 3,
         :intervalForSavingNeuronData => 100,
         :intervalForSavingDetailedNeuronData => 1000,
         :intervalForSavingTrainingData => 100
@@ -88,6 +87,8 @@ class Experiment
     theTrainer = StandardBPTrainingSupervisorModLR.new(examples, network, args)
     return network, theTrainer
   end
+
+
 end
 
 

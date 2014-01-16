@@ -117,7 +117,6 @@ class AbstractStepTrainer
 
   def genericCalcMeanSumSquaredErrors(numberOfExamples)
     squaredErrors = []
-    puts "numberOfExamples = #{numberOfExamples}"
     numberOfExamples.times do |exampleNumber|
       propagateAcrossEntireNetwork(exampleNumber)
       squaredErrors << calcWeightedErrorMetricForExample()

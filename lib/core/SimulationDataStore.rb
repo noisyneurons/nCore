@@ -171,6 +171,7 @@ class DetailedNeuronData
 
   relix do
     primary_key :detailedNeuronDataKey
+    ordered :experimentNumber
     multi :experimentNumber_epochs_neuron_exampleNumber, on: %w(experimentNumber epochs neuron exampleNumber)
     multi :experimentNumber, index_values: true
     multi :epochs, index_values: true
@@ -200,7 +201,7 @@ class DetailedNeuronData
     @epochs = detailedNeuronDataToRecord[:epochs]
     @neuron = detailedNeuronDataToRecord[:neuronID]
     @exampleNumber = detailedNeuronDataToRecord[:exampleNumber]
-    puts "detailedNeuronDataToRecord = #{detailedNeuronDataToRecord}"
+    # puts "detailedNeuronDataToRecord = #{detailedNeuronDataToRecord}"
     $redis.set(detailedNeuronDataKey, YAML.dump(detailedNeuronDataToRecord))
     index!
   end
@@ -217,6 +218,7 @@ class NeuronData
 
   relix do
     primary_key :neuronDataKey
+    ordered :experimentNumber
     multi :experimentNumber_epochs_neuron, on: %w(experimentNumber epochs neuron)
     multi :experimentNumber, index_values: true
     multi :epochs, index_values: true
@@ -305,6 +307,7 @@ module DBAccess
       aHash.delete(:exampleNumber)
       aHash.delete(:error)
       aHash[:epochs] = args[:epochs]
+      puts "stored NeuronData #{aHash}"
       NeuronData.new(aHash)
     end
   end
@@ -315,6 +318,7 @@ module DBAccess
       aHash = metricRecorder.dataToRecord
       aHash.delete(:error)
       aHash[:epochs] = args[:epochs]
+      # puts "----> stored DetailedNeuronData #{aHash}"
       DetailedNeuronData.new(aHash)
     end
   end
