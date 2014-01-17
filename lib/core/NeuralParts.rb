@@ -65,11 +65,11 @@ module PiecewiseLinNonMonIOFunction
       when x >= 5.0
         0.5
       when x >= 2.5
-        (-1.0 * slope * x)  + 1.5
-      when x >= - 2.5
+        (-1.0 * slope * x) + 1.5
+      when x >= -2.5
         (slope * x) + 0.5
       when x >= -5.0
-        (-1.0 * slope * x)  - 0.5
+        (-1.0 * slope * x) - 0.5
       else
         0.5
     end
@@ -81,7 +81,7 @@ module PiecewiseLinNonMonIOFunction
         0.0
       when x >= 2.5
         -1.0 * slope
-      when x >= - 2.5
+      when x >= -2.5
         slope
       when x >= -5.0
         -1.0 * slope
@@ -148,7 +148,6 @@ module NonMonotonicIOFunctionSymmetrical
   end
 
 end
-
 
 
 module LinearIOFunction
@@ -503,7 +502,7 @@ class NeuronRecorder
   end
 
   def dataToRecord
-    {:neuronID => neuron.id, :netInput => neuron.netInput, :output => neuron.output,  :error => neuron.error, :exampleNumber => neuron.exampleNumber}
+    {:neuronID => neuron.id, :netInput => neuron.netInput, :output => neuron.output, :error => neuron.error, :exampleNumber => neuron.exampleNumber}
   end
 
   def recordResponsesForExample

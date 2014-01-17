@@ -6,10 +6,12 @@ require_relative 'BaseLearningExperiment'
 
 class Neuron
   include NonMonotonicIOFunction
+  # include PiecewiseLinNonMonIOFunction
 end
 
 class OutputNeuron
-  include NonMonotonicIOFunction
+  # include NonMonotonicIOFunction
+  # include PiecewiseLinNonMonIOFunction
 end
 
 
@@ -26,12 +28,12 @@ class Experiment
         :outputLayerLearningRate => 0.1,
         :hiddenLayerLearningRate => 0.1,
         :outputErrorLearningRate => nil,
-        :minMSE => 0.00001, # 0.001,
-        :maxNumEpochs => 1100, # 6e3,
+        :minMSE => 0.0, # 0.001,
+        :maxNumEpochs => 6e3,
 
         # Network Architecture
         :numberOfInputNeurons => 3,
-        :numberOfHiddenNeurons => 2,
+        :numberOfHiddenNeurons => 1,
         :numberOfOutputNeurons => 4,
         :weightRange => 1.0,
         :typeOfLink => Link,
@@ -40,9 +42,9 @@ class Experiment
         :numberOfExamples => (self.numberOfExamples = 16),
 
         # Recording and database parameters
-        :neuronToDisplay => 5,
-        :intervalForSavingNeuronData => 100,
-        :intervalForSavingDetailedNeuronData => 1000,
+        :neuronsToDisplay => [4,5,6,7,8],
+        :intervalForSavingNeuronData => 100000,
+        :intervalForSavingDetailedNeuronData => 3000,
         :intervalForSavingTrainingData => 100
     }
   end
@@ -88,6 +90,23 @@ class Experiment
     return network, theTrainer
   end
 
+  def reportTrainingResults(neuronsToDisplay, descriptionOfExperiment, lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime)
+    trainingDataRecords = nil
+
+    endOfTrainingReport(lastEpoch, lastTestingMSE, lastTrainingMSE, network)
+
+    # neuronDataSummary(neuronsToDisplay)
+
+    detailedNeuronDataSummary(neuronsToDisplay)
+
+    # trainingDataRecords = trainingDataSummary
+
+    storeSnapShotData(descriptionOfExperiment, lastEpoch, lastTestingMSE, lastTrainingMSE, network, startingTime)
+
+    snapShotDataSummary
+
+    plotMSEvsEpochNumber(trainingDataRecords) unless(trainingDataRecords.nil?)
+  end
 end
 
 
