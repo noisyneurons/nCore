@@ -20,7 +20,7 @@ class AbstractStepTrainer
                 :outputLayerNeurons, :hiddenLayerNeurons,
 
                 :maxFlockingIterationsCount, :flockingLearningRate, :bpFlockingLearningRate,
-                :flockingIterationsCount, :accumulatedAbsoluteFlockingErrors,
+                :flockingIterationsCount, # :accumulatedAbsoluteFlockingErrors,
                 :accumulatedExampleImportanceFactors, :absFlockingErrorsOld
 
   include NeuronToNeuronConnection
@@ -59,7 +59,6 @@ class AbstractStepTrainer
 
   def train
     distributeSetOfExamples(examples)
-    self.accumulatedAbsoluteFlockingErrors = []
     mse = 1e100
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
       innerTrainingLoop()
@@ -68,7 +67,7 @@ class AbstractStepTrainer
       mse = calcMSE
     end
     testMSE = calcTestingMeanSquaredErrors
-    return calcMSE, testMSE, accumulatedAbsoluteFlockingErrors
+    return calcMSE, testMSE
   end
 
   def performStandardBackPropTraining
@@ -214,7 +213,6 @@ end
 class StepTrainerForOutputErrorBPOnly < AbstractStepTrainer
   def innerTrainingLoop
     performStandardBackPropTraining()
-    self.accumulatedAbsoluteFlockingErrors = []
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
   end
 end
@@ -264,13 +262,12 @@ class TrainingSupervisorBase
   def train
     mse = 1e20
     testMSE = nil
-    accumulatedAbsoluteFlockingErrors = nil
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
-      mse, testMSE, accumulatedAbsoluteFlockingErrors = stepTrainer.train
+      mse, testMSE = stepTrainer.train
     end
     arrayOfNeuronsToPlot = [network.outputLayer[0]]
     plotTrainingResults(arrayOfNeuronsToPlot)
-    return trainingSequence.epochs, mse, testMSE, accumulatedAbsoluteFlockingErrors
+    return trainingSequence.epochs, mse, testMSE
   end
 
   def plotTrainingResults(arrayOfNeuronsToPlot)

@@ -40,7 +40,7 @@ class Experiment
         :numberOfExamples => (self.numberOfExamples = 16),
 
         # Recording and database parameters
-        :neuronToDisplay => 3,
+        :neuronToDisplay => 5,
         :intervalForSavingNeuronData => 100,
         :intervalForSavingDetailedNeuronData => 1000,
         :intervalForSavingTrainingData => 100
@@ -87,7 +87,6 @@ class Experiment
     theTrainer = StandardBPTrainingSupervisorModLR.new(examples, network, args)
     return network, theTrainer
   end
-
 
 end
 

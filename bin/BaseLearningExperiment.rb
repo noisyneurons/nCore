@@ -11,7 +11,7 @@ require_relative '../lib/core/TrainingSequencingAndGrouping'
 require_relative '../lib/core/Trainers.rb'
 
 class Experiment
-  attr_accessor :network, :theTrainer, :descriptionOfExperiment, :taskID, :jobID, :jobName, :randomNumberSeed, :experimentLogger, :examples, :numberOfExamples, :args, :trainingSequence
+  attr_accessor :network, :theTrainer, :descriptionOfExperiment, :taskID, :jobID, :jobName, :randomNumberSeed, :experimentLogger, :simulationDataStoreManager, :examples, :numberOfExamples, :args, :trainingSequence
   include ExampleDistribution
 
   def initialize(descriptionOfExperiment, baseRandomNumberSeed)
@@ -32,6 +32,7 @@ class Experiment
     @examples = createTrainingSet
     args[:testingExamples] = createTestingSet
     @trainingSequence = TrainingSequence.new(args)
+    @simulationDataStoreManager = SimulationDataStoreManager.new(args)
     @args[:trainingSequence] = trainingSequence
   end
 
@@ -95,6 +96,45 @@ class Experiment
   end
 
   def reportTrainingResults(neuronToDisplay, descriptionOfExperiment, lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime)
+
+    endOfTrainingReport(lastEpoch, lastTestingMSE, lastTrainingMSE, network)
+
+    neuronDataSummary(neuronToDisplay)
+
+    detailedNeuronDataSummary(neuronToDisplay)
+
+    trainingDataRecords = trainingDataSummary
+
+    storeSnapShotData(descriptionOfExperiment, lastEpoch, lastTestingMSE, lastTrainingMSE, network, startingTime)
+
+    snapShotDataSummary
+
+    plotMSEvsEpochNumber(trainingDataRecords)
+  end
+
+  def performSimulation
+
+######################## Create Network and Trainer ....
+    self.network, self.theTrainer = createNetworkAndTrainer
+
+###################################### perform Learning/Training  ##########################################
+
+    startingTime = Time.now
+    lastEpoch, lastTrainingMSE, lastTestingMSE = theTrainer.train
+
+############################## reporting results....
+
+    reportTrainingResults(args[:neuronToDisplay], descriptionOfExperiment,
+                          lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime)
+
+############################## clean-up....
+    simulationDataStoreManager.deleteTemporaryDataRecordsInDB(experimentLogger.experimentNumber)
+    simulationDataStoreManager.save
+  end
+
+  # routines supporting 'reportTrainingResults':
+
+  def endOfTrainingReport(lastEpoch, lastTestingMSE, lastTrainingMSE, network)
     puts "\n\n_________________________________________________________________________________________________________"
     STDERR.puts "ExperimentNumber=\t#{$globalExperimentNumber}"
     puts "ExperimentNumber=\t#{$globalExperimentNumber}"
@@ -104,13 +144,15 @@ class Experiment
 
     puts "lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE"
     puts lastEpoch, lastTrainingMSE, lastTestingMSE
+  end
 
+  def neuronDataSummary(neuronToDisplay)
     puts "\n\n############ NeuronData #############"
-    #keysToRecords = []
-    #NeuronData.lookup_values(:epochs).each do |epochNumber|
-    #  keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: $globalExperimentNumber, epochs: epochNumber, neuron: neuronToDisplay}) }
-    #end
-    keysToRecords = NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: $globalExperimentNumber, epochs: 100, neuron: neuronToDisplay}) }
+    keysToRecords = []
+    NeuronData.lookup_values(:epochs).each do |epochNumber|
+      keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: $globalExperimentNumber, epochs: epochNumber, neuron: neuronToDisplay}) }
+    end
+    # keysToRecords = NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: $globalExperimentNumber, epochs: 899, neuron: neuronToDisplay}) }
 
     puts "NeuronData number of Records Retrieved= #{keysToRecords.length}"
     neuronDataRecords = nil
@@ -120,8 +162,9 @@ class Experiment
       neuronDataRecords = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) }
     end
     puts neuronDataRecords
+  end
 
-
+  def detailedNeuronDataSummary(neuronToDisplay)
     puts "\n\n############ DetailedNeuronData #############"
     keysToRecords = []
     DetailedNeuronData.lookup_values(:epochs).each do |epochNumber|
@@ -135,8 +178,9 @@ class Experiment
       detailedNeuronDataRecords = keysToRecords.collect { |recordKey| DetailedNeuronData.values(recordKey) }
     end
     puts detailedNeuronDataRecords
+  end
 
-
+  def trainingDataSummary
     puts "\n\n############ TrainingData #############"
     keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: $globalExperimentNumber}) }
     puts "TrainingData number of Records Retrieved= #{keysToRecords.length}"
@@ -147,8 +191,10 @@ class Experiment
       trainingDataRecords = keysToRecords.collect { |recordKey| TrainingData.values(recordKey) }
     end
     puts trainingDataRecords
+    trainingDataRecords
+  end
 
-
+  def storeSnapShotData(descriptionOfExperiment, lastEpoch, lastTestingMSE, lastTrainingMSE, network, startingTime)
     puts "\n\n############ SnapShotData #############"
     dataToStoreLongTerm = {:experimentNumber => $globalExperimentNumber, :descriptionOfExperiment => descriptionOfExperiment,
                            :gridTaskID => self.taskID, :gridJobID => self.jobID, :network => network, :args => args,
@@ -156,13 +202,9 @@ class Experiment
                            :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE
     }
     SnapShotData.new(dataToStoreLongTerm)
-
-    displayLastSnapShotRecords
-
-    plotMSEvsEpochNumber(trainingDataRecords)
   end
 
-  def displayLastSnapShotRecords
+  def snapShotDataSummary
     keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(2) }
     unless (keysToRecords.empty?)
       puts
@@ -179,24 +221,5 @@ class Experiment
     end
   end
 
-  def performSimulation
-
-######################## Create Network and Trainer ....
-    self.network, self.theTrainer = createNetworkAndTrainer
-
-###################################### perform Learning/Training  ##########################################
-
-    startingTime = Time.now
-    lastEpoch, lastTrainingMSE, lastTestingMSE, accumulatedAbsoluteFlockingErrors = theTrainer.train
-
-############################## reporting results....
-
-    reportTrainingResults(args[:neuronToDisplay], descriptionOfExperiment,
-                          lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime)
-
-############################## clean-up....
-    experimentLogger.deleteTemporaryDataRecordsInDB()
-    experimentLogger.save
-  end
 end
 

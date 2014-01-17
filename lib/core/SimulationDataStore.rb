@@ -82,14 +82,14 @@ class ExperimentLogger
 
   $redis.setnx("experimentNumber", 0)
 
-  def deleteTemporaryDataRecordsInDB
-    #TrainingData.deleteData(experimentNumber)
-    #TrainingData.deleteEntireIndex!
-    NeuronData.deleteData(experimentNumber)
-    NeuronData.deleteEntireIndex!
-    DetailedNeuronData.deleteData(experimentNumber)
-    DetailedNeuronData.deleteEntireIndex!
-  end
+  #def deleteTemporaryDataRecordsInDB
+  #  #TrainingData.deleteData(experimentNumber)
+  #  #TrainingData.deleteEntireIndex!
+  #  NeuronData.deleteData(experimentNumber)
+  #  NeuronData.deleteEntireIndex!
+  #  DetailedNeuronData.deleteData(experimentNumber)
+  #  DetailedNeuronData.deleteEntireIndex!
+  #end
 
   def ExperimentLogger.deleteTable!
     $redis.del("experimentNumber")
@@ -105,13 +105,6 @@ class ExperimentLogger
     $redis.rpush("#{jobName}List", experimentNumber)
   end
 
-  def save
-    begin
-      $redis.save
-    rescue Exception
-      STDERR.puts "redis store was already being saved!"
-    end
-  end
 end
 
 #############################
@@ -218,7 +211,7 @@ class NeuronData
 
   relix do
     primary_key :neuronDataKey
-    ordered :experimentNumber
+    # ordered :experimentNumber
     multi :experimentNumber_epochs_neuron, on: %w(experimentNumber epochs neuron)
     multi :experimentNumber, index_values: true
     multi :epochs, index_values: true
@@ -307,7 +300,7 @@ module DBAccess
       aHash.delete(:exampleNumber)
       aHash.delete(:error)
       aHash[:epochs] = args[:epochs]
-      puts "stored NeuronData #{aHash}"
+      # puts "stored NeuronData #{aHash}"
       NeuronData.new(aHash)
     end
   end
@@ -328,9 +321,9 @@ module DBAccess
     if recordOrNot?(savingInterval)
       trainMSE = calcMeanSumSquaredErrors
       testMSE = calcTestingMeanSquaredErrors
-      biasWeight = outputLayer[0].inputLinks[1].weight
-      puts "epoch number = #{args[:epochs]}\ttrainMSE = #{trainMSE}\ttestMSE = #{testMSE}\tbiasWeight = #{biasWeight}" # unless($currentHost == "master")
-      aHash = {:experimentNumber => $globalExperimentNumber, :epochs => args[:epochs], :mse => trainMSE, :testMSE => testMSE, :biasWeight => biasWeight}
+      # theWeightsValue = outputLayer[0].inputLinks.last.weight
+      puts "epoch number = #{args[:epochs]}\ttrainMSE = #{trainMSE}\ttestMSE = #{testMSE}"  # "\ttheWeightsValue = #{theWeightsValue}" # unless($currentHost == "master")
+      aHash = {:experimentNumber => $globalExperimentNumber, :epochs => args[:epochs], :mse => trainMSE, :testMSE => testMSE}
       TrainingData.new(aHash)
     end
   end
@@ -363,6 +356,15 @@ class SimulationDataStoreManager
     @args = args
   end
 
+  def deleteTemporaryDataRecordsInDB(experimentNumber)
+    #TrainingData.deleteData(experimentNumber)
+    #TrainingData.deleteEntireIndex!
+    NeuronData.deleteData(experimentNumber)
+    NeuronData.deleteEntireIndex!
+    DetailedNeuronData.deleteData(experimentNumber)
+    DetailedNeuronData.deleteEntireIndex!
+  end
+
   def deleteDataForExperiment(experimentNumber)
     DetailedNeuronData.deleteData(experimentNumber)
     NeuronData.deleteData(experimentNumber)
@@ -378,8 +380,15 @@ class SimulationDataStoreManager
     NeuronData.deleteEntireIndex!
     TrainingData.deleteEntireIndex!
   end
-end
 
+  def save
+    begin
+      $redis.save
+    rescue Exception
+      STDERR.puts "redis store was already being saved!"
+    end
+  end
+end
 
 
 #def recordResponsesForEpoch
@@ -413,7 +422,6 @@ end
 #    cluster1Center = 0.0
 #  end
 #end
-
 
 
 #module RecordingAndPlottingRoutines
