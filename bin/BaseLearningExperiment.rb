@@ -164,6 +164,7 @@ class Experiment
       puts "DetailedNeuronData number of Records Retrieved= #{keysToRecords.length}"
       unless (keysToRecords.empty?)
         keysToRecords.reject! { |recordKey| recordKey.empty? }
+        puts "DetailedNeuronData keysToRecords=\t#{keysToRecords}"
         detailedNeuronDataRecords = keysToRecords.collect { |recordKey| DetailedNeuronData.values(recordKey) }
       end
       puts detailedNeuronDataRecords

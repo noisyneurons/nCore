@@ -24,27 +24,31 @@ class Experiment
         :descriptionOfExperiment => descriptionOfExperiment,
         :randomNumberSeed => randomNumberSeed,
 
-        # training parameters re. Output Error
+        # training parameters
+        :probabilityOfBeingDisabled => 0.5,
         :outputLayerLearningRate => 0.1,
         :hiddenLayerLearningRate => 0.1,
         :outputErrorLearningRate => nil,
         :minMSE => 0.0, # 0.001,
-        :maxNumEpochs => 6e3,
+        :maxNumEpochs => 2e3,
 
         # Network Architecture
         :numberOfInputNeurons => 3,
-        :numberOfHiddenNeurons => 1,
+        :numberOfHiddenNeurons => 4,
         :numberOfOutputNeurons => 4,
         :weightRange => 1.0,
         :typeOfLink => Link,
+        :typeOfNeuron => Neuron,
+        :typeOfOutputNeuron => OutputNeuron,
 
         # Training Set parameters
         :numberOfExamples => (self.numberOfExamples = 16),
+        :numberOfTestingExamples => numberOfExamples,
 
         # Recording and database parameters
-        :neuronsToDisplay => [4,5,6,7,8],
+        :neuronsToDisplay => [8],
         :intervalForSavingNeuronData => 100000,
-        :intervalForSavingDetailedNeuronData => 3000,
+        :intervalForSavingDetailedNeuronData => 1000,
         :intervalForSavingTrainingData => 100
     }
   end
@@ -82,6 +86,10 @@ class Experiment
     STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
     puts examples
     examples
+  end
+
+  def createTestingSet
+    return createTrainingSet
   end
 
   def createNetworkAndTrainer

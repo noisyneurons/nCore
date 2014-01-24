@@ -108,7 +108,9 @@ class AbstractStepTrainer
     numberOfTestingExamples = args[:numberOfTestingExamples]
     unless (testingExamples.nil?)
       distributeSetOfExamples(testingExamples)
+      neuronsWithInputLinks.each {|aNeuron| aNeuron.learning = false}
       testMSE = genericCalcMeanSumSquaredErrors(numberOfTestingExamples)
+      neuronsWithInputLinks.each {|aNeuron| aNeuron.learning = true}
       distributeSetOfExamples(examples)
     end
     return testMSE

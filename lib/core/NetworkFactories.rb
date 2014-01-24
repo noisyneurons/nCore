@@ -177,7 +177,7 @@ class Simplest1LayerNet < BaseNetwork
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
     self.allNeuronLayers << inputLayer
 
-    self.outputLayer = createAndConnectLayer(inputLayer, typeOfNeuron = OutputNeuron, args[:numberOfOutputNeurons])
+    self.outputLayer = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfOutputNeuron], args[:numberOfOutputNeurons])
     self.allNeuronLayers << outputLayer
 
     connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
@@ -192,10 +192,10 @@ class Standard3LayerNetwork < BaseNetwork
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
     self.allNeuronLayers << inputLayer
 
-    hiddenLayer = createAndConnectLayer(inputLayer, typeOfNeuron = Neuron, args[:numberOfHiddenNeurons])
+    hiddenLayer = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], args[:numberOfHiddenNeurons])
     self.allNeuronLayers << hiddenLayer
 
-    self.outputLayer = createAndConnectLayer(hiddenLayer, typeOfNeuron = OutputNeuron, args[:numberOfOutputNeurons])
+    self.outputLayer = createAndConnectLayer(hiddenLayer, typeOfNeuron = args[:typeOfOutputNeuron], args[:numberOfOutputNeurons])
     self.allNeuronLayers << outputLayer
 
     connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)

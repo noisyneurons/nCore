@@ -53,7 +53,6 @@ module NonMonotonicIOFunction
 
 end
 
-
 module PiecewiseLinNonMonIOFunction
 
   def slope
@@ -91,32 +90,6 @@ module PiecewiseLinNonMonIOFunction
   end
 end
 
-
-# ODD Ball function -- BE CAREFUL not to reuse..
-#module NonMonotonicIODerivative
-#
-#  def ioFunction(x)
-#    f(x)
-#  end
-#
-#  def f(x)
-#    1.0 / (1.0 + Math.exp(-1.0 * x))
-#  end
-#
-#  def ioDerivativeFromNetInput(aNetInput)
-#    1.49786971589547 * j(aNetInput, 4.0)
-#  end
-#
-#  def j(x, s)
-#    g(x, 0.0) - (0.5 * (g(x, s) + g(x, (-1.0 * s))))
-#  end
-#
-#  def g(x, s)
-#    Math.exp((-1.0 * x) + s) / ((Math.exp((-1.0 * x) + s)) + 1.0) ** 2.0
-#  end
-#end
-
-
 module NonMonotonicIOFunctionSymmetrical
 
   def ioFunction(x)
@@ -149,7 +122,6 @@ module NonMonotonicIOFunctionSymmetrical
 
 end
 
-
 module LinearIOFunction
 
   def ioFunction(aNetInput)
@@ -178,11 +150,9 @@ module SigmoidIOFunctionSymmetrical
 
 end
 
-
 module CommonNeuronCalculations
   public
   attr_accessor :netInput, :inputLinks, :error, :exampleNumber, :metricRecorder
-
 
   def calcDeltaWsAndAccumulate
     inputLinks.each { |inputLink| inputLink.calcDeltaWAndAccumulate }
@@ -230,7 +200,7 @@ end
 
 ############################################################
 class NeuronBase
-  attr_accessor :id, :args, :output
+  attr_accessor :id, :args, :output, :learning
   @@ID = 0
 
   def NeuronBase.zeroID
@@ -242,6 +212,7 @@ class NeuronBase
     @@ID += 1
     @args = args
     @output = 0.0
+    @learning = true
     postInitialize
   end
 
@@ -394,6 +365,43 @@ class LinearOutputNeuron < OutputNeuron
   include LinearIOFunction
 end
 
+class NoisyNeuron < Neuron
+  attr_accessor :probabilityOfBeingDisabled, :disabled, :outputWhenNeuronDisabled
+
+  def postInitialize
+    super
+    @probabilityOfBeingDisabled = args[:probabilityOfBeingDisabled]
+    @outputWhenNeuronDisabled = self.ioFunction(0.0)
+  end
+
+  def propagate(exampleNumber)
+    case
+      when learning == true
+        self.output = if (self.disabled = rand < probabilityOfBeingDisabled)
+                        outputWhenNeuronDisabled
+                      else
+                        super(exampleNumber)
+                      end
+
+      when learning == false
+        self.output = 0.5 * super(exampleNumber)
+      else
+        STDERR.puts "error, 'learning' variable not set to true or false!!"
+    end
+    output
+  end
+
+
+  def backPropagate
+    self.error = if (disabled)
+                   0.0
+                 else
+                   super
+                 end
+  end
+end
+
+
 #class SymmetricalNeuron < Neuron
 #  include SymmetricalSigmoidIOFunction
 #end
@@ -401,6 +409,8 @@ end
 #class SymmetricalOutputNeuron < OutputNeuron
 #  include SymmetricalSigmoidIOFunction
 #end
+############################################################
+
 
 ############################################################
 class Link
