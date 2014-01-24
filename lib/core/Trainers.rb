@@ -67,7 +67,7 @@ class AbstractStepTrainer
       mse = calcMSE
     end
     testMSE = calcTestingMeanSquaredErrors
-    return calcMSE, testMSE
+    return trainingSequence.epochs, calcMSE, testMSE
   end
 
   def performStandardBackPropTraining
@@ -108,9 +108,9 @@ class AbstractStepTrainer
     numberOfTestingExamples = args[:numberOfTestingExamples]
     unless (testingExamples.nil?)
       distributeSetOfExamples(testingExamples)
-      neuronsWithInputLinks.each {|aNeuron| aNeuron.learning = false}
+      neuronsWithInputLinks.each { |aNeuron| aNeuron.learning = false }
       testMSE = genericCalcMeanSumSquaredErrors(numberOfTestingExamples)
-      neuronsWithInputLinks.each {|aNeuron| aNeuron.learning = true}
+      neuronsWithInputLinks.each { |aNeuron| aNeuron.learning = true }
       distributeSetOfExamples(examples)
     end
     return testMSE
@@ -262,18 +262,7 @@ class TrainingSupervisorBase
   end
 
   def train
-    mse = 1e20
-    testMSE = nil
-    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
-      mse, testMSE = stepTrainer.train
-    end
-    arrayOfNeuronsToPlot = [network.outputLayer[0]]
-    plotTrainingResults(arrayOfNeuronsToPlot)
-    return trainingSequence.epochs, mse, testMSE
-  end
-
-  def plotTrainingResults(arrayOfNeuronsToPlot)
-    generatePlotForEachNeuron(arrayOfNeuronsToPlot) if arrayOfNeuronsToPlot.present?
+    stepTrainer.train
   end
 end
 

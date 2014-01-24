@@ -8,15 +8,15 @@ require_relative 'Utilities'
 module SigmoidIOFunction
 
   def ioFunction(aNetInput)
-    return 1.0/(1.0 + Math.exp(-1.0 * aNetInput))
+    1.0/(1.0 + Math.exp(-1.0 * aNetInput))
   end
 
   def ioDerivativeFromNetInput(aNetInput)
-    return ioDerivativeFromOutput(ioFunction(aNetInput))
+    ioDerivativeFromOutput(ioFunction(aNetInput))
   end
 
   def ioDerivativeFromOutput(neuronsOutput)
-    return (neuronsOutput * (1.0 - neuronsOutput))
+    (neuronsOutput * (1.0 - neuronsOutput))
   end
 
 end
@@ -137,15 +137,15 @@ end
 module SigmoidIOFunctionSymmetrical
 
   def ioFunction(aNetInput)
-    return 2.0 * ((1.0/(1.0 + Math.exp(-1.0 * aNetInput))) - 0.5)
+    2.0 * ((1.0/(1.0 + Math.exp(-1.0 * aNetInput))) - 0.5)
   end
 
   def ioDerivativeFromNetInput(aNetInput) # TODO speed this up.  Use sage to get the simpler analytical expression.
-    return ioDerivativeFromOutput(ioFunction(aNetInput))
+    ioDerivativeFromOutput(ioFunction(aNetInput))
   end
 
   def ioDerivativeFromOutput(neuronsOutput)
-    return 2.0 * (neuronsOutput * (1.0 - neuronsOutput))
+    2.0 * (neuronsOutput * (1.0 - neuronsOutput))
   end
 
 end
@@ -183,17 +183,11 @@ module CommonNeuronCalculations
   end
 
   def calcNetInputToNeuron
-    netInput = 0.0
-    inputLinks.each { |link| netInput += link.propagate }
-    return netInput
+    inputLinks.inject(0.0) { |sum, link| sum + link.propagate }
   end
 
   def calcNetError
-    netError = 0.0
-    outputLinks.each do |link|
-      netError += link.backPropagate
-    end
-    return netError
+    outputLinks.inject(0.0) { |sum, link| sum + link.backPropagate }
   end
 end
 
@@ -226,7 +220,6 @@ class BiasNeuron < NeuronBase #TODO should make this a singleton class!
   attr_reader :outputLinks
 
   def postInitialize
-    #@id = -1
     @outputLinks = []
     @output = 1.0
   end
@@ -366,25 +359,26 @@ class LinearOutputNeuron < OutputNeuron
 end
 
 class NoisyNeuron < Neuron
-  attr_accessor :probabilityOfBeingDisabled, :disabled, :outputWhenNeuronDisabled
+  attr_accessor :probabilityOfBeingEnabled, :enabled, :outputWhenNeuronDisabled
 
   def postInitialize
     super
-    @probabilityOfBeingDisabled = args[:probabilityOfBeingDisabled]
+    @probabilityOfBeingEnabled = [args[:probabilityOfBeingEnabled], 0.01].max
     @outputWhenNeuronDisabled = self.ioFunction(0.0)
   end
 
   def propagate(exampleNumber)
     case
       when learning == true
-        self.output = if (self.disabled = rand < probabilityOfBeingDisabled)
-                        outputWhenNeuronDisabled
-                      else
+        self.output = if (self.enabled = rand < probabilityOfBeingEnabled)
                         super(exampleNumber)
+                      else
+                        outputWhenNeuronDisabled
                       end
 
       when learning == false
-        self.output = 0.5 * super(exampleNumber)
+        signal = super(exampleNumber) - outputWhenNeuronDisabled
+        self.output = (signal / probabilityOfBeingEnabled)  +  outputWhenNeuronDisabled
       else
         STDERR.puts "error, 'learning' variable not set to true or false!!"
     end
@@ -393,10 +387,10 @@ class NoisyNeuron < Neuron
 
 
   def backPropagate
-    self.error = if (disabled)
-                   0.0
-                 else
+    self.error = if (enabled)
                    super
+                 else
+                   0.0
                  end
   end
 end

@@ -25,20 +25,20 @@ class Experiment
         :randomNumberSeed => randomNumberSeed,
 
         # training parameters
-        :probabilityOfBeingDisabled => 0.5,
+        :probabilityOfBeingEnabled => 0.5,
         :outputLayerLearningRate => 0.1,
         :hiddenLayerLearningRate => 0.1,
         :outputErrorLearningRate => nil,
         :minMSE => 0.0, # 0.001,
-        :maxNumEpochs => 2e3,
+        :maxNumEpochs => 7e3,
 
         # Network Architecture
         :numberOfInputNeurons => 3,
-        :numberOfHiddenNeurons => 4,
+        :numberOfHiddenNeurons => 2,
         :numberOfOutputNeurons => 4,
         :weightRange => 1.0,
         :typeOfLink => Link,
-        :typeOfNeuron => Neuron,
+        :typeOfNeuron => NoisyNeuron,
         :typeOfOutputNeuron => OutputNeuron,
 
         # Training Set parameters
@@ -48,7 +48,7 @@ class Experiment
         # Recording and database parameters
         :neuronsToDisplay => [8],
         :intervalForSavingNeuronData => 100000,
-        :intervalForSavingDetailedNeuronData => 1000,
+        :intervalForSavingDetailedNeuronData => 2000,
         :intervalForSavingTrainingData => 100
     }
   end
@@ -103,11 +103,11 @@ class Experiment
 
     endOfTrainingReport(lastEpoch, lastTestingMSE, lastTrainingMSE, network)
 
-    # neuronDataSummary(neuronsToDisplay)
+    neuronDataSummary(neuronsToDisplay)
 
     detailedNeuronDataSummary(neuronsToDisplay)
 
-    # trainingDataRecords = trainingDataSummary
+    trainingDataRecords = trainingDataSummary
 
     storeSnapShotData(descriptionOfExperiment, lastEpoch, lastTestingMSE, lastTrainingMSE, network, startingTime)
 

@@ -95,6 +95,8 @@ class Experiment
     snapShotDataSummary
 
     plotMSEvsEpochNumber(trainingDataRecords)
+
+    # plotTrainingResults(neuronToDisplay)
   end
 
   def performSimulation
@@ -127,7 +129,7 @@ class Experiment
 
     puts network
 
-    puts "lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE"
+    puts "lastEpoch, lastTrainingMSE, lastTestingMSE"
     puts lastEpoch, lastTrainingMSE, lastTestingMSE
   end
 
@@ -164,8 +166,8 @@ class Experiment
       puts "DetailedNeuronData number of Records Retrieved= #{keysToRecords.length}"
       unless (keysToRecords.empty?)
         keysToRecords.reject! { |recordKey| recordKey.empty? }
-        puts "DetailedNeuronData keysToRecords=\t#{keysToRecords}"
-        detailedNeuronDataRecords = keysToRecords.collect { |recordKey| DetailedNeuronData.values(recordKey) }
+        # puts "DetailedNeuronData keysToRecords=\t#{keysToRecords}"
+        detailedNeuronDataRecords = keysToRecords.flatten.collect { |recordKey| DetailedNeuronData.values(recordKey) }
       end
       puts detailedNeuronDataRecords
       puts "\n"
@@ -213,5 +215,8 @@ class Experiment
     end
   end
 
+  def plotTrainingResults(arrayOfNeuronsToPlot)
+    generatePlotForEachNeuron(arrayOfNeuronsToPlot) if arrayOfNeuronsToPlot.present?
+  end
 end
 

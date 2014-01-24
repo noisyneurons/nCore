@@ -311,7 +311,7 @@ module DBAccess
       aHash = metricRecorder.dataToRecord
       aHash.delete(:error)
       aHash[:epochs] = args[:epochs]
-      puts "----> stored DetailedNeuronData #{aHash}"
+      # puts "----> stored DetailedNeuronData #{aHash}"
       DetailedNeuronData.new(aHash)
     end
   end
