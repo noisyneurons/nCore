@@ -54,6 +54,16 @@ class NeuronGroupsFor3LayerBPNetwork < AbstractNeuronGroups
 end
 
 
+class NeuronGroupsForJumpLinked3LayerNetwork  < AbstractNeuronGroups
+  def nameTrainingGroups
+    hiddenLayer = allNeuronLayers[1]
+    self.layersWithInputLinks = [hiddenLayer, outputLayer]
+    self.outputErrorAdaptingLayers =  [outputLayer]
+    setNeuronGroupNames()
+  end
+end
+
+
 class NeuronGroupsFor3LayerBPNetworkModLR < NeuronGroupsFor3LayerBPNetwork
 
   def nameTrainingGroups

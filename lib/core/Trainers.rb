@@ -219,6 +219,22 @@ class StepTrainerForOutputErrorBPOnly < AbstractStepTrainer
   end
 end
 
+class StepTrainerForJumpLinksOutputErrorBPOnly < AbstractStepTrainer
+  def innerTrainingLoop
+    performStandardBackPropTraining()
+    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
+  end
+
+  def performStandardBackPropTraining
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.learningRate = 0.0 }
+    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
+    acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
+    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+  end
+
+end
+
+
 
 class StepTrainerForOutputErrorBPOnlyModLR < StepTrainerForOutputErrorBPOnly
   def performStandardBackPropTraining
@@ -281,6 +297,15 @@ class StandardBPTrainingSupervisor < TrainingSupervisorBase
     self.stepTrainer = StepTrainerForOutputErrorBPOnly.new(examples, neuronGroups, trainingSequence, args)
   end
 end
+
+
+class JumpLinksBPTrainingSupervisor < TrainingSupervisorBase
+  def postInitialize
+    self.neuronGroups = NeuronGroupsForJumpLinked3LayerNetwork.new(network)
+    self.stepTrainer = StepTrainerForJumpLinksOutputErrorBPOnly.new(examples, neuronGroups, trainingSequence, args)
+  end
+end
+
 
 
 class StandardBPTrainingSupervisorModLR < StandardBPTrainingSupervisor

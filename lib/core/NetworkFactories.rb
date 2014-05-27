@@ -189,6 +189,11 @@ end
 class Standard3LayerNetwork < BaseNetwork
 
   def createStandardNetworkWithStandardFullyConnectedArchitecture
+    createLayersAndSequentialLayerToLayerConnections
+    connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
+  end
+
+  def createLayersAndSequentialLayerToLayerConnections
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
     self.allNeuronLayers << inputLayer
 
@@ -197,9 +202,18 @@ class Standard3LayerNetwork < BaseNetwork
 
     self.outputLayer = createAndConnectLayer(hiddenLayer, typeOfNeuron = args[:typeOfOutputNeuron], args[:numberOfOutputNeurons])
     self.allNeuronLayers << outputLayer
+  end
+end
 
+
+class JumpLinked3LayerNetwork < Standard3LayerNetwork
+
+  def createStandardNetworkWithStandardFullyConnectedArchitecture
+    createLayersAndSequentialLayerToLayerConnections
+    connect_layer_to_another(inputLayer, outputLayer, args)   # This is where we create links that 'jump across' the hidden layer.
     connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
   end
+
 end
 
 

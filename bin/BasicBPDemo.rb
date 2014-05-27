@@ -6,11 +6,11 @@
 require_relative 'BaseLearningExperiment'
 
 class Neuron
-  include NonMonotonicIOFunctionUnShifted
+  # include NonMonotonicIOFunction
 end
 
 class OutputNeuron
-  # include NonMonotonicIOFunctionUnShifted
+  # include NonMonotonicIOFunction
 end
 
 
@@ -34,13 +34,16 @@ class Experiment
         :numberOfOutputNeurons => 1,
         :weightRange => 1.0,
         :typeOfLink => Link,
+        :typeOfNeuron => Neuron,
+        :typeOfOutputNeuron => OutputNeuron,
+
 
         # Training Set parameters
         :numberOfExamples => (numExamples = 4),
         :numExamples => numExamples,
 
         # Recording and database parameters
-        :neuronToDisplay => 2,
+        :neuronsToDisplay => [5],
         :intervalForSavingNeuronData => 100,
         :intervalForSavingDetailedNeuronData => 1000,
         :intervalForSavingTrainingData => 100

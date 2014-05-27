@@ -1,6 +1,9 @@
 ### VERSION "nCore"
-## ../nCore/bin/ClassifierUsingAutocoderDataSetBP.rb
-# Purpose:  Simple 4-class classifier of data used in 4-cluster AutocoderBP.rb.
+## ../nCore/bin/Proj6pt2.rb
+# Purpose:  Second and very important part of Project 6; 3-layer non-mon neurons
+# Ultimate goal of project 6 is to do a preliminarily test of the
+# usefulness of non-mon neurons' for improving the extracted features. Improving
+# the features amounts to improving the features to provide better generalization ability.
 
 require_relative 'BaseLearningExperiment'
 
@@ -11,6 +14,7 @@ end
 
 class OutputNeuron
   # include NonMonotonicIOFunction
+  # include SigmoidIOFunction
   # include PiecewiseLinNonMonIOFunction
 end
 
@@ -25,20 +29,19 @@ class Experiment
         :randomNumberSeed => randomNumberSeed,
 
         # training parameters
-        :probabilityOfBeingEnabled => 0.5,
-        :outputLayerLearningRate => 0.1,
-        :hiddenLayerLearningRate => 0.1,
-        :outputErrorLearningRate => nil,
+        :outputErrorLearningRate => 0.1,
         :minMSE => 0.0, # 0.001,
         :maxNumEpochs => 7e3,
+        :probabilityOfBeingEnabled => 1.0,
+
 
         # Network Architecture
-        :numberOfInputNeurons => 3,
+        :numberOfInputNeurons => 2,
         :numberOfHiddenNeurons => 2,
-        :numberOfOutputNeurons => 4,
+        :numberOfOutputNeurons => 1,
         :weightRange => 1.0,
         :typeOfLink => Link,
-        :typeOfNeuron => Neuron, # NoisyNeuron,
+        :typeOfNeuron => Neuron, # NoisyNeuron,  # Neuron,
         :typeOfOutputNeuron => OutputNeuron,
 
         # Training Set parameters
@@ -46,7 +49,7 @@ class Experiment
         :numberOfTestingExamples => numberOfExamples,
 
         # Recording and database parameters
-        :neuronsToDisplay => [8],
+        :neuronsToDisplay => [5],
         :intervalForSavingNeuronData => 100000,
         :intervalForSavingDetailedNeuronData => 2000,
         :intervalForSavingTrainingData => 100
@@ -76,9 +79,10 @@ class Experiment
         x = xS + (xI * classExNumb)
         y = yS + (yI * classExNumb)
         z = zS + (zI * classExNumb)
-        aPoint = [x, y, z]
-        desiredOutputs = [0.0, 0.0, 0.0, 0.0]
-        desiredOutputs[indexToClass] = 1.0
+        # aPoint = [x, y, z]
+        aPoint = [x, y]
+        desiredOutputs = [0.0]
+        desiredOutputs[0] = 1.0  if(indexToClass == 1)
         examples << {:inputs => aPoint, :targets => desiredOutputs, :exampleNumber => exampleNumber, :class => indexToClass}
         exampleNumber += 1
       end
@@ -93,8 +97,8 @@ class Experiment
   end
 
   def createNetworkAndTrainer
-    network = Standard3LayerNetwork.new(args)
-    theTrainer = StandardBPTrainingSupervisorModLR.new(examples, network, args)
+    network = JumpLinked3LayerNetwork.new(args)
+    theTrainer = JumpLinksBPTrainingSupervisor.new(examples, network, args)
     return network, theTrainer
   end
 
@@ -122,6 +126,6 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("3in1hidN4ClAuto   Classifier Using Autocoder DataSet with hidden NonMonUnShifted", baseRandomNumberSeed)
+experiment = Experiment.new("Proj6pt2; 2-in 1-out; single NonMon Output Neuron; 2-4 Neurons in Hidden Layer", baseRandomNumberSeed)
 
 experiment.performSimulation()
