@@ -235,7 +235,6 @@ class StepTrainerForJumpLinksOutputErrorBPOnly < AbstractStepTrainer
 end
 
 
-
 class StepTrainerForOutputErrorBPOnlyModLR < StepTrainerForOutputErrorBPOnly
   def performStandardBackPropTraining
     outputLayerNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputLayerLearningRate] }
@@ -299,13 +298,25 @@ class StandardBPTrainingSupervisor < TrainingSupervisorBase
 end
 
 
-class JumpLinksBPTrainingSupervisor < TrainingSupervisorBase
-  def postInitialize
-    self.neuronGroups = NeuronGroupsForJumpLinked3LayerNetwork.new(network)
-    self.stepTrainer = StepTrainerForJumpLinksOutputErrorBPOnly.new(examples, neuronGroups, trainingSequence, args)
-  end
-end
+class Project6pt2TrainingSupervisor < TrainingSupervisorBase
+  attr_accessor :stepTrainer1, :stepTrainer2, :neuronGroups1, :neuronGroups2
 
+  def postInitialize
+    self.neuronGroups1 = NeuronGroupsForStep1JumpLinked3LayerNetwork.new(network)
+    self.stepTrainer1 = StepTrainerForJumpLinksOutputErrorBPOnly.new(examples, neuronGroups1, trainingSequence, args)
+
+    self.neuronGroups2 = NeuronGroupsForStep2JumpLinked3LayerNetwork.new(network)
+    trainingSequence2 = TrainingSequence.new(args)
+    self.stepTrainer2 = StepTrainerForJumpLinksOutputErrorBPOnly.new(examples, neuronGroups2, trainingSequence2, args)
+  end
+
+  def train
+    stepTrainer1.train
+    puts network
+    stepTrainer2.train
+  end
+
+end
 
 
 class StandardBPTrainingSupervisorModLR < StandardBPTrainingSupervisor

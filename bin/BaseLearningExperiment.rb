@@ -11,7 +11,8 @@ require_relative '../lib/core/TrainingSequencingAndGrouping'
 require_relative '../lib/core/Trainers.rb'
 
 class Experiment
-  attr_accessor :network, :theTrainer, :descriptionOfExperiment, :taskID, :jobID, :jobName, :randomNumberSeed, :experimentLogger, :simulationDataStoreManager, :examples, :numberOfExamples, :args, :trainingSequence
+  attr_accessor :network, :theTrainer, :descriptionOfExperiment, :taskID, :jobID, :jobName, :randomNumberSeed,
+                :experimentLogger, :simulationDataStoreManager, :examples, :numberOfExamples, :args, :trainingSequence
   include ExampleDistribution
 
   def initialize(descriptionOfExperiment, baseRandomNumberSeed)

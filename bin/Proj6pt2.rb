@@ -13,7 +13,7 @@ class Neuron
 end
 
 class OutputNeuron
-  # include NonMonotonicIOFunction
+  include NonMonotonicIOFunction
   # include SigmoidIOFunction
   # include PiecewiseLinNonMonIOFunction
 end
@@ -98,7 +98,7 @@ class Experiment
 
   def createNetworkAndTrainer
     network = JumpLinked3LayerNetwork.new(args)
-    theTrainer = JumpLinksBPTrainingSupervisor.new(examples, network, args)
+    theTrainer = Project6pt2TrainingSupervisor.new(examples, network, args)
     return network, theTrainer
   end
 
