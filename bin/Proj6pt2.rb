@@ -8,7 +8,7 @@
 require_relative 'BaseLearningExperiment'
 
 class Neuron
-  include NonMonotonicIOFunction
+  # include NonMonotonicIOFunction
   # include PiecewiseLinNonMonIOFunction
 end
 
@@ -29,10 +29,10 @@ class Experiment
         :randomNumberSeed => randomNumberSeed,
 
         # training parameters
-        :outputErrorLearningRate => 0.1,
+        :outputErrorLearningRate => 0.3,
         :minMSE => 0.0, # 0.001,
-        :maxNumEpochs => 7e3,
-        :probabilityOfBeingEnabled => 1.0,
+        :maxNumEpochs => 1000,
+        #:probabilityOfBeingEnabled => 1.0,
 
 
         # Network Architecture
@@ -60,7 +60,8 @@ class Experiment
     xStart = [-1.0, 1.0, -1.0, 1.0]
     yStart = [1.0, 1.0, -4.0, -4.0]
     xInc = [0.0, 0.0, 0.0, 0.0]
-    yInc = [1.0, 1.0, 1.0, 1.0]
+     yInc = [1.0, 1.0, 1.0, 1.0]
+   # yInc = [0.0, 0.0, 0.0, 0.0]
     zS = -2.0 # 0.0 # -2.0
     zI = 1.0 # 0.0 # 1.0
 

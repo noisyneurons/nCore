@@ -109,6 +109,28 @@ module NeuronToNeuronConnection
     end
   end
 
+
+  def zeroLearningRateInLinksBetweenNeurons(sendingNeurons, receivingNeurons)
+    sendingNeurons.each do |aSendingNeuron|
+      receivingNeurons.each do |aReceivingNeuron|
+        outputLinks = aSendingNeuron.outputLinks
+        inputLinks = aReceivingNeuron.inputLinks
+        zeroLearningRateInCommonLink(outputLinks, inputLinks)
+      end
+    end
+  end
+
+
+  def zeroLearningRateInCommonLink(outputLinks, inputLinks)
+    theCommonLink = findTheConnectingLink(inputLinks, outputLinks)
+    if (theCommonLink.nil?)
+      STDERR.puts "Possible ERROR: No common link between 2 Neurons"
+    else
+      theCommonLink.learningRate = 0.0
+    end
+  end
+
+
   def giveEachLinkArrayASingleSharedWeight(groupedLinks)
     groupedLinks.each do |aGroupOfLinksToShareASingleWeight|
       firstLinkOfGroup = aGroupOfLinksToShareASingleWeight[0]
@@ -210,7 +232,7 @@ class JumpLinked3LayerNetwork < Standard3LayerNetwork
 
   def createStandardNetworkWithStandardFullyConnectedArchitecture
     createLayersAndSequentialLayerToLayerConnections
-    connect_layer_to_another(inputLayer, outputLayer, args)   # This is where we create links that 'jump across' the hidden layer.
+    connect_layer_to_another(inputLayer, outputLayer, args) # This is where we create links that 'jump across' the hidden layer.
     connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
   end
 

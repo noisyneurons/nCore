@@ -219,20 +219,22 @@ class StepTrainerForOutputErrorBPOnly < AbstractStepTrainer
   end
 end
 
-class StepTrainerForJumpLinksOutputErrorBPOnly < AbstractStepTrainer
-  def innerTrainingLoop
-    performStandardBackPropTraining()
-    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
-  end
-
+class Step1TrainerForJumpLinksOutputErrorBPOnly < StepTrainerForOutputErrorBPOnly
   def performStandardBackPropTraining
     neuronsWithInputLinks.each { |aNeuron| aNeuron.learningRate = 0.0 }
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
+
+    zeroLearningRateInLinksBetweenNeurons(allNeuronLayers[1], outputErrorAdaptingNeurons)
+    zeroWeightsInLinksBetweenNeurons(allNeuronLayers[1], outputErrorAdaptingNeurons)
+
     acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
     outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
   end
-
 end
+
+class Step2TrainerForJumpLinksOutputErrorBPOnly < StepTrainerForOutputErrorBPOnly
+end
+
 
 
 class StepTrainerForOutputErrorBPOnlyModLR < StepTrainerForOutputErrorBPOnly
@@ -303,11 +305,12 @@ class Project6pt2TrainingSupervisor < TrainingSupervisorBase
 
   def postInitialize
     self.neuronGroups1 = NeuronGroupsForStep1JumpLinked3LayerNetwork.new(network)
-    self.stepTrainer1 = StepTrainerForJumpLinksOutputErrorBPOnly.new(examples, neuronGroups1, trainingSequence, args)
+    self.stepTrainer1 = Step1TrainerForJumpLinksOutputErrorBPOnly.new(examples, neuronGroups1, trainingSequence, args)
 
     self.neuronGroups2 = NeuronGroupsForStep2JumpLinked3LayerNetwork.new(network)
-    trainingSequence2 = TrainingSequence.new(args)
-    self.stepTrainer2 = StepTrainerForJumpLinksOutputErrorBPOnly.new(examples, neuronGroups2, trainingSequence2, args)
+    trainingSequence = TrainingSequence.new(args)
+    trainingSequence.maxNumberOfEpochs = 7e3
+    self.stepTrainer2 = Step2TrainerForJumpLinksOutputErrorBPOnly.new(examples, neuronGroups2, trainingSequence, args)
   end
 
   def train

@@ -56,7 +56,7 @@ class Experiment
 
   def createTrainingSet
     xStart = [-1.0, 1.0, -1.0, 1.0]
-    yStart = [1.0, 1.0, -4.0, -4.0]
+    yStart = [1.0, 1.0, -1.0, -1.0]
     xInc = [0.0, 0.0, 0.0, 0.0]
     yInc = [1.0, 1.0, 1.0, 1.0]
     zS = -2.0 # 0.0 # -2.0
