@@ -1,19 +1,20 @@
 ### VERSION "nCore"
+### VERSION "nCore"
 ## ../nCore/bin/Proj6pt2Variations.rb
-# Purpose:  Second and very important part of Project 6; 3-layer non-mon neurons
-# Ultimate goal of project 6 is to do a preliminarily test of the
-# usefulness of non-mon neurons' for improving the extracted features. Improving
-# the features amounts to improving the features to provide better generalization ability.
+# Purpose:  Second and very important part of Project 6;
+# 3-layer standard network, except that output neuron is non-mon
+
 
 require_relative 'BaseLearningExperiment'
 
 class Neuron
-  include NonMonotonicIOFunction
+  include LinearIOFunction
+  # include NonMonotonicIOFunction
   # include PiecewiseLinNonMonIOFunction
 end
 
 class OutputNeuron
-  include NonMonotonicIOFunction
+  include LinearIOFunction
   # include SigmoidIOFunction
   # include PiecewiseLinNonMonIOFunction
 end
@@ -29,17 +30,17 @@ class Experiment
         :randomNumberSeed => randomNumberSeed,
 
         # training parameters
-        :outputErrorLearningRate => 0.1,
+        :outputErrorLearningRate => 0.001,
         :minMSE => 0.0, # 0.001,
-        :maxNumEpochs => 7e3,
+        :maxNumEpochs => 2e3,
         :probabilityOfBeingEnabled => 1.0,
 
 
         # Network Architecture
         :numberOfInputNeurons => 2,
         :numberOfHiddenNeurons => 2,
-        :numberOfOutputNeurons => 1,
-        :weightRange => 0.1,
+        :numberOfOutputNeurons => 2,
+        :weightRange => 0.01,
         :typeOfLink => Link,
         :typeOfNeuron => Neuron, # NoisyNeuron,  # Neuron,
         :typeOfOutputNeuron => OutputNeuron,
@@ -61,6 +62,7 @@ class Experiment
     yStart = [1.0, 1.0, -4.0, -4.0]
     xInc = [0.0, 0.0, 0.0, 0.0]
     yInc = [1.0, 1.0, 1.0, 1.0]
+    # yInc = [0.0, 0.0, 0.0, 0.0]
     zS = -2.0 # 0.0 # -2.0
     zI = 1.0 # 0.0 # 1.0
 
@@ -81,8 +83,19 @@ class Experiment
         z = zS + (zI * classExNumb)
         # aPoint = [x, y, z]
         aPoint = [x, y]
-        desiredOutputs = [0.0]
-        desiredOutputs[0] = 1.0  if(indexToClass == 1)
+
+        #xd = xS + (xI * classExNumb)
+        #yd = yS + (yI * classExNumb)
+        #zd = zS + (zI * classExNumb)
+        ## aPoint = [x, y, z]
+        #desiredOutputs = [xd, yd]
+
+
+        # desiredOutputs = aPoint.deep_clone
+        # puts "aPoint= #{aPoint}\tdesiredOutputs= #{desiredOutputs}"
+
+        desiredOutputs = [10.0, 0.0]
+        # desiredOutputs[0] = 1.0  if(indexToClass == 1)
         examples << {:inputs => aPoint, :targets => desiredOutputs, :exampleNumber => exampleNumber, :class => indexToClass}
         exampleNumber += 1
       end

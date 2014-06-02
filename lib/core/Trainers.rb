@@ -65,6 +65,7 @@ class AbstractStepTrainer
       dbStoreTrainingData()
       trainingSequence.nextEpoch
       mse = calcMSE
+     # std("mse 1= ", mse)
     end
     testMSE = calcTestingMeanSquaredErrors
     return trainingSequence.epochs, calcMSE, testMSE

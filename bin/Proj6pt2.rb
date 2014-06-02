@@ -31,7 +31,7 @@ class Experiment
         # training parameters
         :outputErrorLearningRate => 0.3,
         :minMSE => 0.0, # 0.001,
-        :maxNumEpochs => 1000,
+        :maxNumEpochs => 10,
         #:probabilityOfBeingEnabled => 1.0,
 
 

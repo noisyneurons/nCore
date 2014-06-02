@@ -125,11 +125,15 @@ end
 module LinearIOFunction
 
   def ioFunction(aNetInput)
-    return aNetInput
+    aNetInput
   end
 
   def ioDerivativeFromNetInput(aNetInput)
-    return 1.0
+    ioDerivativeFromOutput(ioFunction(aNetInput))
+  end
+
+  def ioDerivativeFromOutput(neuronsOutput)
+    1.0
   end
 
 end
@@ -189,6 +193,12 @@ module CommonNeuronCalculations
   def calcNetError
     outputLinks.inject(0.0) { |sum, link| sum + link.backPropagate }
   end
+end
+
+
+module SelfOrganization
+  public
+
 end
 
 
@@ -384,7 +394,6 @@ class NoisyNeuron < Neuron
     end
     output
   end
-
 
   def backPropagate
     self.error = if (enabled)
