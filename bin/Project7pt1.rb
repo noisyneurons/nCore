@@ -1,21 +1,21 @@
 ### VERSION "nCore"
-### VERSION "nCore"
-## ../nCore/bin/Proj6pt2Variations.rb
-# Purpose:  Second and very important part of Project 6;
-# 3-layer standard network, except that output neuron is non-mon
-
+## ../nCore/bin/Project7pt1.rb
+# Purpose:  Start of Project 7; project to split example set to learn sub-parts, and then combine those parts/neuron-functions that
+# didn't need to be separated, but instead need to be integrated to obtain better generalization.
+# Ultimate goal of project 6 is develop analogy processing -- where one function useful for solving one problem
+# can be of use in solving another problem.  The common function(s)/neuron(s) can be thus be 'reused' -- and even potentially made
+# better by improving the accuracy of the function parameters because more examples are used to learn the parameters.
 
 require_relative 'BaseLearningExperiment'
 
-class Neuron
-  # include LinearIOFunction
-  # include NonMonotonicIOFunction
-  # include PiecewiseLinNonMonIOFunction
-end
+#class Neuron
+#  include NonMonotonicIOFunction
+#  # include PiecewiseLinNonMonIOFunction
+#end
 
 class OutputNeuron
-  include LinearIOFunction
   # include SigmoidIOFunction
+  # include NonMonotonicIOFunction
   # include PiecewiseLinNonMonIOFunction
 end
 
@@ -30,17 +30,16 @@ class Experiment
         :randomNumberSeed => randomNumberSeed,
 
         # training parameters
-        :outputErrorLearningRate => 0.001,
+        :outputErrorLearningRate => 0.1,
         :minMSE => 0.0, # 0.001,
-        :maxNumEpochs => 30e3,
-        :probabilityOfBeingEnabled => 1.0,
+        :maxNumEpochs => 7e3,
 
 
         # Network Architecture
         :numberOfInputNeurons => 2,
-        :numberOfHiddenNeurons => 2,
-        :numberOfOutputNeurons => 2,
-        :weightRange => 0.01,
+        :numberOfHiddenNeurons => 0,
+        :numberOfOutputNeurons => 1,
+        :weightRange => 1.0,
         :typeOfLink => Link,
         :typeOfNeuron => Neuron,
         :typeOfOutputNeuron => OutputNeuron,
@@ -50,7 +49,7 @@ class Experiment
         :numberOfTestingExamples => numberOfExamples,
 
         # Recording and database parameters
-        :neuronsToDisplay => [5],
+        :neuronsToDisplay => [0],
         :intervalForSavingNeuronData => 100000,
         :intervalForSavingDetailedNeuronData => 2000,
         :intervalForSavingTrainingData => 100
@@ -59,13 +58,9 @@ class Experiment
 
   def createTrainingSet
     xStart = [-1.0, 1.0, -1.0, 1.0]
-    yStart = [1.0, 1.0, -4.0, -4.0]
+    yStart = [1.0, 1.0, -1.0, -1.0]
     xInc = [0.0, 0.0, 0.0, 0.0]
     yInc = [1.0, 1.0, 1.0, 1.0]
-    # yInc = [0.0, 0.0, 0.0, 0.0]
-    zS = -2.0 # 0.0 # -2.0
-    zI = 1.0 # 0.0 # 1.0
-
 
     numberOfClasses = xStart.length
     numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
@@ -80,12 +75,9 @@ class Experiment
       numberOfExamplesInEachClass.times do |classExNumb|
         x = xS + (xI * classExNumb)
         y = yS + (yI * classExNumb)
-        z = zS + (zI * classExNumb)
-        # aPoint = [x, y, z]
         aPoint = [x, y]
-
-        desiredOutputs = aPoint
-
+        desiredOutputs = [0.0]
+        desiredOutputs[0] = 1.0  if(indexToClass == 1)
         examples << {:inputs => aPoint, :targets => desiredOutputs, :exampleNumber => exampleNumber, :class => indexToClass}
         exampleNumber += 1
       end
@@ -100,8 +92,8 @@ class Experiment
   end
 
   def createNetworkAndTrainer
-    network = Standard3LayerNetwork.new(args)
-    theTrainer = StandardBPTrainingSupervisor.new(examples, network, args)
+    network = Simplest1LayerNet.new(args)
+    theTrainer = BPTrainingSupervisorFor1LayerNet.new(examples, network, args)
     return network, theTrainer
   end
 
@@ -129,6 +121,6 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("Proj6pt2; 2-in 1-out; single NonMon Output Neuron; 2-4 Neurons in Hidden Layer", baseRandomNumberSeed)
+experiment = Experiment.new("Proj7pt1; 2 in 1 out; divide then integrate", baseRandomNumberSeed)
 
 experiment.performSimulation()

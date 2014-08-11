@@ -239,6 +239,50 @@ class JumpLinked3LayerNetwork < Standard3LayerNetwork
 end
 
 
+class JumpLinked4LayerNetwork < BaseNetwork
+  attr_accessor :hiddenLayer1, :hiddenLayer2
+
+  def createStandardNetworkWithStandardFullyConnectedArchitecture
+    createLayersAndSequentialLayerToLayerConnections
+    connect_layer_to_another(inputLayer, hiddenLayer2, args) # This is where we create links that 'jump across' the hidden layer1.
+    connect_layer_to_another(hiddenLayer1, outputLayer, args) # This is where we create links that 'jump across' the hidden layer2.
+    connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
+  end
+
+  def createLayersAndSequentialLayerToLayerConnections
+    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
+    self.allNeuronLayers << inputLayer
+
+    self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], args[:numberOfHiddenLayer1Neurons])
+    self.allNeuronLayers << hiddenLayer1
+
+    self.hiddenLayer2 = createAndConnectLayer(hiddenLayer1, typeOfNeuron = args[:typeOfNeuron], args[:numberOfHiddenLayer2Neurons])
+    self.allNeuronLayers << hiddenLayer2
+
+    self.outputLayer = createAndConnectLayer(hiddenLayer2, typeOfNeuron = args[:typeOfOutputNeuron], args[:numberOfOutputNeurons])
+    self.allNeuronLayers << outputLayer
+  end
+end
+
+
+class SharedJumpLinked4LayerNetwork < JumpLinked4LayerNetwork
+  attr_accessor :hiddenLayer1, :hiddenLayer2
+
+  def createStandardNetworkWithStandardFullyConnectedArchitecture
+    createLayersAndSequentialLayerToLayerConnections
+    connect_layer_to_another(inputLayer, hiddenLayer2, args) # This is where we create links that 'jump across' the hidden layer1.
+    connect_layer_to_another(hiddenLayer1, outputLayer, args) # This is where we create links that 'jump across' the hidden layer2.
+    connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
+  end
+
+end
+
+
+
+
+
+
+
 class Recurrent2HiddenLayerNetworkSpecial < BaseNetwork
   attr_accessor :hiddenLayer1, :hiddenLayer2, :linksBetweenHidden2Layers
 

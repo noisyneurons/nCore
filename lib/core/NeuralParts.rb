@@ -388,7 +388,7 @@ class NoisyNeuron < Neuron
 
       when learning == false
         signal = super(exampleNumber) - outputWhenNeuronDisabled
-        self.output = (signal / probabilityOfBeingEnabled)  +  outputWhenNeuronDisabled
+        self.output = (signal / probabilityOfBeingEnabled) + outputWhenNeuronDisabled
       else
         STDERR.puts "error, 'learning' variable not set to true or false!!"
     end
