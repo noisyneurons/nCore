@@ -157,12 +157,7 @@ class BaseNetwork
   end
 
   def createSimpleLearningANN
-    createStandardNetworkWithStandardFullyConnectedArchitecture
-    modificationsToStandardNetworkArchitecture
-  end
-
-  def modificationsToStandardNetworkArchitecture
-    self
+    createNetwork
   end
 
   def to_s
@@ -195,7 +190,7 @@ end # Base network
 
 class Simplest1LayerNet < BaseNetwork
 
-  def createStandardNetworkWithStandardFullyConnectedArchitecture
+  def createNetwork
     self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
     self.allNeuronLayers << inputLayer
 
@@ -210,7 +205,7 @@ end
 
 class Standard3LayerNetwork < BaseNetwork
 
-  def createStandardNetworkWithStandardFullyConnectedArchitecture
+  def createNetwork
     createLayersAndSequentialLayerToLayerConnections
     connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
   end
@@ -230,7 +225,7 @@ end
 
 class JumpLinked3LayerNetwork < Standard3LayerNetwork
 
-  def createStandardNetworkWithStandardFullyConnectedArchitecture
+  def createNetwork
     createLayersAndSequentialLayerToLayerConnections
     connect_layer_to_another(inputLayer, outputLayer, args) # This is where we create links that 'jump across' the hidden layer.
     connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
@@ -242,15 +237,15 @@ end
 class JumpLinked4LayerNetwork < BaseNetwork
   attr_accessor :hiddenLayer1, :hiddenLayer2
 
-  def createStandardNetworkWithStandardFullyConnectedArchitecture
+  def createNetwork
     createLayersAndSequentialLayerToLayerConnections
-    connect_layer_to_another(inputLayer, hiddenLayer2, args) # This is where we create links that 'jump across' the hidden layer1.
-    connect_layer_to_another(hiddenLayer1, outputLayer, args) # This is where we create links that 'jump across' the hidden layer2.
+    connect_layer_to_another(inputLayer, hiddenLayer2, args) # This is where we create links that 'jump across' hidden layer1.
+    connect_layer_to_another(hiddenLayer1, outputLayer, args) # This is where we create links that 'jump across' hidden layer2.
     connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
   end
 
   def createLayersAndSequentialLayerToLayerConnections
-    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
+    self.inputLayer = createAndConnectLayer(nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
     self.allNeuronLayers << inputLayer
 
     self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], args[:numberOfHiddenLayer1Neurons])
@@ -266,9 +261,8 @@ end
 
 
 class SharedJumpLinked4LayerNetwork < JumpLinked4LayerNetwork
-  attr_accessor :hiddenLayer1, :hiddenLayer2
 
-  def createStandardNetworkWithStandardFullyConnectedArchitecture
+  def createNetwork
     createLayersAndSequentialLayerToLayerConnections
     connect_layer_to_another(inputLayer, hiddenLayer2, args) # This is where we create links that 'jump across' the hidden layer1.
     connect_layer_to_another(hiddenLayer1, outputLayer, args) # This is where we create links that 'jump across' the hidden layer2.
@@ -276,10 +270,6 @@ class SharedJumpLinked4LayerNetwork < JumpLinked4LayerNetwork
   end
 
 end
-
-
-
-
 
 
 

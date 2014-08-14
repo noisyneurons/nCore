@@ -92,7 +92,7 @@ class Experiment
   end
 
   def createNetworkAndTrainer
-    network = Simplest1LayerNet.new(args)
+    network = JumpLinked4LayerNetwork.new(args)
     theTrainer = BPTrainingSupervisorFor1LayerNet.new(examples, network, args)
     return network, theTrainer
   end
