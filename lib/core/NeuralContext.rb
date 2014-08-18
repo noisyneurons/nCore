@@ -4,41 +4,67 @@
 require_relative 'Utilities'
 require_relative 'NeuralParts'
 
-class Context
-  attr_accessor :enclosingNeuron, :args, :learn
 
-  def initialize(controlledNeuron, controllingNeuron, args)
-    @enclosingNeuron = enclosingNeuron
-    @args = args
-    @learn = true
-  end
-
-end
-
-
-class NeuronLearningInContext < Neuron
-  attr_accessor :controllingNeuron, :contextRequirements, :learningEnabled
+class NeuronInContext < Neuron
+  attr_accessor :neuronControllingLearning, :layerLearningController, :adjustmentToLearningRate
 
   def postInitialize
     super
-    @probabilityOfBeingEnabled = [args[:probabilityOfBeingEnabled], 0.01].max
-    @outputWhenNeuronDisabled = self.ioFunction(0.0)
+    @neuronControllingLearning = nil
+    @layerLearningController = nil
+    @adjustmentToLearningRate = nil
+  end
+
+  def calcDeltaWsAndAccumulate
+    self.adjustmentToLearningRate = adjustmentTransformer(neuronControllingLearning.output, layerLearningController.output)
+    inputLinks.each do |inputLink|
+      inputLink.calcDeltaWAndAccumulate
+    end
   end
 
 
-  def backPropagate
-    self.error = if contextRequirements.met( controllingNeuron.output )
-                   super
-                 else
-                   0.0
-                 end
+  def adjustmentTransformer(controlNeuronsOutput, layerControllersOutput)
+    adjustment = controlNeuronsOutput * layerControllersOutput
+    transformedAdjustment =  if adjustment >= 0.5
+                               1.0
+                             else
+                               0.0
+                             end
+    #transformedAdjustment = 1.0
+  end
+
+
+  def to_s
+    super
+    description += "\t\t\tNeuron Controlling Learning\t#{neuronControllingLearning}\n"
+    description += "\t\t\tLayer Controller\t#{layerLearningController}\n"
+    return description
   end
 end
 
 
-class ContextDecisionMaker
+class LinkInContext < Link
+  def calcDeltaWAndAccumulate
+    adjustmentToLearningRate = outputNeuron.adjustmentToLearningRate
+    self.deltaWAccumulated += if adjustmentToLearningRate > 0.0
+                                adjustmentToLearningRate * calcDeltaW
+                              else
+                                0.0
+                              end
+  end
+end
 
 
+class LayerLearningController
+
+  def output
+    1.0
+  end
 
 end
+
+
+
+
+
 

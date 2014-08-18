@@ -4,8 +4,8 @@
 require_relative 'Utilities'
 
 module NeuronToNeuronConnection
-  def connect_layer_to_another(sendingLayer, receivingLayer, args)
-    sendingLayer.each { |sendingNeuron| connectToAllNeuronsInReceivingLayer(sendingNeuron, receivingLayer, args) }
+  def connect_layer_to_another(sendingLayer, receivingLayer, typeOfLink, args)
+    sendingLayer.each { |sendingNeuron| connectToAllNeuronsInReceivingLayer(sendingNeuron, receivingLayer, typeOfLink, args) }
   end
 
   def createArrayOfNeurons(typeOfNeuron, numberOfNeurons, args)
@@ -51,18 +51,18 @@ module NeuronToNeuronConnection
 
   private
 
-  def connectToAllNeuronsInReceivingLayer(sendingNeuron, receivingLayer, args)
-    receivingLayer.each { |receivingNeuron| connect_neuron_to_neuron(sendingNeuron, receivingNeuron, args) }
+  def connectToAllNeuronsInReceivingLayer(sendingNeuron, receivingLayer, typeOfLink, args)
+    receivingLayer.each { |receivingNeuron| connect_neuron_to_neuron(sendingNeuron, receivingNeuron, typeOfLink, args) }
   end
 
-  def connect_neuron_to_neuron(inputNeuron, outputNeuron, args)
-    theLink = createLink(inputNeuron, outputNeuron, args)
+  def connect_neuron_to_neuron(inputNeuron, outputNeuron, typeOfLink, args)
+    theLink = createLink(inputNeuron, outputNeuron, typeOfLink, args)
     inputNeuron.outputLinks << theLink
     outputNeuron.inputLinks << theLink
   end
 
-  def createLink(inputNeuron, outputNeuron, args)
-    typeOfLink = args[:typeOfLink] || Link
+  def createLink(inputNeuron, outputNeuron, typeOfLink, args)
+    typeOfLink = typeOfLink
     return typeOfLink.new(inputNeuron, outputNeuron, args)
   end
 
@@ -109,7 +109,6 @@ module NeuronToNeuronConnection
     end
   end
 
-
   def zeroLearningRateInLinksBetweenNeurons(sendingNeurons, receivingNeurons)
     sendingNeurons.each do |aSendingNeuron|
       receivingNeurons.each do |aReceivingNeuron|
@@ -120,7 +119,6 @@ module NeuronToNeuronConnection
     end
   end
 
-
   def zeroLearningRateInCommonLink(outputLinks, inputLinks)
     theCommonLink = findTheConnectingLink(inputLinks, outputLinks)
     if (theCommonLink.nil?)
@@ -129,7 +127,6 @@ module NeuronToNeuronConnection
       theCommonLink.learningRate = 0.0
     end
   end
-
 
   def giveEachLinkArrayASingleSharedWeight(groupedLinks)
     groupedLinks.each do |aGroupOfLinksToShareASingleWeight|
@@ -153,10 +150,6 @@ class BaseNetwork
     @allNeuronLayers = []
     NeuronBase.zeroID
     @theBiasNeuron = BiasNeuron.new(args)
-    createSimpleLearningANN
-  end
-
-  def createSimpleLearningANN
     createNetwork
   end
 
@@ -172,9 +165,9 @@ class BaseNetwork
 
   protected
 
-  def createAndConnectLayer(inputToLayer, typeOfNeuronInLayer, numberOfNeurons)
+  def createAndConnectLayer(inputToLayer, typeOfNeuronInLayer, typeOfLink, numberOfNeurons)
     layer = createArrayOfNeurons(typeOfNeuronInLayer, numberOfNeurons, args)
-    connect_layer_to_another(inputToLayer, layer, args) unless (inputToLayer.nil?) # input neurons do not receive any inputs from other neurons
+    connect_layer_to_another(inputToLayer, layer, typeOfLink, args) unless (inputToLayer.nil?) # input neurons do not receive any inputs from other neurons
     return layer
   end
 
@@ -183,7 +176,7 @@ class BaseNetwork
   end
 
   def addLinksFromBiasNeuronToHiddenAndOutputNeurons(singleArrayOfAllNeuronsToReceiveBiasInput)
-    connect_layer_to_another([theBiasNeuron], singleArrayOfAllNeuronsToReceiveBiasInput, args)
+    connect_layer_to_another([theBiasNeuron], singleArrayOfAllNeuronsToReceiveBiasInput, args[:typeOfLink], args)
   end
 end # Base network
 
@@ -191,10 +184,10 @@ end # Base network
 class Simplest1LayerNet < BaseNetwork
 
   def createNetwork
-    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
+    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, typeOfLink= args[:typeOfLink], args[:numberOfInputNeurons])
     self.allNeuronLayers << inputLayer
 
-    self.outputLayer = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfOutputNeuron], args[:numberOfOutputNeurons])
+    self.outputLayer = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfOutputNeuron], typeOfLink= args[:typeOfLink], args[:numberOfOutputNeurons])
     self.allNeuronLayers << outputLayer
 
     connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
@@ -211,13 +204,13 @@ class Standard3LayerNetwork < BaseNetwork
   end
 
   def createLayersAndSequentialLayerToLayerConnections
-    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
+    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, typeOfLink= args[:typeOfLink], args[:numberOfInputNeurons])
     self.allNeuronLayers << inputLayer
 
-    hiddenLayer = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], args[:numberOfHiddenNeurons])
+    hiddenLayer = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], typeOfLink= args[:typeOfLink], args[:numberOfHiddenNeurons])
     self.allNeuronLayers << hiddenLayer
 
-    self.outputLayer = createAndConnectLayer(hiddenLayer, typeOfNeuron = args[:typeOfOutputNeuron], args[:numberOfOutputNeurons])
+    self.outputLayer = createAndConnectLayer(hiddenLayer, typeOfNeuron = args[:typeOfOutputNeuron], typeOfLink= args[:typeOfLink], args[:numberOfOutputNeurons])
     self.allNeuronLayers << outputLayer
   end
 end
@@ -227,12 +220,102 @@ class JumpLinked3LayerNetwork < Standard3LayerNetwork
 
   def createNetwork
     createLayersAndSequentialLayerToLayerConnections
-    connect_layer_to_another(inputLayer, outputLayer, args) # This is where we create links that 'jump across' the hidden layer.
+    connect_layer_to_another(inputLayer, outputLayer, args[:typeOfLink], args) # This is where we create links that 'jump across' the hidden layer.
     connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
   end
 
 end
 
+
+
+###########################################################################################
+# May want to move this to a separate file and place it after this file in the "include manifest of files to load"
+
+###########################################################################################
+
+class ContextNetwork < BaseNetwork
+
+  def createNetwork
+    createLayersWithContextLayerArchitecture
+    connectAllLearningNeuronsToBiasNeuron
+  end
+
+
+  def connectAllLearningNeuronsToBiasNeuron
+    hiddenNeurons =  allNeuronLayers.flatten - inputLayer - outputLayer
+    addLinksFromBiasNeuronTo( hiddenNeurons, args[:typeOfLink] )
+    addLinksFromBiasNeuronTo( outputLayer, args[:typeOfLinkToOutput] )
+  end
+
+  def addLinksFromBiasNeuronTo( neurons, typeOfLink)
+    connect_layer_to_another([theBiasNeuron], neurons, typeOfLink, args)
+  end
+end
+
+
+
+class Context4LayerNetwork < ContextNetwork
+
+  def createLayersWithContextLayerArchitecture
+    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, typeOfLink = args[:typeOfLink], args[:numberOfInputNeurons])
+    self.allNeuronLayers << inputLayer
+
+    hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], typeOfLink = args[:typeOfLink], args[:numberOfHiddenLayer1Neurons])
+    layer1LearningController = LayerLearningController.new
+    hiddenLayer1.each {|aNeuron| aNeuron.layerLearningController = layer1LearningController}
+    hiddenLayer1.each {|aNeuron| aNeuron.neuronControllingLearning = theBiasNeuron}  # 'placeholder' -- always on
+    self.allNeuronLayers << hiddenLayer1
+
+    hiddenLayer2 = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], typeOfLink = args[:typeOfLink], args[:numberOfHiddenLayer2Neurons])
+    layer2LearningController = LayerLearningController.new
+    hiddenLayer2.each {|aNeuron| aNeuron.layerLearningController = layer2LearningController}
+    hiddenLayer2.each {|aNeuron| aNeuron.neuronControllingLearning = hiddenLayer1[0]}
+    self.allNeuronLayers << hiddenLayer2
+
+    self.outputLayer = createAndConnectLayer( (hiddenLayer1 + hiddenLayer2), typeOfNeuron = args[:typeOfOutputNeuron], typeOfLink = args[:typeOfLinkToOutput], args[:numberOfOutputNeurons])
+    self.allNeuronLayers << outputLayer
+  end
+
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+######################################## Code Below is not being used.
 
 class JumpLinked4LayerNetwork < BaseNetwork
   attr_accessor :hiddenLayer1, :hiddenLayer2

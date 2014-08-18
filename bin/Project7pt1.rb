@@ -6,6 +6,16 @@
 # can be of use in solving another problem.  The common function(s)/neuron(s) can be thus be 'reused' -- and even potentially made
 # better by improving the accuracy of the function parameters because more examples are used to learn the parameters.
 
+require_relative '../lib/core/Utilities'
+require_relative '../lib/core/DataSet'
+require_relative '../lib/core/NeuralParts'
+require_relative '../lib/core/NeuralContext'
+require_relative '../lib/core/NetworkFactories'
+require_relative '../lib/plot/CorePlottingCode'
+require_relative '../lib/core/SimulationDataStore'
+require_relative '../lib/core/TrainingSequencingAndGrouping'
+require_relative '../lib/core/Trainers.rb'
+
 require_relative 'BaseLearningExperiment'
 
 #class Neuron
@@ -32,16 +42,18 @@ class Experiment
         # training parameters
         :outputErrorLearningRate => 0.1,
         :minMSE => 0.0, # 0.001,
-        :maxNumEpochs => 7e3,
+        :maxNumEpochs => 1e3,
 
 
         # Network Architecture
         :numberOfInputNeurons => 2,
-        :numberOfHiddenNeurons => 0,
+        :numberOfHiddenLayer1Neurons => 1,
+        :numberOfHiddenLayer2Neurons => 2,
         :numberOfOutputNeurons => 1,
         :weightRange => 1.0,
-        :typeOfLink => Link,
-        :typeOfNeuron => Neuron,
+        :typeOfLink => LinkInContext,
+        :typeOfLinkToOutput => Link,
+        :typeOfNeuron => NeuronInContext,
         :typeOfOutputNeuron => OutputNeuron,
 
         # Training Set parameters
@@ -92,7 +104,7 @@ class Experiment
   end
 
   def createNetworkAndTrainer
-    network = JumpLinked4LayerNetwork.new(args)
+    network = Context4LayerNetwork.new(args)
     theTrainer = BPTrainingSupervisorFor1LayerNet.new(examples, network, args)
     return network, theTrainer
   end

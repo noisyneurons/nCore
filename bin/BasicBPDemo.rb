@@ -33,9 +33,11 @@ class Experiment
         :numberOfHiddenNeurons => 2,
         :numberOfOutputNeurons => 1,
         :weightRange => 1.0,
+
         :typeOfLink => Link,
         :typeOfNeuron => Neuron,
         :typeOfOutputNeuron => OutputNeuron,
+     #   :typeOfLinkToOutput => Link,
 
 
         # Training Set parameters
