@@ -286,35 +286,6 @@ end
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ######################################## Code Below is not being used.
 
 class JumpLinked4LayerNetwork < BaseNetwork

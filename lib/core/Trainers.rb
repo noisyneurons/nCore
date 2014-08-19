@@ -2,70 +2,45 @@
 ## ../nCore/lib/core/Trainers.rb
 
 
-######
-class AbstractStepTrainer
-  attr_accessor :examples, :numberOfExamples, :neuronGroups, :trainingSequence,
-                :args, :numberOfOutputNeurons, :minMSE,
+###################################################################
+###################################################################
 
-                :allNeuronLayers, :inputLayer, :outputLayer,
-                :layersWithInputLinks, :layersWhoseClustersNeedToBeSeeded,
-
-                :allNeuronsInOneArray, :neuronsWithInputLinks,
-                :neuronsWithInputLinksInReverseOrder, :neuronsWhoseClustersNeedToBeSeeded,
-
-                :outputErrorAdaptingLayers, :flockErrorGeneratingLayers, :flockErrorAdaptingLayers,
-                :outputErrorAdaptingNeurons, :flockErrorGeneratingNeurons, :flockErrorAdaptingNeurons,
-                :bpFlockErrorAdaptingNeurons, :bpFlockErrorAdaptingLayers,
-                :bpFlockErrorGeneratingNeurons, :bpFlockErrorGeneratingLayers,
-                :outputLayerNeurons, :hiddenLayerNeurons,
-
-                :maxFlockingIterationsCount, :flockingLearningRate, :bpFlockingLearningRate,
-                :flockingIterationsCount, # :accumulatedAbsoluteFlockingErrors,
-                :accumulatedExampleImportanceFactors, :absFlockingErrorsOld
-
+class TrainerBase
+  attr_accessor :examples, :network, :numberOfOutputNeurons, :args, :trainingSequence, :numberOfExamples, :startTime, :elapsedTime, :minMSE
   include NeuronToNeuronConnection
   include ExampleDistribution
   include DBAccess
+  include RecordingAndPlottingRoutines
 
-  def initialize(examples, neuronGroups, trainingSequence, args)
+  def initialize(examples, network, args)
     @examples = examples
-    @neuronGroups = neuronGroups
-    @trainingSequence = trainingSequence
+    @network = network
     @args = args
-
-    specifyGroupsOfLayersAndNeurons()
+    @trainingSequence = args[:trainingSequence]
 
     @numberOfOutputNeurons = @outputLayer.length
     @numberOfExamples = args[:numberOfExamples]
     @minMSE = args[:minMSE]
+
+    @startTime = Time.now
+    @elapsedTime = nil
+    @minMSE = args[:minMSE]
+    postInitialize
   end
 
-  def specifyGroupsOfLayersAndNeurons
-    @allNeuronLayers = neuronGroups.allNeuronLayers
-    @allNeuronsInOneArray = neuronGroups.allNeuronsInOneArray
-    @inputLayer = neuronGroups.inputLayer
-    @outputLayer = neuronGroups.outputLayer
-    @layersWithInputLinks = neuronGroups.layersWithInputLinks
-    @neuronsWithInputLinks = neuronGroups.neuronsWithInputLinks
-    @neuronsWithInputLinksInReverseOrder = neuronGroups.neuronsWithInputLinksInReverseOrder
-
-
-    @outputLayerNeurons = neuronGroups.outputLayerNeurons
-    @hiddenLayerNeurons = neuronGroups.hiddenLayerNeurons
-
-    @outputErrorAdaptingLayers = neuronGroups.outputErrorAdaptingLayers
-    @outputErrorAdaptingNeurons = neuronGroups.outputErrorAdaptingNeurons
+  def postInitialize
+    STDERR.puts "postInitialize of base class called!"
   end
 
   def train
     distributeSetOfExamples(examples)
     mse = 1e100
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
-      innerTrainingLoop()
+      performStandardBackPropTraining()
+      outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
       dbStoreTrainingData()
       trainingSequence.nextEpoch
       mse = calcMSE
-     # std("mse 1= ", mse)
     end
     testMSE = calcTestingMeanSquaredErrors
     return trainingSequence.epochs, calcMSE, testMSE
@@ -90,6 +65,7 @@ class AbstractStepTrainer
       end
     end
   end
+
 
   ###------------  Core Support Section ------------------------------
   #### Also, some refinements and specialized control functions:
@@ -209,134 +185,10 @@ class AbstractStepTrainer
   end
 
   # END CODE FOR AUTOMATIC CONTROL OF LEARNING RATES PER LAYER
-
-end
-
-
-class StepTrainerForOutputErrorBPOnly < AbstractStepTrainer
-  def innerTrainingLoop
-    performStandardBackPropTraining()
-    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
-  end
-end
-
-class Step1TrainerForJumpLinksOutputErrorBPOnly < StepTrainerForOutputErrorBPOnly
-  def performStandardBackPropTraining
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.learningRate = 0.0 }
-    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
-
-    zeroLearningRateInLinksBetweenNeurons(allNeuronLayers[1], outputErrorAdaptingNeurons)
-    zeroWeightsInLinksBetweenNeurons(allNeuronLayers[1], outputErrorAdaptingNeurons)
-
-    acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
-    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-  end
-end
-
-class Step2TrainerForJumpLinksOutputErrorBPOnly < StepTrainerForOutputErrorBPOnly
 end
 
 
 
-class StepTrainerForOutputErrorBPOnlyModLR < StepTrainerForOutputErrorBPOnly
-  def performStandardBackPropTraining
-    outputLayerNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputLayerLearningRate] }
-
-    ###
-    #hiddenLayerNeurons[0].learningRate = args[:hiddenLayerLearningRate]
-    #hiddenLayerNeurons[1].learningRate = args[:hiddenLayerLearningRate] / 10.0
-    #hiddenLayerNeurons[2].learningRate = args[:hiddenLayerLearningRate] / 100.0
-
-    hiddenLayerNeurons.each { |aNeuron| aNeuron.learningRate = args[:hiddenLayerLearningRate] }
-
-    ###
-
-    acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
-    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-  end
-end
-
-
-###################################################################
-###################################################################
-
-class TrainingSupervisorBase
-  attr_accessor :examples, :network, :args, :neuronGroups, :stepTrainer, :trainingSequence, :startTime, :elapsedTime, :minMSE
-  include RecordingAndPlottingRoutines
-
-  def initialize(examples, network, args)
-    @examples = examples
-    @network = network
-    @args = args
-    @trainingSequence = args[:trainingSequence]
-    @startTime = Time.now
-    @elapsedTime = nil
-    @minMSE = args[:minMSE]
-    postInitialize
-  end
-
-  def postInitialize
-    STDERR.puts "postInitialize of base class called!"
-  end
-
-  def train
-    stepTrainer.train
-  end
-end
-
-
-class ThreeClass2HiddenSupervisorOEBP < TrainingSupervisorBase
-  def postInitialize
-    self.neuronGroups = GroupsForThreeClass2HiddenLayersOEBP.new(network)
-    self.stepTrainer = StepTrainerForOutputErrorBPOnly.new(examples, neuronGroups, trainingSequence, args)
-  end
-end
-
-
-class StandardBPTrainingSupervisor < TrainingSupervisorBase
-  def postInitialize
-    self.neuronGroups = NeuronGroupsFor3LayerBPNetwork.new(network)
-    self.stepTrainer = StepTrainerForOutputErrorBPOnly.new(examples, neuronGroups, trainingSequence, args)
-  end
-end
-
-
-class Project6pt2TrainingSupervisor < TrainingSupervisorBase
-  attr_accessor :stepTrainer1, :stepTrainer2, :neuronGroups1, :neuronGroups2
-
-  def postInitialize
-    self.neuronGroups1 = NeuronGroupsForStep1JumpLinked3LayerNetwork.new(network)
-    self.stepTrainer1 = Step1TrainerForJumpLinksOutputErrorBPOnly.new(examples, neuronGroups1, trainingSequence, args)
-
-    self.neuronGroups2 = NeuronGroupsForStep2JumpLinked3LayerNetwork.new(network)
-    trainingSequence = TrainingSequence.new(args)
-    trainingSequence.maxNumberOfEpochs = 7e3
-    self.stepTrainer2 = Step2TrainerForJumpLinksOutputErrorBPOnly.new(examples, neuronGroups2, trainingSequence, args)
-  end
-
-  def train
-    stepTrainer1.train
-    puts network
-    stepTrainer2.train
-  end
-
-end
-
-
-class StandardBPTrainingSupervisorModLR < StandardBPTrainingSupervisor
-  def postInitialize
-    self.neuronGroups = NeuronGroupsFor3LayerBPNetworkModLR.new(network)
-    self.stepTrainer = StepTrainerForOutputErrorBPOnlyModLR.new(examples, neuronGroups, trainingSequence, args)
-  end
-end
-
-
-class BPTrainingSupervisorFor1LayerNet < TrainingSupervisorBase
-  def postInitialize
-    self.neuronGroups = NeuronGroupsFor1LayerBPNetwork.new(network)
-    self.stepTrainer = StepTrainerForOutputErrorBPOnly.new(examples, neuronGroups, trainingSequence, args)
-  end
-end
 
 
 #class WeightChangeNormalizer
