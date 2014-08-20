@@ -234,15 +234,16 @@ end
 ###########################################################################################
 
 class ContextNetwork < BaseNetwork
+  attr_accessor :hiddenLayers, :hiddenNeurons
 
   def createNetwork
     createLayersWithContextLayerArchitecture
+    self.hiddenLayers = allNeuronLayers[1..-2]
+    self.hiddenNeurons =  hiddenLayers.flatten
     connectAllLearningNeuronsToBiasNeuron
   end
 
-
   def connectAllLearningNeuronsToBiasNeuron
-    hiddenNeurons =  allNeuronLayers.flatten - inputLayer - outputLayer
     addLinksFromBiasNeuronTo( hiddenNeurons, args[:typeOfLink] )
     addLinksFromBiasNeuronTo( outputLayer, args[:typeOfLinkToOutput] )
   end
@@ -261,14 +262,10 @@ class Context4LayerNetwork < ContextNetwork
     self.allNeuronLayers << inputLayer
 
     hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], typeOfLink = args[:typeOfLink], args[:numberOfHiddenLayer1Neurons])
-    layer1LearningController = LayerLearningController.new
-    hiddenLayer1.each {|aNeuron| aNeuron.layerLearningController = layer1LearningController}
     hiddenLayer1.each {|aNeuron| aNeuron.neuronControllingLearning = theBiasNeuron}  # 'placeholder' -- always on
     self.allNeuronLayers << hiddenLayer1
 
     hiddenLayer2 = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], typeOfLink = args[:typeOfLink], args[:numberOfHiddenLayer2Neurons])
-    layer2LearningController = LayerLearningController.new
-    hiddenLayer2.each {|aNeuron| aNeuron.layerLearningController = layer2LearningController}
     hiddenLayer2.each {|aNeuron| aNeuron.neuronControllingLearning = hiddenLayer1[0]}
     self.allNeuronLayers << hiddenLayer2
 

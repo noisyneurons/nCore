@@ -77,7 +77,6 @@ class TrainerBase
   end
 
   def postInitialize
-    STDERR.puts "postInitialize of base class called!"
   end
 
   def train

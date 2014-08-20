@@ -6,26 +6,23 @@ require_relative 'NeuralParts'
 
 
 class NeuronInContext < Neuron
-  attr_accessor :neuronControllingLearning, :layerLearningController, :adjustmentToLearningRate
+  attr_accessor :neuronControllingLearning, :adjustmentToLearningRate
 
   def postInitialize
     super
-    @neuronControllingLearning = nil
-    @layerLearningController = nil
     @adjustmentToLearningRate = nil
   end
 
   def calcDeltaWsAndAccumulate
-    self.adjustmentToLearningRate = adjustmentTransformer(neuronControllingLearning.output, layerLearningController.output)
+    self.adjustmentToLearningRate = adjustmentTransformer(neuronControllingLearning.output)
     inputLinks.each do |inputLink|
       inputLink.calcDeltaWAndAccumulate
     end
   end
 
 
-  def adjustmentTransformer(controlNeuronsOutput, layerControllersOutput)
-    adjustment = controlNeuronsOutput * layerControllersOutput
-    transformedAdjustment =  if adjustment >= 0.5
+  def adjustmentTransformer(controlNeuronsOutput)
+    transformedAdjustment =  if controlNeuronsOutput >= 0.5
                                1.0
                              else
                                0.0
@@ -35,9 +32,8 @@ class NeuronInContext < Neuron
 
 
   def to_s
-    super
+    description = super
     description += "\t\t\tNeuron Controlling Learning\t#{neuronControllingLearning}\n"
-    description += "\t\t\tLayer Controller\t#{layerLearningController}\n"
     return description
   end
 end
@@ -55,14 +51,14 @@ class LinkInContext < Link
 end
 
 
-class LayerLearningController
-
-  def output
-    1.0
-  end
-
-end
-
+#class LayerLearningController
+#
+#  def output
+#    1.0
+#  end
+#
+#end
+#
 
 
 

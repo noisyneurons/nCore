@@ -13,7 +13,6 @@ require_relative '../lib/core/NeuralContext'
 require_relative '../lib/core/NetworkFactories'
 require_relative '../lib/plot/CorePlottingCode'
 require_relative '../lib/core/SimulationDataStore'
-require_relative '../lib/core/TrainingSequencingAndGrouping'
 require_relative '../lib/core/Trainers.rb'
 
 require_relative 'BaseLearningExperiment'
@@ -49,7 +48,7 @@ class Experiment
         :numberOfInputNeurons => 2,
         :numberOfHiddenLayer1Neurons => 1,
         :numberOfHiddenLayer2Neurons => 2,
-        :numberOfOutputNeurons => 1,
+        :numberOfOutputNeurons => 4,
         :weightRange => 1.0,
         :typeOfLink => LinkInContext,
         :typeOfLinkToOutput => Link,
@@ -88,8 +87,8 @@ class Experiment
         x = xS + (xI * classExNumb)
         y = yS + (yI * classExNumb)
         aPoint = [x, y]
-        desiredOutputs = [0.0]
-        desiredOutputs[0] = 1.0  if(indexToClass == 1)
+        desiredOutputs = [0.0, 0.0, 0.0, 0.0]
+        desiredOutputs[indexToClass] = 1.0
         examples << {:inputs => aPoint, :targets => desiredOutputs, :exampleNumber => exampleNumber, :class => indexToClass}
         exampleNumber += 1
       end
@@ -105,27 +104,10 @@ class Experiment
 
   def createNetworkAndTrainer
     network = Context4LayerNetwork.new(args)
-    theTrainer = BPTrainingSupervisorFor1LayerNet.new(examples, network, args)
+    theTrainer = TrainerBase.new(examples, network, args)
     return network, theTrainer
   end
 
-  def reportTrainingResults(neuronsToDisplay, descriptionOfExperiment, lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime)
-    trainingDataRecords = nil
-
-    endOfTrainingReport(lastEpoch, lastTestingMSE, lastTrainingMSE, network)
-
-    neuronDataSummary(neuronsToDisplay)
-
-    detailedNeuronDataSummary(neuronsToDisplay)
-
-    trainingDataRecords = trainingDataSummary
-
-    storeSnapShotData(descriptionOfExperiment, lastEpoch, lastTestingMSE, lastTrainingMSE, network, startingTime)
-
-    snapShotDataSummary
-
-    plotMSEvsEpochNumber(trainingDataRecords) unless(trainingDataRecords.nil?)
-  end
 end
 
 
