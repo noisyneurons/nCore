@@ -63,7 +63,7 @@ class Experiment
 
   def createNetworkAndTrainer
     network = Standard3LayerNetwork.new(args)
-    theTrainer = StandardBPTrainingSupervisor.new(examples, network, args)
+    theTrainer = TrainerBase.new(examples, network, args)
     return network, theTrainer
   end
 end

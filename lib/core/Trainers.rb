@@ -2,29 +2,77 @@
 ## ../nCore/lib/core/Trainers.rb
 
 
+#####
+
+class TrainingSequence
+  attr_accessor :args, :epochs, :maxNumberOfEpochs,
+                :stillMoreEpochs, :lastEpoch,
+                :atStartOfTraining, :afterFirstEpoch
+
+  def initialize(args)
+    @args = args
+    @maxNumberOfEpochs = args[:maxNumEpochs]
+    @epochs = -1
+    @atStartOfTraining = true
+    @afterFirstEpoch = false
+    @stillMoreEpochs = true
+    @lastEpoch = false
+    nextEpoch
+  end
+
+  def epochs=(value)
+    @epochs = value
+    args[:epochs] = value
+  end
+
+  def nextEpoch
+    self.epochs += 1
+    self.atStartOfTraining = false if (epochs > 0)
+    self.afterFirstEpoch = true unless (atStartOfTraining)
+
+    self.lastEpoch = false
+    self.lastEpoch = true if (epochs == (maxNumberOfEpochs - 1))
+
+    self.stillMoreEpochs = true
+    self.stillMoreEpochs = false if (epochs >= maxNumberOfEpochs)
+  end
+end
+
+
+
 ###################################################################
 ###################################################################
 
 class TrainerBase
-  attr_accessor :examples, :network, :numberOfOutputNeurons, :args, :trainingSequence, :numberOfExamples, :startTime, :elapsedTime, :minMSE
+  attr_accessor :examples, :network, :numberOfOutputNeurons, :allNeuronLayers, :allNeuronsInOneArray, :inputLayer, :outputLayer,
+                :neuronsWithInputLinks, :neuronsWithInputLinksInReverseOrder, :args, :trainingSequence,
+                :numberOfExamples, :startTime, :elapsedTime, :minMSE
   include NeuronToNeuronConnection
   include ExampleDistribution
   include DBAccess
   include RecordingAndPlottingRoutines
 
   def initialize(examples, network, args)
-    @examples = examples
-    @network = network
     @args = args
-    @trainingSequence = args[:trainingSequence]
 
+    @network = network
+    @allNeuronLayers = network.allNeuronLayers
+    @allNeuronsInOneArray = @allNeuronLayers.flatten
+    @inputLayer = @allNeuronLayers[0]
+    @outputLayer = @allNeuronLayers[-1]
+    @neuronsWithInputLinks = (@allNeuronsInOneArray - @inputLayer).flatten
+    @neuronsWithInputLinksInReverseOrder =  @neuronsWithInputLinks.reverse
     @numberOfOutputNeurons = @outputLayer.length
-    @numberOfExamples = args[:numberOfExamples]
+
+    @examples = examples
+    @numberOfExamples = examples.length
+
     @minMSE = args[:minMSE]
+    @trainingSequence = args[:trainingSequence]
 
     @startTime = Time.now
     @elapsedTime = nil
-    @minMSE = args[:minMSE]
+
     postInitialize
   end
 
@@ -37,7 +85,7 @@ class TrainerBase
     mse = 1e100
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
       performStandardBackPropTraining()
-      outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.dbStoreNeuronData }
+      neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
       dbStoreTrainingData()
       trainingSequence.nextEpoch
       mse = calcMSE
@@ -47,9 +95,10 @@ class TrainerBase
   end
 
   def performStandardBackPropTraining
-    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
-    acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
-    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+    #puts  neuronsWithInputLinks
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
+    acrossExamplesAccumulateDeltaWs(neuronsWithInputLinks) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
   end
 
   def acrossExamplesAccumulateDeltaWs(neurons)
@@ -65,7 +114,6 @@ class TrainerBase
       end
     end
   end
-
 
   ###------------  Core Support Section ------------------------------
   #### Also, some refinements and specialized control functions:
@@ -113,7 +161,7 @@ class TrainerBase
   end
 
   def propagateAcrossEntireNetwork(exampleNumber)
-    allNeuronsInOneArray.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+    allNeuronsInOneArray.flatten.each { |aNeuron| aNeuron.propagate(exampleNumber) }
   end
 
   def clearStoredNetInputs
@@ -131,60 +179,6 @@ class TrainerBase
   def calcWeightedErrorMetricForExample
     outputLayer.collect { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
   end
-
-  # BEGIN: CODE FOR AUTOMATIC CONTROL OF LEARNING RATES PER LAYER
-  # todo Code for automatic control of learning rates for bp of OE and FE.  Separate gain control per neuron necessary for local flocking. #############
-
-  def performNormalizedBackPropTrainingWithExtraMeasures
-    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
-    acrossExamplesAccumulateDeltaWs(outputErrorAdaptingNeurons) { |aNeuron, dataRecord| aNeuron.calcAccumDeltaWsForHigherLayerError }
-    mseBeforeBackProp = calcMSE # assumes squared error for each example and output neuron is stored in NeuronRecorder
-    outputErrorAdaptingNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-    mseAfterBackProp, netInputs = calcMeanSumSquaredErrorsAndNetInputs # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
-
-
-    maxChangesInExampleGainsInEachLayer
-    return mseBeforeBackProp, mseAfterBackProp
-  end
-
-  def measureChangesInExampleGainsInEachLayer
-
-    maxLogGainChangeForEachLayer = outputErrorAdaptingLayers.collect do |aLayer|
-
-      maxGainRatioForLayer = nil
-      aLayer.each do |aNeuron|
-        mostRecentGains, previousGains = recentAndPastExampleGains(aNeuron)
-        maxGainRatioForLayer = calculateMaxGainRatio(mostRecentGains, previousGains)
-      end
-      maxGainRatioForLayer
-    end
-
-
-  end
-
-  def calculateMaxGainRatio(mostRecentGains, previousGains)
-    gainRatios = []
-    previousGains.each_with_index do |previousGain, index|
-      mostRecentGain = mostRecentGains[index]
-      gainRatios << (previousGain / mostRecentGain) if (previousGain >= mostRecentGain)
-      gainRatios << (mostRecentGain / previousGain) if (previousGain < mostRecentGain)
-    end
-    maxGainRatioForLayer = gainRatios.max
-  end
-
-  def recentAndPastExampleGains(aNeuron)
-    withinEpochMeasures = aNeuron.metricRecorder.withinEpochMeasures
-
-    previousGains = withinEpochMeasures.collect do |measuresForAnExample|
-      aNeuron.ioDerivativeFromNetInput(measuresForAnExample[:netInput])
-    end
-    mostRecentGains = aNeuron.storedNetInputs.collect do |aNetInput|
-      aNeuron.ioDerivativeFromNetInput(aNetInput)
-    end
-    return mostRecentGains, previousGains
-  end
-
-  # END CODE FOR AUTOMATIC CONTROL OF LEARNING RATES PER LAYER
 end
 
 

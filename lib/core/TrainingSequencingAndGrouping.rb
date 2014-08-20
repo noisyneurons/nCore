@@ -1,92 +1,92 @@
 ### VERSION "nCore"
 ## ../nCore/lib/core/TrainingSequencingAndGrouping.rb
 
-#####
-class AbstractNeuronGroups
-  attr_accessor :allNeuronLayers, :allNeuronsInOneArray,
-                :inputLayer, :outputLayer, :hiddenLayerNeurons, :outputLayerNeurons,
-                :layersWithInputLinks, :adaptingLayers,
-                :neuronsWithInputLinks, :neuronsWithInputLinksInReverseOrder,
-                :adaptingNeurons,
-                :outputErrorGeneratingLayers, :outputErrorGeneratingNeurons,
-                :outputErrorAdaptingLayers,
-                :outputErrorAdaptingNeurons
-
-
-  def initialize(network)
-    @allNeuronLayers = network.allNeuronLayers
-    @inputLayer = allNeuronLayers.first
-    @outputLayer = allNeuronLayers.last
-    @outputErrorGeneratingLayers = [outputLayer]
-    nameTrainingGroups()
-  end
-
-  def setNeuronGroupNames
-    self.neuronsWithInputLinks = layersWithInputLinks.flatten
-    self.neuronsWithInputLinksInReverseOrder = neuronsWithInputLinks.reverse
-    self.allNeuronsInOneArray = inputLayer + neuronsWithInputLinks
-    self.outputErrorGeneratingNeurons = (outputErrorGeneratingLayers || []).flatten
-    self.outputErrorAdaptingNeurons = (outputErrorAdaptingLayers || []).flatten
-  end
-end
-
-#####
-
-class GroupsForThreeClass2HiddenLayersOEBP < AbstractNeuronGroups
-  def nameTrainingGroups
-    hiddenLayer1 = allNeuronLayers[1]
-    hiddenLayer2 = allNeuronLayers[2]
-
-    self.layersWithInputLinks = [hiddenLayer1, hiddenLayer2, outputLayer]
-    self.outputErrorAdaptingLayers = [hiddenLayer2, outputLayer]
-    setNeuronGroupNames()
-  end
-end
-
-
-class NeuronGroupsFor3LayerBPNetwork < AbstractNeuronGroups
-  def nameTrainingGroups
-    hiddenLayer = allNeuronLayers[1]
-    self.layersWithInputLinks = [hiddenLayer, outputLayer]
-    self.outputErrorAdaptingLayers = layersWithInputLinks
-    setNeuronGroupNames()
-  end
-end
-
-
-class NeuronGroupsForStep1JumpLinked3LayerNetwork  < AbstractNeuronGroups
-  def nameTrainingGroups
-    hiddenLayer = allNeuronLayers[1]
-    self.layersWithInputLinks = [hiddenLayer, outputLayer]
-    self.outputErrorAdaptingLayers =  [outputLayer]
-    setNeuronGroupNames()
-  end
-end
-
-class NeuronGroupsForStep2JumpLinked3LayerNetwork  < NeuronGroupsFor3LayerBPNetwork
-end
-
-
-
-class NeuronGroupsFor3LayerBPNetworkModLR < NeuronGroupsFor3LayerBPNetwork
-
-  def nameTrainingGroups
-    super()
-    self.outputLayerNeurons = allNeuronLayers.last
-    self.hiddenLayerNeurons = allNeuronLayers[1]
-  end
-end
-
-
-class NeuronGroupsFor1LayerBPNetwork < AbstractNeuronGroups
-  def nameTrainingGroups
-    self.layersWithInputLinks = [outputLayer]
-    self.outputErrorAdaptingLayers = layersWithInputLinks
-    setNeuronGroupNames()
-  end
-end
-
-
+######
+#class AbstractNeuronGroups
+#  attr_accessor :allNeuronLayers, :allNeuronsInOneArray,
+#                :inputLayer, :outputLayer, :hiddenLayerNeurons, :outputLayerNeurons,
+#                :layersWithInputLinks, :adaptingLayers,
+#                :neuronsWithInputLinks, :neuronsWithInputLinksInReverseOrder,
+#                :adaptingNeurons,
+#                :outputErrorGeneratingLayers, :outputErrorGeneratingNeurons,
+#                :outputErrorAdaptingLayers,
+#                :outputErrorAdaptingNeurons
+#
+#
+#  def initialize(network)
+#    @allNeuronLayers = network.allNeuronLayers
+#    @inputLayer = allNeuronLayers.first
+#    @outputLayer = allNeuronLayers.last
+#    @outputErrorGeneratingLayers = [outputLayer]
+#    nameTrainingGroups()
+#  end
+#
+#  def setNeuronGroupNames
+#    self.neuronsWithInputLinks = layersWithInputLinks.flatten
+#    self.neuronsWithInputLinksInReverseOrder = neuronsWithInputLinks.reverse
+#    self.allNeuronsInOneArray = inputLayer + neuronsWithInputLinks
+#    self.outputErrorGeneratingNeurons = (outputErrorGeneratingLayers || []).flatten
+#    self.outputErrorAdaptingNeurons = (outputErrorAdaptingLayers || []).flatten
+#  end
+#end
+#
+######
+#
+#class GroupsForThreeClass2HiddenLayersOEBP < AbstractNeuronGroups
+#  def nameTrainingGroups
+#    hiddenLayer1 = allNeuronLayers[1]
+#    hiddenLayer2 = allNeuronLayers[2]
+#
+#    self.layersWithInputLinks = [hiddenLayer1, hiddenLayer2, outputLayer]
+#    self.outputErrorAdaptingLayers = [hiddenLayer2, outputLayer]
+#    setNeuronGroupNames()
+#  end
+#end
+#
+#
+#class NeuronGroupsFor3LayerBPNetwork < AbstractNeuronGroups
+#  def nameTrainingGroups
+#    hiddenLayer = allNeuronLayers[1]
+#    self.layersWithInputLinks = [hiddenLayer, outputLayer]
+#    self.outputErrorAdaptingLayers = layersWithInputLinks
+#    setNeuronGroupNames()
+#  end
+#end
+#
+#
+#class NeuronGroupsForStep1JumpLinked3LayerNetwork  < AbstractNeuronGroups
+#  def nameTrainingGroups
+#    hiddenLayer = allNeuronLayers[1]
+#    self.layersWithInputLinks = [hiddenLayer, outputLayer]
+#    self.outputErrorAdaptingLayers =  [outputLayer]
+#    setNeuronGroupNames()
+#  end
+#end
+#
+#class NeuronGroupsForStep2JumpLinked3LayerNetwork  < NeuronGroupsFor3LayerBPNetwork
+#end
+#
+#
+#
+#class NeuronGroupsFor3LayerBPNetworkModLR < NeuronGroupsFor3LayerBPNetwork
+#
+#  def nameTrainingGroups
+#    super()
+#    self.outputLayerNeurons = allNeuronLayers.last
+#    self.hiddenLayerNeurons = allNeuronLayers[1]
+#  end
+#end
+#
+#
+#class NeuronGroupsFor1LayerBPNetwork < AbstractNeuronGroups
+#  def nameTrainingGroups
+#    self.layersWithInputLinks = [outputLayer]
+#    self.outputErrorAdaptingLayers = layersWithInputLinks
+#    setNeuronGroupNames()
+#  end
+#end
+#
+#
 #####
 
 class TrainingSequence
