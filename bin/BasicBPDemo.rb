@@ -41,8 +41,9 @@ class Experiment
 
 
         # Training Set parameters
-        :numberOfExamples => (numExamples = 4),
-        :numExamples => numExamples,
+        :numberOfExamples => (self.numberOfExamples = 4),
+        :numberOfTestingExamples => numberOfExamples,
+
 
         # Recording and database parameters
         :neuronsToDisplay => [5],
@@ -59,6 +60,10 @@ class Experiment
     examples << {:inputs => [1.0, 0.0], :targets => [1.0], :exampleNumber => 2, :class => 1}
     examples << {:inputs => [1.0, 1.0], :targets => [0.0], :exampleNumber => 3, :class => 0}
     return examples
+  end
+
+  def createTestingSet
+    return createTrainingSet
   end
 
   def createNetworkAndTrainer

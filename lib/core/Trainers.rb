@@ -20,6 +20,15 @@ class TrainingSequence
     nextEpoch
   end
 
+  def reinitialize
+    @epochs = -1
+    @atStartOfTraining = true
+    @afterFirstEpoch = false
+    @stillMoreEpochs = true
+    @lastEpoch = false
+    nextEpoch
+  end
+
   def epochs=(value)
     @epochs = value
     args[:epochs] = value
@@ -37,7 +46,6 @@ class TrainingSequence
     self.stillMoreEpochs = false if (epochs >= maxNumberOfEpochs)
   end
 end
-
 
 
 ###################################################################
@@ -61,7 +69,7 @@ class TrainerBase
     @inputLayer = @allNeuronLayers[0]
     @outputLayer = @allNeuronLayers[-1]
     @neuronsWithInputLinks = (@allNeuronsInOneArray - @inputLayer).flatten
-    @neuronsWithInputLinksInReverseOrder =  @neuronsWithInputLinks.reverse
+    @neuronsWithInputLinksInReverseOrder = @neuronsWithInputLinks.reverse
     @numberOfOutputNeurons = @outputLayer.length
 
     @examples = examples
@@ -77,6 +85,7 @@ class TrainerBase
   end
 
   def postInitialize
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
   end
 
   def train
@@ -89,13 +98,12 @@ class TrainerBase
       trainingSequence.nextEpoch
       mse = calcMSE
     end
+    forEachExampleDisplayInputsAndOutputs
     testMSE = calcTestingMeanSquaredErrors
     return trainingSequence.epochs, calcMSE, testMSE
   end
 
   def performStandardBackPropTraining
-    #puts  neuronsWithInputLinks
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
     acrossExamplesAccumulateDeltaWs(neuronsWithInputLinks) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
     neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
   end
@@ -132,9 +140,7 @@ class TrainerBase
     numberOfTestingExamples = args[:numberOfTestingExamples]
     unless (testingExamples.nil?)
       distributeSetOfExamples(testingExamples)
-      neuronsWithInputLinks.each { |aNeuron| aNeuron.learning = false }
       testMSE = genericCalcMeanSumSquaredErrors(numberOfTestingExamples)
-      neuronsWithInputLinks.each { |aNeuron| aNeuron.learning = true }
       distributeSetOfExamples(examples)
     end
     return testMSE
@@ -149,6 +155,17 @@ class TrainerBase
     sse = squaredErrors.flatten.reduce(:+)
     return (sse / (numberOfExamples * numberOfOutputNeurons))
   end
+
+  def forEachExampleDisplayInputsAndOutputs
+    puts "At end of Training:"
+    examples.each_with_index do | anExample, exampleNumber |
+      inputs = anExample[:inputs]
+      propagateAcrossEntireNetwork(exampleNumber)
+      outputs = outputLayer.collect {|anOutputNeuron| anOutputNeuron.output}
+      puts "\t\t\tinputs= #{inputs}\toutputs= #{outputs}"
+     end
+  end
+
 
   def distributeSetOfExamples(examples)
     distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
@@ -181,7 +198,102 @@ class TrainerBase
 end
 
 
+class Trainer7pt1 < TrainerBase
+  attr_accessor :learningNeurons
 
+  def postInitialize
+    super
+    self.learningNeurons = allNeuronLayers[1] + outputLayer
+    zeroWeights
+  end
+
+  def performStandardBackPropTraining
+    acrossExamplesAccumulateDeltaWs(learningNeurons) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
+  end
+
+  def zeroWeights
+    #hiddenLayer1 = allNeuronLayers[1]
+    #hiddenLayer1.each do |neuron|
+    #  neuron.inputLinks.each { |inputLink| inputLink.weight = 0.0 }
+    #end
+
+
+    hiddenLayer2 = allNeuronLayers[2]
+    hiddenLayer2.each do |neuron|
+      neuron.inputLinks.each { |inputLink| inputLink.weight = 0.0 }
+    end
+
+    outputLayer.each do |neuron|
+      neuron.inputLinks.each { |inputLink| inputLink.weight = 0.0 }
+    end
+
+  end
+
+
+  #def backPropTrainLinks(setOfLinks)
+  #  acrossExamplesAccumulateDeltaWs(setOfLearningNeurons) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
+  #  neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
+  #end
+  #
+  #
+  #def acrossExamplesAccumulateDeltaWsFor(neurons, links)
+  #  clearEpochAccumulationsInAllNeurons()
+  #  numberOfExamples.times do |exampleNumber|
+  #    propagateAcrossEntireNetwork(exampleNumber)
+  #    backpropagateAcrossEntireNetwork()
+  #    calcWeightedErrorMetricForExample()
+  #    neurons.each do |aNeuron|
+  #      dataRecord = aNeuron.recordResponsesForExample
+  #      yield(aNeuron, dataRecord, exampleNumber)
+  #      aNeuron.dbStoreDetailedData
+  #    end
+  #  end
+  #end
+
+
+end
+
+
+class Trainer7pt2 < Trainer7pt1
+  attr_accessor :learningNeurons2
+
+  def postInitialize
+    super
+    self.learningNeurons2 = allNeuronLayers[2] + outputLayer
+  end
+
+  def train
+    distributeSetOfExamples(examples)
+    mse = 1e100
+    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
+      performStandardBackPropTraining()
+      neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
+      dbStoreTrainingData()
+      trainingSequence.nextEpoch
+      mse = calcMSE
+    end
+
+    #trainingSequence.reinitialize
+    #
+    #while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
+    #  backPropTrain(learningNeurons2)
+    #  neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
+    #  dbStoreTrainingData()
+    #  trainingSequence.nextEpoch
+    #  mse = calcMSE
+    #end
+
+    testMSE = calcTestingMeanSquaredErrors
+    return trainingSequence.epochs, calcMSE, testMSE
+  end
+
+
+  def backPropTrainLinks(setOfLinks)
+    acrossExamplesAccumulateDeltaWs(setOfLearningNeurons) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
+  end
+end
 
 
 #class WeightChangeNormalizer

@@ -84,9 +84,9 @@ class Experiment
 
     endOfTrainingReport(lastEpoch, lastTestingMSE, lastTrainingMSE, network)
 
-    neuronDataSummary(neuronToDisplay)
+    #neuronDataSummary(neuronToDisplay)
 
-    detailedNeuronDataSummary(neuronToDisplay)
+    #detailedNeuronDataSummary(neuronToDisplay)
 
     trainingDataRecords = trainingDataSummary
 

@@ -1,5 +1,5 @@
 ### VERSION "nCore"
-## ../nCore/bin/Project7pt1.rb
+## ../nCore/bin/ProjSelfOrg7pt1.rb
 # Purpose:  Start of Project 7; project to split example set to learn sub-parts, and then combine those parts/neuron-functions that
 # didn't need to be separated, but instead need to be integrated to obtain better generalization.
 # Ultimate goal of project 6 is develop analogy processing -- where one function useful for solving one problem
@@ -23,7 +23,7 @@ class Neuron
 end
 
 class OutputNeuron
-  # include SigmoidIOFunction
+  include LinearIOFunction
   #include NonMonotonicIOFunction
   # include PiecewiseLinNonMonIOFunction
 end
@@ -39,7 +39,7 @@ class Experiment
         :randomNumberSeed => randomNumberSeed,
 
         # training parameters
-        :outputErrorLearningRate => 0.1,
+        :outputErrorLearningRate => 0.01,
         :minMSE => 0.0, # 0.001,
         :maxNumEpochs => 2e3,
 
@@ -48,7 +48,7 @@ class Experiment
         :numberOfInputNeurons => 2,
         :numberOfHiddenLayer1Neurons => 1,
         :numberOfHiddenLayer2Neurons => 2,
-        :numberOfOutputNeurons => 4,
+        :numberOfOutputNeurons => 2,
         :weightRange => 1.0,
         :typeOfLink => LinkInContext,
         :typeOfLinkToOutput => Link,
@@ -56,7 +56,7 @@ class Experiment
         :typeOfOutputNeuron => OutputNeuron,
 
         # Training Set parameters
-        :numberOfExamples => (self.numberOfExamples = 16),
+        :numberOfExamples => (self.numberOfExamples = 4),
         :numberOfTestingExamples => numberOfExamples,
 
         # Recording and database parameters
@@ -87,8 +87,16 @@ class Experiment
         x = xS + (xI * classExNumb)
         y = yS + (yI * classExNumb)
         aPoint = [x, y]
-        desiredOutputs = [0.0, 0.0, 0.0, 0.0]
-        desiredOutputs[indexToClass] = 1.0
+        desiredOutputs = [x, y]
+
+
+        #if xS == -1.0
+        #  desiredOutputs[0] = 1.0
+        #else
+        #  desiredOutputs[1] = 1.0
+        #end
+
+
         examples << {:inputs => aPoint, :targets => desiredOutputs, :exampleNumber => exampleNumber, :class => indexToClass}
         exampleNumber += 1
       end
@@ -115,6 +123,6 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("Proj7pt1; 2 in 4 out; divide then integrate", baseRandomNumberSeed)
+experiment = Experiment.new("ProjSelfOrg7pt1; 2 in 2 out; divide then integrate", baseRandomNumberSeed)
 
 experiment.performSimulation()

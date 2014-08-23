@@ -266,7 +266,10 @@ class Context4LayerNetwork < ContextNetwork
     self.allNeuronLayers << hiddenLayer1
 
     hiddenLayer2 = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], typeOfLink = args[:typeOfLink], args[:numberOfHiddenLayer2Neurons])
-    hiddenLayer2.each {|aNeuron| aNeuron.neuronControllingLearning = hiddenLayer1[0]}
+    hiddenLayer2.each_with_index do |aNeuron, index|
+      aNeuron.neuronControllingLearning = hiddenLayer1[0]
+      aNeuron.flipLearningProbability = index.odd?
+    end
     self.allNeuronLayers << hiddenLayer2
 
     self.outputLayer = createAndConnectLayer( (hiddenLayer1 + hiddenLayer2), typeOfNeuron = args[:typeOfOutputNeuron], typeOfLink = args[:typeOfLinkToOutput], args[:numberOfOutputNeurons])
