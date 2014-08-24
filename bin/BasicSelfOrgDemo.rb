@@ -26,9 +26,10 @@ class Experiment
         :randomNumberSeed => randomNumberSeed,
 
         # training parameters re. Output Error
-        :outputErrorLearningRate => 0.2,
+        :learningRate => 0.2,
         :minMSE => 10e-5,
-        :maxNumEpochs => 6e2,
+        :maxEpochNumbersForEachPhase => [600,600],
+        :trainingSequence =>  MultiPhaseTrainingSequence,
 
         # Network Architecture
         :numberOfInputNeurons => 2,

@@ -4,28 +4,16 @@
 
 #####
 
+
 class TrainingSequence
   attr_accessor :args, :epochs, :maxNumberOfEpochs,
-                :stillMoreEpochs, :lastEpoch,
-                :atStartOfTraining, :afterFirstEpoch
+                :stillMoreEpochs
 
   def initialize(args)
     @args = args
     @maxNumberOfEpochs = args[:maxNumEpochs]
     @epochs = -1
-    @atStartOfTraining = true
-    @afterFirstEpoch = false
     @stillMoreEpochs = true
-    @lastEpoch = false
-    nextEpoch
-  end
-
-  def reinitialize
-    @epochs = -1
-    @atStartOfTraining = true
-    @afterFirstEpoch = false
-    @stillMoreEpochs = true
-    @lastEpoch = false
     nextEpoch
   end
 
@@ -36,15 +24,42 @@ class TrainingSequence
 
   def nextEpoch
     self.epochs += 1
-    self.atStartOfTraining = false if (epochs > 0)
-    self.afterFirstEpoch = true unless (atStartOfTraining)
-
-    self.lastEpoch = false
-    self.lastEpoch = true if (epochs == (maxNumberOfEpochs - 1))
-
-    self.stillMoreEpochs = true
-    self.stillMoreEpochs = false if (epochs >= maxNumberOfEpochs)
+    self.stillMoreEpochs = areThereStillMoreEpochs?
   end
+
+  def startNextPhaseOfTraining
+    self.epochs = -1
+    self.stillMoreEpochs = true
+    nextEpoch
+  end
+
+  protected
+
+  def areThereStillMoreEpochs?
+    if epochs >= maxNumberOfEpochs
+      false
+    else
+      true
+    end
+  end
+end
+
+class MultiPhaseTrainingSequence < TrainingSequence
+   attr_accessor :maxEpochNumbersForEachPhase, :phaseIndex
+  def initialize(args)
+    @args = args
+    @maxEpochNumbersForEachPhase = args[:maxEpochNumbersForEachPhase]
+    @phaseIndex = -1
+    startNextPhaseOfTraining
+  end
+
+   def startNextPhaseOfTraining
+     self.phaseIndex += 1
+     self.maxNumberOfEpochs = maxEpochNumbersForEachPhase[phaseIndex]
+     self.epochs = -1
+     self.stillMoreEpochs = true
+     nextEpoch
+   end
 end
 
 
@@ -85,7 +100,6 @@ class TrainerBase
   end
 
   def postInitialize
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.learningRate = args[:outputErrorLearningRate] }
   end
 
   def train
@@ -158,12 +172,12 @@ class TrainerBase
 
   def forEachExampleDisplayInputsAndOutputs
     puts "At end of Training:"
-    examples.each_with_index do | anExample, exampleNumber |
+    examples.each_with_index do |anExample, exampleNumber|
       inputs = anExample[:inputs]
       propagateAcrossEntireNetwork(exampleNumber)
-      outputs = outputLayer.collect {|anOutputNeuron| anOutputNeuron.output}
+      outputs = outputLayer.collect { |anOutputNeuron| anOutputNeuron.output }
       puts "\t\t\tinputs= #{inputs}\toutputs= #{outputs}"
-     end
+    end
   end
 
 
@@ -198,13 +212,12 @@ class TrainerBase
 end
 
 
-
-
-class  TrainerSelfOrg < TrainerBase
+class TrainerSelfOrg < TrainerBase
   attr_accessor :selfOrgNeurons
 
   def postInitialize
     super
+
     self.selfOrgNeurons = allNeuronLayers[1]
   end
 
@@ -220,14 +233,14 @@ class  TrainerSelfOrg < TrainerBase
       mse = calcMSE
     end
 
-    trainingSequence.reinitialize
+    trainingSequence.startNextPhaseOfTraining
 
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
       performSelfOrgTraining
       neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
       dbStoreTrainingData()
       trainingSequence.nextEpoch
-      mse = calcMeanSumSquaredErrors
+      mse = calcMSE # calcMeanSumSquaredErrors
     end
 
     forEachExampleDisplayInputsAndOutputs
@@ -236,21 +249,22 @@ class  TrainerSelfOrg < TrainerBase
   end
 
   def performSelfOrgTraining
-    acrossExamplesAccumulateSelfOrgDeltaWs(selfOrgNeurons) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
-    selfOrgNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+    acrossExamplesAccumulateSelfOrgDeltaWs
+    neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
   end
 
 
-  def acrossExamplesAccumulateSelfOrgDeltaWs(neurons)
+  def acrossExamplesAccumulateSelfOrgDeltaWs
     clearEpochAccumulationsInAllNeurons()
     numberOfExamples.times do |exampleNumber|
       propagateAcrossEntireNetwork(exampleNumber)
-      backpropagateAcrossEntireNetwork()
-      selfOrgNeurons.each {|aNeuron| aNeuron.calcSelfOrgError}
+      backpropagateAcrossEntireNetwork() # really only need to do this for non-self org layers
+      selfOrgNeurons.each { |aNeuron| aNeuron.calcSelfOrgError }
       calcWeightedErrorMetricForExample()
-      neurons.each do |aNeuron|
+
+      neuronsWithInputLinks.each do |aNeuron|
         dataRecord = aNeuron.recordResponsesForExample
-        yield(aNeuron, dataRecord, exampleNumber)
+        aNeuron.calcDeltaWsAndAccumulate
         aNeuron.dbStoreDetailedData
       end
     end
@@ -289,28 +303,10 @@ class Trainer7pt1 < TrainerBase
     end
 
   end
+end
 
 
-  #def backPropTrainLinks(setOfLinks)
-  #  acrossExamplesAccumulateDeltaWs(setOfLearningNeurons) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
-  #  neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
-  #end
-  #
-  #
-  #def acrossExamplesAccumulateDeltaWsFor(neurons, links)
-  #  clearEpochAccumulationsInAllNeurons()
-  #  numberOfExamples.times do |exampleNumber|
-  #    propagateAcrossEntireNetwork(exampleNumber)
-  #    backpropagateAcrossEntireNetwork()
-  #    calcWeightedErrorMetricForExample()
-  #    neurons.each do |aNeuron|
-  #      dataRecord = aNeuron.recordResponsesForExample
-  #      yield(aNeuron, dataRecord, exampleNumber)
-  #      aNeuron.dbStoreDetailedData
-  #    end
-  #  end
-  #end
-
+class Trainer7pt1LocalSO < TrainerBase
 
 end
 
@@ -381,3 +377,48 @@ end
 #end
 #
 
+
+
+#class TrainingSequenceOLD
+#  attr_accessor :args, :epochs, :maxNumberOfEpochs,
+#                :stillMoreEpochs, :lastEpoch,
+#                :atStartOfTraining, :afterFirstEpoch
+#
+#  def initialize(args)
+#    @args = args
+#    @maxNumberOfEpochs = args[:maxNumEpochs]
+#    @epochs = -1
+#    @atStartOfTraining = true
+#    @afterFirstEpoch = false
+#    @stillMoreEpochs = true
+#    @lastEpoch = false
+#    nextEpoch
+#  end
+#
+#  def reinitialize
+#    @epochs = -1
+#    @atStartOfTraining = true
+#    @afterFirstEpoch = false
+#    @stillMoreEpochs = true
+#    @lastEpoch = false
+#    nextEpoch
+#  end
+#
+#  def epochs=(value)
+#    @epochs = value
+#    args[:epochs] = value
+#  end
+#
+#  def nextEpoch
+#    self.epochs += 1
+#    self.atStartOfTraining = false if (epochs > 0)
+#    self.afterFirstEpoch = true unless (atStartOfTraining)
+#
+#    self.lastEpoch = false
+#    self.lastEpoch = true if (epochs == (maxNumberOfEpochs - 1))
+#
+#    self.stillMoreEpochs = true
+#    self.stillMoreEpochs = false if (epochs >= maxNumberOfEpochs)
+#  end
+#end
+#

@@ -31,7 +31,9 @@ class Experiment
     @args = self.setParameters
     @examples = createTrainingSet
     args[:testingExamples] = createTestingSet
-    @trainingSequence = TrainingSequence.new(args)
+
+    @trainingSequence = args[:trainingSequence].new(args)
+
     @simulationDataStoreManager = SimulationDataStoreManager.new(args)
     @args[:trainingSequence] = trainingSequence
   end

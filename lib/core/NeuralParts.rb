@@ -54,7 +54,7 @@ module SelfOrganization
     targetMinus = -1.0 * targetPlus
     distanceBetweenTargets = targetPlus - targetMinus
     puts "\t\t\tnetInput=\t#{netInput}\terror=\t#{error}"
-    self.error = ioDerivativeFromNetInput(netInput) * -1.0 * (((netInput - targetMinus)/distanceBetweenTargets)  -  0.5)
+    self.error = -1.0 * ioDerivativeFromNetInput(netInput) * (((netInput - targetMinus)/distanceBetweenTargets)  -  0.5)
   end
 
 end
@@ -286,7 +286,7 @@ class Link
     @inputNeuron = inputNeuron
     @outputNeuron = outputNeuron
     @args = args
-    @learningRate = args[:learningRate] || 1.0
+    @learningRate = args[:learningRate]
     @weight = 0.0
     @weightRange = args[:weightRange]
     randomizeWeightWithinTheRange(weightRange)
