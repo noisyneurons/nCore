@@ -53,7 +53,8 @@ module SelfOrganization
     targetPlus = 2.5
     targetMinus = -1.0 * targetPlus
     distanceBetweenTargets = targetPlus - targetMinus
-    self.error = ioDerivativeFromNetInput(netInput) * (2.0 * (  (netInput - targetMinus)/distanceBetweenTargets  )  -  1.0)
+    puts "\t\t\tnetInput=\t#{netInput}\terror=\t#{error}"
+    self.error = ioDerivativeFromNetInput(netInput) * -1.0 * (((netInput - targetMinus)/distanceBetweenTargets)  -  0.5)
   end
 
 end

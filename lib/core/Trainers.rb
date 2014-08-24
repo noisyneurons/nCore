@@ -198,6 +198,66 @@ class TrainerBase
 end
 
 
+
+
+class  TrainerSelfOrg < TrainerBase
+  attr_accessor :selfOrgNeurons
+
+  def postInitialize
+    super
+    self.selfOrgNeurons = allNeuronLayers[1]
+  end
+
+
+  def train
+    distributeSetOfExamples(examples)
+    mse = 1e100
+    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
+      performStandardBackPropTraining()
+      neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
+      dbStoreTrainingData()
+      trainingSequence.nextEpoch
+      mse = calcMSE
+    end
+
+    trainingSequence.reinitialize
+
+    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
+      performSelfOrgTraining
+      neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
+      dbStoreTrainingData()
+      trainingSequence.nextEpoch
+      mse = calcMeanSumSquaredErrors
+    end
+
+    forEachExampleDisplayInputsAndOutputs
+    testMSE = calcTestingMeanSquaredErrors
+    return trainingSequence.epochs, calcMeanSumSquaredErrors, testMSE
+  end
+
+  def performSelfOrgTraining
+    acrossExamplesAccumulateSelfOrgDeltaWs(selfOrgNeurons) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
+    selfOrgNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+  end
+
+
+  def acrossExamplesAccumulateSelfOrgDeltaWs(neurons)
+    clearEpochAccumulationsInAllNeurons()
+    numberOfExamples.times do |exampleNumber|
+      propagateAcrossEntireNetwork(exampleNumber)
+      backpropagateAcrossEntireNetwork()
+      selfOrgNeurons.each {|aNeuron| aNeuron.calcSelfOrgError}
+      calcWeightedErrorMetricForExample()
+      neurons.each do |aNeuron|
+        dataRecord = aNeuron.recordResponsesForExample
+        yield(aNeuron, dataRecord, exampleNumber)
+        aNeuron.dbStoreDetailedData
+      end
+    end
+  end
+end
+
+
 class Trainer7pt1 < TrainerBase
   attr_accessor :learningNeurons
 

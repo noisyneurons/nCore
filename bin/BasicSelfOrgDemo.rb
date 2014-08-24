@@ -7,10 +7,11 @@ require_relative 'BaseLearningExperiment'
 
 class Neuron
   include NonMonotonicIOFunction
+  include SelfOrganization
 end
 
 class OutputNeuron
-  include NonMonotonicIOFunction
+  #include NonMonotonicIOFunction
  #include LinearIOFunction
 end
 
@@ -27,7 +28,7 @@ class Experiment
         # training parameters re. Output Error
         :outputErrorLearningRate => 0.2,
         :minMSE => 10e-5,
-        :maxNumEpochs => 2e3,
+        :maxNumEpochs => 6e2,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
@@ -69,7 +70,7 @@ class Experiment
 
   def createNetworkAndTrainer
     network = Standard3LayerNetwork.new(args)
-    theTrainer = TrainerBase.new(examples, network, args)
+    theTrainer = TrainerSelfOrg.new(examples, network, args)
     return network, theTrainer
   end
 end
