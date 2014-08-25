@@ -81,6 +81,6 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("BasicBPDemo1 both layers NonMon", baseRandomNumberSeed)
+experiment = Experiment.new("BasicSelfOrgDemo", baseRandomNumberSeed)
 
 experiment.performSimulation()

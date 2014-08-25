@@ -15,11 +15,21 @@ class NeuronInContext < Neuron
 
   def calcDeltaWsAndAccumulate
     self.adjustmentToLearningRate = adjustmentTransformer(neuronControllingLearning.output, flipLearningProbability)
-    inputLinks.each do |inputLink|
-      inputLink.calcDeltaWAndAccumulate
+    if adjustmentToLearningRate > 0.0
+      inputLinks.each do |inputLink|
+        inputLink.calcDeltaWAndAccumulate
+      end
     end
   end
 
+  def to_s
+    description = super
+    description += "\t\t\t\t\tNeuron Controlling Learning:\t#{
+    neuronControllingLearning.class} Class; ID = #{neuronControllingLearning.id}\n"
+    return description
+  end
+
+  protected
 
   def adjustmentTransformer(controlNeuronsOutput, flipLearningProbability)
     adjustment = if controlNeuronsOutput >= 0.5
@@ -34,24 +44,14 @@ class NeuronInContext < Neuron
     end
   end
 
-
-  def to_s
-    description = super
-    description += "\t\t\t\t\tNeuron Controlling Learning:\t#{
-    neuronControllingLearning.class} Class; ID = #{neuronControllingLearning.id}\n"
-    return description
-  end
+  public
 end
 
 
 class LinkInContext < Link
+
   def calcDeltaWAndAccumulate
-    adjustmentToLearningRate = outputNeuron.adjustmentToLearningRate
-    self.deltaWAccumulated += if adjustmentToLearningRate > 0.0
-                                adjustmentToLearningRate * calcDeltaW
-                              else
-                                0.0
-                              end
+    self.deltaWAccumulated += calcDeltaW * outputNeuron.adjustmentToLearningRate
   end
 end
 

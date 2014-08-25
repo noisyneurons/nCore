@@ -19,13 +19,10 @@ require_relative 'BaseLearningExperiment'
 
 class Neuron
   #include NonMonotonicIOFunction
-  # include PiecewiseLinNonMonIOFunction
+  #include SelfOrganization
 end
 
 class OutputNeuron
-  # include SigmoidIOFunction
-  #include NonMonotonicIOFunction
-  # include PiecewiseLinNonMonIOFunction
 end
 
 
@@ -39,10 +36,10 @@ class Experiment
         :randomNumberSeed => randomNumberSeed,
 
         # training parameters
-        :outputErrorLearningRate => 0.1,
+        :learningRate =>  0.1,
         :minMSE => 0.0, # 0.001,
-        :maxNumEpochs => 2e3,
-
+        :maxEpochNumbersForEachPhase => [2e3,600],
+        :trainingSequence =>  MultiPhaseTrainingSequence,
 
         # Network Architecture
         :numberOfInputNeurons => 2,

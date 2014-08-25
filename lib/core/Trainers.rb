@@ -45,7 +45,8 @@ class TrainingSequence
 end
 
 class MultiPhaseTrainingSequence < TrainingSequence
-   attr_accessor :maxEpochNumbersForEachPhase, :phaseIndex
+  attr_accessor :maxEpochNumbersForEachPhase, :phaseIndex
+
   def initialize(args)
     @args = args
     @maxEpochNumbersForEachPhase = args[:maxEpochNumbersForEachPhase]
@@ -53,13 +54,13 @@ class MultiPhaseTrainingSequence < TrainingSequence
     startNextPhaseOfTraining
   end
 
-   def startNextPhaseOfTraining
-     self.phaseIndex += 1
-     self.maxNumberOfEpochs = maxEpochNumbersForEachPhase[phaseIndex]
-     self.epochs = -1
-     self.stillMoreEpochs = true
-     nextEpoch
-   end
+  def startNextPhaseOfTraining
+    self.phaseIndex += 1
+    self.maxNumberOfEpochs = maxEpochNumbersForEachPhase[phaseIndex]
+    self.epochs = -1
+    self.stillMoreEpochs = true
+    nextEpoch
+  end
 end
 
 
@@ -258,7 +259,7 @@ class TrainerSelfOrg < TrainerBase
     clearEpochAccumulationsInAllNeurons()
     numberOfExamples.times do |exampleNumber|
       propagateAcrossEntireNetwork(exampleNumber)
-      backpropagateAcrossEntireNetwork() # really only need to do this for non-self org layers
+      backpropagateAcrossEntireNetwork() # really only need to do this for non-self org layers  ??
       selfOrgNeurons.each { |aNeuron| aNeuron.calcSelfOrgError }
       calcWeightedErrorMetricForExample()
 
@@ -278,7 +279,6 @@ class Trainer7pt1 < TrainerBase
   def postInitialize
     super
     self.learningNeurons = allNeuronLayers[1] + outputLayer
-    zeroWeights
   end
 
   def performStandardBackPropTraining
@@ -287,21 +287,10 @@ class Trainer7pt1 < TrainerBase
   end
 
   def zeroWeights
-    #hiddenLayer1 = allNeuronLayers[1]
-    #hiddenLayer1.each do |neuron|
-    #  neuron.inputLinks.each { |inputLink| inputLink.weight = 0.0 }
-    #end
-
-
     hiddenLayer2 = allNeuronLayers[2]
     hiddenLayer2.each do |neuron|
       neuron.inputLinks.each { |inputLink| inputLink.weight = 0.0 }
     end
-
-    outputLayer.each do |neuron|
-      neuron.inputLinks.each { |inputLink| inputLink.weight = 0.0 }
-    end
-
   end
 end
 
@@ -376,7 +365,6 @@ end
 #  end
 #end
 #
-
 
 
 #class TrainingSequenceOLD

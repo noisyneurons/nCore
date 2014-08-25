@@ -26,6 +26,7 @@ class Experiment
         # training parameters re. Output Error
         :learningRate => 3.0,
         :minMSE => 0.001,
+        :trainingSequence =>  TrainingSequence,
         :maxNumEpochs => 2e3,
 
         # Network Architecture
