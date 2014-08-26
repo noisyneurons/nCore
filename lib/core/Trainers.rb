@@ -105,18 +105,25 @@ class TrainerBase
 
   def train
     distributeSetOfExamples(examples)
+    phaseTrain { performStandardBackPropTraining }
+    forEachExampleDisplayInputsAndOutputs
+    testMSE = calcTestingMeanSquaredErrors
+    return trainingSequence.epochs, calcMSE, testMSE
+  end
+
+
+  def phaseTrain
     mse = 1e100
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
-      performStandardBackPropTraining()
+      yield
       neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
       dbStoreTrainingData()
       trainingSequence.nextEpoch
       mse = calcMSE
     end
-    forEachExampleDisplayInputsAndOutputs
-    testMSE = calcTestingMeanSquaredErrors
-    return trainingSequence.epochs, calcMSE, testMSE
+    return mse
   end
+
 
   def performStandardBackPropTraining
     acrossExamplesAccumulateDeltaWs(neuronsWithInputLinks) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
@@ -213,47 +220,13 @@ class TrainerBase
 end
 
 
-class TrainerSelfOrg < TrainerBase
+module SelfOrgTraining
   attr_accessor :selfOrgNeurons
-
-  def postInitialize
-    super
-
-    self.selfOrgNeurons = allNeuronLayers[1]
-  end
-
-
-  def train
-    distributeSetOfExamples(examples)
-    mse = 1e100
-    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
-      performStandardBackPropTraining()
-      neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
-      dbStoreTrainingData()
-      trainingSequence.nextEpoch
-      mse = calcMSE
-    end
-
-    trainingSequence.startNextPhaseOfTraining
-
-    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
-      performSelfOrgTraining
-      neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
-      dbStoreTrainingData()
-      trainingSequence.nextEpoch
-      mse = calcMSE # calcMeanSumSquaredErrors
-    end
-
-    forEachExampleDisplayInputsAndOutputs
-    testMSE = calcTestingMeanSquaredErrors
-    return trainingSequence.epochs, calcMeanSumSquaredErrors, testMSE
-  end
 
   def performSelfOrgTraining
     acrossExamplesAccumulateSelfOrgDeltaWs
     neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
   end
-
 
   def acrossExamplesAccumulateSelfOrgDeltaWs
     clearEpochAccumulationsInAllNeurons()
@@ -273,12 +246,44 @@ class TrainerSelfOrg < TrainerBase
 end
 
 
+class TrainerSelfOrg < TrainerBase
+  include SelfOrgTraining
+
+  def postInitialize
+    super
+    self.selfOrgNeurons = allNeuronLayers[1]
+  end
+
+  def train
+    distributeSetOfExamples(examples)
+    phaseTrain { performStandardBackPropTraining }
+    trainingSequence.startNextPhaseOfTraining
+    phaseTrain { performSelfOrgTraining }
+    forEachExampleDisplayInputsAndOutputs
+    testMSE = calcTestingMeanSquaredErrors
+    return trainingSequence.epochs, calcMeanSumSquaredErrors, testMSE
+  end
+end
+
+
 class Trainer7pt1 < TrainerBase
   attr_accessor :learningNeurons
+  include SelfOrgTraining
 
   def postInitialize
     super
     self.learningNeurons = allNeuronLayers[1] + outputLayer
+    self.selfOrgNeurons = allNeuronLayers[1]
+  end
+
+  def train
+    distributeSetOfExamples(examples)
+    phaseTrain { performStandardBackPropTraining }
+    trainingSequence.startNextPhaseOfTraining
+    phaseTrain { performSelfOrgTraining }
+    forEachExampleDisplayInputsAndOutputs
+    testMSE = calcTestingMeanSquaredErrors
+    return trainingSequence.epochs, calcMSE, testMSE
   end
 
   def performStandardBackPropTraining
@@ -365,6 +370,63 @@ end
 #  end
 #end
 #
+
+
+#class TrainerSelfOrg < TrainerBase
+#  attr_accessor :selfOrgNeurons
+#
+#  def postInitialize
+#    super
+#    self.selfOrgNeurons = allNeuronLayers[1]
+#  end
+#
+#
+#  def train
+#    distributeSetOfExamples(examples)
+#    phaseTrain {performStandardBackPropTraining}
+#    trainingSequence.startNextPhaseOfTraining
+#    phaseTrain {performSelfOrgTraining}
+#    forEachExampleDisplayInputsAndOutputs
+#    testMSE = calcTestingMeanSquaredErrors
+#    return trainingSequence.epochs, calcMeanSumSquaredErrors, testMSE
+#  end
+#
+#
+#  def phaseTrain
+#    mse = 1e100
+#    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
+#      yield performStandardBackPropTraining()
+#      neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
+#      dbStoreTrainingData()
+#      trainingSequence.nextEpoch
+#      mse = calcMSE
+#    end
+#    return mse
+#  end
+#
+#
+#  def performSelfOrgTraining
+#    acrossExamplesAccumulateSelfOrgDeltaWs
+#    neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
+#  end
+#
+#
+#  def acrossExamplesAccumulateSelfOrgDeltaWs
+#    clearEpochAccumulationsInAllNeurons()
+#    numberOfExamples.times do |exampleNumber|
+#      propagateAcrossEntireNetwork(exampleNumber)
+#      backpropagateAcrossEntireNetwork() # really only need to do this for non-self org layers  ??
+#      selfOrgNeurons.each { |aNeuron| aNeuron.calcSelfOrgError }
+#      calcWeightedErrorMetricForExample()
+#
+#      neuronsWithInputLinks.each do |aNeuron|
+#        dataRecord = aNeuron.recordResponsesForExample
+#        aNeuron.calcDeltaWsAndAccumulate
+#        aNeuron.dbStoreDetailedData
+#      end
+#    end
+#  end
+#end
 
 
 #class TrainingSequenceOLD

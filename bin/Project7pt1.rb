@@ -18,8 +18,8 @@ require_relative '../lib/core/Trainers.rb'
 require_relative 'BaseLearningExperiment'
 
 class Neuron
-  #include NonMonotonicIOFunction
-  #include SelfOrganization
+  include NonMonotonicIOFunction
+  include SelfOrganization
 end
 
 class OutputNeuron
