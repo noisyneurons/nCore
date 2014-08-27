@@ -230,19 +230,18 @@ end
 
 module SelfOrgTraining
 
-  def performSelfOrgTrainingOn(neurons)
-    acrossExamplesAccumulateSelfOrgDeltaWs(neurons)
-    neurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+  def performSelfOrgTrainingOn(layerOfNeurons)
+    acrossExamplesAccumulateSelfOrgDeltaWs(layerOfNeurons)
+    layerOfNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
   end
 
-  def acrossExamplesAccumulateSelfOrgDeltaWs(neurons)
+  def acrossExamplesAccumulateSelfOrgDeltaWs(layerOfNeurons)
     clearEpochAccumulationsInAllNeurons()
     numberOfExamples.times do |exampleNumber|
-      propagateExampleUpToLayer(exampleNumber, neurons)
-      #propagateAcrossEntireNetwork(exampleNumber) # TODO just up to self org neurons
-      neurons.each { |aNeuron| aNeuron.calcSelfOrgError }
+      propagateExampleUpToLayer(exampleNumber, layerOfNeurons)
+      layerOfNeurons.each { |aNeuron| aNeuron.calcSelfOrgError }
 
-      neurons.each do |aNeuron|
+      layerOfNeurons.each do |aNeuron|
         dataRecord = aNeuron.recordResponsesForExample
         aNeuron.calcDeltaWsAndAccumulate
         aNeuron.dbStoreDetailedData
@@ -283,6 +282,17 @@ class Trainer7pt1 < TrainerBase
     trainingSequence.startNextPhaseOfTraining
     phaseTrain { performSelfOrgTrainingOn( allNeuronLayers[1] ) }
 
+    trainingSequence.startNextPhaseOfTraining
+    phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
+
+    allNeuronLayers[2].each do |aNeuron|
+      aNeuron.neuronControllingLearning = theBiasNeuron
+      aNeuron.flipLearningProbability = false
+    end
+    trainingSequence.startNextPhaseOfTraining
+    phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
+
+
     forEachExampleDisplayInputsAndOutputs
     testMSE = calcTestingMeanSquaredErrors
     return trainingSequence.epochs, calcMSE, testMSE
@@ -296,7 +306,7 @@ class Trainer7pt1 < TrainerBase
 
   def zeroWeightsOfNon(learningNeurons)
     nonLearningNeurons = neuronsWithInputLinks - learningNeurons.flatten
-    nonLearningNeurons.each { |neuron| neuron.zeroWeight }
+    nonLearningNeurons.each { |neuron| neuron.zeroWeights }
   end
 end
 

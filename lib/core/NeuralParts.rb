@@ -17,7 +17,7 @@ module CommonNeuronCalculations
     inputLinks.each { |inputLink| inputLink.addAccumulationToWeight }
   end
 
-  def zeroWeight
+  def zeroWeights
     inputLinks.each { |inputLink| inputLink.weight = 0.0 }
   end
 
@@ -57,7 +57,6 @@ module SelfOrganization
     targetPlus = 2.5
     targetMinus = -1.0 * targetPlus
     distanceBetweenTargets = targetPlus - targetMinus
-    # puts "\t\t\tnetInput=\t#{netInput}\terror=\t#{error}"
     self.error = -1.0 * ioDerivativeFromNetInput(netInput) * (((netInput - targetMinus)/distanceBetweenTargets)  -  0.5)
   end
 

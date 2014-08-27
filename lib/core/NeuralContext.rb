@@ -11,6 +11,7 @@ class NeuronInContext < Neuron
   def postInitialize
     super
     @adjustmentToLearningRate = nil
+    @flipLearningProbability = false
   end
 
   def calcDeltaWsAndAccumulate
