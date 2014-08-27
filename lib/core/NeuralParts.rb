@@ -17,6 +17,10 @@ module CommonNeuronCalculations
     inputLinks.each { |inputLink| inputLink.addAccumulationToWeight }
   end
 
+  def zeroWeight
+    inputLinks.each { |inputLink| inputLink.weight = 0.0 }
+  end
+
   def zeroDeltaWAccumulated
     inputLinks.each { |inputLink| inputLink.deltaWAccumulated = 0.0 }
   end
