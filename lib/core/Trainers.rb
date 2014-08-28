@@ -68,9 +68,9 @@ end
 ###################################################################
 
 class TrainerBase
-  attr_accessor :examples, :network, :numberOfOutputNeurons, :allNeuronLayers, :allNeuronsInOneArray, :inputLayer, :outputLayer,
-                :neuronsWithInputLinks, :neuronsWithInputLinksInReverseOrder, :args, :trainingSequence,
-                :numberOfExamples, :startTime, :elapsedTime, :minMSE
+  attr_accessor :examples, :network, :numberOfOutputNeurons, :allNeuronLayers, :allNeuronsInOneArray, :inputLayer,
+                :outputLayer, :theBiasNeuron, :neuronsWithInputLinks, :neuronsWithInputLinksInReverseOrder,
+                :args, :trainingSequence, :numberOfExamples, :startTime, :elapsedTime, :minMSE
   include NeuronToNeuronConnection
   include ExampleDistribution
   include DBAccess
@@ -84,6 +84,7 @@ class TrainerBase
     @allNeuronsInOneArray = @allNeuronLayers.flatten
     @inputLayer = @allNeuronLayers[0]
     @outputLayer = @allNeuronLayers[-1]
+    @theBiasNeuron = network.theBiasNeuron
     @neuronsWithInputLinks = (@allNeuronsInOneArray - @inputLayer).flatten
     @neuronsWithInputLinksInReverseOrder = @neuronsWithInputLinks.reverse
     @numberOfOutputNeurons = @outputLayer.length
@@ -276,19 +277,35 @@ class Trainer7pt1 < TrainerBase
 
   def train
     distributeSetOfExamples(examples)
+
+    #phase1 short bp for hidden layer 1
     learningNeurons = allNeuronLayers[1] + outputLayer
     phaseTrain { performStandardBackPropTrainingOn(learningNeurons) }
 
+    #phase2 self-org for hidden layer 1
     trainingSequence.startNextPhaseOfTraining
     phaseTrain { performSelfOrgTrainingOn( allNeuronLayers[1] ) }
 
+    #phase3 context learning for hidden layer 2, controlled by hidden layer 1
     trainingSequence.startNextPhaseOfTraining
     phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
+
+    #phase4 self-org for hidden layer 2
+    trainingSequence.startNextPhaseOfTraining
+    phaseTrain { performSelfOrgTrainingOn( allNeuronLayers[2] ) }
+
 
     allNeuronLayers[2].each do |aNeuron|
       aNeuron.neuronControllingLearning = theBiasNeuron
       aNeuron.flipLearningProbability = false
     end
+
+    #phase5 NON-context Self-Org learning for hidden layer 2
+    trainingSequence.startNextPhaseOfTraining
+    phaseTrain { performSelfOrgTrainingOn( allNeuronLayers[2] ) }
+
+
+    #phase6 NON-context bp learning for entire network
     trainingSequence.startNextPhaseOfTraining
     phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
 

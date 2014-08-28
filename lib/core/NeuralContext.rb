@@ -16,11 +16,11 @@ class NeuronInContext < Neuron
 
   def calcDeltaWsAndAccumulate
     self.adjustmentToLearningRate = adjustmentTransformer(neuronControllingLearning.output, flipLearningProbability)
-    if adjustmentToLearningRate > 0.0
+    #if adjustmentToLearningRate > 0.0
       inputLinks.each do |inputLink|
         inputLink.calcDeltaWAndAccumulate
       end
-    end
+    #end
   end
 
   def to_s
