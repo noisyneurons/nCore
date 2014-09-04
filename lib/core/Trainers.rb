@@ -45,17 +45,19 @@ class TrainingSequence
 end
 
 class MultiPhaseTrainingSequence < TrainingSequence
-  attr_accessor :maxEpochNumbersForEachPhase, :phaseIndex
+  attr_accessor :maxEpochNumbersForEachPhase, :phaseIndex, :numberOfPhases
 
   def initialize(args)
     @args = args
     @maxEpochNumbersForEachPhase = args[:maxEpochNumbersForEachPhase]
+    @numberOfPhases = @maxEpochNumbersForEachPhase.length
     @phaseIndex = -1
     startNextPhaseOfTraining
   end
 
   def startNextPhaseOfTraining
     self.phaseIndex += 1
+    return if(numberOfPhases == phaseIndex)
     self.maxNumberOfEpochs = maxEpochNumbersForEachPhase[phaseIndex]
     self.epochs = -1
     self.stillMoreEpochs = true
@@ -121,6 +123,7 @@ class TrainerBase
       trainingSequence.nextEpoch
       mse = calcMSE
     end
+    trainingSequence.startNextPhaseOfTraining
     return mse
   end
 
@@ -283,31 +286,32 @@ class Trainer7pt1 < TrainerBase
     phaseTrain { performStandardBackPropTrainingOn(learningNeurons) }
 
     #phase2 self-org for hidden layer 1
-    trainingSequence.startNextPhaseOfTraining
     phaseTrain { performSelfOrgTrainingOn( allNeuronLayers[1] ) }
 
-    #phase3 context learning for hidden layer 2, controlled by hidden layer 1
-    trainingSequence.startNextPhaseOfTraining
+    #phase3
+    phaseTrain { performStandardBackPropTrainingOn(learningNeurons) }
+
+    #phase4 context learning for hidden layer 2, controlled by hidden layer 1
     phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
 
-    #phase4 self-org for hidden layer 2
-    trainingSequence.startNextPhaseOfTraining
+    #phase5
     phaseTrain { performSelfOrgTrainingOn( allNeuronLayers[2] ) }
 
+    ##phase6
+    phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
 
     allNeuronLayers[2].each do |aNeuron|
       aNeuron.neuronControllingLearning = theBiasNeuron
-      aNeuron.flipLearningProbability = false
+      aNeuron.reverseLearningProbability = false
     end
 
-    #phase5 NON-context Self-Org learning for hidden layer 2
-    trainingSequence.startNextPhaseOfTraining
+    #phase7
     phaseTrain { performSelfOrgTrainingOn( allNeuronLayers[2] ) }
 
 
-    #phase6 NON-context bp learning for entire network
-    trainingSequence.startNextPhaseOfTraining
-    phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
+    ##phase6 NON-context bp learning for entire network
+    #trainingSequence.startNextPhaseOfTraining
+    #phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
 
 
     forEachExampleDisplayInputsAndOutputs

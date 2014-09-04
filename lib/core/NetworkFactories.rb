@@ -267,8 +267,9 @@ class Context4LayerNetwork < ContextNetwork
 
     hiddenLayer2 = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], typeOfLink = args[:typeOfLink], args[:numberOfHiddenLayer2Neurons])
     hiddenLayer2.each_with_index do |aNeuron, index|
-      aNeuron.neuronControllingLearning = hiddenLayer1[0]
-      aNeuron.flipLearningProbability = index.odd?
+      indexToNeuronControllingNeuronInPrecedingLayer = (index / 2).to_i
+      aNeuron.neuronControllingLearning = hiddenLayer1[indexToNeuronControllingNeuronInPrecedingLayer]
+      aNeuron.reverseLearningProbability = index.odd?
     end
     self.allNeuronLayers << hiddenLayer2
 
@@ -287,86 +288,86 @@ end
 
 
 ######################################## Code Below is not being used.
-
-class JumpLinked4LayerNetwork < BaseNetwork
-  attr_accessor :hiddenLayer1, :hiddenLayer2
-
-  def createNetwork
-    createLayersAndSequentialLayerToLayerConnections
-    connect_layer_to_another(inputLayer, hiddenLayer2, args) # This is where we create links that 'jump across' hidden layer1.
-    connect_layer_to_another(hiddenLayer1, outputLayer, args) # This is where we create links that 'jump across' hidden layer2.
-    connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
-  end
-
-  def createLayersAndSequentialLayerToLayerConnections
-    self.inputLayer = createAndConnectLayer(nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
-    self.allNeuronLayers << inputLayer
-
-    self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], args[:numberOfHiddenLayer1Neurons])
-    self.allNeuronLayers << hiddenLayer1
-
-    self.hiddenLayer2 = createAndConnectLayer(hiddenLayer1, typeOfNeuron = args[:typeOfNeuron], args[:numberOfHiddenLayer2Neurons])
-    self.allNeuronLayers << hiddenLayer2
-
-    self.outputLayer = createAndConnectLayer(hiddenLayer2, typeOfNeuron = args[:typeOfOutputNeuron], args[:numberOfOutputNeurons])
-    self.allNeuronLayers << outputLayer
-  end
-end
-
-
-class SharedJumpLinked4LayerNetwork < JumpLinked4LayerNetwork
-
-  def createNetwork
-    createLayersAndSequentialLayerToLayerConnections
-    connect_layer_to_another(inputLayer, hiddenLayer2, args) # This is where we create links that 'jump across' the hidden layer1.
-    connect_layer_to_another(hiddenLayer1, outputLayer, args) # This is where we create links that 'jump across' the hidden layer2.
-    connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
-  end
-
-end
-
-
-
-class Recurrent2HiddenLayerNetworkSpecial < BaseNetwork
-  attr_accessor :hiddenLayer1, :hiddenLayer2, :linksBetweenHidden2Layers
-
-  def createStandardNetworkWithStandardFullyConnectedArchitecture
-    STDERR.puts "Error: number of neurons in hidden layers are not identical" if (args[:numberOfHiddenLayer1Neurons] != args[:numberOfHiddenLayer2Neurons])
-
-    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
-    self.allNeuronLayers << inputLayer
-
-    # self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingNeuronStepIO, args[:numberOfHiddenLayer1Neurons])
-    # self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingSymmetricalNeuron, args[:numberOfHiddenLayer1Neurons])
-    self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingNeuron, args[:numberOfHiddenLayer1Neurons])
-    self.allNeuronLayers << hiddenLayer1
-
-    # self.hiddenLayer2 = createAndConnectLayer((inputLayer + hiddenLayer1), typeOfNeuron = FlockingSymmetricalNeuron, args[:numberOfHiddenLayer2Neurons])
-    self.hiddenLayer2 = createAndConnectLayer((inputLayer + hiddenLayer1), typeOfNeuron = FlockingNeuron, args[:numberOfHiddenLayer2Neurons])
-    self.allNeuronLayers << hiddenLayer2
-
-    self.outputLayer = createAndConnectLayer(hiddenLayer2, typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
-    self.allNeuronLayers << outputLayer
-
-    connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
-  end
-
-  def modificationsToStandardNetworkArchitecture
-    # Weight Sharing code
-    inputLayerIncludingLinkFromBias = inputLayer + [theBiasNeuron]
-    shareWeightBetweenCorrespondingLinks(inputLayerIncludingLinkFromBias, hiddenLayer1,
-                                         inputLayerIncludingLinkFromBias, hiddenLayer2)
-
-    # to create just cross-connections between 2 hidden layers of a "simulated recurrent net" we need to delete ALL (direct recurrent: N1out to N1in connections)
-    # In other words, we delete the connection between a neuron's output and its input. i.e. we eliminate the "cat chases its tail" links.
-    deleteRecurrentSelfConnections(hiddenLayer1, hiddenLayer2)
-
-    # connectToAllNeuronsInReceivingLayer(theBiasNeuron, hiddenLayer2, args)
-
-    linksBetweenHidden2Layers = retrieveLinksBetweenGroupsOfNeurons(hiddenLayer1, hiddenLayer2)
-    linksBetweenHidden2Layers.each { |aLink| aLink.weight = 0.0 } ## Set inter-hidden-layer weights to zero
-  end
-end
+#
+#class JumpLinked4LayerNetwork < BaseNetwork
+#  attr_accessor :hiddenLayer1, :hiddenLayer2
+#
+#  def createNetwork
+#    createLayersAndSequentialLayerToLayerConnections
+#    connect_layer_to_another(inputLayer, hiddenLayer2, args) # This is where we create links that 'jump across' hidden layer1.
+#    connect_layer_to_another(hiddenLayer1, outputLayer, args) # This is where we create links that 'jump across' hidden layer2.
+#    connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
+#  end
+#
+#  def createLayersAndSequentialLayerToLayerConnections
+#    self.inputLayer = createAndConnectLayer(nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
+#    self.allNeuronLayers << inputLayer
+#
+#    self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], args[:numberOfHiddenLayer1Neurons])
+#    self.allNeuronLayers << hiddenLayer1
+#
+#    self.hiddenLayer2 = createAndConnectLayer(hiddenLayer1, typeOfNeuron = args[:typeOfNeuron], args[:numberOfHiddenLayer2Neurons])
+#    self.allNeuronLayers << hiddenLayer2
+#
+#    self.outputLayer = createAndConnectLayer(hiddenLayer2, typeOfNeuron = args[:typeOfOutputNeuron], args[:numberOfOutputNeurons])
+#    self.allNeuronLayers << outputLayer
+#  end
+#end
+#
+#
+#class SharedJumpLinked4LayerNetwork < JumpLinked4LayerNetwork
+#
+#  def createNetwork
+#    createLayersAndSequentialLayerToLayerConnections
+#    connect_layer_to_another(inputLayer, hiddenLayer2, args) # This is where we create links that 'jump across' the hidden layer1.
+#    connect_layer_to_another(hiddenLayer1, outputLayer, args) # This is where we create links that 'jump across' the hidden layer2.
+#    connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
+#  end
+#
+#end
+#
+#
+#
+#class Recurrent2HiddenLayerNetworkSpecial < BaseNetwork
+#  attr_accessor :hiddenLayer1, :hiddenLayer2, :linksBetweenHidden2Layers
+#
+#  def createStandardNetworkWithStandardFullyConnectedArchitecture
+#    STDERR.puts "Error: number of neurons in hidden layers are not identical" if (args[:numberOfHiddenLayer1Neurons] != args[:numberOfHiddenLayer2Neurons])
+#
+#    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
+#    self.allNeuronLayers << inputLayer
+#
+#    # self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingNeuronStepIO, args[:numberOfHiddenLayer1Neurons])
+#    # self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingSymmetricalNeuron, args[:numberOfHiddenLayer1Neurons])
+#    self.hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = FlockingNeuron, args[:numberOfHiddenLayer1Neurons])
+#    self.allNeuronLayers << hiddenLayer1
+#
+#    # self.hiddenLayer2 = createAndConnectLayer((inputLayer + hiddenLayer1), typeOfNeuron = FlockingSymmetricalNeuron, args[:numberOfHiddenLayer2Neurons])
+#    self.hiddenLayer2 = createAndConnectLayer((inputLayer + hiddenLayer1), typeOfNeuron = FlockingNeuron, args[:numberOfHiddenLayer2Neurons])
+#    self.allNeuronLayers << hiddenLayer2
+#
+#    self.outputLayer = createAndConnectLayer(hiddenLayer2, typeOfNeuron = FlockingOutputNeuron, args[:numberOfOutputNeurons])
+#    self.allNeuronLayers << outputLayer
+#
+#    connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
+#  end
+#
+#  def modificationsToStandardNetworkArchitecture
+#    # Weight Sharing code
+#    inputLayerIncludingLinkFromBias = inputLayer + [theBiasNeuron]
+#    shareWeightBetweenCorrespondingLinks(inputLayerIncludingLinkFromBias, hiddenLayer1,
+#                                         inputLayerIncludingLinkFromBias, hiddenLayer2)
+#
+#    # to create just cross-connections between 2 hidden layers of a "simulated recurrent net" we need to delete ALL (direct recurrent: N1out to N1in connections)
+#    # In other words, we delete the connection between a neuron's output and its input. i.e. we eliminate the "cat chases its tail" links.
+#    deleteRecurrentSelfConnections(hiddenLayer1, hiddenLayer2)
+#
+#    # connectToAllNeuronsInReceivingLayer(theBiasNeuron, hiddenLayer2, args)
+#
+#    linksBetweenHidden2Layers = retrieveLinksBetweenGroupsOfNeurons(hiddenLayer1, hiddenLayer2)
+#    linksBetweenHidden2Layers.each { |aLink| aLink.weight = 0.0 } ## Set inter-hidden-layer weights to zero
+#  end
+#end
 
 
 #class DeepRecurrentNetwork < BaseNetwork  # TODO a number of things wrong here.  Needs to be corrected.

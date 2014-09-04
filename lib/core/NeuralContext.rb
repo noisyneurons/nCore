@@ -6,16 +6,17 @@ require_relative 'NeuralParts'
 
 
 class NeuronInContext < Neuron
-  attr_accessor :neuronControllingLearning, :flipLearningProbability, :adjustmentToLearningRate
+  attr_accessor :neuronControllingLearning, :reverseLearningProbability, :adjustmentToLearningRate
 
   def postInitialize
     super
+    @neuronControllingLearning = nil
     @adjustmentToLearningRate = nil
-    @flipLearningProbability = false
+    @reverseLearningProbability = false
   end
 
   def calcDeltaWsAndAccumulate
-    self.adjustmentToLearningRate = adjustmentTransformer(neuronControllingLearning.output, flipLearningProbability)
+    self.adjustmentToLearningRate = adjustmentTransformer(neuronControllingLearning.output, reverseLearningProbability)
     #if adjustmentToLearningRate > 0.0
       inputLinks.each do |inputLink|
         inputLink.calcDeltaWAndAccumulate
@@ -32,13 +33,13 @@ class NeuronInContext < Neuron
 
   protected
 
-  def adjustmentTransformer(controlNeuronsOutput, flipLearningProbability)
+  def adjustmentTransformer(controlNeuronsOutput, reverseLearningProbability)
     adjustment = if controlNeuronsOutput >= 0.5
                    1.0
                  else
                    0.0
                  end
-    if flipLearningProbability
+    if reverseLearningProbability
       1.0 - adjustment
     else
       adjustment
