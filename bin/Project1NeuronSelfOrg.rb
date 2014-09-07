@@ -1,10 +1,6 @@
 ### VERSION "nCore"
-## ../nCore/bin/Project7pt1.rb
-# Purpose:  Start of Project 7; project to split example set to learn sub-parts, and then combine those parts/neuron-functions that
-# didn't need to be separated, but instead need to be integrated to obtain better generalization.
-# Ultimate goal of project 6 is develop analogy processing -- where one function useful for solving one problem
-# can be of use in solving another problem.  The common function(s)/neuron(s) can be thus be 'reused' -- and even potentially made
-# better by improving the accuracy of the function parameters because more examples are used to learn the parameters.
+## ../nCore/bin/Project1NeuronSelfOrg.rb
+# Purpose:  1NeuronSelfOrg;  Get simplest versions of self-org understood and "working."
 
 require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
@@ -22,9 +18,6 @@ class Neuron
   include SelfOrganization
 end
 
-class OutputNeuron
-end
-
 
 class Experiment
   include NeuronToNeuronConnection
@@ -33,7 +26,7 @@ class Experiment
     @args = {
         :experimentNumber => $globalExperimentNumber,
         :descriptionOfExperiment => descriptionOfExperiment,
-        :randomNumberSeed => randomNumberSeed,
+        :randomNumberSeed => (randomNumberSeed + 4),
 
         # training parameters
         :learningRate =>  0.1,
@@ -57,7 +50,7 @@ class Experiment
         :numberOfTestingExamples => numberOfExamples,
 
         # Recording and database parameters
-        :neuronsToDisplay => [6],
+        :neuronsToDisplay => [1],
         :intervalForSavingNeuronData => 100, #100000,
         :intervalForSavingDetailedNeuronData => 100, #2000,
         :intervalForSavingTrainingData => 100
@@ -68,7 +61,8 @@ class Experiment
     xStart = [-1.0, 1.0, -1.0, 1.0]
     yStart = [1.0, 1.0, -1.0, -1.0]
     xInc = [0.0, 0.0, 0.0, 0.0]
-    yInc = [0.2, 0.2, -0.2, -0.2]
+    # yInc = [0.2, 0.2, -0.2, -0.2]
+    yInc = [0.1, 0.1, -0.1, -0.1]
 
     numberOfClasses = xStart.length
     numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
@@ -100,10 +94,37 @@ class Experiment
   end
 
   def createNetworkAndTrainer
-    network = Context4LayerNetwork.new(args)
-    theTrainer = Trainer7pt1.new(examples, network, args)
+    network = SelfOrg1NeuronNetwork.new(args)
+
+    selfOrgLayer = network.allNeuronLayers[1]
+    selfOrgNeuron = selfOrgLayer[0]
+    selfOrgNeuron.inputLinks[0].weight = 0.1
+    selfOrgNeuron.inputLinks[1].weight = 0.1
+    selfOrgNeuron.inputLinks[2].weight = 0.0
+
+    theTrainer = TrainerSelfOrg.new(examples, network, args)
     return network, theTrainer
   end
+
+  def reportTrainingResults(neuronToDisplay, descriptionOfExperiment, lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime)
+
+    endOfTrainingReport(lastEpoch, lastTestingMSE, lastTrainingMSE, network)
+
+    #neuronDataSummary(neuronToDisplay)
+
+    #detailedNeuronDataSummary(neuronToDisplay)
+
+    trainingDataRecords = trainingDataSummary
+
+    storeSnapShotData(descriptionOfExperiment, lastEpoch, lastTestingMSE, lastTrainingMSE, network, startingTime)
+
+    snapShotDataSummary
+
+    #plotMSEvsEpochNumber(trainingDataRecords)
+
+    # plotTrainingResults(neuronToDisplay)
+  end
+
 
 end
 

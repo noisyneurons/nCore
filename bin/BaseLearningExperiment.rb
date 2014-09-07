@@ -16,9 +16,11 @@ class Experiment
 
   def initialize(descriptionOfExperiment, baseRandomNumberSeed)
     @descriptionOfExperiment = descriptionOfExperiment
+
     @taskID = ((ENV['SGE_TASK_ID']).to_i) || 0
     @randomNumberSeed = baseRandomNumberSeed + (taskID * 10000)
-    srand(randomNumberSeed)
+    @args = self.setParameters
+    srand(@args[:randomNumberSeed])
 
     puts "sleeping" unless ($currentHost == "localhost")
     sleep(rand * 30) unless ($currentHost == "localhost")
@@ -28,7 +30,7 @@ class Experiment
 
     @experimentLogger = ExperimentLogger.new(descriptionOfExperiment, jobName)
     $globalExperimentNumber = experimentLogger.experimentNumber
-    @args = self.setParameters
+    #@args = self.setParameters
     @examples = createTrainingSet
     args[:testingExamples] = createTestingSet
 

@@ -252,26 +252,43 @@ module SelfOrgTraining
       end
     end
   end
+
 end
 
 
 class TrainerSelfOrg < TrainerBase
   include SelfOrgTraining
 
-  def postInitialize
-    super
-    self.selfOrgNeurons = allNeuronLayers[1]
-  end
-
   def train
     distributeSetOfExamples(examples)
-    phaseTrain { performStandardBackPropTraining }
-    trainingSequence.startNextPhaseOfTraining
-    phaseTrain { performSelfOrgTraining }
-    forEachExampleDisplayInputsAndOutputs
-    testMSE = calcTestingMeanSquaredErrors
-    return trainingSequence.epochs, calcMeanSumSquaredErrors, testMSE
+
+    puts "phase1: self-org for hidden layer 1 "
+    phaseTrain { performSelfOrgTrainingOn( allNeuronLayers[1] ) }
+
+
+    #forEachExampleDisplayInputsAndOutputs
+    #testMSE = calcTestingMeanSquaredErrors
+    return trainingSequence.epochs, 9999.9, 9999.9
   end
+
+
+  def phaseTrain
+    mse = 1e100
+    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
+      yield
+      neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
+      # dbStoreTrainingData()
+      trainingSequence.nextEpoch
+      # mse = calcMSE
+    end
+    trainingSequence.startNextPhaseOfTraining
+    return mse
+  end
+
+  def distributeSetOfExamples(examples)
+    distributeDataToInputAndOutputNeurons(examples, [inputLayer])
+  end
+
 end
 
 
@@ -281,32 +298,36 @@ class Trainer7pt1 < TrainerBase
   def train
     distributeSetOfExamples(examples)
 
-    #phase1 short bp for hidden layer 1
+    #puts "phase1: short bp for hidden layer 1 + output layer"
     learningNeurons = allNeuronLayers[1] + outputLayer
     phaseTrain { performStandardBackPropTrainingOn(learningNeurons) }
 
-    #phase2 self-org for hidden layer 1
+    puts "phase2: self-org for hidden layer 1 "
     phaseTrain { performSelfOrgTrainingOn( allNeuronLayers[1] ) }
 
-    #phase3
-    phaseTrain { performStandardBackPropTrainingOn(learningNeurons) }
+    #puts "phase3: short bp for hidden layer 1 + output layer"
+    #phaseTrain { performStandardBackPropTrainingOn(learningNeurons) }
 
-    #phase4 context learning for hidden layer 2, controlled by hidden layer 1
-    phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
+    #puts "phase4: context learning for hidden layer 2, controlled by hidden layer 1 "
+    #phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
 
-    #phase5
-    phaseTrain { performSelfOrgTrainingOn( allNeuronLayers[2] ) }
+    #puts "phase5: context learning for hidden layer 2, controlled by hidden layer 1"
+    #phaseTrain { performSelfOrgTrainingOn( allNeuronLayers[2] ) }
+    #
+    #puts "phase6"
+    #phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
+    #
+    #allNeuronLayers[2].each do |aNeuron|
+    #  aNeuron.neuronControllingLearning = theBiasNeuron
+    #  aNeuron.reverseLearningProbability = false
+    #end
+    #
+    #puts "phase7"
+    #phaseTrain { performSelfOrgTrainingOn( allNeuronLayers[2] ) }
+    #
+    #puts "phase8"
+    #phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
 
-    ##phase6
-    phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
-
-    allNeuronLayers[2].each do |aNeuron|
-      aNeuron.neuronControllingLearning = theBiasNeuron
-      aNeuron.reverseLearningProbability = false
-    end
-
-    #phase7
-    phaseTrain { performSelfOrgTrainingOn( allNeuronLayers[2] ) }
 
 
     ##phase6 NON-context bp learning for entire network
@@ -332,50 +353,6 @@ class Trainer7pt1 < TrainerBase
 end
 
 
-class Trainer7pt1LocalSO < TrainerBase
-
-end
-
-
-class Trainer7pt2 < Trainer7pt1
-  attr_accessor :learningNeurons2
-
-  def postInitialize
-    super
-    self.learningNeurons2 = allNeuronLayers[2] + outputLayer
-  end
-
-  def train
-    distributeSetOfExamples(examples)
-    mse = 1e100
-    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
-      performStandardBackPropTraining()
-      neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
-      dbStoreTrainingData()
-      trainingSequence.nextEpoch
-      mse = calcMSE
-    end
-
-    #trainingSequence.reinitialize
-    #
-    #while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
-    #  backPropTrain(learningNeurons2)
-    #  neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
-    #  dbStoreTrainingData()
-    #  trainingSequence.nextEpoch
-    #  mse = calcMSE
-    #end
-
-    testMSE = calcTestingMeanSquaredErrors
-    return trainingSequence.epochs, calcMSE, testMSE
-  end
-
-
-  def backPropTrainLinks(setOfLinks)
-    acrossExamplesAccumulateDeltaWs(setOfLearningNeurons) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
-  end
-end
 
 
 #class WeightChangeNormalizer
