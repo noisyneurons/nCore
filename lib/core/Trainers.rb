@@ -57,7 +57,7 @@ class MultiPhaseTrainingSequence < TrainingSequence
 
   def startNextPhaseOfTraining
     self.phaseIndex += 1
-    return if(numberOfPhases == phaseIndex)
+    return if (numberOfPhases == phaseIndex)
     self.maxNumberOfEpochs = maxEpochNumbersForEachPhase[phaseIndex]
     self.epochs = -1
     self.stillMoreEpochs = true
@@ -234,6 +234,34 @@ end
 
 module SelfOrgTraining
 
+  #def setBiasWeightsForSelfOrgOn(neurons)
+  #  accumulatedNetInputs = acrossExamplesAccumulateNetInputTo(neurons)
+  #  setBiasWeightsFor(neurons, accumulatedNetInputs)
+  #  acrossExamplesAccumulateNetInputTo(neurons)
+  #end
+  #
+  #def acrossExamplesAccumulateNetInputTo(neurons)
+  #  accumulatedNetInputs = Array.new(neurons.length, 0.0)
+  #  puts "Initialized accumulatedNetInputs= #{accumulatedNetInputs}"
+  #  numberOfExamples.times do |exampleNumber|
+  #    propagateExampleUpToLayer(exampleNumber, neurons)
+  #    neurons.each_with_index do |aNeuron, index|
+  #      puts "For Ex netInput= #{aNeuron.netInput}"
+  #      accumulatedNetInputs[index] += aNeuron.netInput
+  #    end
+  #  end
+  #  accumulatedNetInputs
+  #end
+  #
+  #def setBiasWeightsFor(neurons, accumulatedNetInputs)
+  #  neurons.each_with_index do | aNeuron, index |
+  #    aVal = accumulatedNetInputs[index]
+  #    puts "accumulatedNetInputs= #{aVal}"
+  #    aNeuron.inputLinks[-1].weight = -1.0 * (accumulatedNetInputs[index] / args[:numberOfExamples])
+  #    puts "aNeuron.inputLinks[-1].weight= #{aNeuron.inputLinks[-1].weight}"
+  #  end
+  #end
+
   def performSelfOrgTrainingOn(layerOfNeurons)
     acrossExamplesAccumulateSelfOrgDeltaWs(layerOfNeurons)
     layerOfNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
@@ -263,14 +291,12 @@ class TrainerSelfOrg < TrainerBase
     distributeSetOfExamples(examples)
 
     puts "phase1: self-org for hidden layer 1 "
-    phaseTrain { performSelfOrgTrainingOn( allNeuronLayers[1] ) }
+    phaseTrain { performSelfOrgTrainingOn(allNeuronLayers[1]) }
+    forEachExampleDisplayInputsAndOutputs
 
-
-    #forEachExampleDisplayInputsAndOutputs
     #testMSE = calcTestingMeanSquaredErrors
     return trainingSequence.epochs, 9999.9, 9999.9
   end
-
 
   def phaseTrain
     mse = 1e100
@@ -303,7 +329,7 @@ class Trainer7pt1 < TrainerBase
     phaseTrain { performStandardBackPropTrainingOn(learningNeurons) }
 
     puts "phase2: self-org for hidden layer 1 "
-    phaseTrain { performSelfOrgTrainingOn( allNeuronLayers[1] ) }
+    phaseTrain { performSelfOrgTrainingOn(allNeuronLayers[1]) }
 
     #puts "phase3: short bp for hidden layer 1 + output layer"
     #phaseTrain { performStandardBackPropTrainingOn(learningNeurons) }
@@ -329,7 +355,6 @@ class Trainer7pt1 < TrainerBase
     #phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
 
 
-
     ##phase6 NON-context bp learning for entire network
     #trainingSequence.startNextPhaseOfTraining
     #phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
@@ -351,8 +376,6 @@ class Trainer7pt1 < TrainerBase
     nonLearningNeurons.each { |neuron| neuron.zeroWeights }
   end
 end
-
-
 
 
 #class WeightChangeNormalizer

@@ -77,7 +77,11 @@ class Array
 
   def mean
     sumOfArray = self.inject { |sum, n| sum + n }
-    return (sumOfArray / self.length)
+    return (sumOfArray.to_f / self.length)
+  end
+
+  def abs
+    self.collect { |value| value.abs }
   end
 
   def standardError
@@ -87,8 +91,10 @@ class Array
   end
 
   def normalize
-    maximum = (self.max).to_f
-    self.collect { |value| value / maximum }
+    meanValue = self.mean
+    centeredArray = self.collect { |value| value - meanValue }
+    largestAbsoluteArrayElement = centeredArray.minmax.abs.max.to_f
+    centeredArray.collect { |value| value / largestAbsoluteArrayElement }
   end
 
   def scaleValuesToSumToOne

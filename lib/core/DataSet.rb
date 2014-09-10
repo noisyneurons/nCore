@@ -5,7 +5,6 @@ require_relative 'Utilities'
 require_relative '../../../rubystats/lib/normal_distribution'
 
 
-
 module ExampleDistribution
 
   def distributeDataToInputAndOutputNeurons(examples, arrayOfArraysOfInputAndOutputNeurons)
@@ -17,10 +16,66 @@ module ExampleDistribution
     anArray.each_with_index { |aNeuron, arrayIndexToExampleData| distributeSelectedDataToNeuron(aNeuron, examples, aNeuron.keyToExampleData, arrayIndexToExampleData) }
   end
 
-  private
 
   def distributeSelectedDataToNeuron(theNeuron, examples, keyToExampleData, arrayIndexToExampleData)
     theNeuron.arrayOfSelectedData = examples.collect { |anExample| anExample[keyToExampleData][arrayIndexToExampleData] }
+  end
+
+  def normalizeDataSet(examples)
+    transformedExampleDataSet = examples.deep_clone
+    arrayOfInputRows = extractArrayOfExampleInputVectors(examples)
+    numberOfNetworkInputs = arrayOfInputRows[0].length
+    std("numberOfNetworkInputs ", numberOfNetworkInputs)
+    numberOfNetworkInputs.times do |inputNumber|
+      std("inputNumber ", inputNumber)
+      allExampleValuesForOneNetworkInput = extractArrayOfAllExamplesForJustOneNetworkInput(inputNumber, arrayOfInputRows)
+      std("\tallExampleValuesForOneNetworkInput ", allExampleValuesForOneNetworkInput)
+      normalizedExampleValuesForInput = allExampleValuesForOneNetworkInput.normalize
+      std("\tnormalizedExampleValuesForInput ", normalizedExampleValuesForInput)
+      insertExampleValuesForInput(transformedExampleDataSet, normalizedExampleValuesForInput, inputNumber)
+    end
+    transformedExampleDataSet
+  end
+
+  # examples << {:inputs => aPoint, :targets => desiredOutputs, :exampleNumber => exampleNumber, :class => indexToClass}
+
+  def extractArrayOfExampleInputVectors(examples)
+    arrayOfInputRows = []
+    examples.each do |anExample|
+      inputRow = anExample[:inputs]
+      arrayOfInputRows << inputRow
+    end
+    return arrayOfInputRows
+  end
+
+  def extractArrayOfAllExamplesForJustOneNetworkInput(inputNumber, arrayOfInputRows)
+    arrayOfInputRows.collect { |aRow| aRow[inputNumber] }
+  end
+
+  def insertExampleValuesForInput(examples, normalizedExampleValuesForInput, inputNumber)
+    examples.each_with_index do |anExample, exampleNumber|
+      anExample[:inputs][inputNumber] = normalizedExampleValuesForInput[exampleNumber]
+    end
+  end
+
+  ################## ExampleList ROTATION of 2-D Inputs ###########################
+
+  def createRotationMatrix(angleInDegrees) # for CLOCKWISE Rotations!!
+    angleInRadians = angleInDegrees * ((2.0*Math::PI)/360.0)
+    s = Math.sin(angleInRadians)
+    c = Math.cos(angleInRadians)
+    # puts "angleInRadians= #{angleInRadians}\ts= #{s}\tc= #{c}\t    "
+    rotationMatrix = Matrix[[c, -s], [s, c]]
+    # puts "rotationMatrix= #{rotationMatrix} "
+    return rotationMatrix
+  end
+
+  def reconstructExampleListUsingNewInputs(originalExampleList, rotatedMatrix)
+    arrayOfInputs = rotatedMatrix.to_a
+    originalExampleList.each_with_index do |example, exampleNumber|
+      example[0] = arrayOfInputs[exampleNumber]
+    end
+    return originalExampleList
   end
 end
 

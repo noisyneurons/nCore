@@ -20,13 +20,12 @@ end
 
 
 class Experiment
-  include NeuronToNeuronConnection
 
   def setParameters
     @args = {
         :experimentNumber => $globalExperimentNumber,
         :descriptionOfExperiment => descriptionOfExperiment,
-        :randomNumberSeed => (randomNumberSeed + 4),
+        :randomNumberSeed => (randomNumberSeed + 0),
 
         # training parameters
         :learningRate =>  0.1,
@@ -37,8 +36,7 @@ class Experiment
         # Network Architecture
         :numberOfInputNeurons => 2,
         :numberOfHiddenLayer1Neurons => 1,
-        :numberOfHiddenLayer2Neurons => 2,
-        :numberOfOutputNeurons => 4,
+        :numberOfOutputNeurons => 1,
         :weightRange => 0.1,
         :typeOfLink => LinkInContext,
         :typeOfLinkToOutput => Link,
@@ -59,10 +57,14 @@ class Experiment
 
   def createTrainingSet
     xStart = [-1.0, 1.0, -1.0, 1.0]
+    # xStart = [0.0, 2.0, 0.0, 2.0]
+    # xStart = [1.0, 3.0, 1.0, 3.0]
+
     yStart = [1.0, 1.0, -1.0, -1.0]
+    # yStart = [2.0, 2.0, 0.0, 0.0]
     xInc = [0.0, 0.0, 0.0, 0.0]
-    # yInc = [0.2, 0.2, -0.2, -0.2]
-    yInc = [0.1, 0.1, -0.1, -0.1]
+    yInc = [0.2, 0.2, -0.2, -0.2]
+    # yInc = [0.0, 0.0, -0.0, -0.0]
 
     numberOfClasses = xStart.length
     numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
@@ -98,11 +100,13 @@ class Experiment
 
     selfOrgLayer = network.allNeuronLayers[1]
     selfOrgNeuron = selfOrgLayer[0]
-    selfOrgNeuron.inputLinks[0].weight = 0.1
+    selfOrgNeuron.inputLinks[0].weight = 0.02
     selfOrgNeuron.inputLinks[1].weight = 0.1
     selfOrgNeuron.inputLinks[2].weight = 0.0
 
-    theTrainer = TrainerSelfOrg.new(examples, network, args)
+    transformedExamples = normalizeDataSet(examples)
+
+    theTrainer = TrainerSelfOrg.new(transformedExamples, network, args)
     return network, theTrainer
   end
 

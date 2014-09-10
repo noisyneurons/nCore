@@ -60,6 +60,10 @@ module SelfOrganization
     self.error = -1.0 * ioDerivativeFromNetInput(netInput) * (((netInput - targetMinus)/distanceBetweenTargets)  -  0.5)
   end
 
+  def calcSumOfNetInput
+
+  end
+
 end
 
 
