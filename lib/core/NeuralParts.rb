@@ -57,7 +57,7 @@ module SelfOrganization
     targetPlus = 2.5
     targetMinus = -1.0 * targetPlus
     distanceBetweenTargets = targetPlus - targetMinus
-    self.error = -1.0 * ioDerivativeFromNetInput(netInput) * (((netInput - targetMinus)/distanceBetweenTargets)  -  0.5)
+    self.error = -1.0 * ioDerivativeFromNetInput(netInput) * (((netInput - targetMinus)/distanceBetweenTargets) - 0.5)
   end
 
   def calcSumOfNetInput
@@ -273,7 +273,6 @@ end
 #end
 
 
-
 #class SymmetricalNeuron < Neuron
 #  include SymmetricalSigmoidIOFunction
 #end
@@ -356,6 +355,39 @@ class Link
 
   def to_s
     return "Weight=\t#{weight}\tDeltaW=\t#{deltaW}\tAccumulatedDeltaW=\t#{deltaWAccumulated}\tWeightAtBeginningOfTraining=\t#{weightAtBeginningOfTraining}\tFROM: #{inputNeuron.class.to_s} #{inputNeuron.id} TO: #{outputNeuron.class.to_s} #{outputNeuron.id}"
+  end
+end
+
+
+class LinkWithNormalization < Link
+  attr_accessor :inputsOverEpoch, :normalizationOffset, :normalizationMultiplier
+
+  def initialize(inputNeuron, outputNeuron, args)
+    super(inputNeuron, outputNeuron, args)
+    resetNormalizationComponent
+  end
+
+  def resetNormalizationComponent
+    self.inputsOverEpoch = []
+    self.normalizationOffset = nil
+    self.normalizationMultiplier = nil
+  end
+
+  def propagateForNormalization
+    inputForThisExample =   inputNeuron.output
+    self.inputsOverEpoch << inputForThisExample
+    return inputForThisExample * weight
+  end
+
+  def propagate
+    return  normalizationMultiplier * (inputNeuron.output - normalizationOffset) * weight
+  end
+
+  def calculateNormalizationCoefficients
+      self.normalizationOffset = inputsOverEpoch.mean
+      centeredArray = inputsOverEpoch.collect { |value| value - meanInputValue }
+      largestAbsoluteArrayElement = centeredArray.minmax.abs.max.to_f
+      self.normalizationMultiplier = 1.0 / largestAbsoluteArrayElement
   end
 end
 

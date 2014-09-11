@@ -318,6 +318,46 @@ class TrainerSelfOrg < TrainerBase
 end
 
 
+class TrainerSelfOrgWithLinkNormalization < TrainerSelfOrg
+  include SelfOrgTraining
+
+  def train
+    distributeSetOfExamples(examples)
+
+    puts "phase1: self-org for hidden layer 1 "
+    normalize(allNeuronLayers[1])
+    phaseTrain { performSelfOrgTrainingOn(allNeuronLayers[1]) }
+    forEachExampleDisplayInputsAndOutputs
+
+    #testMSE = calcTestingMeanSquaredErrors
+    return trainingSequence.epochs, 9999.9, 9999.9
+  end
+
+  def phaseTrain
+
+    mse = 1e100
+    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
+      yield
+      neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
+      # dbStoreTrainingData()
+      trainingSequence.nextEpoch
+      # mse = calcMSE
+    end
+    trainingSequence.startNextPhaseOfTraining
+    return mse
+  end
+
+  def normalize(layer)
+    resetNormalizationComponent
+    numberOfExamples.times do |exampleNumber|
+      propagateForNormalizationToLayer(exampleNumber, layer)
+    end
+    calculateNormalizationCoefficients
+
+  end
+end
+
+
 class Trainer7pt1 < TrainerBase
   include SelfOrgTraining
 
