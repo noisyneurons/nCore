@@ -364,30 +364,33 @@ class LinkWithNormalization < Link
 
   def initialize(inputNeuron, outputNeuron, args)
     super(inputNeuron, outputNeuron, args)
-    resetNormalizationComponent
+    resetNormalizationVariables
   end
 
-  def resetNormalizationComponent
+  def resetNormalizationVariables
     self.inputsOverEpoch = []
-    self.normalizationOffset = nil
-    self.normalizationMultiplier = nil
+    self.normalizationOffset = 0.0
+    self.normalizationMultiplier = 1.0
   end
 
   def propagateForNormalization
-    inputForThisExample =   inputNeuron.output
+    inputForThisExample = inputNeuron.output
     self.inputsOverEpoch << inputForThisExample
     return inputForThisExample * weight
   end
 
   def propagate
-    return  normalizationMultiplier * (inputNeuron.output - normalizationOffset) * weight
+    return normalizationMultiplier * (inputNeuron.output - normalizationOffset) * weight
   end
 
   def calculateNormalizationCoefficients
-      self.normalizationOffset = inputsOverEpoch.mean
-      centeredArray = inputsOverEpoch.collect { |value| value - meanInputValue }
+    average = inputsOverEpoch.mean
+    if (average != 1.0)
+      self.normalizationOffset = average
+      centeredArray = inputsOverEpoch.collect { |value| value - normalizationOffset }
       largestAbsoluteArrayElement = centeredArray.minmax.abs.max.to_f
       self.normalizationMultiplier = 1.0 / largestAbsoluteArrayElement
+    end
   end
 end
 
