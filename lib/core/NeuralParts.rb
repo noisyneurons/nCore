@@ -51,21 +51,6 @@ module CommonNeuronCalculations
 end
 
 
-module SelfOrganization
-
-  def calcSelfOrgError
-    targetPlus = 2.5
-    targetMinus = -1.0 * targetPlus
-    distanceBetweenTargets = targetPlus - targetMinus
-    self.error = -1.0 * ioDerivativeFromNetInput(netInput) * (((netInput - targetMinus)/distanceBetweenTargets) - 0.5)
-  end
-
-  def calcSumOfNetInput
-
-  end
-
-end
-
 
 ############################################################
 class NeuronBase
@@ -263,26 +248,6 @@ class NoisyNeuron < Neuron
 end
 
 
-# dont need these if I just add LinearIOFunction to Neuron or OutputNeuron or BaseNeuron
-#class LinearNeuron < Neuron
-#  include LinearIOFunction
-#end
-#
-#class LinearOutputNeuron < OutputNeuron
-#  include LinearIOFunction
-#end
-
-
-#class SymmetricalNeuron < Neuron
-#  include SymmetricalSigmoidIOFunction
-#end
-#
-#class SymmetricalOutputNeuron < OutputNeuron
-#  include SymmetricalSigmoidIOFunction
-#end
-############################################################
-
-
 ############################################################
 class Link
   attr_accessor :inputNeuron, :outputNeuron, :weightAtBeginningOfTraining,
@@ -358,60 +323,6 @@ class Link
   end
 end
 
-
-class LinkWithNormalization < Link
-  attr_accessor :inputsOverEpoch, :normalizationOffset, :largestAbsoluteArrayElement, :normalizationMultiplier
-
-  def initialize(inputNeuron, outputNeuron, args)
-    super(inputNeuron, outputNeuron, args)
-    @inputsOverEpoch = []
-    resetAllNormalizationVariables
-  end
-
-  def resetAllNormalizationVariables
-    self.inputsOverEpoch.clear
-    self.normalizationOffset = 0.0
-    self.largestAbsoluteArrayElement = 1.0
-    self.normalizationMultiplier = 1.0
-  end
-
-  def propagateForNormalization
-    inputForThisExample = inputNeuron.output
-    self.inputsOverEpoch << inputForThisExample
-    return inputForThisExample * weight
-  end
-
-  def propagate
-    return normalizationMultiplier * weight * (inputNeuron.output - normalizationOffset)
-  end
-
-  def calculateNormalizationCoefficients
-    puts "inputsOverEpoch= #{inputsOverEpoch}"
-    averageOfInputs = inputsOverEpoch.mean
-    puts "averageOfInputs= #{averageOfInputs}"
-
-    self.normalizationOffset = averageOfInputs
-    centeredArray = inputsOverEpoch.collect { |value| value - normalizationOffset }
-    largestAbsoluteArrayElement = centeredArray.minmax.abs.max.to_f
-    self.normalizationMultiplier = 1.0 / largestAbsoluteArrayElement
-  end
-
-  def setBiasLinkNormalizationCoefficients
-    self.normalizationMultiplier = 0.0
-  end
-
-  def afterSelfOrgReCalcLinkWeights
-    puts "weightBefore= #{weight}"
-    self.weight = normalizationMultiplier * weight
-    puts "normalizationMultiplier= #{normalizationMultiplier}"
-    puts "weightAfter= #{weight}"
-  end
-
-  def propagateUsingZeroInput
-    return -1.0 * normalizationMultiplier * weight * normalizationOffset
-  end
-
-end
 
 
 class SharedWeight

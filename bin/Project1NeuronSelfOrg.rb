@@ -5,17 +5,18 @@
 require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
 require_relative '../lib/core/NeuralParts'
-require_relative '../lib/core/NeuralContext'
+# require_relative '../lib/core/NeuralContext'
+# require_relative '../lib/core/NeuralSelfOrg'
 require_relative '../lib/core/NetworkFactories'
 require_relative '../lib/plot/CorePlottingCode'
 require_relative '../lib/core/SimulationDataStore'
 require_relative '../lib/core/Trainers.rb'
+require_relative '../lib/core/NeuralSelfOrg'
 
 require_relative 'BaseLearningExperiment'
 
 class Neuron
   include NonMonotonicIOFunction
-  include SelfOrganization
 end
 
 
@@ -102,7 +103,7 @@ class Experiment
     selfOrgLayer = network.allNeuronLayers[1]
     selfOrgNeuron = selfOrgLayer[0]
     selfOrgNeuron.inputLinks[0].weight = 0.1
-    selfOrgNeuron.inputLinks[1].weight = 0.01
+    selfOrgNeuron.inputLinks[1].weight = 0.05
     # selfOrgNeuron.inputLinks[2].weight = 100.0
 
     theTrainer = TrainerSelfOrgWithLinkNormalization.new(examples, network, args)
