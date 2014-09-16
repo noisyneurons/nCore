@@ -57,15 +57,15 @@ class Experiment
   end
 
   def createTrainingSet
-    xStart = [-1.0, 1.0, -1.0, 1.0]
+    # xStart = [-1.0, 1.0, -1.0, 1.0]
     # xStart = [0.0, 2.0, 0.0, 2.0]
-    # xStart = [1.0, 3.0, 1.0, 3.0]
+    xStart = [1.0, 3.0, 1.0, 3.0]
 
     yStart = [1.0, 1.0, -1.0, -1.0]
     # yStart = [2.0, 2.0, 0.0, 0.0]
     xInc = [0.0, 0.0, 0.0, 0.0]
-    yInc = [0.2, 0.2, -0.2, -0.2]
-    # yInc = [0.0, 0.0, -0.0, -0.0]
+    # yInc = [0.2, 0.2, -0.2, -0.2]
+    yInc = [0.0, 0.0, -0.0, -0.0]
 
     numberOfClasses = xStart.length
     numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
@@ -102,11 +102,8 @@ class Experiment
     selfOrgLayer = network.allNeuronLayers[1]
     selfOrgNeuron = selfOrgLayer[0]
     selfOrgNeuron.inputLinks[0].weight = 0.1
-    selfOrgNeuron.inputLinks[1].weight = 0.025
-    selfOrgNeuron.inputLinks[2].weight = 0.0
-
-    #transformedExamples = normalizeDataSet(examples)
-    #theTrainer = TrainerSelfOrg.new(transformedExamples, network, args)
+    selfOrgNeuron.inputLinks[1].weight = 0.01
+    # selfOrgNeuron.inputLinks[2].weight = 100.0
 
     theTrainer = TrainerSelfOrgWithLinkNormalization.new(examples, network, args)
 

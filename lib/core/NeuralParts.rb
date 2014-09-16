@@ -360,16 +360,18 @@ end
 
 
 class LinkWithNormalization < Link
-  attr_accessor :inputsOverEpoch, :normalizationOffset, :normalizationMultiplier
+  attr_accessor :inputsOverEpoch, :normalizationOffset, :largestAbsoluteArrayElement, :normalizationMultiplier
 
   def initialize(inputNeuron, outputNeuron, args)
     super(inputNeuron, outputNeuron, args)
-    resetNormalizationVariables
+    @inputsOverEpoch = []
+    resetAllNormalizationVariables
   end
 
-  def resetNormalizationVariables
-    self.inputsOverEpoch = []
+  def resetAllNormalizationVariables
+    self.inputsOverEpoch.clear
     self.normalizationOffset = 0.0
+    self.largestAbsoluteArrayElement = 1.0
     self.normalizationMultiplier = 1.0
   end
 
@@ -380,18 +382,35 @@ class LinkWithNormalization < Link
   end
 
   def propagate
-    return normalizationMultiplier * (inputNeuron.output - normalizationOffset) * weight
+    return normalizationMultiplier * weight * (inputNeuron.output - normalizationOffset)
   end
 
   def calculateNormalizationCoefficients
-    average = inputsOverEpoch.mean
-    if (average != 1.0)
-      self.normalizationOffset = average
-      centeredArray = inputsOverEpoch.collect { |value| value - normalizationOffset }
-      largestAbsoluteArrayElement = centeredArray.minmax.abs.max.to_f
-      self.normalizationMultiplier = 1.0 / largestAbsoluteArrayElement
-    end
+    puts "inputsOverEpoch= #{inputsOverEpoch}"
+    averageOfInputs = inputsOverEpoch.mean
+    puts "averageOfInputs= #{averageOfInputs}"
+
+    self.normalizationOffset = averageOfInputs
+    centeredArray = inputsOverEpoch.collect { |value| value - normalizationOffset }
+    largestAbsoluteArrayElement = centeredArray.minmax.abs.max.to_f
+    self.normalizationMultiplier = 1.0 / largestAbsoluteArrayElement
   end
+
+  def setBiasLinkNormalizationCoefficients
+    self.normalizationMultiplier = 0.0
+  end
+
+  def afterSelfOrgReCalcLinkWeights
+    puts "weightBefore= #{weight}"
+    self.weight = normalizationMultiplier * weight
+    puts "normalizationMultiplier= #{normalizationMultiplier}"
+    puts "weightAfter= #{weight}"
+  end
+
+  def propagateUsingZeroInput
+    return -1.0 * normalizationMultiplier * weight * normalizationOffset
+  end
+
 end
 
 
