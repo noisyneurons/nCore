@@ -53,6 +53,7 @@ class Experiment
         :typeOfOutputNeuron => OutputNeuron,
 
         # Training Set parameters
+        :angleOfClockwiseRotationOfInputData => 0.0,
         :numberOfExamples => (self.numberOfExamples = 16),
         :numberOfTestingExamples => numberOfExamples,
 
@@ -64,14 +65,18 @@ class Experiment
     }
   end
 
-  def createTrainingSet
-    # xStart = [-1.0, 1.0, -1.0, 1.0]
+  def createDataSet
+    xStart = [-1.0, 1.0, -1.0, 1.0]
     # xStart = [0.0, 2.0, 0.0, 2.0]
-    xStart = [1.0, 3.0, 1.0, 3.0]
+    # xStart = [1.0, 3.0, 1.0, 3.0]
 
     yStart = [1.0, 1.0, -1.0, -1.0]
-    # yStart = [2.0, 2.0, 0.0, 0.0]
+    # yStart = [4.0, 4.0, 0.0, 0.0]
+
     xInc = [0.0, 0.0, 0.0, 0.0]
+    xInc = [0.0, 0.0, 0.0, 0.0]
+
+    yInc = [0.0, 0.0, -0.0, -0.0]
     # yInc = [0.2, 0.2, -0.2, -0.2]
     yInc = [0.0, 0.0, -0.0, -0.0]
 
@@ -96,12 +101,19 @@ class Experiment
       end
     end
     STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
+    angleOfClockwiseRotationOfInputData = args[:angleOfClockwiseRotationOfInputData]
+    examples = rotateClockwise(examples, angleOfClockwiseRotationOfInputData)
+  end
+
+  def createTrainingSet
+    examples = createDataSet
+    puts "length of examples = #{examples.length}"
     puts examples
-    examples
+    return examples
   end
 
   def createTestingSet
-    return createTrainingSet
+    return createDataSet
   end
 
   def createNetworkAndTrainer
@@ -109,8 +121,8 @@ class Experiment
 
     selfOrgLayer = network.allNeuronLayers[1]
     selfOrgNeuron = selfOrgLayer[0]
-    selfOrgNeuron.inputLinks[0].weight = 0.1
-    selfOrgNeuron.inputLinks[1].weight = 0.01
+    selfOrgNeuron.inputLinks[0].weight = 0.01
+    selfOrgNeuron.inputLinks[1].weight = 0.1
     # selfOrgNeuron.inputLinks[2].weight = 100.0
 
     theTrainer = TrainerSelfOrgWithLinkNormalization.new(examples, network, args)
@@ -136,7 +148,6 @@ class Experiment
 
     # plotTrainingResults(neuronToDisplay)
   end
-
 
 end
 

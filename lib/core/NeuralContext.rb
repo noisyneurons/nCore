@@ -64,7 +64,7 @@ end
 
 class DummyLearningController < LearningController
   def output
-    aGroupOfExampleNumbers = [0,1,2,3,8,9,10,11] # (0..7).to_a #
+    aGroupOfExampleNumbers = (0..15).to_a # [0,1,2,3,8,9,10,11]
     if aGroupOfExampleNumbers.include?(sensor.exampleNumber)
       1.0
     else

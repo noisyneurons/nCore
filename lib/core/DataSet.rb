@@ -56,6 +56,13 @@ module ExampleDistribution
 
   ################## ExampleList ROTATION of 2-D Inputs ###########################
 
+  def rotateClockwise(examples, angleOfClockwiseRotationOfInputData)
+    rotationMatrix = createRotationMatrix(angleOfClockwiseRotationOfInputData)
+    matrixToBeRotated = Matrix.rows(extractArrayOfExampleInputVectors(examples))
+    rotatedMatrix = matrixToBeRotated * rotationMatrix
+    reconstructExampleListUsingNewInputs(examples, rotatedMatrix)
+  end
+
   def createRotationMatrix(angleInDegrees) # for CLOCKWISE Rotations!!
     angleInRadians = angleInDegrees * ((2.0*Math::PI)/360.0)
     s = Math.sin(angleInRadians)
@@ -66,12 +73,22 @@ module ExampleDistribution
     return rotationMatrix
   end
 
-  def reconstructExampleListUsingNewInputs(originalExampleList, rotatedMatrix)
+  def reconstructExampleListUsingNewInputs(examples, rotatedMatrix)
     arrayOfInputs = rotatedMatrix.to_a
-    originalExampleList.each_with_index do |example, exampleNumber|
-      example[0] = arrayOfInputs[exampleNumber]
+    examples.each do |example|
+      example[:inputs] = arrayOfInputs[example[:exampleNumber]]
     end
-    return originalExampleList
+    return examples
+  end
+
+
+  def extractArrayOfExampleInputVectors(examples)
+    arrayOfInputRows = []
+    examples.each do |anExampleRow|
+      inputRow = anExampleRow[:inputs]
+      arrayOfInputRows << inputRow
+    end
+    return arrayOfInputRows
   end
 end
 
@@ -105,36 +122,6 @@ class DataGenerator
     end
     return @arrayOfExamples
   end
-end
-
-
-################## ExampleList ROTATION of 2-D Inputs ###########################
-
-def extractArrayOfExampleInputVectors(exampleList)
-  arrayOfInputRows = []
-  exampleList.each do |inputTarget|
-    inputRow = inputTarget[0]
-    arrayOfInputRows << inputRow
-  end
-  return arrayOfInputRows
-end
-
-def reconstructExampleListUsingNewInputs(originalExampleList, rotatedMatrix)
-  arrayOfInputs = rotatedMatrix.to_a
-  originalExampleList.each_with_index do |example, exampleNumber|
-    example[0] = arrayOfInputs[exampleNumber]
-  end
-  return originalExampleList
-end
-
-def createRotationMatrix(angleInDegrees) # for CLOCKWISE Rotations!!
-  angleInRadians = angleInDegrees * ((2.0*Math::PI)/360.0)
-  s = Math.sin(angleInRadians)
-  c = Math.cos(angleInRadians)
-  # puts "angleInRadians= #{angleInRadians}\ts= #{s}\tc= #{c}\t    "
-  rotationMatrix = Matrix[[c, -s], [s, c]]
-  # puts "rotationMatrix= #{rotationMatrix} "
-  return rotationMatrix
 end
 
 
