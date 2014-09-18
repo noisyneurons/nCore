@@ -1,6 +1,6 @@
 require_relative 'Utilities'
 
+aRange = Range.new(0,7)
+anArray =  (0..7).to_a
 
-anArray = [-3, 2]
-
-puts "Normalized Array = #{anArray.normalize}"
+puts "Normalized Array = #{anArray}"

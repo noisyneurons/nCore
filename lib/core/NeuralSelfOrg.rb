@@ -144,7 +144,7 @@ module SelfOrganization
 
   def calculateNormalizationCoefficients
     inputLinks.each { |aLink| aLink.calculateNormalizationCoefficients }
-    inputLinks[-1].setBiasLinkNormalizationCoefficients
+    # inputLinks[-1].setBiasLinkNormalizationCoefficients
   end
 
   def afterSelfOrgReCalcLinkWeights
@@ -154,11 +154,6 @@ module SelfOrganization
   end
 end
 
-
-########################################################################
-class Neuron
-  include SelfOrganization
-end
 
 
 ########################################################################
@@ -198,12 +193,16 @@ class LinkWithNormalization < Link
     self.normalizationOffset = averageOfInputs
     centeredArray = inputsOverEpoch.collect { |value| value - normalizationOffset }
     largestAbsoluteArrayElement = centeredArray.minmax.abs.max.to_f
-    self.normalizationMultiplier = 1.0 / largestAbsoluteArrayElement
+    self.normalizationMultiplier = if largestAbsoluteArrayElement > 1.0e-5
+                                     1.0 / largestAbsoluteArrayElement
+                                   else
+                                     0.0
+                                   end
   end
 
-  def setBiasLinkNormalizationCoefficients
-    self.normalizationMultiplier = 0.0
-  end
+  #def setBiasLinkNormalizationCoefficients
+  #  self.normalizationMultiplier = 0.0
+  #end
 
   def afterSelfOrgReCalcLinkWeights
     puts "weightBefore= #{weight}"

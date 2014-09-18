@@ -89,39 +89,39 @@
 #
 #####
 
-class TrainingSequence
-  attr_accessor :args, :epochs, :maxNumberOfEpochs,
-                :stillMoreEpochs, :lastEpoch,
-                :atStartOfTraining, :afterFirstEpoch
-
-  def initialize(args)
-    @args = args
-    @maxNumberOfEpochs = args[:maxNumEpochs]
-    @epochs = -1
-    @atStartOfTraining = true
-    @afterFirstEpoch = false
-    @stillMoreEpochs = true
-    @lastEpoch = false
-    nextEpoch
-  end
-
-  def epochs=(value)
-    @epochs = value
-    args[:epochs] = value
-  end
-
-  def nextEpoch
-    self.epochs += 1
-    self.atStartOfTraining = false if (epochs > 0)
-    self.afterFirstEpoch = true unless (atStartOfTraining)
-
-    self.lastEpoch = false
-    self.lastEpoch = true if (epochs == (maxNumberOfEpochs - 1))
-
-    self.stillMoreEpochs = true
-    self.stillMoreEpochs = false if (epochs >= maxNumberOfEpochs)
-  end
-end
-
-
-
+#class TrainingSequence
+#  attr_accessor :args, :epochs, :maxNumberOfEpochs,
+#                :stillMoreEpochs, :lastEpoch,
+#                :atStartOfTraining, :afterFirstEpoch
+#
+#  def initialize(args)
+#    @args = args
+#    @maxNumberOfEpochs = args[:maxNumEpochs]
+#    @epochs = -1
+#    @atStartOfTraining = true
+#    @afterFirstEpoch = false
+#    @stillMoreEpochs = true
+#    @lastEpoch = false
+#    nextEpoch
+#  end
+#
+#  def epochs=(value)
+#    @epochs = value
+#    args[:epochs] = value
+#  end
+#
+#  def nextEpoch
+#    self.epochs += 1
+#    self.atStartOfTraining = false if (epochs > 0)
+#    self.afterFirstEpoch = true unless (atStartOfTraining)
+#
+#    self.lastEpoch = false
+#    self.lastEpoch = true if (epochs == (maxNumberOfEpochs - 1))
+#
+#    self.stillMoreEpochs = true
+#    self.stillMoreEpochs = false if (epochs >= maxNumberOfEpochs)
+#  end
+#end
+#
+#
+#

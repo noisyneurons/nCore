@@ -191,7 +191,6 @@ class TrainerBase
     end
   end
 
-
   def distributeSetOfExamples(examples)
     distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
   end
@@ -212,7 +211,6 @@ class TrainerBase
       break if lastLayerOfNeuronsToReceivePropagation == aLayer
     end
   end
-
 
   def clearStoredNetInputs
     allNeuronsInOneArray.each { |aNeuron| aNeuron.clearStoredNetInputs }
