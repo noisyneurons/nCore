@@ -15,7 +15,7 @@ require_relative '../lib/core/NeuralContext'
 require_relative 'BaseLearningExperiment'
 
 ########################################################################
-class NeuronInContext
+class NeuronWithNormalizationAndContext  <  NeuronInContext
   include NonMonotonicIOFunction
   include SelfOrganization
 end
@@ -41,12 +41,12 @@ class Experiment
         # Network Architecture
         :numberOfInputNeurons => 2,
         :numberOfHiddenLayer1Neurons => 1,
-        :numberOfOutputNeurons => 1,
+        :numberOfHiddenLayer2Neurons => 2,
+        :numberOfOutputNeurons => 4,
         :weightRange => 0.1,
-        #:typeOfLink => Link,
         :typeOfLink => LinkWithNormalizationAndContext,
-        #:typeOfLinkToOutput => Link,
-        :typeOfNeuron => NeuronInContext,
+        :typeOfLinkToOutput => Link,
+        :typeOfNeuron => NeuronWithNormalizationAndContext,
         :typeOfOutputNeuron => OutputNeuron,
 
         # Training Set parameters
@@ -55,7 +55,7 @@ class Experiment
         :numberOfTestingExamples => numberOfExamples,
 
         # Recording and database parameters
-        :neuronsToDisplay => [1],
+        :neuronsToDisplay => [3],
         :intervalForSavingNeuronData => 100, #100000,
         :intervalForSavingDetailedNeuronData => 100, #2000,
         :intervalForSavingTrainingData => 100
@@ -70,12 +70,12 @@ class Experiment
     yStart = [1.0, 1.0, -1.0, -1.0]
     # yStart = [4.0, 4.0, 0.0, 0.0]
 
-    xInc = [0.0, 0.0, 0.0, 0.0]
+    # xInc = [0.0, 0.0, 0.0, 0.0]
     xInc = [0.0, 0.0, 0.0, 0.0]
 
     yInc = [0.0, 0.0, -0.0, -0.0]
     # yInc = [0.2, 0.2, -0.2, -0.2]
-    yInc = [0.0, 0.0, -0.0, -0.0]
+
 
     numberOfClasses = xStart.length
     numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
@@ -121,7 +121,7 @@ class Experiment
     selfOrgNeuron.inputLinks[0].weight = 0.01
     selfOrgNeuron.inputLinks[1].weight = 0.1
 
-    theTrainer = TrainerSelfOrgWithLinkNormalization.new(examples, network, args)
+    theTrainer = TrainerProj2SelfOrgAndContext.new(examples, network, args)
 
     return network, theTrainer
   end
@@ -151,6 +151,6 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("Proj1NeuronSelfOrgAndContext; 2 in 4 out; divide then integrate", baseRandomNumberSeed)
+experiment = Experiment.new("Proj2NeuronSelfOrgAndContext; 2 in 4 out; divide then integrate", baseRandomNumberSeed)
 
 experiment.performSimulation()

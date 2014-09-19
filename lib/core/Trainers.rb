@@ -233,10 +233,93 @@ end
 ###################################################################
 
 
-class Trainer7pt1 < TrainerBase
+class TrainerProj2SelfOrgAndContext < TrainerBase
 #  include SelfOrgTraining
 
   def train
+    distributeSetOfExamples(examples)
+
+    puts "phase1: self-org for hidden layer 1 "
+    puts "allNeuronLayers[1][0].output= #{allNeuronLayers[1][0].output}"
+
+    normalize(allNeuronLayers[1])
+
+    [0, 1, 2].each do |i|
+      puts "allNeuronLayers[1][0].inputLinks[#{i}].weight= #{allNeuronLayers[1][0].inputLinks[i].weight}"
+      puts "allNeuronLayers[1][0].inputLinks[#{i}].normalizationOffset= #{allNeuronLayers[1][0].inputLinks[i].normalizationOffset}"
+      puts "allNeuronLayers[1][0].inputLinks[#{i}].normalizationMultiplier= #{allNeuronLayers[1][0].inputLinks[i].normalizationMultiplier}"
+    end
+
+    phaseTrain { performSelfOrgTrainingOn(allNeuronLayers[1]) }
+    forEachExampleDisplayInputsAndOutputs
+
+
+    forEachExampleDisplayInputsAndOutputs
+    testMSE = calcTestingMeanSquaredErrors
+    return trainingSequence.epochs, calcMSE, testMSE
+  end
+
+  def phaseTrain
+    mse = 1e100
+    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
+      yield
+      neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
+      trainingSequence.nextEpoch
+    end
+    allNeuronLayers[1].each { |aNeuron| aNeuron.afterSelfOrgReCalcLinkWeights }
+    resetAllNormalizationVariables(allNeuronLayers[1])
+    trainingSequence.startNextPhaseOfTraining
+    return mse
+  end
+
+  def performSelfOrgTrainingOn(layerOfNeurons)
+    acrossExamplesAccumulateSelfOrgDeltaWs(layerOfNeurons)
+    layerOfNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+  end
+
+  def acrossExamplesAccumulateSelfOrgDeltaWs(layerOfNeurons)
+    clearEpochAccumulationsInAllNeurons()
+    numberOfExamples.times do |exampleNumber|
+      propagateExampleUpToLayer(exampleNumber, layerOfNeurons)
+      layerOfNeurons.each { |aNeuron| aNeuron.calcSelfOrgError }
+
+      layerOfNeurons.each do |aNeuron|
+        dataRecord = aNeuron.recordResponsesForExample
+        aNeuron.calcDeltaWsAndAccumulate
+        aNeuron.dbStoreDetailedData
+      end
+    end
+  end
+
+  def normalize(layer)
+    resetAllNormalizationVariables(layer)
+    numberOfExamples.times do |exampleNumber|
+      propagateForNormalizationToLayer(exampleNumber, layer)
+    end
+    calculateNormalizationCoefficients(layer)
+  end
+
+  def resetAllNormalizationVariables(layer)
+    layer.each { |aNeuron| aNeuron.resetAllNormalizationVariables }
+  end
+
+  def propagateForNormalizationToLayer(exampleNumber, lastLayerOfNeuronsToReceivePropagation)
+    allNeuronLayers.each do |aLayer|
+      if aLayer == lastLayerOfNeuronsToReceivePropagation
+        aLayer.each { |aNeuron| aNeuron.propagateForNormalization(exampleNumber) }
+      else
+        aLayer.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+      end
+      break if lastLayerOfNeuronsToReceivePropagation == aLayer
+    end
+  end
+
+  def calculateNormalizationCoefficients(layer)
+    layer.each { |aNeuron| aNeuron.calculateNormalizationCoefficients }
+  end
+
+
+  def trainOLD
     distributeSetOfExamples(examples)
 
     #puts "phase1: short bp for hidden layer 1 + output layer"

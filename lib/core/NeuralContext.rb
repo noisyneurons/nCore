@@ -35,7 +35,7 @@ class Context4LayerNetwork < ContextNetwork
     self.allNeuronLayers << inputLayer
 
     hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], typeOfLink = args[:typeOfLink], args[:numberOfHiddenLayer1Neurons])
-    hiddenLayer1.each { |aNeuron| aNeuron.learningController = LearningControllerAlwaysOn.new(nil) }
+    hiddenLayer1.each { |aNeuron| aNeuron.learningController = LearningController.new }
     self.allNeuronLayers << hiddenLayer1
 
     hiddenLayer2 = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], typeOfLink = args[:typeOfLink], args[:numberOfHiddenLayer2Neurons])
@@ -45,7 +45,7 @@ class Context4LayerNetwork < ContextNetwork
       aNeuron.learningController = if index.even?
                                      LearningControlledByNeuron.new(controllingNeuron)
                                    else
-                                     LearningControlledByFlippedNeuron.new(controllingNeuron)
+                                     LearningControlledByNeuronOutputReversed.new(controllingNeuron)
                                    end
     end
     self.allNeuronLayers << hiddenLayer2
@@ -56,25 +56,27 @@ class Context4LayerNetwork < ContextNetwork
 end
 
 
+
+
+
 class NeuronInContext < Neuron
   attr_accessor :learningController
 
   def postInitialize
     super
-    @learningController = LearningControllerAlwaysOn.new(nil)
+    @learningController = LearningController.new  # This is just a fall-back controller that keeps learning-on for all examples
   end
 
   def to_s
     description = super
-    description += "\t\t\t\t\tLearning Signal:\t#{learningController.class}\n"
-    #                  Class; ID = #{learningController.id}\n"
+    description += "\t\t\t\t\tLearning Controller:\t#{learningController.class}\n"
     return description
   end
 end
 
 
-module LearningInContext
-  def propagateForNormalization
+module LearningInContext   # module for links  -- also works with links with normalization
+  def propagateForNormalization   # TODO Potential "loading sequence problem here"  Need to make sure that this method is not overwritten by SelfOrg module
     inputForThisExample = inputNeuron.output
     self.inputsOverEpoch << inputForThisExample if (outputNeuron.learningController.output == 1.0)
     return inputForThisExample * weight
@@ -89,16 +91,15 @@ end
 class LearningController
   attr_accessor :sensor
 
-  def initialize(sensor)
+  def initialize(sensor=nil)
     @sensor = sensor
   end
-end
 
-class LearningControllerAlwaysOn < LearningController
   def output
     1.0
   end
 end
+
 
 class LearningControlledByNeuron < LearningController
   def output
@@ -114,7 +115,7 @@ class LearningControlledByNeuron < LearningController
   end
 end
 
-class LearningControlledByFlippedNeuron < LearningControlledByNeuron
+class LearningControlledByNeuronOutputReversed < LearningControlledByNeuron
   def transform(input)
     1.0 - super(input)
   end

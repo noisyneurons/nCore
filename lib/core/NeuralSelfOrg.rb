@@ -85,10 +85,6 @@ class TrainerSelfOrgWithLinkNormalization < TrainerBase
   def calculateNormalizationCoefficients(layer)
     layer.each { |aNeuron| aNeuron.calculateNormalizationCoefficients }
   end
-
-  def distributeSetOfExamples(examples)
-    distributeDataToInputAndOutputNeurons(examples, [inputLayer])
-  end
 end
 
 
@@ -122,7 +118,7 @@ end
 ########################################################################
 ########################################################################
 
-module SelfOrganization
+module SelfOrganization    # Module for Neuron classes
 
   def calcSelfOrgError
     targetPlus = 2.5
@@ -174,7 +170,7 @@ class LinkWithNormalization < Link
     self.normalizationMultiplier = 1.0
   end
 
-  def propagateForNormalization
+  def propagateForNormalization   # TODO this must not overwrite context-Normalization method with same name.
     inputForThisExample = inputNeuron.output
     self.inputsOverEpoch << inputForThisExample
     return inputForThisExample * weight
@@ -199,9 +195,6 @@ class LinkWithNormalization < Link
                                    end
   end
 
-  #def setBiasLinkNormalizationCoefficients
-  #  self.normalizationMultiplier = 0.0
-  #end
 
   def afterSelfOrgReCalcLinkWeights
     puts "weightBefore= #{weight}"

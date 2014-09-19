@@ -25,6 +25,13 @@ class LinkWithNormalizationAndContext < LinkWithNormalization
   include LearningInContext
 end
 
+class TrainerSelfOrgWithLinkNormalization
+  def distributeSetOfExamples(examples)
+    distributeDataToInputAndOutputNeurons(examples, [inputLayer])
+  end
+
+end
+
 class Experiment
 
   def setParameters
