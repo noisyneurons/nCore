@@ -231,53 +231,6 @@ end
 ###########################################################################################
 # May want to move this to a separate file and place it after this file in the "include manifest of files to load"
 
-###########################################################################################
-
-class ContextNetwork < BaseNetwork
-  attr_accessor :hiddenLayers, :hiddenNeurons
-
-  def createNetwork
-    createLayersWithContextLayerArchitecture
-    self.hiddenLayers = allNeuronLayers[1..-2]
-    self.hiddenNeurons =  hiddenLayers.flatten
-    connectAllLearningNeuronsToBiasNeuron
-  end
-
-  def connectAllLearningNeuronsToBiasNeuron
-    addLinksFromBiasNeuronTo( hiddenNeurons, args[:typeOfLink] )
-    addLinksFromBiasNeuronTo( outputLayer, args[:typeOfLinkToOutput] )
-  end
-
-  def addLinksFromBiasNeuronTo( neurons, typeOfLink)
-    connect_layer_to_another([theBiasNeuron], neurons, typeOfLink, args)
-  end
-end
-
-
-
-class Context4LayerNetwork < ContextNetwork
-
-  def createLayersWithContextLayerArchitecture
-    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, typeOfLink = args[:typeOfLink], args[:numberOfInputNeurons])
-    self.allNeuronLayers << inputLayer
-
-    hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], typeOfLink = args[:typeOfLink], args[:numberOfHiddenLayer1Neurons])
-    hiddenLayer1.each {|aNeuron| aNeuron.neuronControllingLearning = theBiasNeuron}  # 'placeholder' -- always on
-    self.allNeuronLayers << hiddenLayer1
-
-    hiddenLayer2 = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], typeOfLink = args[:typeOfLink], args[:numberOfHiddenLayer2Neurons])
-    hiddenLayer2.each_with_index do |aNeuron, index|
-      indexToNeuronControllingNeuronInPrecedingLayer = (index / 2).to_i
-      aNeuron.neuronControllingLearning = hiddenLayer1[indexToNeuronControllingNeuronInPrecedingLayer]
-      aNeuron.reverseLearningProbability = index.odd?
-    end
-    self.allNeuronLayers << hiddenLayer2
-
-    self.outputLayer = createAndConnectLayer( (hiddenLayer1 + hiddenLayer2), typeOfNeuron = args[:typeOfOutputNeuron], typeOfLink = args[:typeOfLinkToOutput], args[:numberOfOutputNeurons])
-    self.allNeuronLayers << outputLayer
-  end
-end
-
 
 ######################################## Code Below is not being used.
 #

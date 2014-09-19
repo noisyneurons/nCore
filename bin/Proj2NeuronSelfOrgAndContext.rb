@@ -1,5 +1,5 @@
 ### VERSION "nCore"
-## ../nCore/bin/Proj1NeuronSelfOrgAndContext.rb
+## ../nCore/bin/Proj2NeuronSelfOrgAndContext.rb
 # Purpose: Get simplest versions of self-org AND CONTEXT understood and "working."
 
 require_relative '../lib/core/Utilities'
@@ -13,7 +13,6 @@ require_relative '../lib/core/NeuralSelfOrg'
 require_relative '../lib/core/NeuralContext'
 
 require_relative 'BaseLearningExperiment'
-
 
 ########################################################################
 class NeuronInContext
@@ -115,7 +114,7 @@ class Experiment
   end
 
   def createNetworkAndTrainer
-    network = SelfOrg1NeuronNetwork.new(args)
+    network = Context4LayerNetwork.new(args)
 
     selfOrgLayer = network.allNeuronLayers[1]
     selfOrgNeuron = selfOrgLayer[0]
@@ -145,7 +144,6 @@ class Experiment
 
     # plotTrainingResults(neuronToDisplay)
   end
-
 end
 
 

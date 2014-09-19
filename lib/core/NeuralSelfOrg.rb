@@ -104,7 +104,6 @@ class SelfOrg1NeuronNetwork < BaseNetwork
     self.allNeuronLayers << inputLayer
 
     hiddenLayer1 = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], typeOfLink = args[:typeOfLink], args[:numberOfHiddenLayer1Neurons])
-#    hiddenLayer1.each {|aNeuron| aNeuron.neuronControllingLearning = theBiasNeuron}  # 'placeholder' -- always on
     self.allNeuronLayers << hiddenLayer1
 
     connectAllLearningNeuronsToBiasNeuron
