@@ -1,14 +1,6 @@
 ### VERSION "nCore"
 ## ../nCore/bin/BaseLearningExperiments.rb
 
-require_relative '../lib/core/Utilities'
-require_relative '../lib/core/DataSet'
-require_relative '../lib/core/NeuralParts'
-require_relative '../lib/core/NetworkFactories'
-require_relative '../lib/plot/CorePlottingCode'
-require_relative '../lib/core/SimulationDataStore'
-require_relative '../lib/core/Trainers.rb'
-
 class Experiment
   attr_accessor :network, :theTrainer, :descriptionOfExperiment, :taskID, :jobID, :jobName, :randomNumberSeed,
                 :experimentLogger, :simulationDataStoreManager, :examples, :numberOfExamples, :args, :trainingSequence

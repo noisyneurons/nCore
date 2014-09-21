@@ -3,15 +3,16 @@
 ## Simple backprop demo. For XOR, and given parameters, requires 2080 epochs to converge.
 ##                       For OR, and given parameters, requires 166 epochs to converge.
 
+require_relative '../lib/core/Utilities'
+require_relative '../lib/core/DataSet'
+require_relative '../lib/core/NeuralParts'
+require_relative '../lib/core/NeuralParts2'
+require_relative '../lib/core/NetworkFactories'
+require_relative '../lib/plot/CorePlottingCode'
+require_relative '../lib/core/SimulationDataStore'
+require_relative '../lib/core/Trainers.rb'
+
 require_relative 'BaseLearningExperiment'
-
-class Neuron
-  # include NonMonotonicIOFunction
-end
-
-class OutputNeuron
-  # include NonMonotonicIOFunction
-end
 
 
 class Experiment
@@ -36,8 +37,8 @@ class Experiment
         :weightRange => 1.0,
 
         :typeOfLink => Link,
-        :typeOfNeuron => Neuron,
-        :typeOfOutputNeuron => OutputNeuron,
+        :typeOfNeuron => Neuron2,
+        :typeOfOutputNeuron => OutputNeuron2,
      #   :typeOfLinkToOutput => Link,
 
 

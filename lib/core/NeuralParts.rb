@@ -7,7 +7,6 @@ require_relative 'NeuralIOFunctions'
 
 module CommonNeuronCalculations
   public
-  attr_accessor :netInput, :inputLinks, :error, :exampleNumber, :metricRecorder
 
   def calcDeltaWsAndAccumulate
     inputLinks.each { |inputLink| inputLink.calcDeltaWAndAccumulate }
@@ -49,8 +48,6 @@ module CommonNeuronCalculations
     outputLinks.inject(0.0) { |sum, link| sum + link.backPropagate }
   end
 end
-
-
 
 ############################################################
 class NeuronBase
@@ -118,6 +115,7 @@ end
 
 class Neuron < NeuronBase
   attr_accessor :outputLinks
+  attr_accessor :netInput, :inputLinks, :error, :exampleNumber, :metricRecorder
   include CommonNeuronCalculations
   include SigmoidIOFunction
 
@@ -158,6 +156,7 @@ end
 
 class OutputNeuron < NeuronBase
   attr_accessor :arrayOfSelectedData, :keyToExampleData, :target, :outputError, :weightedErrorMetric
+  attr_accessor :netInput, :inputLinks, :error, :exampleNumber, :metricRecorder
   include CommonNeuronCalculations
   include SigmoidIOFunction
 
@@ -209,7 +208,6 @@ class OutputNeuron < NeuronBase
   end
 end
 
-
 class NoisyNeuron < Neuron
   attr_accessor :probabilityOfBeingEnabled, :enabled, :outputWhenNeuronDisabled, :learning
 
@@ -246,7 +244,6 @@ class NoisyNeuron < Neuron
                  end
   end
 end
-
 
 ############################################################
 class Link
@@ -322,8 +319,6 @@ class Link
     return "Weight=\t#{weight}\tDeltaW=\t#{deltaW}\tAccumulatedDeltaW=\t#{deltaWAccumulated}\tWeightAtBeginningOfTraining=\t#{weightAtBeginningOfTraining}\tFROM: #{inputNeuron.class.to_s} #{inputNeuron.id} TO: #{outputNeuron.class.to_s} #{outputNeuron.id}"
   end
 end
-
-
 
 class SharedWeight
   attr_accessor :value

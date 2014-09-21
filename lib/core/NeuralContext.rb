@@ -56,7 +56,18 @@ class Context4LayerNetwork < ContextNetwork
 end
 
 
+class NeuronContainerImplementingContext
+  attr_accessor :args, :containedNeuron, :learningController
 
+  def initialize(containedNeuron, args=nil, learningController=nil)
+    @learningController = learningController
+    @learningController = @learningController = LearningController.new if learningController.nil?
+    @containedNeuron = containedNeuron
+    @args = args
+  end
+
+
+end
 
 
 class NeuronInContext < Neuron
@@ -64,7 +75,7 @@ class NeuronInContext < Neuron
 
   def postInitialize
     super
-    @learningController = LearningController.new  # This is just a fall-back controller that keeps learning-on for all examples
+    @learningController = LearningController.new # This is just a fall-back controller that keeps learning-on for all examples
   end
 
   def to_s
@@ -75,11 +86,13 @@ class NeuronInContext < Neuron
 end
 
 
-module LearningInContext   # module for links  -- also works with links with normalization
-  def propagateForNormalization   # TODO Potential "loading sequence problem here"  Need to make sure that this method is not overwritten by SelfOrg module
+module LearningInContext # module for links  -- also works with links with normalization
+
+  # TODO Potential "loading sequence problem here"  Need to make sure that this method is not overwritten by SelfOrg module
+  def propagateForNormalization
     inputForThisExample = inputNeuron.output
     self.inputsOverEpoch << inputForThisExample if (outputNeuron.learningController.output == 1.0)
-    return inputForThisExample * weight
+    return weight * inputForThisExample
   end
 
   def calcDeltaWAndAccumulate
