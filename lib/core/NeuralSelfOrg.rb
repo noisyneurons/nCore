@@ -118,7 +118,7 @@ end
 ########################################################################
 ########################################################################
 
-module SelfOrganization    # Module for Neuron classes
+module SelfOrganization # Module for Neuron classes
 
   def calcSelfOrgError
     targetPlus = 2.5
@@ -139,7 +139,6 @@ module SelfOrganization    # Module for Neuron classes
 
   def calculateNormalizationCoefficients
     inputLinks.each { |aLink| aLink.calculateNormalizationCoefficients }
-    # inputLinks[-1].setBiasLinkNormalizationCoefficients
   end
 
   def afterSelfOrgReCalcLinkWeights
@@ -148,7 +147,6 @@ module SelfOrganization    # Module for Neuron classes
     inputLinks[-1].weight = biasWeight
   end
 end
-
 
 
 ########################################################################
@@ -170,10 +168,12 @@ class LinkWithNormalization < Link
     self.normalizationMultiplier = 1.0
   end
 
-  def propagateForNormalization   # TODO this must not overwrite context-Normalization method with same name.
-    inputForThisExample = inputNeuron.output
-    self.inputsOverEpoch << inputForThisExample
-    return inputForThisExample * weight
+  def storeEpochHistory
+    self.inputsOverEpoch << inputNeuron.output
+  end
+
+  def propagateForNormalization # TODO this must not overwrite context-Normalization method with same name.
+    return weight * inputNeuron.output
   end
 
   def propagate
@@ -194,7 +194,6 @@ class LinkWithNormalization < Link
                                      0.0
                                    end
   end
-
 
   def afterSelfOrgReCalcLinkWeights
     puts "weightBefore= #{weight}"
