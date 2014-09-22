@@ -15,6 +15,7 @@ require_relative '../lib/core/Trainers.rb'
 require_relative 'BaseLearningExperiment'
 
 
+
 class Experiment
   include NeuronToNeuronConnection
 

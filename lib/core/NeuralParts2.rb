@@ -13,10 +13,6 @@ class Neuron2 < Neuron
     @learningStrat = LearningBP.new(self) # default learner
   end
 
-  def propagate(exampleNumber)
-    learningStrat.propagate(exampleNumber)
-  end
-
   def backPropagate
     learningStrat.backPropagate
   end
@@ -28,10 +24,6 @@ class OutputNeuron2 < OutputNeuron
   def postInitialize
     super
     @learningStrat = LearningBPOutput.new(self) # default learner
-  end
-
-  def propagate(exampleNumber)
-    learningStrat.propagate(exampleNumber)
   end
 
   def backPropagate
@@ -63,12 +55,6 @@ class LearningBP < LearningStrategyBase # strategy for standard bp learning for 
     @outputLinks = @neuron.outputLinks
   end
 
-  def propagate(exampleNumber)
-    neuron.exampleNumber = exampleNumber
-    neuron.netInput = calcNetInputToNeuron
-    neuron.output = neuron.ioFunction(neuron.netInput)
-  end
-
   def backPropagate
     neuron.error = calcNetError * neuron.ioDerivativeFromNetInput(neuron.netInput)
   end
@@ -76,14 +62,6 @@ end
 
 
 class LearningBPOutput < LearningStrategyBase # strategy for standard bp learning for output neurons
-
-  def propagate(exampleNumber)
-    neuron.exampleNumber = exampleNumber
-    neuron.netInput = calcNetInputToNeuron
-    neuron.output = neuron.ioFunction(neuron.netInput)
-    neuron.target = neuron.arrayOfSelectedData[exampleNumber]
-    neuron.outputError = neuron.output - neuron.target
-  end
 
   def backPropagate
     neuron.error = neuron.outputError * neuron.ioDerivativeFromNetInput(neuron.netInput)
@@ -94,7 +72,7 @@ end
 class LearningSelfOrg < LearningStrategyBase
 
   def calcSelfOrgError
-    targetPlus = 2.5     # TODO need "exact number" here. -- just for illustration purposes...
+    targetPlus = 2.5 # TODO need "exact number" here. -- just for illustration purposes...
     targetMinus = -1.0 * targetPlus
     distanceBetweenTargets = targetPlus - targetMinus
     neuron.error = -1.0 * neuron.ioDerivativeFromNetInput(neuron.netInput) * (((neuron.netInput - targetMinus)/distanceBetweenTargets) - 0.5)
@@ -102,14 +80,6 @@ class LearningSelfOrg < LearningStrategyBase
 
   def resetAllNormalizationVariables
     inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
-  end
-
-  def propagate(exampleNumber)
-    nextInChain.propagate(exampleNumber)
-  end
-
-  def backPropagate
-    nextInChain.backPropagate
   end
 
   def storeEpochHistory
@@ -135,13 +105,12 @@ end
 
 
 class LearningStratContext < LearningStrategyBase
-  attr_accessor  :learningController
+  attr_accessor :learningController
 
   def initialize(theEnclosingNeuron, nextInChain = nil)
     super
     @learningController = LearningController.new
   end
-
 
   def storeEpochHistory
     nextInChain.storeEpochHistory if (learningController.output == 1)
@@ -153,9 +122,9 @@ class LearningStratContext < LearningStrategyBase
 
   ### forward calls to next in daisy chain below
 
-  def propagate
-    nextInChain.propagate
-  end
+  #def propagate
+  #  nextInChain.propagate
+  #end
 
   def backPropagate
     nextInChain.backPropagate
