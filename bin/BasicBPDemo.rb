@@ -49,10 +49,10 @@ class Experiment
 
 
         # Recording and database parameters
-        :neuronsToDisplay => [5],
-        :intervalForSavingNeuronData => 100,
-        :intervalForSavingDetailedNeuronData => 1000,
-        :intervalForSavingTrainingData => 100
+        #:neuronsToDisplay => [5],
+        #:intervalForSavingNeuronData => 100,
+        #:intervalForSavingDetailedNeuronData => 1000,
+        #:intervalForSavingTrainingData => 100
     }
   end
 

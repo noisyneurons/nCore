@@ -24,14 +24,6 @@ module CommonNeuronCalculations
     inputLinks.each { |inputLink| inputLink.deltaWAccumulated = 0.0 }
   end
 
-  def recordResponsesForExample
-    metricRecorder.recordResponsesForExample
-  end
-
-  def clearWithinEpochMeasures
-    metricRecorder.clearWithinEpochMeasures
-  end
-
   def learningRate=(aLearningRate)
     inputLinks.each { |aLink| aLink.learningRate = aLearningRate }
   end

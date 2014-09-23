@@ -4,30 +4,43 @@
 require_relative 'NeuralParts'
 ############################################################
 
+module ForwardingToLearningStrategy
+  def startEpoch
+    learningStrat.startEpoch
+  end
+
+  def propagate(exampleNumber)
+    learningStrat.propagate(exampleNumber)
+  end
+
+  def learnExample
+    learningStrat.learnExample
+  end
+
+  def endEpoch
+    learningStrat.endEpoch
+  end
+
+end
+
 
 class Neuron2 < Neuron
   attr_accessor :learningStrat
+  include ForwardingToLearningStrategy
 
   def postInitialize
     super
-    @learningStrat = LearningBP.new(self) # default learner
-  end
-
-  def backPropagate
-    learningStrat.backPropagate
+    @learningStrat = nil # default learner
   end
 end
 
 class OutputNeuron2 < OutputNeuron
   attr_accessor :learningStrat
+  include ForwardingToLearningStrategy
 
   def postInitialize
     super
-    @learningStrat = LearningBPOutput.new(self) # default learner
-  end
-
-  def backPropagate
-    learningStrat.backPropagate
+    @learningStrat = nil # default learner
   end
 end
 
@@ -55,16 +68,46 @@ class LearningBP < LearningStrategyBase # strategy for standard bp learning for 
     @outputLinks = @neuron.outputLinks
   end
 
-  def backPropagate
+  def startEpoch
+    neuron.zeroDeltaWAccumulated
+    neuron.error = 0.0
+  end
+
+  def propagate(exampleNumber)
+    neuron.exampleNumber = exampleNumber
+    neuron.netInput = netInput = calcNetInputToNeuron
+    neuron.output = neuron.ioFunction(netInput)
+  end
+
+  def learnExample
     neuron.error = calcNetError * neuron.ioDerivativeFromNetInput(neuron.netInput)
+  end
+
+  def endEpoch
   end
 end
 
 
 class LearningBPOutput < LearningStrategyBase # strategy for standard bp learning for output neurons
 
-  def backPropagate
+  def startEpoch
+    neuron.zeroDeltaWAccumulated
+    neuron.error = 0.0
+  end
+
+  def propagate(exampleNumber)
+    neuron.exampleNumber = exampleNumber
+    neuron.netInput = netInput = calcNetInputToNeuron()
+    neuron.output = output = neuron.ioFunction(netInput)
+    neuron.target = target = neuron.arrayOfSelectedData[exampleNumber]
+    neuron.outputError = output - target
+  end
+
+  def learnExample
     neuron.error = neuron.outputError * neuron.ioDerivativeFromNetInput(neuron.netInput)
+  end
+
+  def endEpoch
   end
 end
 

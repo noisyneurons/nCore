@@ -41,7 +41,7 @@ class TrainerSelfOrg < TrainerBase
 
 
   def acrossExamplesAccumulateSelfOrgDeltaWs
-    clearEpochAccumulationsInAllNeurons()
+    startEpoch()
     numberOfExamples.times do |exampleNumber|
       propagateAcrossEntireNetwork(exampleNumber)
       backpropagateAcrossEntireNetwork() # really only need to do this for non-self org layers  ??

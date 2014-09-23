@@ -46,7 +46,7 @@ class TrainerSelfOrgWithLinkNormalization < TrainerBase
   end
 
   def acrossExamplesAccumulateSelfOrgDeltaWs(layerOfNeurons)
-    clearEpochAccumulationsInAllNeurons()
+    startEpoch()
     numberOfExamples.times do |exampleNumber|
       propagateExampleUpToLayer(exampleNumber, layerOfNeurons)
       layerOfNeurons.each { |aNeuron| aNeuron.calcSelfOrgError }

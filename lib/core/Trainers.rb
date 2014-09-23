@@ -105,55 +105,42 @@ class TrainerBase
   end
 
   def postInitialize
+    attachLearningStrategy(LearningBP, (neuronsWithInputLinks - outputLayer))
+    attachLearningStrategy(LearningBPOutput, outputLayer)
   end
 
   def train
     distributeSetOfExamples(examples)
-    phaseTrain { performStandardBackPropTraining }
+    trainingPhaseFor(neuronsWithInputLinks)
     forEachExampleDisplayInputsAndOutputs
-    testMSE = calcTestingMeanSquaredErrors
-    return trainingSequence.epochs, calcMSE, testMSE
   end
 
-  def phaseTrain
+  def trainingPhaseFor(learningNeurons)
     mse = 1e100
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
-      yield
-      neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
-      dbStoreTrainingData()
+      propagateAndLearnForAnEpoch(learningNeurons)
       trainingSequence.nextEpoch
-      mse = calcMSE
+      mse = calcMeanSumSquaredErrors
     end
     trainingSequence.startNextPhaseOfTraining
-    return mse
+    return trainingSequence.epochs, mse, calcTestingMeanSquaredErrors
   end
 
-  def performStandardBackPropTraining
-    acrossExamplesAccumulateDeltaWs(neuronsWithInputLinks) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
-  end
-
-  def acrossExamplesAccumulateDeltaWs(neurons)
-    clearEpochAccumulationsInAllNeurons()
+  def propagateAndLearnForAnEpoch(neurons)
+    neuronsWithInputLinks.each {|neuron| neuron.startEpoch}
     numberOfExamples.times do |exampleNumber|
       propagateAcrossEntireNetwork(exampleNumber)
-      backpropagateAcrossEntireNetwork()
-      calcWeightedErrorMetricForExample()
-      neurons.each do |aNeuron|
-        dataRecord = aNeuron.recordResponsesForExample
-        yield(aNeuron, dataRecord, exampleNumber)
-        aNeuron.dbStoreDetailedData
-      end
+      neurons.reverse.each {|aNeuron| aNeuron.learnExample}
     end
+    neuronsWithInputLinks.each {|neuron| neuron.endEpoch}
   end
+
+  def attachLearningStrategy(learningStrategy, neurons)
+    neurons.each {|neuron| neuron.learningStrat = learningStrategy.new(neuron)}
+  end
+
 
   ###------------  Core Support Section ------------------------------
-  #### Also, some refinements and specialized control functions:
-
-  def calcMSE # assumes squared error for each example and output neuron is stored in NeuronRecorder
-    sse = outputLayer.inject(0.0) { |sum, anOutputNeuron| sum + anOutputNeuron.calcSumOfSquaredErrors }
-    return (sse / (numberOfOutputNeurons * numberOfExamples))
-  end
 
   def calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
     return genericCalcMeanSumSquaredErrors(numberOfExamples)
@@ -195,12 +182,6 @@ class TrainerBase
     distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
   end
 
-  def clearEpochAccumulationsInAllNeurons
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.error = 0.0 }
-    neuronsWithInputLinks.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
-  end
-
   def propagateAcrossEntireNetwork(exampleNumber)
     allNeuronsInOneArray.flatten.each { |aNeuron| aNeuron.propagate(exampleNumber) }
   end
@@ -212,17 +193,17 @@ class TrainerBase
     end
   end
 
-  def clearStoredNetInputs
-    allNeuronsInOneArray.each { |aNeuron| aNeuron.clearStoredNetInputs }
-  end
+  #def clearStoredNetInputs
+  #  allNeuronsInOneArray.each { |aNeuron| aNeuron.clearStoredNetInputs }
+  #end
+  #
+  #def storeNetInputsForExample
+  #  allNeuronsInOneArray.each { |aNeuron| aNeuron.storeNetInputForExample }
+  #end
 
-  def storeNetInputsForExample
-    allNeuronsInOneArray.each { |aNeuron| aNeuron.storeNetInputForExample }
-  end
-
-  def backpropagateAcrossEntireNetwork
-    neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.backPropagate }
-  end
+  #def learnExampleAcrossEntireNetwork
+  #  neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.learnExample }
+  #end
 
   def calcWeightedErrorMetricForExample
     outputLayer.collect { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
@@ -278,7 +259,7 @@ class TrainerProj2SelfOrgAndContext < TrainerBase
   end
 
   def acrossExamplesAccumulateSelfOrgDeltaWs(layerOfNeurons)
-    clearEpochAccumulationsInAllNeurons()
+    startEpoch()
     numberOfExamples.times do |exampleNumber|
       propagateExampleUpToLayer(exampleNumber, layerOfNeurons)
       layerOfNeurons.each { |aNeuron| aNeuron.calcSelfOrgError }
