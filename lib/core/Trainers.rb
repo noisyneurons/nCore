@@ -111,19 +111,24 @@ class TrainerBase
 
   def train
     distributeSetOfExamples(examples)
-    trainingPhaseFor(neuronsWithInputLinks)
+    totalEpochs = 0
+    mse, totalEpochs = trainingPhaseFor(neuronsWithInputLinks, totalEpochs)
     forEachExampleDisplayInputsAndOutputs
+    return totalEpochs, mse, calcTestingMeanSquaredErrors
   end
 
-  def trainingPhaseFor(learningNeurons)
+  def trainingPhaseFor(learningNeurons, totalEpochs)
     mse = 1e100
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
       propagateAndLearnForAnEpoch(learningNeurons)
       trainingSequence.nextEpoch
       mse = calcMeanSumSquaredErrors
+      currentEpochNumber = trainingSequence.epochs  + totalEpochs
+      puts "current epoch number= #{currentEpochNumber}\tmse = #{mse}"  if (currentEpochNumber % 100 == 0)
     end
+    totalEpochs += trainingSequence.epochs
     trainingSequence.startNextPhaseOfTraining
-    return trainingSequence.epochs, mse, calcTestingMeanSquaredErrors
+    return mse, totalEpochs
   end
 
   def propagateAndLearnForAnEpoch(neurons)

@@ -20,7 +20,6 @@ module ForwardingToLearningStrategy
   def endEpoch
     learningStrat.endEpoch
   end
-
 end
 
 
@@ -30,7 +29,7 @@ class Neuron2 < Neuron
 
   def postInitialize
     super
-    @learningStrat = nil # default learner
+    @learningStrat = nil
   end
 end
 
@@ -40,7 +39,7 @@ class OutputNeuron2 < OutputNeuron
 
   def postInitialize
     super
-    @learningStrat = nil # default learner
+    @learningStrat = nil
   end
 end
 
@@ -49,65 +48,56 @@ end
 
 
 class LearningStrategyBase # strategy for standard bp learning for output neurons
-  attr_reader :neuron, :inputLinks, :nextInChain
+  attr_reader :neuron, :inputLinks, :outputLinks, :nextInChain
   include CommonNeuronCalculations
+  include SigmoidIOFunction
 
   def initialize(theEnclosingNeuron, nextInChain = nil)
     @neuron = theEnclosingNeuron
     @nextInChain = nextInChain
     @inputLinks = @neuron.inputLinks
+    @outputLinks = @neuron.outputLinks if @neuron.respond_to?(:outputLinks)
+  end
+
+  def startEpoch
+    zeroDeltaWAccumulated
+    neuron.error = 0.0
+  end
+
+  def endEpoch
+    addAccumulationToWeight
   end
 end
 
 
 class LearningBP < LearningStrategyBase # strategy for standard bp learning for hidden neurons
-  attr_reader :outputLinks
-
-  def initialize(theEnclosingNeuron, nextInChain = nil)
-    super
-    @outputLinks = @neuron.outputLinks
-  end
-
-  def startEpoch
-    neuron.zeroDeltaWAccumulated
-    neuron.error = 0.0
-  end
 
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
     neuron.netInput = netInput = calcNetInputToNeuron
-    neuron.output = neuron.ioFunction(netInput)
+    neuron.output = ioFunction(netInput)
   end
 
   def learnExample
-    neuron.error = calcNetError * neuron.ioDerivativeFromNetInput(neuron.netInput)
-  end
-
-  def endEpoch
+    neuron.error = calcNetError * ioDerivativeFromNetInput(neuron.netInput)
+    calcDeltaWsAndAccumulate
   end
 end
 
 
 class LearningBPOutput < LearningStrategyBase # strategy for standard bp learning for output neurons
 
-  def startEpoch
-    neuron.zeroDeltaWAccumulated
-    neuron.error = 0.0
-  end
-
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
     neuron.netInput = netInput = calcNetInputToNeuron()
-    neuron.output = output = neuron.ioFunction(netInput)
+    neuron.output = output = ioFunction(netInput)
     neuron.target = target = neuron.arrayOfSelectedData[exampleNumber]
     neuron.outputError = output - target
   end
 
   def learnExample
-    neuron.error = neuron.outputError * neuron.ioDerivativeFromNetInput(neuron.netInput)
-  end
-
-  def endEpoch
+    neuron.error = neuron.outputError * ioDerivativeFromNetInput(neuron.netInput)
+    calcDeltaWsAndAccumulate
   end
 end
 

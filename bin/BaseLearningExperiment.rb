@@ -28,7 +28,7 @@ class Experiment
 
     @trainingSequence = args[:trainingSequence].new(args)
 
- #   @simulationDataStoreManager = SimulationDataStoreManager.new(args)
+    #   @simulationDataStoreManager = SimulationDataStoreManager.new(args)
     @args[:trainingSequence] = trainingSequence
   end
 
@@ -103,19 +103,13 @@ class Experiment
 ###################################### perform Learning/Training  ##########################################
 
     startingTime = Time.now
-    lastEpoch, lastTrainingMSE, lastTestingMSE = theTrainer.train
+    lastEpoch, trainingMSE, testMSE = theTrainer.train
+    endingTime = Time.now
 
 ############################## reporting results....
 
-puts    "lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime "
-puts    lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime
-
-#    reportTrainingResults(args[:neuronsToDisplay], descriptionOfExperiment,
-#                          lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime)
-#
-############################### clean-up....
-#    simulationDataStoreManager.deleteTemporaryDataRecordsInDB(experimentLogger.experimentNumber)
-#    simulationDataStoreManager.save
+    puts "lastEpoch, trainingMSE, testMSE, startingTime, endingTime "
+    puts lastEpoch, trainingMSE, testMSE, startingTime, endingTime
   end
 
   # routines supporting 'reportTrainingResults':
