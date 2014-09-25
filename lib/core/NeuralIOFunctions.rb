@@ -147,3 +147,18 @@ module SigmoidIOFunctionSymmetrical
 
 end
 
+
+module IOFunctionNotAccessibleHere
+  def ioFunction(aNetInput)
+    STDERR.puts "IO Function Accessible Only via LearningStrategy class"
+  end
+
+  def ioDerivativeFromNetInput(aNetInput) # TODO speed this up.  Use sage to get the simpler analytical expression.
+    STDERR.puts "IO Function Accessible Only via LearningStrategy class"
+  end
+
+  def ioDerivativeFromOutput(neuronsOutput)
+    STDERR.puts "IO Function Accessible Only via LearningStrategy class"
+  end
+
+end

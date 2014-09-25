@@ -8,20 +8,25 @@ require_relative 'NeuralIOFunctions'
 module CommonNeuronCalculations
   public
 
+
+  def zeroDeltaWAccumulated
+    inputLinks.each { |inputLink| inputLink.deltaWAccumulated = 0.0 }
+  end
+
+  def calcNetInputToNeuron
+    inputLinks.inject(0.0) { |sum, link| sum + link.propagate }
+  end
+
+  def calcNetError
+    outputLinks.inject(0.0) { |sum, link| sum + link.backPropagate }
+  end
+
   def calcDeltaWsAndAccumulate
     inputLinks.each { |inputLink| inputLink.calcDeltaWAndAccumulate }
   end
 
   def addAccumulationToWeight
     inputLinks.each { |inputLink| inputLink.addAccumulationToWeight }
-  end
-
-  def zeroWeights
-    inputLinks.each { |inputLink| inputLink.weight = 0.0 }
-  end
-
-  def zeroDeltaWAccumulated
-    inputLinks.each { |inputLink| inputLink.deltaWAccumulated = 0.0 }
   end
 
   def learningRate=(aLearningRate)
@@ -32,12 +37,8 @@ module CommonNeuronCalculations
     inputLinks.each { |anInputLink| anInputLink.randomizeWeightWithinTheRange(anInputLink.weightRange) }
   end
 
-  def calcNetInputToNeuron
-    inputLinks.inject(0.0) { |sum, link| sum + link.propagate }
-  end
-
-  def calcNetError
-    outputLinks.inject(0.0) { |sum, link| sum + link.backPropagate }
+  def zeroWeights
+    inputLinks.each { |inputLink| inputLink.weight = 0.0 }
   end
 end
 

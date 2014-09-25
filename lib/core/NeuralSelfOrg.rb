@@ -10,23 +10,23 @@ class TrainerSelfOrgWithLinkNormalization < TrainerBase
   def train
     distributeSetOfExamples(examples)
     totalEpochs = 0
-    hiddenLayer = allNeuronLayers[1]
 
-    attachLearningStrategy(Normalize, hiddenLayer)
-    mse, totalEpochs = trainingPhaseFor(hiddenLayer, totalEpochs)
+    learningLayers = propagatingLayers = [ allNeuronLayers[1] ]
+    attachLearningStrategy(propagatingLayers, Normalize)
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
 
-    attachLearningStrategy(SelfOrgLearning, hiddenLayer)
-    mse, totalEpochs = trainingPhaseFor(hiddenLayer, totalEpochs)
+    #attachLearningStrategy(propagatingLayers, SelfOrgLearning)
+    #mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
 
     forEachExampleDisplayInputsAndOutputs
     return totalEpochs, mse, calcTestingMeanSquaredErrors
   end
 
 
-  def trainingPhaseFor(learningNeurons, totalEpochs)
+  def trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
     mse = 1e100
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
-      propagateAndLearnForAnEpoch(learningNeurons)
+      propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
       trainingSequence.nextEpoch
       mse = calcMeanSumSquaredErrors
       currentEpochNumber = trainingSequence.epochs + totalEpochs
@@ -40,74 +40,92 @@ class TrainerSelfOrgWithLinkNormalization < TrainerBase
   #allNeuronLayers[1].each { |aNeuron| aNeuron.afterSelfOrgReCalcLinkWeights }
   #resetAllNormalizationVariables(allNeuronLayers[1])
 
-  def propagateAndLearnForAnEpoch(propagatingNeurons, learningNeurons)
-    propagatingNeurons.each { |neuron| neuron.startEpoch }
+  def propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
+    initializeStartOfEpochAcross(learningLayers)
     numberOfExamples.times do |exampleNumber|
-      propagateToLayer(learningNeurons, exampleNumber)
-      learningNeurons.reverse.each { |aNeuron| aNeuron.learnExample }
+      propagateExampleAcross(propagatingLayers, exampleNumber)
+      learnExampleIn(learningLayers, exampleNumber)
     end
-    propagatingNeurons.each { |neuron| neuron.endEpoch }
+    endEpochAcross(learningLayers)
   end
 
-  def attachLearningStrategy(learningStrategy, neurons)
-    neurons.each { |neuron| neuron.learningStrat = learningStrategy.new(neuron) }
-  end
-
-  def propagateToLayer(lastLayerOfNeuronsToReceivePropagation, exampleNumber)
-    allNeuronLayers.each do |aLayer|
-      aLayer.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-      break if  aLayer == lastLayerOfNeuronsToReceivePropagation
+  def initializeStartOfEpochAcross(layers)
+    layers.each do |neurons|
+      neurons.each { |neuron| neuron.startEpoch }
     end
   end
 
+  def propagateExampleAcross(propagatingLayers, exampleNumber)
+    propagatingLayers.each do |neurons|
+      neurons.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+    end
+  end
+
+  def learnExampleIn(learningLayers, exampleNumber)
+    learningLayers.reverse.each do |neurons|
+      neurons.each { |aNeuron| aNeuron.learnExample }
+    end
+  end
+
+  def endEpochAcross(layers)
+    layers.each do |neurons|
+      neurons.each { |neuron| neuron.endEpoch }
+    end
+  end
+
+  def attachLearningStrategy(layers, learningStrategy)
+    layers.each do |neurons|
+      neurons.each { |neuron| neuron.learningStrat = learningStrategy.new(neuron) }
+    end
+  end
 
   ###########################
 
-  def performSelfOrgTrainingOn(layerOfNeurons)
-    acrossExamplesAccumulateSelfOrgDeltaWs(layerOfNeurons)
-    layerOfNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-  end
-
-  def acrossExamplesAccumulateSelfOrgDeltaWs(layerOfNeurons)
-    startEpoch()
-    numberOfExamples.times do |exampleNumber|
-      propagateExampleUpToLayer(exampleNumber, layerOfNeurons)
-      layerOfNeurons.each { |aNeuron| aNeuron.calcSelfOrgError }
-
-      layerOfNeurons.each do |aNeuron|
-        dataRecord = aNeuron.recordResponsesForExample
-        aNeuron.calcDeltaWsAndAccumulate
-        aNeuron.dbStoreDetailedData
-      end
-    end
-  end
-
-  def normalize(layer)
-    resetAllNormalizationVariables(layer)
-    numberOfExamples.times do |exampleNumber|
-      propagateForNormalizationToLayer(exampleNumber, layer)
-    end
-    calculateNormalizationCoefficients(layer)
-  end
-
-  def resetAllNormalizationVariables(layer)
-    layer.each { |aNeuron| aNeuron.resetAllNormalizationVariables }
-  end
-
-  def propagateForNormalizationToLayer(exampleNumber, lastLayerOfNeuronsToReceivePropagation)
-    allNeuronLayers.each do |aLayer|
-      if aLayer == lastLayerOfNeuronsToReceivePropagation
-        aLayer.each { |aNeuron| aNeuron.propagateForNormalization(exampleNumber) }
-      else
-        aLayer.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-      end
-      break if lastLayerOfNeuronsToReceivePropagation == aLayer
-    end
-  end
-
-  def calculateNormalizationCoefficients(layer)
-    layer.each { |aNeuron| aNeuron.calculateNormalizationCoefficients }
-  end
+  #def performSelfOrgTrainingOn(layerOfNeurons)
+  #  acrossExamplesAccumulateSelfOrgDeltaWs(layerOfNeurons)
+  #  layerOfNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
+  #end
+  #
+  #def acrossExamplesAccumulateSelfOrgDeltaWs(layerOfNeurons)
+  #  startEpoch()
+  #  numberOfExamples.times do |exampleNumber|
+  #    propagateExampleUpToLayer(exampleNumber, layerOfNeurons)
+  #    layerOfNeurons.each { |aNeuron| aNeuron.calcSelfOrgError }
+  #
+  #    layerOfNeurons.each do |aNeuron|
+  #      dataRecord = aNeuron.recordResponsesForExample
+  #      aNeuron.calcDeltaWsAndAccumulate
+  #      aNeuron.dbStoreDetailedData
+  #    end
+  #  end
+  #end
+  #
+  #def normalize(layer)
+  #  resetAllNormalizationVariables(layer)
+  #  numberOfExamples.times do |exampleNumber|
+  #    propagateForNormalizationToLayer(exampleNumber, layer)
+  #  end
+  #  calculateNormalizationCoefficients(layer)
+  #end
+  #
+  #def resetAllNormalizationVariables(layer)
+  #  layer.each { |aNeuron| aNeuron.resetAllNormalizationVariables }
+  #end
+  #
+  #def propagateForNormalizationToLayer(exampleNumber, lastLayerOfNeuronsToReceivePropagation)
+  #  allNeuronLayers.each do |aLayer|
+  #    if aLayer == lastLayerOfNeuronsToReceivePropagation
+  #      aLayer.each { |aNeuron| aNeuron.propagateForNormalization(exampleNumber) }
+  #    else
+  #      aLayer.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+  #    end
+  #    break if lastLayerOfNeuronsToReceivePropagation == aLayer
+  #  end
+  #end
+  #
+  #def calculateNormalizationCoefficients(layer)
+  #  layer.each { |aNeuron| aNeuron.calculateNormalizationCoefficients }
+  #end
 end
 
 

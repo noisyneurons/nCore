@@ -103,47 +103,94 @@ class TrainerBase
   end
 
   def postInitialize
-    attachLearningStrategy(LearningBP, (neuronsWithInputLinks - outputLayer))
-    attachLearningStrategy(LearningBPOutput, outputLayer)
   end
 
   def train
     distributeSetOfExamples(examples)
     totalEpochs = 0
-    mse, totalEpochs = trainingPhaseFor(neuronsWithInputLinks, totalEpochs)
+
+    learningLayers = allNeuronLayers - [inputLayer]
+    propagatingLayers = allNeuronLayers
+    attachLearningStrategy(learningLayers - [outputLayer], LearningBP)
+    attachLearningStrategy([outputLayer], LearningBPOutput)
+
+    specifyIOFunction(learningLayers, SigmoidIOFunction)
+
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
+
+    #attachLearningStrategy(propagatingLayers, SelfOrgLearning)
+    #mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
+
     forEachExampleDisplayInputsAndOutputs
     return totalEpochs, mse, calcTestingMeanSquaredErrors
   end
 
-  def trainingPhaseFor(learningNeurons, totalEpochs)
+  def distributeSetOfExamples(examples)
+    distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
+  end
+
+  def trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
     mse = 1e100
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
-      propagateAndLearnForAnEpoch(learningNeurons)
+      propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
       trainingSequence.nextEpoch
       mse = calcMeanSumSquaredErrors
-      currentEpochNumber = trainingSequence.epochs  + totalEpochs
-      puts "current epoch number= #{currentEpochNumber}\tmse = #{mse}"  if (currentEpochNumber % 100 == 0)
+      currentEpochNumber = trainingSequence.epochs + totalEpochs
+      puts "current epoch number= #{currentEpochNumber}\tmse = #{mse}" if (currentEpochNumber % 100 == 0)
     end
     totalEpochs += trainingSequence.epochs
     trainingSequence.startNextPhaseOfTraining
     return mse, totalEpochs
   end
 
-  def propagateAndLearnForAnEpoch(neurons)
-    neuronsWithInputLinks.each {|neuron| neuron.startEpoch}
+  def propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
+    initializeStartOfEpochAcross(learningLayers)
     numberOfExamples.times do |exampleNumber|
-      propagateAcrossEntireNetwork(exampleNumber)
-      neurons.reverse.each {|aNeuron| aNeuron.learnExample}
+      propagateExampleAcross(propagatingLayers, exampleNumber)
+      learnExampleIn(learningLayers, exampleNumber)
     end
-    neuronsWithInputLinks.each {|neuron| neuron.endEpoch}
+    endEpochAcross(learningLayers)
   end
 
-  def attachLearningStrategy(learningStrategy, neurons)
-    neurons.each {|neuron| neuron.learningStrat = learningStrategy.new(neuron)}
+  def initializeStartOfEpochAcross(layers)
+    layers.each do |neurons|
+      neurons.each { |neuron| neuron.startEpoch }
+    end
   end
 
+  def propagateExampleAcross(propagatingLayers, exampleNumber)
+    propagatingLayers.each do |neurons|
+      neurons.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+    end
+  end
 
-  ###------------  Core Support Section ------------------------------
+  def learnExampleIn(learningLayers, exampleNumber)
+    learningLayers.reverse.each do |neurons|
+      neurons.each { |aNeuron| aNeuron.learnExample }
+    end
+  end
+
+  def endEpochAcross(layers)
+    layers.each do |neurons|
+      neurons.each { |neuron| neuron.endEpoch }
+    end
+  end
+
+  def attachLearningStrategy(layers, learningStrategy)
+    layers.each do |neurons|
+      neurons.each { |neuron| neuron.learningStrat = learningStrategy.new(neuron) }
+    end
+  end
+
+  def specifyIOFunction(layers, ioFunction)
+    layers.each do |neurons|
+      neurons.each { |neuron| neuron.learningStrat.extend(ioFunction) }
+    end
+  end
+
+  ###########################
+
+  ###------------  Core Metric Support Section ------------------------------
 
   def calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
     return genericCalcMeanSumSquaredErrors(numberOfExamples)
@@ -181,21 +228,18 @@ class TrainerBase
     end
   end
 
-  def distributeSetOfExamples(examples)
-    distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
-  end
-
   def propagateAcrossEntireNetwork(exampleNumber)
     allNeuronsInOneArray.flatten.each { |aNeuron| aNeuron.propagate(exampleNumber) }
   end
 
-  def propagateExampleUpToLayer(exampleNumber, lastLayerOfNeuronsToReceivePropagation)
-    allNeuronLayers.each do |aLayer|
-      aLayer.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-      break if lastLayerOfNeuronsToReceivePropagation == aLayer
-    end
-  end
 
+  #def propagateExampleUpToLayer(exampleNumber, lastLayerOfNeuronsToReceivePropagation)
+  #  allNeuronLayers.each do |aLayer|
+  #    aLayer.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+  #    break if lastLayerOfNeuronsToReceivePropagation == aLayer
+  #  end
+  #end
+  #
   #def clearStoredNetInputs
   #  allNeuronsInOneArray.each { |aNeuron| aNeuron.clearStoredNetInputs }
   #end
