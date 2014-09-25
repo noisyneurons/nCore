@@ -66,34 +66,42 @@ class Experiment
     }
   end
 
-  def createTrainingSet
+  def createDataSet
     STDERR.puts "Error: base class method called!!"
     STDERR.puts "Error: Incorrect Number of Examples Generated and/or Specified" unless (examples.length == args[:numberOfExamples])
     return examples
   end
 
+  def createTrainingSet
+    examples = createDataSet
+    puts "length of examples = #{examples.length}"
+    puts examples
+    return examples
+  end
+
   def createTestingSet
-    return nil
+    return createDataSet
   end
 
-  def reportTrainingResults(neuronToDisplay, descriptionOfExperiment, lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime)
 
-    endOfTrainingReport(lastEpoch, lastTestingMSE, lastTrainingMSE, network)
-
-    #neuronDataSummary(neuronToDisplay)
-
-    #detailedNeuronDataSummary(neuronToDisplay)
-
-    trainingDataRecords = trainingDataSummary
-
-    storeSnapShotData(descriptionOfExperiment, lastEpoch, lastTestingMSE, lastTrainingMSE, network, startingTime)
-
-    snapShotDataSummary
-
-    plotMSEvsEpochNumber(trainingDataRecords)
-
-    # plotTrainingResults(neuronToDisplay)
-  end
+  #def reportTrainingResults(neuronToDisplay, descriptionOfExperiment, lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime)
+  #
+  #  endOfTrainingReport(lastEpoch, lastTestingMSE, lastTrainingMSE, network)
+  #
+  #  #neuronDataSummary(neuronToDisplay)
+  #
+  #  #detailedNeuronDataSummary(neuronToDisplay)
+  #
+  #  trainingDataRecords = trainingDataSummary
+  #
+  #  storeSnapShotData(descriptionOfExperiment, lastEpoch, lastTestingMSE, lastTrainingMSE, network, startingTime)
+  #
+  #  snapShotDataSummary
+  #
+  #  plotMSEvsEpochNumber(trainingDataRecords)
+  #
+  #  # plotTrainingResults(neuronToDisplay)
+  #end
 
   def performSimulation
 
@@ -114,102 +122,102 @@ class Experiment
 
   # routines supporting 'reportTrainingResults':
 
-  def endOfTrainingReport(lastEpoch, lastTestingMSE, lastTrainingMSE, network)
-    puts "\n\n_________________________________________________________________________________________________________"
-    STDERR.puts "ExperimentNumber=\t#{$globalExperimentNumber}"
-    puts "ExperimentNumber=\t#{$globalExperimentNumber}"
-    puts " GridEngineJobID= \t#{jobID}\n\n"
-
-    puts network
-
-    puts "lastEpoch, lastTrainingMSE, lastTestingMSE"
-    puts lastEpoch, lastTrainingMSE, lastTestingMSE
-  end
-
-  def neuronDataSummary(neuronsToDisplay)
-    puts "\n\n############ NeuronData #############"
-    neuronsToDisplay.each do |neuronToDisplay|
-      keysToRecords = []
-      NeuronData.lookup_values(:epochs).each do |epochNumber|
-        keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: $globalExperimentNumber, epochs: epochNumber, neuron: neuronToDisplay}) }
-      end
-      # keysToRecords = NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: $globalExperimentNumber, epochs: 899, neuron: neuronToDisplay}) }
-
-      puts "NeuronData number of Records Retrieved= #{keysToRecords.length}"
-      neuronDataRecords = nil
-      unless (keysToRecords.empty?)
-        # keysToRecords.each { |recordKey| puts "empty" if(recordKey.empty?) }
-        keysToRecords.reject! { |recordKey| recordKey.empty? }
-        neuronDataRecords = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) }
-      end
-      puts neuronDataRecords
-      puts "\n"
-    end
-  end
-
-  def detailedNeuronDataSummary(neuronsToDisplay)
-    puts "\n\n############ DetailedNeuronData #############"
-    neuronsToDisplay.each do |neuronToDisplay|
-      keysToRecords = []
-      DetailedNeuronData.lookup_values(:epochs).each do |epochNumber|
-        DetailedNeuronData.lookup_values(:exampleNumber).each do |anExampleNumber|
-          keysToRecords << DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: $globalExperimentNumber, epochs: epochNumber, neuron: neuronToDisplay, exampleNumber: anExampleNumber}) }
-        end
-      end
-      puts "DetailedNeuronData number of Records Retrieved= #{keysToRecords.length}"
-      unless (keysToRecords.empty?)
-        keysToRecords.reject! { |recordKey| recordKey.empty? }
-        # puts "DetailedNeuronData keysToRecords=\t#{keysToRecords}"
-        detailedNeuronDataRecords = keysToRecords.flatten.collect { |recordKey| DetailedNeuronData.values(recordKey) }
-      end
-      puts detailedNeuronDataRecords
-      puts "\n"
-    end
-  end
-
-  def trainingDataSummary
-    puts "\n\n############ TrainingData #############"
-    keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: $globalExperimentNumber}) }
-    puts "TrainingData number of Records Retrieved= #{keysToRecords.length}"
-
-    trainingDataRecords = nil
-    unless (keysToRecords.empty?)
-      keysToRecords.reject! { |recordKey| recordKey.empty? }
-      trainingDataRecords = keysToRecords.collect { |recordKey| TrainingData.values(recordKey) }
-    end
-    puts trainingDataRecords
-    trainingDataRecords
-  end
-
-  def storeSnapShotData(descriptionOfExperiment, lastEpoch, lastTestingMSE, lastTrainingMSE, network, startingTime)
-    puts "\n\n############ SnapShotData #############"
-    dataToStoreLongTerm = {:experimentNumber => $globalExperimentNumber, :descriptionOfExperiment => descriptionOfExperiment,
-                           :gridTaskID => self.taskID, :gridJobID => self.jobID, :network => network, :args => args,
-                           :time => Time.now, :elapsedTime => (Time.now - startingTime),
-                           :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE
-    }
-    SnapShotData.new(dataToStoreLongTerm)
-  end
-
-  def snapShotDataSummary
-    keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(2) }
-    unless (keysToRecords.empty?)
-      puts
-      puts "Number\tLastEpoch\t\tTrainMSE\t\t\tTestMSE\t\t\tAccumulatedAbsoluteFlockingErrors\t\t\t\tTime\t\tTaskID\t\t\t\t\tDescription"
-      keysToRecords.each do |keyToOneRecord|
-        begin
-          recordHash = SnapShotData.values(keyToOneRecord)
-          puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t\t#{recordHash[:trainMSE]}\t\t#{recordHash[:testMSE]}\t\t\t#{recordHash[:accumulatedAbsoluteFlockingErrors]}\t\t\t#{recordHash[:time]}\t\t\t#{recordHash[:gridTaskID]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
-        rescue
-          puts "problem in yaml conversion"
-        end
-      end
-      # recordHash = SnapShotData.values(keysToRecords.last)
-    end
-  end
-
-  def plotTrainingResults(arrayOfNeuronsToPlot)
-    generatePlotForEachNeuron(arrayOfNeuronsToPlot) if arrayOfNeuronsToPlot.present?
-  end
+  #def endOfTrainingReport(lastEpoch, lastTestingMSE, lastTrainingMSE, network)
+  #  puts "\n\n_________________________________________________________________________________________________________"
+  #  STDERR.puts "ExperimentNumber=\t#{$globalExperimentNumber}"
+  #  puts "ExperimentNumber=\t#{$globalExperimentNumber}"
+  #  puts " GridEngineJobID= \t#{jobID}\n\n"
+  #
+  #  puts network
+  #
+  #  puts "lastEpoch, lastTrainingMSE, lastTestingMSE"
+  #  puts lastEpoch, lastTrainingMSE, lastTestingMSE
+  #end
+  #
+  #def neuronDataSummary(neuronsToDisplay)
+  #  puts "\n\n############ NeuronData #############"
+  #  neuronsToDisplay.each do |neuronToDisplay|
+  #    keysToRecords = []
+  #    NeuronData.lookup_values(:epochs).each do |epochNumber|
+  #      keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: $globalExperimentNumber, epochs: epochNumber, neuron: neuronToDisplay}) }
+  #    end
+  #    # keysToRecords = NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: $globalExperimentNumber, epochs: 899, neuron: neuronToDisplay}) }
+  #
+  #    puts "NeuronData number of Records Retrieved= #{keysToRecords.length}"
+  #    neuronDataRecords = nil
+  #    unless (keysToRecords.empty?)
+  #      # keysToRecords.each { |recordKey| puts "empty" if(recordKey.empty?) }
+  #      keysToRecords.reject! { |recordKey| recordKey.empty? }
+  #      neuronDataRecords = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) }
+  #    end
+  #    puts neuronDataRecords
+  #    puts "\n"
+  #  end
+  #end
+  #
+  #def detailedNeuronDataSummary(neuronsToDisplay)
+  #  puts "\n\n############ DetailedNeuronData #############"
+  #  neuronsToDisplay.each do |neuronToDisplay|
+  #    keysToRecords = []
+  #    DetailedNeuronData.lookup_values(:epochs).each do |epochNumber|
+  #      DetailedNeuronData.lookup_values(:exampleNumber).each do |anExampleNumber|
+  #        keysToRecords << DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron_exampleNumber].eq({experimentNumber: $globalExperimentNumber, epochs: epochNumber, neuron: neuronToDisplay, exampleNumber: anExampleNumber}) }
+  #      end
+  #    end
+  #    puts "DetailedNeuronData number of Records Retrieved= #{keysToRecords.length}"
+  #    unless (keysToRecords.empty?)
+  #      keysToRecords.reject! { |recordKey| recordKey.empty? }
+  #      # puts "DetailedNeuronData keysToRecords=\t#{keysToRecords}"
+  #      detailedNeuronDataRecords = keysToRecords.flatten.collect { |recordKey| DetailedNeuronData.values(recordKey) }
+  #    end
+  #    puts detailedNeuronDataRecords
+  #    puts "\n"
+  #  end
+  #end
+  #
+  #def trainingDataSummary
+  #  puts "\n\n############ TrainingData #############"
+  #  keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: $globalExperimentNumber}) }
+  #  puts "TrainingData number of Records Retrieved= #{keysToRecords.length}"
+  #
+  #  trainingDataRecords = nil
+  #  unless (keysToRecords.empty?)
+  #    keysToRecords.reject! { |recordKey| recordKey.empty? }
+  #    trainingDataRecords = keysToRecords.collect { |recordKey| TrainingData.values(recordKey) }
+  #  end
+  #  puts trainingDataRecords
+  #  trainingDataRecords
+  #end
+  #
+  #def storeSnapShotData(descriptionOfExperiment, lastEpoch, lastTestingMSE, lastTrainingMSE, network, startingTime)
+  #  puts "\n\n############ SnapShotData #############"
+  #  dataToStoreLongTerm = {:experimentNumber => $globalExperimentNumber, :descriptionOfExperiment => descriptionOfExperiment,
+  #                         :gridTaskID => self.taskID, :gridJobID => self.jobID, :network => network, :args => args,
+  #                         :time => Time.now, :elapsedTime => (Time.now - startingTime),
+  #                         :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE
+  #  }
+  #  SnapShotData.new(dataToStoreLongTerm)
+  #end
+  #
+  #def snapShotDataSummary
+  #  keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(2) }
+  #  unless (keysToRecords.empty?)
+  #    puts
+  #    puts "Number\tLastEpoch\t\tTrainMSE\t\t\tTestMSE\t\t\tAccumulatedAbsoluteFlockingErrors\t\t\t\tTime\t\tTaskID\t\t\t\t\tDescription"
+  #    keysToRecords.each do |keyToOneRecord|
+  #      begin
+  #        recordHash = SnapShotData.values(keyToOneRecord)
+  #        puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t\t#{recordHash[:trainMSE]}\t\t#{recordHash[:testMSE]}\t\t\t#{recordHash[:accumulatedAbsoluteFlockingErrors]}\t\t\t#{recordHash[:time]}\t\t\t#{recordHash[:gridTaskID]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
+  #      rescue
+  #        puts "problem in yaml conversion"
+  #      end
+  #    end
+  #    # recordHash = SnapShotData.values(keysToRecords.last)
+  #  end
+  #end
+  #
+  #def plotTrainingResults(arrayOfNeuronsToPlot)
+  #  generatePlotForEachNeuron(arrayOfNeuronsToPlot) if arrayOfNeuronsToPlot.present?
+  #end
 end
 

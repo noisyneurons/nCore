@@ -9,36 +9,59 @@ class TrainerSelfOrgWithLinkNormalization < TrainerBase
 
   def train
     distributeSetOfExamples(examples)
+    totalEpochs = 0
+    hiddenLayer = allNeuronLayers[1]
 
-    puts "phase1: self-org for hidden layer 1 "
-    puts "allNeuronLayers[1][0].output= #{allNeuronLayers[1][0].output}"
+    attachLearningStrategy(Normalize, hiddenLayer)
+    mse, totalEpochs = trainingPhaseFor(hiddenLayer, totalEpochs)
 
-    normalize(allNeuronLayers[1])
+    attachLearningStrategy(SelfOrgLearning, hiddenLayer)
+    mse, totalEpochs = trainingPhaseFor(hiddenLayer, totalEpochs)
 
-    [0, 1, 2].each do |i|
-      puts "allNeuronLayers[1][0].inputLinks[#{i}].weight= #{allNeuronLayers[1][0].inputLinks[i].weight}"
-      puts "allNeuronLayers[1][0].inputLinks[#{i}].normalizationOffset= #{allNeuronLayers[1][0].inputLinks[i].normalizationOffset}"
-      puts "allNeuronLayers[1][0].inputLinks[#{i}].normalizationMultiplier= #{allNeuronLayers[1][0].inputLinks[i].normalizationMultiplier}"
-    end
-
-    phaseTrain { performSelfOrgTrainingOn(allNeuronLayers[1]) }
     forEachExampleDisplayInputsAndOutputs
-
-    return trainingSequence.epochs, 9999.9, 9999.9
+    return totalEpochs, mse, calcTestingMeanSquaredErrors
   end
 
-  def phaseTrain
+
+  def trainingPhaseFor(learningNeurons, totalEpochs)
     mse = 1e100
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
-      yield
-      neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
+      propagateAndLearnForAnEpoch(learningNeurons)
       trainingSequence.nextEpoch
+      mse = calcMeanSumSquaredErrors
+      currentEpochNumber = trainingSequence.epochs + totalEpochs
+      puts "current epoch number= #{currentEpochNumber}\tmse = #{mse}" if (currentEpochNumber % 100 == 0)
     end
-    allNeuronLayers[1].each { |aNeuron| aNeuron.afterSelfOrgReCalcLinkWeights }
-    resetAllNormalizationVariables(allNeuronLayers[1])
+    totalEpochs += trainingSequence.epochs
     trainingSequence.startNextPhaseOfTraining
-    return mse
+    return mse, totalEpochs
   end
+
+  #allNeuronLayers[1].each { |aNeuron| aNeuron.afterSelfOrgReCalcLinkWeights }
+  #resetAllNormalizationVariables(allNeuronLayers[1])
+
+  def propagateAndLearnForAnEpoch(propagatingNeurons, learningNeurons)
+    propagatingNeurons.each { |neuron| neuron.startEpoch }
+    numberOfExamples.times do |exampleNumber|
+      propagateToLayer(learningNeurons, exampleNumber)
+      learningNeurons.reverse.each { |aNeuron| aNeuron.learnExample }
+    end
+    propagatingNeurons.each { |neuron| neuron.endEpoch }
+  end
+
+  def attachLearningStrategy(learningStrategy, neurons)
+    neurons.each { |neuron| neuron.learningStrat = learningStrategy.new(neuron) }
+  end
+
+  def propagateToLayer(lastLayerOfNeuronsToReceivePropagation, exampleNumber)
+    allNeuronLayers.each do |aLayer|
+      aLayer.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+      break if  aLayer == lastLayerOfNeuronsToReceivePropagation
+    end
+  end
+
+
+  ###########################
 
   def performSelfOrgTrainingOn(layerOfNeurons)
     acrossExamplesAccumulateSelfOrgDeltaWs(layerOfNeurons)
@@ -172,19 +195,12 @@ class LinkWithNormalization < Link
     self.inputsOverEpoch << inputNeuron.output
   end
 
-  def propagateForNormalization # TODO this must not overwrite context-Normalization method with same name.
-    return weight * inputNeuron.output
-  end
-
   def propagate
     return normalizationMultiplier * weight * (inputNeuron.output - normalizationOffset)
   end
 
   def calculateNormalizationCoefficients
-    puts "inputsOverEpoch= #{inputsOverEpoch}"
     averageOfInputs = inputsOverEpoch.mean
-    puts "averageOfInputs= #{averageOfInputs}"
-
     self.normalizationOffset = averageOfInputs
     centeredArray = inputsOverEpoch.collect { |value| value - normalizationOffset }
     largestAbsoluteArrayElement = centeredArray.minmax.abs.max.to_f

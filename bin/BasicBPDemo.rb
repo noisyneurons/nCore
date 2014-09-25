@@ -15,9 +15,7 @@ require_relative '../lib/core/Trainers.rb'
 require_relative 'BaseLearningExperiment'
 
 
-
 class Experiment
-  include NeuronToNeuronConnection
 
   def setParameters
     @args = {
@@ -50,17 +48,13 @@ class Experiment
     }
   end
 
-  def createTrainingSet
+  def createDataSet
     examples = []
     examples << {:inputs => [0.0, 0.0], :targets => [0.0], :exampleNumber => 0, :class => 0}
     examples << {:inputs => [0.0, 1.0], :targets => [1.0], :exampleNumber => 1, :class => 1}
     examples << {:inputs => [1.0, 0.0], :targets => [1.0], :exampleNumber => 2, :class => 1}
     examples << {:inputs => [1.0, 1.0], :targets => [0.0], :exampleNumber => 3, :class => 0}
     return examples
-  end
-
-  def createTestingSet
-    return createTrainingSet
   end
 
   def createNetworkAndTrainer

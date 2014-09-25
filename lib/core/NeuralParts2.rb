@@ -102,6 +102,30 @@ class LearningBPOutput < LearningStrategyBase # strategy for standard bp learnin
 end
 
 
+
+class Normalization < LearningStrategyBase
+  def startEpoch
+    inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
+  end
+
+  def propagate(exampleNumber)
+    neuron.exampleNumber = exampleNumber
+  end
+
+  def learnExample
+    inputLinks.each { |link| link.storeEpochHistory }
+  end
+
+  def endEpoch
+    inputLinks.each { |aLink| aLink.calculateNormalizationCoefficients }
+  end
+end
+
+
+
+
+
+
 class LearningSelfOrg < LearningStrategyBase
 
   def calcSelfOrgError
@@ -111,22 +135,11 @@ class LearningSelfOrg < LearningStrategyBase
     neuron.error = -1.0 * neuron.ioDerivativeFromNetInput(neuron.netInput) * (((neuron.netInput - targetMinus)/distanceBetweenTargets) - 0.5)
   end
 
-  def resetAllNormalizationVariables
-    inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
-  end
 
-  def storeEpochHistory
-    inputLinks.each { |link| link.storeEpochHistory }
-  end
-
-  def propagateForNormalization(exampleNumber)
-    neuron.exampleNumber = exampleNumber
-    neuron.netInput = inputLinks.inject(0.0) { |sum, link| sum + link.propagateForNormalization }
-    neuron.output = neuron.ioFunction(neuron.netInput)
-  end
-
-  def calculateNormalizationCoefficients
-    inputLinks.each { |aLink| aLink.calculateNormalizationCoefficients }
+  def afterSelfOrgReCalcLinkWeights
+    biasWeight = inputLinks.inject(0.0) { |sum, link| sum + link.propagateUsingZeroInput }
+    inputLinks.each { |aLink| aLink.afterSelfOrgReCalcLinkWeights }
+    inputLinks[-1].weight = biasWeight
   end
 
   def afterSelfOrgReCalcLinkWeights
@@ -134,7 +147,15 @@ class LearningSelfOrg < LearningStrategyBase
     inputLinks.each { |aLink| aLink.afterSelfOrgReCalcLinkWeights }
     inputLinks[-1].weight = biasWeight
   end
+
+
 end
+
+
+
+
+
+
 
 
 class LearningStratContext < LearningStrategyBase

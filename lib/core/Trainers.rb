@@ -76,8 +76,6 @@ class TrainerBase
                 :args, :trainingSequence, :numberOfExamples, :startTime, :elapsedTime, :minMSE
   include NeuronToNeuronConnection
   include ExampleDistribution
-  include DBAccess
-  include RecordingAndPlottingRoutines
 
   def initialize(examples, network, args)
     @args = args
