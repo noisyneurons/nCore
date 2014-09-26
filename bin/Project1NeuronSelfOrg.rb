@@ -2,8 +2,6 @@
 ## ../nCore/bin/Project1NeuronSelfOrg.rb
 # Purpose:  1NeuronSelfOrg;  Get simplest versions of self-org understood and "working."
 
-require_relative 'BaseLearningExperiment'
-
 require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
 require_relative '../lib/core/NeuralParts'
@@ -32,7 +30,7 @@ class Experiment
         # training parameters
         :learningRate => 0.1,
         :minMSE => 0.0,
-        :maxEpochNumbersForEachPhase => [1, 200, 200, 6e2, 200, 6e2, 200],
+        :maxEpochNumbersForEachPhase => [1, 15, 200, 6e2, 200, 6e2, 200],
         :trainingSequence => MultiPhaseTrainingSequence,
 
         # Network Architecture
@@ -51,10 +49,11 @@ class Experiment
 
   def createDataSet
     # xStart = [-1.0, 1.0, -1.0, 1.0]
-    # xStart = [0.0, 2.0, 0.0, 2.0]
-    xStart = [1.0, 3.0, 1.0, 3.0]
+    xStart = [0.0, 4.0, 0.0, 4.0]
+    # xStart = [1.0, 3.0, 1.0, 3.0]
 
-    yStart = [1.0, 1.0, -1.0, -1.0]
+    #  yStart = [1.0, 1.0, -1.0, -1.0]
+    yStart = [4.0, 0.0, 4.0, 0.0]
     # yStart = [2.0, 2.0, 0.0, 0.0]
     xInc = [0.0, 0.0, 0.0, 0.0]
     # yInc = [0.2, 0.2, -0.2, -0.2]
@@ -109,3 +108,5 @@ baseRandomNumberSeed = 0
 experiment = Experiment.new("Proj1SelfOrg: single self-org neuron", baseRandomNumberSeed)
 
 experiment.performSimulation()
+
+puts experiment.network

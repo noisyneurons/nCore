@@ -36,7 +36,6 @@ class Neuron2 < Neuron
   def postInitialize
     @inputLinks = []
     @netInput = 0.0
-    #self.output = self.ioFunction(@netInput) # Only doing this in case we wish to use this code for recurrent networks
     @outputLinks = []
     @error = 0.0
     @exampleNumber = nil
@@ -52,7 +51,6 @@ class OutputNeuron2 < OutputNeuron
 
   def postInitialize
     @netInput = 0.0
-    # self.output = ioFunction(netInput) # Only doing this in case we wish to use this code for recurrent networks
     @inputLinks = []
     @error = 0.0
     @outputError = nil
@@ -89,7 +87,6 @@ class LearningBP < LearningStrategyBase # strategy for standard bp learning for 
 
   def startEpoch
     zeroDeltaWAccumulated
-    error = 0.0
   end
 
   def propagate(exampleNumber)
@@ -113,7 +110,6 @@ class LearningBPOutput < LearningStrategyBase # strategy for standard bp learnin
 
   def startEpoch
     zeroDeltaWAccumulated
-    error = 0.0
   end
 
   def propagate(exampleNumber)
@@ -154,30 +150,50 @@ class Normalization < LearningStrategyBase
 end
 
 
-#class LearningSelfOrg < LearningStrategyBase
-#
-#  def calcSelfOrgError
-#    targetPlus = 2.5 # TODO need "exact number" here. -- just for illustration purposes...
-#    targetMinus = -1.0 * targetPlus
-#    distanceBetweenTargets = targetPlus - targetMinus
-#    neuron.error = -1.0 * neuron.ioDerivativeFromNetInput(neuron.netInput) * (((neuron.netInput - targetMinus)/distanceBetweenTargets) - 0.5)
-#  end
-#
-#
-#  def afterSelfOrgReCalcLinkWeights
-#    biasWeight = inputLinks.inject(0.0) { |sum, link| sum + link.propagateUsingZeroInput }
-#    inputLinks.each { |aLink| aLink.afterSelfOrgReCalcLinkWeights }
-#    inputLinks[-1].weight = biasWeight
-#  end
-#
-#  def afterSelfOrgReCalcLinkWeights
-#    biasWeight = inputLinks.inject(0.0) { |sum, link| sum + link.propagateUsingZeroInput }
-#    inputLinks.each { |aLink| aLink.afterSelfOrgReCalcLinkWeights }
-#    inputLinks[-1].weight = biasWeight
-#  end
-#
-#
-#end
+class SelfOrgStrat < LearningStrategyBase
+
+  def startEpoch
+    zeroDeltaWAccumulated
+    @targetPlus = 2.5 # TODO need "exact number" here. -- just for illustration purposes...
+    @targetMinus = -1.0 * @targetPlus
+    @distanceBetweenTargets = @targetPlus - @targetMinus
+  end
+
+  def propagate(exampleNumber)
+    neuron.exampleNumber = exampleNumber
+    neuron.netInput = netInput = calcNetInputToNeuron
+    neuron.output = ioFunction(netInput)
+  end
+
+  def learnExample
+    calcSelfOrgError
+    calcDeltaWsAndAccumulate
+  end
+
+
+  #def afterSelfOrgReCalcLinkWeights
+  #  biasWeight = inputLinks.inject(0.0) { |sum, link| sum + link.propagateUsingZeroInput }
+  #  inputLinks.each { |aLink| aLink.afterSelfOrgReCalcLinkWeights }
+  #  inputLinks[-1].weight = biasWeight
+  #end
+  #
+  #def afterSelfOrgReCalcLinkWeights
+  #  biasWeight = inputLinks.inject(0.0) { |sum, link| sum + link.propagateUsingZeroInput }
+  #  inputLinks.each { |aLink| aLink.afterSelfOrgReCalcLinkWeights }
+  #  inputLinks[-1].weight = biasWeight
+  #end
+
+  def endEpoch
+    addAccumulationToWeight
+  end
+
+  private
+
+  def calcSelfOrgError
+    netInput = neuron.netInput
+    neuron.error = -1.0 * neuron.ioDerivativeFromNetInput(netInput) * (((netInput - @targetMinus)/@distanceBetweenTargets) - 0.5)
+  end
+end
 
 
 class LearningStratContext < LearningStrategyBase

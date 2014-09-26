@@ -5,7 +5,6 @@
 ###################################################################
 ###################################################################
 
-
 class TrainingSequence
   attr_accessor :args, :epochs, :maxNumberOfEpochs,
                 :stillMoreEpochs
@@ -106,20 +105,15 @@ class TrainerBase
   end
 
   def train
-    distributeSetOfExamples(examples)
-    totalEpochs = 0
-
     learningLayers = allNeuronLayers - [inputLayer]
     propagatingLayers = allNeuronLayers
     attachLearningStrategy(learningLayers - [outputLayer], LearningBP)
     attachLearningStrategy([outputLayer], LearningBPOutput)
-
     specifyIOFunction(learningLayers, SigmoidIOFunction)
 
+    distributeSetOfExamples(examples)
+    totalEpochs = 0
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
-
-    #attachLearningStrategy(propagatingLayers, SelfOrgLearning)
-    #mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
 
     forEachExampleDisplayInputsAndOutputs
     return totalEpochs, mse, calcTestingMeanSquaredErrors
