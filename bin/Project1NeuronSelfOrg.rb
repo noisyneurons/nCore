@@ -42,6 +42,7 @@ class Experiment
         :typeOfNeuron => Neuron2,
 
         # Training Set parameters
+        :angleOfClockwiseRotationOfInputData => 0.0,
         :numberOfExamples => (self.numberOfExamples = 16),
         :numberOfTestingExamples => numberOfExamples
     }
@@ -80,8 +81,8 @@ class Experiment
       end
     end
     STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
-    puts examples
-    examples
+    angleOfClockwiseRotationOfInputData = args[:angleOfClockwiseRotationOfInputData]
+    examples = rotateClockwise(examples, angleOfClockwiseRotationOfInputData)
   end
 
 

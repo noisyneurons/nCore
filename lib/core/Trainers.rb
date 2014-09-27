@@ -226,26 +226,6 @@ class TrainerBase
     allNeuronsInOneArray.flatten.each { |aNeuron| aNeuron.propagate(exampleNumber) }
   end
 
-
-  #def propagateExampleUpToLayer(exampleNumber, lastLayerOfNeuronsToReceivePropagation)
-  #  allNeuronLayers.each do |aLayer|
-  #    aLayer.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-  #    break if lastLayerOfNeuronsToReceivePropagation == aLayer
-  #  end
-  #end
-  #
-  #def clearStoredNetInputs
-  #  allNeuronsInOneArray.each { |aNeuron| aNeuron.clearStoredNetInputs }
-  #end
-  #
-  #def storeNetInputsForExample
-  #  allNeuronsInOneArray.each { |aNeuron| aNeuron.storeNetInputForExample }
-  #end
-
-  #def learnExampleAcrossEntireNetwork
-  #  neuronsWithInputLinksInReverseOrder.each { |aNeuron| aNeuron.learnExample }
-  #end
-
   def calcWeightedErrorMetricForExample
     outputLayer.collect { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
   end

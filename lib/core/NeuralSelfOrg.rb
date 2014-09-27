@@ -1,9 +1,6 @@
 ### VERSION "nCore"
 ## ../nCore/lib/core/NeuralSelfOrg.rb
 
-require_relative 'Utilities'
-require_relative 'NeuralParts'
-
 
 class TrainerSelfOrgWithLinkNormalization < TrainerBase
 
@@ -20,8 +17,10 @@ class TrainerSelfOrgWithLinkNormalization < TrainerBase
     attachLearningStrategy(learningLayers, SelfOrgStrat)
     specifyIOFunction(learningLayers, NonMonotonicIOFunction)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
+    calcWeightsForUNNormalizedInputs(learningLayers)
 
     forEachExampleDisplayInputsAndOutputs
+
     return totalEpochs, mse, 0.998 # calcTestingMeanSquaredErrors
   end
 
@@ -43,97 +42,38 @@ class TrainerSelfOrgWithLinkNormalization < TrainerBase
     return mse, totalEpochs
   end
 
-  #allNeuronLayers[1].each { |aNeuron| aNeuron.afterSelfOrgReCalcLinkWeights }
-  #resetAllNormalizationVariables(allNeuronLayers[1])
-
-  #def propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
-  #  initializeStartOfEpochAcross(learningLayers)
-  #  numberOfExamples.times do |exampleNumber|
-  #    propagateExampleAcross(propagatingLayers, exampleNumber)
-  #    learnExampleIn(learningLayers, exampleNumber)
-  #  end
-  #  endEpochAcross(learningLayers)
-  #end
-
-  #def initializeStartOfEpochAcross(layers)
-  #  layers.each do |neurons|
-  #    neurons.each { |neuron| neuron.startEpoch }
-  #  end
-  #end
-  #
-  #def propagateExampleAcross(propagatingLayers, exampleNumber)
-  #  propagatingLayers.each do |neurons|
-  #    neurons.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-  #  end
-  #end
-  #
-  #def learnExampleIn(learningLayers, exampleNumber)
-  #  learningLayers.reverse.each do |neurons|
-  #    neurons.each { |aNeuron| aNeuron.learnExample }
-  #  end
-  #end
-  #
-  #def endEpochAcross(layers)
-  #  layers.each do |neurons|
-  #    neurons.each { |neuron| neuron.endEpoch }
-  #  end
-  #end
-  #
-  #def attachLearningStrategy(layers, learningStrategy)
-  #  layers.each do |neurons|
-  #    neurons.each { |neuron| neuron.learningStrat = learningStrategy.new(neuron) }
-  #  end
-  #end
-
-  ###########################
-
-  #def performSelfOrgTrainingOn(layerOfNeurons)
-  #  acrossExamplesAccumulateSelfOrgDeltaWs(layerOfNeurons)
-  #  layerOfNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-  #end
-  #
-  #def acrossExamplesAccumulateSelfOrgDeltaWs(layerOfNeurons)
-  #  startEpoch()
-  #  numberOfExamples.times do |exampleNumber|
-  #    propagateExampleUpToLayer(exampleNumber, layerOfNeurons)
-  #    layerOfNeurons.each { |aNeuron| aNeuron.calcSelfOrgError }
-  #
-  #    layerOfNeurons.each do |aNeuron|
-  #      dataRecord = aNeuron.recordResponsesForExample
-  #      aNeuron.calcDeltaWsAndAccumulate
-  #      aNeuron.dbStoreDetailedData
-  #    end
-  #  end
-  #end
-  #
-  #def normalize(layer)
-  #  resetAllNormalizationVariables(layer)
-  #  numberOfExamples.times do |exampleNumber|
-  #    propagateForNormalizationToLayer(exampleNumber, layer)
-  #  end
-  #  calculateNormalizationCoefficients(layer)
-  #end
-  #
-  #def resetAllNormalizationVariables(layer)
-  #  layer.each { |aNeuron| aNeuron.resetAllNormalizationVariables }
-  #end
-  #
-  #def propagateForNormalizationToLayer(exampleNumber, lastLayerOfNeuronsToReceivePropagation)
-  #  allNeuronLayers.each do |aLayer|
-  #    if aLayer == lastLayerOfNeuronsToReceivePropagation
-  #      aLayer.each { |aNeuron| aNeuron.propagateForNormalization(exampleNumber) }
-  #    else
-  #      aLayer.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-  #    end
-  #    break if lastLayerOfNeuronsToReceivePropagation == aLayer
-  #  end
-  #end
-  #
-  #def calculateNormalizationCoefficients(layer)
-  #  layer.each { |aNeuron| aNeuron.calculateNormalizationCoefficients }
-  #end
+  def calcWeightsForUNNormalizedInputs(learningLayers)
+    learningLayers.each { |neurons| neurons.each { |aNeuron| aNeuron.calcWeightsForUNNormalizedInputs } }
+  end
 end
 
+
+class Trainer1SelfOrgAndContext < TrainerSelfOrgWithLinkNormalization
+  def train
+    learningLayers = [allNeuronLayers[1]]
+    propagatingLayers = allNeuronLayers
+
+    normalizationStrategy = Normalization.new()
+    contextAdapter = AdapterForContext.new(strategy, theEnclosingNeuron, contextController)
+    attachLearningStrategy(learningLayers, Normalization)
+    specifyIOFunction(learningLayers, NonMonotonicIOFunction)
+
+    distributeSetOfExamples(examples)
+    totalEpochs = 0
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
+
+    attachLearningStrategy(learningLayers, SelfOrgStrat)
+    specifyIOFunction(learningLayers, NonMonotonicIOFunction)
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
+    calcWeightsForUNNormalizedInputs(learningLayers)
+
+    forEachExampleDisplayInputsAndOutputs
+
+    return totalEpochs, mse, 0.998 # calcTestingMeanSquaredErrors
+  end
+
+
+end
 
 ########################################################################
 ########################################################################
@@ -160,41 +100,6 @@ class SelfOrg1NeuronNetwork < BaseNetwork
     connect_layer_to_another([theBiasNeuron], neurons, typeOfLink, args)
   end
 end
-
-
-########################################################################
-########################################################################
-
-#module SelfOrganization # Module for Neuron classes
-#
-#  def calcSelfOrgError
-#    targetPlus = 2.5
-#    targetMinus = -1.0 * targetPlus
-#    distanceBetweenTargets = targetPlus - targetMinus
-#    self.error = -1.0 * ioDerivativeFromNetInput(netInput) * (((netInput - targetMinus)/distanceBetweenTargets) - 0.5)
-#  end
-#
-#  def resetAllNormalizationVariables
-#    inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
-#  end
-#
-#  def propagateForNormalization(exampleNumber)
-#    self.exampleNumber = exampleNumber
-#    self.netInput = inputLinks.inject(0.0) { |sum, link| sum + link.propagateForNormalization }
-#    self.output = ioFunction(netInput)
-#  end
-#
-#  def calculateNormalizationCoefficients
-#    inputLinks.each { |aLink| aLink.calculateNormalizationCoefficients }
-#  end
-#
-#  def afterSelfOrgReCalcLinkWeights
-#    biasWeight = inputLinks.inject(0.0) { |sum, link| sum + link.propagateUsingZeroInput }
-#    inputLinks.each { |aLink| aLink.afterSelfOrgReCalcLinkWeights }
-#    inputLinks[-1].weight = biasWeight
-#  end
-#end
-
 
 ########################################################################
 ########################################################################
@@ -235,7 +140,7 @@ class LinkWithNormalization < Link
                                    end
   end
 
-  def afterSelfOrgReCalcLinkWeights
+  def calcWeightsForUNNormalizedInputs
     puts "weightBefore= #{weight}"
     self.weight = normalizationMultiplier * weight
     puts "normalizationMultiplier= #{normalizationMultiplier}"
@@ -249,7 +154,6 @@ class LinkWithNormalization < Link
   def to_s
     return "Weight=\t#{weight}\tOffset=\t#{normalizationOffset}\tMultiplier=\t#{normalizationMultiplier}\tDeltaW=\t#{deltaW}\tAccumulatedDeltaW=\t#{deltaWAccumulated}\tWeightAtBeginningOfTraining=\t#{weightAtBeginningOfTraining}\tFROM: #{inputNeuron.class.to_s} #{inputNeuron.id} TO: #{outputNeuron.class.to_s} #{outputNeuron.id}"
   end
-
 end
 
 

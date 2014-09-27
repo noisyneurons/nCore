@@ -1,7 +1,6 @@
 ### VERSION "nCore"
 ## ../nCore/lib/core/NeuralParts2.rb
 
-require_relative 'NeuralParts'
 ############################################################
 
 module ForwardingToLearningStrategy
@@ -25,6 +24,13 @@ module ForwardingToLearningStrategy
   def finishLearningStrategy
     learningStrat.finishLearningStrategy
   end
+
+  # service routines that may be used by various learning strategies
+
+  def calcWeightsForUNNormalizedInputs
+    learningStrat.calcWeightsForUNNormalizedInputs
+  end
+
 end
 
 
@@ -79,6 +85,18 @@ class LearningStrategyBase # strategy for standard bp learning for output neuron
 
   def startStrategy
     neuron.output = ioFunction(neuron.netInput) # Probably only need to do this in special cases, like simulating recurrent nets
+  end
+
+  def finishLearningStrategy
+  end
+
+  # service routines that may be used by various learning strategies
+
+  def calcWeightsForUNNormalizedInputs
+    biasWeight = inputLinks.inject(0.0) { |sum, link| sum + link.propagateUsingZeroInput }
+    inputLinks.each { |aLink| aLink.calcWeightsForUNNormalizedInputs }
+    inputLinks[-1].weight = biasWeight
+    inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
   end
 end
 
@@ -151,7 +169,7 @@ end
 
 
 class SelfOrgStrat < LearningStrategyBase
-
+  attr_accessor  :targetMinus, :distanceBetweenTargets
   def startEpoch
     zeroDeltaWAccumulated
     @targetPlus = 2.5 # TODO need "exact number" here. -- just for illustration purposes...
@@ -170,19 +188,6 @@ class SelfOrgStrat < LearningStrategyBase
     calcDeltaWsAndAccumulate
   end
 
-
-  #def afterSelfOrgReCalcLinkWeights
-  #  biasWeight = inputLinks.inject(0.0) { |sum, link| sum + link.propagateUsingZeroInput }
-  #  inputLinks.each { |aLink| aLink.afterSelfOrgReCalcLinkWeights }
-  #  inputLinks[-1].weight = biasWeight
-  #end
-  #
-  #def afterSelfOrgReCalcLinkWeights
-  #  biasWeight = inputLinks.inject(0.0) { |sum, link| sum + link.propagateUsingZeroInput }
-  #  inputLinks.each { |aLink| aLink.afterSelfOrgReCalcLinkWeights }
-  #  inputLinks[-1].weight = biasWeight
-  #end
-
   def endEpoch
     addAccumulationToWeight
   end
@@ -191,7 +196,56 @@ class SelfOrgStrat < LearningStrategyBase
 
   def calcSelfOrgError
     netInput = neuron.netInput
-    neuron.error = -1.0 * neuron.ioDerivativeFromNetInput(netInput) * (((netInput - @targetMinus)/@distanceBetweenTargets) - 0.5)
+    neuron.error = -1.0 * neuron.ioDerivativeFromNetInput(netInput) * (((netInput - targetMinus)/distanceBetweenTargets) - 0.5)
+  end
+end
+
+
+class LearningController
+  attr_accessor :sensor
+
+  def initialize(sensor=nil)
+    @sensor = sensor
+  end
+
+  def output
+    1.0
+  end
+end
+
+
+class AdapterForContext
+  attr_accessor :targetStrategy, :theEnclosingNeuron, :contextController
+
+  def initialize(theEnclosingNeuron, args)
+    @theEnclosingNeuron = theEnclosingNeuron
+    @args = args
+    @targetStrategy = @args[:strategy].new(theEnclosingNeuron, args)
+    @contextController = @args[:contextController]
+  end
+
+  def startEpoch
+    targetStrategy.startEpoch
+  end
+
+  def propagate(exampleNumber)
+    returnValue = if contextController.output == 1.0
+                    targetStrategy.propagate(exampleNumber)
+                  else
+                    targetStrategy.ioFunction(0.0)
+                  end
+  end
+
+  def learnExample
+    returnValue = if contextController.output == 1.0
+                    targetStrategy.learnExample
+                  else
+                    nil
+                  end
+  end
+
+  def endEpoch
+    targetStrategy.endEpoch
   end
 end
 

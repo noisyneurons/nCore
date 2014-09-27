@@ -151,14 +151,16 @@ end
 module IOFunctionNotAccessibleHere
   def ioFunction(aNetInput)
     STDERR.puts "IO Function Accessible Only via LearningStrategy class"
+    0.5
   end
 
   def ioDerivativeFromNetInput(aNetInput) # TODO speed this up.  Use sage to get the simpler analytical expression.
     STDERR.puts "IO Function Accessible Only via LearningStrategy class"
+    0.0
   end
 
   def ioDerivativeFromOutput(neuronsOutput)
     STDERR.puts "IO Function Accessible Only via LearningStrategy class"
+    0.0
   end
-
 end
