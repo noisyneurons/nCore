@@ -21,6 +21,9 @@ class Neuron2
   include NonMonotonicIOFunction
 end
 
+
+########################################################################
+
 class Experiment
 
   def setParameters
@@ -32,14 +35,15 @@ class Experiment
         # training parameters
         :learningRate => 0.1,
         :minMSE => 0.0,
-        :maxEpochNumbersForEachPhase => [1, 150, 200, 6e2, 200, 6e2, 200],
+        :maxEpochNumbersForEachPhase => [1, 150],
         :trainingSequence => MultiPhaseTrainingSequence,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
         :numberOfHiddenLayer1Neurons => 1,
-        #:numberOfOutputNeurons => 1,
+
         :weightRange => 0.1,
+
         :typeOfLink => LinkWithNormalization,
         :typeOfNeuron => Neuron2,
 
@@ -87,20 +91,13 @@ class Experiment
     examples = rotateClockwise(examples, angleOfClockwiseRotationOfInputData)
   end
 
-  def createTrainingSet
-    examples = createDataSet
-    puts "length of examples = #{examples.length}"
-    puts examples
-    return examples
-  end
-
   def createNetworkAndTrainer
     network = SelfOrg1NeuronNetwork.new(args)
 
     selfOrgLayer = network.allNeuronLayers[1]
     selfOrgNeuron = selfOrgLayer[0]
-    selfOrgNeuron.inputLinks[0].weight = 0.1
-    selfOrgNeuron.inputLinks[1].weight = 0.105
+    selfOrgNeuron.inputLinks[0].weight = 0.105
+    selfOrgNeuron.inputLinks[1].weight = 0.1
 
     theTrainer = Trainer1SelfOrgAndContext.new(examples, network, args)
 

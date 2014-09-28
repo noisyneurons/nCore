@@ -5,24 +5,22 @@
 require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
 require_relative '../lib/core/NeuralParts'
+require_relative '../lib/core/NeuralParts2'
 require_relative '../lib/core/NetworkFactories'
 require_relative '../lib/plot/CorePlottingCode'
 require_relative '../lib/core/SimulationDataStore'
-require_relative '../lib/core/Trainers.rb'
+require_relative '../lib/core/Trainers'
 require_relative '../lib/core/NeuralSelfOrg'
 require_relative '../lib/core/NeuralContext'
 
+
 require_relative 'BaseLearningExperiment'
-
 ########################################################################
-class NeuronWithNormalizationAndContext  <  NeuronInContext
+
+class Neuron2
   include NonMonotonicIOFunction
-  include SelfOrganization
 end
 
-class LinkWithNormalizationAndContext < LinkWithNormalization
-  include LearningInContext
-end
 
 class Experiment
 
@@ -35,7 +33,7 @@ class Experiment
         # training parameters
         :learningRate =>  0.1,
         :minMSE => 0.0, # 0.001,
-        :maxEpochNumbersForEachPhase => [200, 6e2, 200, 6e2, 200, 6e2, 200],
+        :maxEpochNumbersForEachPhase => [1, 150, 1, 150, 200, 6e2, 200],
         :trainingSequence =>  MultiPhaseTrainingSequence,
 
         # Network Architecture
@@ -43,10 +41,13 @@ class Experiment
         :numberOfHiddenLayer1Neurons => 1,
         :numberOfHiddenLayer2Neurons => 2,
         :numberOfOutputNeurons => 4,
+
+
         :weightRange => 0.1,
-        :typeOfLink => LinkWithNormalizationAndContext,
+
+        :typeOfLink => LinkWithNormalization,
+        :typeOfNeuron => Neuron2,
         :typeOfLinkToOutput => Link,
-        :typeOfNeuron => NeuronWithNormalizationAndContext,
         :typeOfOutputNeuron => OutputNeuron,
 
         # Training Set parameters
@@ -54,11 +55,6 @@ class Experiment
         :numberOfExamples => (self.numberOfExamples = 16),
         :numberOfTestingExamples => numberOfExamples,
 
-        # Recording and database parameters
-        :neuronsToDisplay => [3],
-        :intervalForSavingNeuronData => 100, #100000,
-        :intervalForSavingDetailedNeuronData => 100, #2000,
-        :intervalForSavingTrainingData => 100
     }
   end
 
@@ -102,47 +98,17 @@ class Experiment
     examples = rotateClockwise(examples, angleOfClockwiseRotationOfInputData)
   end
 
-  def createTrainingSet
-    examples = createDataSet
-    puts "length of examples = #{examples.length}"
-    puts examples
-    return examples
-  end
-
-  def createTestingSet
-    return createDataSet
-  end
-
   def createNetworkAndTrainer
     network = Context4LayerNetwork.new(args)
 
     selfOrgLayer = network.allNeuronLayers[1]
     selfOrgNeuron = selfOrgLayer[0]
-    selfOrgNeuron.inputLinks[0].weight = 0.01
+    selfOrgNeuron.inputLinks[0].weight = 0.105
     selfOrgNeuron.inputLinks[1].weight = 0.1
 
     theTrainer = TrainerProj2SelfOrgAndContext.new(examples, network, args)
 
     return network, theTrainer
-  end
-
-  def reportTrainingResults(neuronToDisplay, descriptionOfExperiment, lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime)
-
-    endOfTrainingReport(lastEpoch, lastTestingMSE, lastTrainingMSE, network)
-
-    #neuronDataSummary(neuronToDisplay)
-
-    #detailedNeuronDataSummary(neuronToDisplay)
-
-    trainingDataRecords = trainingDataSummary
-
-    storeSnapShotData(descriptionOfExperiment, lastEpoch, lastTestingMSE, lastTrainingMSE, network, startingTime)
-
-    snapShotDataSummary
-
-    #plotMSEvsEpochNumber(trainingDataRecords)
-
-    # plotTrainingResults(neuronToDisplay)
   end
 end
 

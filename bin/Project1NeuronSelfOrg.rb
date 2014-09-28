@@ -95,7 +95,7 @@ class Experiment
     selfOrgNeuron.inputLinks[1].weight = 0.05
     # selfOrgNeuron.inputLinks[2].weight = 100.0
 
-    theTrainer = TrainerSelfOrgWithLinkNormalizationAndContext.new(examples, network, args)
+    theTrainer = TrainerSelfOrgWithLinkNormalization.new(examples, network, args)
 
     return network, theTrainer
   end

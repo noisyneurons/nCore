@@ -203,13 +203,25 @@ class SelfOrgStrat < LearningStrategyBase
   end
 end
 
+#hiddenLayer2.each_with_index do |aNeuron, index|
+#  indexToNeuronControllingNeuronInPrecedingLayer = (index / 2).to_i
+#  controllingNeuron = hiddenLayer1[indexToNeuronControllingNeuronInPrecedingLayer]
+#  aNeuron.learningController = if index.even?
+#                                 LearningControlledByNeuron.new(controllingNeuron)
+#                               else
+#                                 LearningControlledByNeuronOutputReversed.new(controllingNeuron)
+#                               end
+#end
+
+
 
 class AdapterForContext
-  attr_accessor :theEnclosingNeuron, :strategyArgs, :learningStrat, :contextController
+  attr_accessor :theEnclosingNeuron, :strategyArgs, :oddNeuron, :learningStrat, :contextController
   include ForwardingToLearningStrategy
 
   def initialize(theEnclosingNeuron, strategyArgs)
     @theEnclosingNeuron = theEnclosingNeuron
+    @oddNeuron = theEnclosingNeuron.id.odd?
     @strategyArgs = strategyArgs
     @learningStrat = @strategyArgs[:strategy].new(theEnclosingNeuron, strategyArgs)
     @contextController = @strategyArgs[:contextController]
@@ -220,7 +232,7 @@ class AdapterForContext
   end
 
   def propagate(exampleNumber)
-    returnValue = if contextController.output == 1.0
+    returnValue = if contextController.output == oddNeuron
                     learningStrat.propagate(exampleNumber)
                   else
                     theEnclosingNeuron.output = learningStrat.ioFunction(0.0)
@@ -228,7 +240,7 @@ class AdapterForContext
   end
 
   def learnExample
-    returnValue = if contextController.output == 1.0
+    returnValue = if contextController.output == oddNeuron
                     learningStrat.learnExample
                   else
                     nil
