@@ -74,11 +74,14 @@ end
 
 
 class LearningStrategyBase # strategy for standard bp learning for output neurons
-  attr_reader :neuron, :inputLinks, :outputLinks
+  attr_reader :neuron, :strategyArgs, :inputLinks, :outputLinks
   include CommonNeuronCalculations
 
-  def initialize(theEnclosingNeuron)
+  def initialize(theEnclosingNeuron, strategyArgs)
     @neuron = theEnclosingNeuron
+    @strategyArgs = strategyArgs
+    ioFunction = @strategyArgs[:ioFunction]
+    self.extend(ioFunction)
     @inputLinks = @neuron.inputLinks
     @outputLinks = @neuron.outputLinks if @neuron.respond_to?(:outputLinks)
   end
@@ -215,37 +218,38 @@ end
 
 
 class AdapterForContext
-  attr_accessor :targetStrategy, :theEnclosingNeuron, :contextController
+  attr_accessor :theEnclosingNeuron, :strategyArgs, :learningStrat, :contextController
+  include ForwardingToLearningStrategy
 
-  def initialize(theEnclosingNeuron, args)
+  def initialize(theEnclosingNeuron, strategyArgs)
     @theEnclosingNeuron = theEnclosingNeuron
-    @args = args
-    @targetStrategy = @args[:strategy].new(theEnclosingNeuron, args)
-    @contextController = @args[:contextController]
+    @strategyArgs = strategyArgs
+    @learningStrat = @strategyArgs[:strategy].new(theEnclosingNeuron, strategyArgs)
+    @contextController = @strategyArgs[:contextController]
   end
 
   def startEpoch
-    targetStrategy.startEpoch
+    learningStrat.startEpoch
   end
 
   def propagate(exampleNumber)
     returnValue = if contextController.output == 1.0
-                    targetStrategy.propagate(exampleNumber)
+                    learningStrat.propagate(exampleNumber)
                   else
-                    targetStrategy.ioFunction(0.0)
+                    learningStrat.ioFunction(0.0)
                   end
   end
 
   def learnExample
     returnValue = if contextController.output == 1.0
-                    targetStrategy.learnExample
+                    learningStrat.learnExample
                   else
                     nil
                   end
   end
 
   def endEpoch
-    targetStrategy.endEpoch
+    learningStrat.endEpoch
   end
 end
 

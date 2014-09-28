@@ -170,17 +170,12 @@ class TrainerBase
     end
   end
 
-  def attachLearningStrategy(layers, learningStrategy)
+  def attachLearningStrategy(layers, learningStrategy, strategyArgs)
     layers.each do |neurons|
-      neurons.each { |neuron| neuron.learningStrat = learningStrategy.new(neuron) }
+      neurons.each { |neuron| neuron.learningStrat = learningStrategy.new(neuron, strategyArgs) }
     end
   end
 
-  def specifyIOFunction(layers, ioFunction)
-    layers.each do |neurons|
-      neurons.each { |neuron| neuron.learningStrat.extend(ioFunction) }
-    end
-  end
 
   ###########################
 

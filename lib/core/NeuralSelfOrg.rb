@@ -5,17 +5,17 @@
 class TrainerSelfOrgWithLinkNormalization < TrainerBase
 
   def train
-    learningLayers = [allNeuronLayers[1]]
-    propagatingLayers = allNeuronLayers
-    attachLearningStrategy(learningLayers, Normalization)
-    specifyIOFunction(learningLayers, NonMonotonicIOFunction)
-
     distributeSetOfExamples(examples)
     totalEpochs = 0
+
+    learningLayers = [allNeuronLayers[1]]
+    propagatingLayers = allNeuronLayers
+
+    strategyArguments = {:ioFunction => NonMonotonicIOFunction}
+    attachLearningStrategy(learningLayers, Normalization, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
 
-    attachLearningStrategy(learningLayers, SelfOrgStrat)
-    specifyIOFunction(learningLayers, NonMonotonicIOFunction)
+    attachLearningStrategy(learningLayers, SelfOrgStrat, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
     calcWeightsForUNNormalizedInputs(learningLayers)
 
@@ -45,34 +45,36 @@ class TrainerSelfOrgWithLinkNormalization < TrainerBase
   def calcWeightsForUNNormalizedInputs(learningLayers)
     learningLayers.each { |neurons| neurons.each { |aNeuron| aNeuron.calcWeightsForUNNormalizedInputs } }
   end
+
 end
 
 
 class Trainer1SelfOrgAndContext < TrainerSelfOrgWithLinkNormalization
   def train
+    distributeSetOfExamples(examples)
+    totalEpochs = 0
+
     learningLayers = [allNeuronLayers[1]]
     propagatingLayers = allNeuronLayers
 
-    normalizationStrategy = Normalization.new()
-    contextAdapter = AdapterForContext.new(strategy, theEnclosingNeuron, contextController)
-    attachLearningStrategy(learningLayers, Normalization)
-    specifyIOFunction(learningLayers, NonMonotonicIOFunction)
 
-    distributeSetOfExamples(examples)
-    totalEpochs = 0
+    learningController = LearningController.new
+
+    strategyArguments = {:strategy => Normalization, :ioFunction => NonMonotonicIOFunction, :contextController => learningController}
+    attachLearningStrategy(learningLayers, AdapterForContext, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
 
-    attachLearningStrategy(learningLayers, SelfOrgStrat)
-    specifyIOFunction(learningLayers, NonMonotonicIOFunction)
+
+    strategyArguments = {:strategy => SelfOrgStrat, :ioFunction => NonMonotonicIOFunction, :contextController => learningController}
+    attachLearningStrategy(learningLayers, AdapterForContext, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
+
     calcWeightsForUNNormalizedInputs(learningLayers)
 
     forEachExampleDisplayInputsAndOutputs
 
     return totalEpochs, mse, 0.998 # calcTestingMeanSquaredErrors
   end
-
-
 end
 
 ########################################################################
