@@ -11,6 +11,7 @@ require_relative '../lib/plot/CorePlottingCode'
 require_relative '../lib/core/SimulationDataStore'
 require_relative '../lib/core/Trainers'
 require_relative '../lib/core/NeuralSelfOrg'
+require_relative '../lib/core/NeuralContext'
 
 require_relative 'BaseLearningExperiment'
 
@@ -85,7 +86,6 @@ class Experiment
     examples = rotateClockwise(examples, angleOfClockwiseRotationOfInputData)
   end
 
-
   def createNetworkAndTrainer
     network = SelfOrg1NeuronNetwork.new(args)
 
@@ -95,7 +95,7 @@ class Experiment
     selfOrgNeuron.inputLinks[1].weight = 0.05
     # selfOrgNeuron.inputLinks[2].weight = 100.0
 
-    theTrainer = TrainerSelfOrgWithLinkNormalization.new(examples, network, args)
+    theTrainer = TrainerSelfOrgWithLinkNormalizationAndContext.new(examples, network, args)
 
     return network, theTrainer
   end

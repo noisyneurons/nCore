@@ -56,50 +56,6 @@ class Context4LayerNetwork < ContextNetwork
 end
 
 
-class NeuronContainerImplementingContext
-  attr_accessor :args, :containedNeuron, :learningController
-
-  def initialize(containedNeuron, args=nil, learningController=nil)
-    @learningController = learningController
-    @learningController = @learningController = LearningController.new if learningController.nil?
-    @containedNeuron = containedNeuron
-    @args = args
-  end
-
-
-end
-
-
-class NeuronInContext < Neuron
-  attr_accessor :learningController
-
-  def postInitialize
-    super
-    @learningController = LearningController.new # This is just a fall-back controller that keeps learning-on for all examples
-  end
-
-  def to_s
-    description = super
-    description += "\t\t\t\t\tLearning Controller:\t#{learningController.class}\n"
-    return description
-  end
-end
-
-
-module LearningInContext # module for links  -- also works with links with normalization
-
-  # TODO Potential "loading sequence problem here"  Need to make sure that this method is not overwritten by SelfOrg module
-  def propagateForNormalization
-    inputForThisExample = inputNeuron.output
-    self.inputsOverEpoch << inputForThisExample if (outputNeuron.learningController.output == 1.0)
-    return weight * inputForThisExample
-  end
-
-  def calcDeltaWAndAccumulate
-    self.deltaWAccumulated += calcDeltaW * outputNeuron.learningController.output
-  end
-end
-
 
 class LearningController
   attr_accessor :sensor
@@ -136,7 +92,7 @@ end
 
 class DummyLearningController < LearningController
   def output
-    aGroupOfExampleNumbers = (0..15).to_a # [0,1,2,3,8,9,10,11]
+    aGroupOfExampleNumbers =  [0,1,2,3,8,9,10,11]  # (0..7).to_a #
     if aGroupOfExampleNumbers.include?(sensor.exampleNumber)
       1.0
     else

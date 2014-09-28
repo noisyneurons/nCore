@@ -11,6 +11,7 @@ require_relative '../lib/plot/CorePlottingCode'
 require_relative '../lib/core/SimulationDataStore'
 require_relative '../lib/core/Trainers'
 require_relative '../lib/core/NeuralSelfOrg'
+require_relative '../lib/core/NeuralContext'
 
 require_relative 'BaseLearningExperiment'
 
@@ -31,7 +32,7 @@ class Experiment
         # training parameters
         :learningRate => 0.1,
         :minMSE => 0.0,
-        :maxEpochNumbersForEachPhase => [1, 15, 200, 6e2, 200, 6e2, 200],
+        :maxEpochNumbersForEachPhase => [1, 150, 200, 6e2, 200, 6e2, 200],
         :trainingSequence => MultiPhaseTrainingSequence,
 
         # Network Architecture
@@ -50,12 +51,12 @@ class Experiment
   end
 
   def createDataSet
-    # xStart = [-1.0, 1.0, -1.0, 1.0]
-    xStart = [0.0, 4.0, 0.0, 4.0]
+    xStart = [-1.0, 1.0, -1.0, 1.0]
+    # xStart = [0.0, 4.0, 0.0, 4.0]
     # xStart = [1.0, 3.0, 1.0, 3.0]
 
-    #  yStart = [1.0, 1.0, -1.0, -1.0]
-    yStart = [4.0, 0.0, 4.0, 0.0]
+    yStart = [1.0, 1.0, -1.0, -1.0]
+    # yStart = [4.0, 0.0, 4.0, 0.0]
     # yStart = [2.0, 2.0, 0.0, 0.0]
     xInc = [0.0, 0.0, 0.0, 0.0]
     # yInc = [0.2, 0.2, -0.2, -0.2]
@@ -99,7 +100,7 @@ class Experiment
     selfOrgLayer = network.allNeuronLayers[1]
     selfOrgNeuron = selfOrgLayer[0]
     selfOrgNeuron.inputLinks[0].weight = 0.1
-    selfOrgNeuron.inputLinks[1].weight = 0.05
+    selfOrgNeuron.inputLinks[1].weight = 0.105
 
     theTrainer = Trainer1SelfOrgAndContext.new(examples, network, args)
 

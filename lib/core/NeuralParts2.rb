@@ -204,19 +204,6 @@ class SelfOrgStrat < LearningStrategyBase
 end
 
 
-class LearningController
-  attr_accessor :sensor
-
-  def initialize(sensor=nil)
-    @sensor = sensor
-  end
-
-  def output
-    1.0
-  end
-end
-
-
 class AdapterForContext
   attr_accessor :theEnclosingNeuron, :strategyArgs, :learningStrat, :contextController
   include ForwardingToLearningStrategy
@@ -236,7 +223,7 @@ class AdapterForContext
     returnValue = if contextController.output == 1.0
                     learningStrat.propagate(exampleNumber)
                   else
-                    learningStrat.ioFunction(0.0)
+                    theEnclosingNeuron.output = learningStrat.ioFunction(0.0)
                   end
   end
 
@@ -252,55 +239,6 @@ class AdapterForContext
     learningStrat.endEpoch
   end
 end
-
-
-class LearningStratContext < LearningStrategyBase
-  attr_accessor :learningController
-
-  def initialize(theEnclosingNeuron)
-    super
-    @learningController = LearningController.new
-  end
-
-  def storeEpochHistory
-    nextInChain.storeEpochHistory if (learningController.output == 1)
-  end
-
-  def calcDeltaWAndAccumulate
-    nextInChain.calcDeltaWAndAccumulate if (learningController.output == 1)
-  end
-
-  ### forward calls to next in daisy chain below
-
-  #def propagate
-  #  nextInChain.propagate
-  #end
-
-  def backPropagate
-    nextInChain.backPropagate
-  end
-
-  def calcSelfOrgError
-    nextInChain.calcSelfOrgError
-  end
-
-  def propagateForNormalization(exampleNumber)
-    nextInChain.propagateForNormalization(exampleNumber)
-  end
-
-  def resetAllNormalizationVariables
-    nextInChain.resetAllNormalizationVariables
-  end
-
-  def calculateNormalizationCoefficients
-    nextInChain.calculateNormalizationCoefficients
-  end
-
-  def afterSelfOrgReCalcLinkWeights
-    nextInChain.afterSelfOrgReCalcLinkWeights
-  end
-end
-
 
 
 

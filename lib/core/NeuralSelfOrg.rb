@@ -2,7 +2,7 @@
 ## ../nCore/lib/core/NeuralSelfOrg.rb
 
 
-class TrainerSelfOrgWithLinkNormalization < TrainerBase
+class TrainerSelfOrgWithLinkNormalizationAndContext < TrainerBase
 
   def train
     distributeSetOfExamples(examples)
@@ -45,11 +45,10 @@ class TrainerSelfOrgWithLinkNormalization < TrainerBase
   def calcWeightsForUNNormalizedInputs(learningLayers)
     learningLayers.each { |neurons| neurons.each { |aNeuron| aNeuron.calcWeightsForUNNormalizedInputs } }
   end
-
 end
 
 
-class Trainer1SelfOrgAndContext < TrainerSelfOrgWithLinkNormalization
+class Trainer1SelfOrgAndContext < TrainerSelfOrgWithLinkNormalizationAndContext
   def train
     distributeSetOfExamples(examples)
     totalEpochs = 0
@@ -57,13 +56,12 @@ class Trainer1SelfOrgAndContext < TrainerSelfOrgWithLinkNormalization
     learningLayers = [allNeuronLayers[1]]
     propagatingLayers = allNeuronLayers
 
-
-    learningController = LearningController.new
+    anInputNeuron = allNeuronLayers[0][0]
+    learningController = DummyLearningController.new(anInputNeuron)
 
     strategyArguments = {:strategy => Normalization, :ioFunction => NonMonotonicIOFunction, :contextController => learningController}
     attachLearningStrategy(learningLayers, AdapterForContext, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
-
 
     strategyArguments = {:strategy => SelfOrgStrat, :ioFunction => NonMonotonicIOFunction, :contextController => learningController}
     attachLearningStrategy(learningLayers, AdapterForContext, strategyArguments)

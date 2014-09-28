@@ -84,15 +84,17 @@ class BiasNeuron < NeuronBase #TODO should make this a singleton class!
 end
 
 class InputNeuron < NeuronBase
-  attr_accessor :outputLinks, :arrayOfSelectedData, :keyToExampleData
+  attr_accessor :outputLinks, :exampleNumber, :arrayOfSelectedData, :keyToExampleData
 
   def postInitialize
     @outputLinks =[]
+    @exampleNumber = nil
     @arrayOfSelectedData = nil
     @keyToExampleData = :inputs
   end
 
   def propagate(exampleNumber)
+    @exampleNumber = exampleNumber
     self.output = arrayOfSelectedData[exampleNumber]
   end
 
