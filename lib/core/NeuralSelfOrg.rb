@@ -33,7 +33,7 @@ class TrainerSelfOrgWithLinkNormalization < TrainerBase
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
       propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
       trainingSequence.nextEpoch
-      mse = 0.997 # = calcMeanSumSquaredErrors
+      mse = calcMeanSumSquaredErrors if(mse != 1e100)
       currentEpochNumber = trainingSequence.epochs + totalEpochs
       puts "current epoch number= #{currentEpochNumber}\tmse = #{mse}" if (currentEpochNumber % 100 == 0)
     end

@@ -172,7 +172,8 @@ end
 
 
 class SelfOrgStrat < LearningStrategyBase
-  attr_accessor  :targetMinus, :distanceBetweenTargets
+  attr_accessor :targetMinus, :distanceBetweenTargets
+
   def startEpoch
     zeroDeltaWAccumulated
     @targetPlus = 2.5 # TODO need "exact number" here. -- just for illustration purposes...
@@ -203,25 +204,13 @@ class SelfOrgStrat < LearningStrategyBase
   end
 end
 
-#hiddenLayer2.each_with_index do |aNeuron, index|
-#  indexToNeuronControllingNeuronInPrecedingLayer = (index / 2).to_i
-#  controllingNeuron = hiddenLayer1[indexToNeuronControllingNeuronInPrecedingLayer]
-#  aNeuron.learningController = if index.even?
-#                                 LearningControlledByNeuron.new(controllingNeuron)
-#                               else
-#                                 LearningControlledByNeuronOutputReversed.new(controllingNeuron)
-#                               end
-#end
-
-
 
 class AdapterForContext
-  attr_accessor :theEnclosingNeuron, :strategyArgs, :oddNeuron, :learningStrat, :contextController
+  attr_accessor :theEnclosingNeuron, :strategyArgs, :learningStrat, :contextController
   include ForwardingToLearningStrategy
 
   def initialize(theEnclosingNeuron, strategyArgs)
     @theEnclosingNeuron = theEnclosingNeuron
-    @oddNeuron = theEnclosingNeuron.id.odd?
     @strategyArgs = strategyArgs
     @learningStrat = @strategyArgs[:strategy].new(theEnclosingNeuron, strategyArgs)
     @contextController = @strategyArgs[:contextController]
@@ -232,25 +221,28 @@ class AdapterForContext
   end
 
   def propagate(exampleNumber)
-    returnValue = if contextController.output == oddNeuron
-                    learningStrat.propagate(exampleNumber)
-                  else
-                    theEnclosingNeuron.output = learningStrat.ioFunction(0.0)
-                  end
+    if contextController.output == 1.0
+      learningStrat.propagate(exampleNumber)
+    else
+      dropOutNeuron
+    end
   end
 
   def learnExample
-    returnValue = if contextController.output == oddNeuron
-                    learningStrat.learnExample
-                  else
-                    nil
-                  end
+    if contextController.output == 1.0
+      learningStrat.learnExample
+    end
   end
 
   def endEpoch
     learningStrat.endEpoch
   end
+
+  protected
+
+  def dropOutNeuron
+    theEnclosingNeuron.netInput = netInput = 0.0
+    theEnclosingNeuron.output = learningStrat.ioFunction(netInput)
+  end
 end
-
-
 

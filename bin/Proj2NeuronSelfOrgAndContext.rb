@@ -48,7 +48,7 @@ class Experiment
         :typeOfLink => LinkWithNormalization,
         :typeOfNeuron => Neuron2,
         :typeOfLinkToOutput => Link,
-        :typeOfOutputNeuron => OutputNeuron,
+        :typeOfOutputNeuron => OutputNeuron2,
 
         # Training Set parameters
         :angleOfClockwiseRotationOfInputData => 0.0,
@@ -106,7 +106,7 @@ class Experiment
     selfOrgNeuron.inputLinks[0].weight = 0.105
     selfOrgNeuron.inputLinks[1].weight = 0.1
 
-    theTrainer = TrainerProj2SelfOrgAndContext.new(examples, network, args)
+    theTrainer = Trainer2SelfOrgAndContext.new(examples, network, args)
 
     return network, theTrainer
   end
@@ -120,3 +120,5 @@ baseRandomNumberSeed = 0
 experiment = Experiment.new("Proj2NeuronSelfOrgAndContext; 2 in 4 out; divide then integrate", baseRandomNumberSeed)
 
 experiment.performSimulation()
+
+puts experiment.network

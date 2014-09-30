@@ -1,5 +1,5 @@
 ### VERSION "nCore"
-## ../nCore/bin/Proj1NeuronSelfOrgAndContext.rb
+## ../nCore/bin/Proj3NeuronSelfOrgAndContext.rb
 # Purpose: Get simplest versions of self-org AND CONTEXT understood and "working."
 
 require_relative '../lib/core/Utilities'
@@ -13,15 +13,14 @@ require_relative '../lib/core/Trainers'
 require_relative '../lib/core/NeuralSelfOrg'
 require_relative '../lib/core/NeuralContext'
 
+
 require_relative 'BaseLearningExperiment'
-
-
 ########################################################################
+
 class Neuron2
   include NonMonotonicIOFunction
 end
 
-########################################################################
 
 class Experiment
 
@@ -32,38 +31,47 @@ class Experiment
         :randomNumberSeed => (randomNumberSeed + 0),
 
         # training parameters
-        :learningRate => 0.1,
-        :minMSE => 0.0,
-        :maxEpochNumbersForEachPhase => [1, 150],
-        :trainingSequence => MultiPhaseTrainingSequence,
+        :learningRate =>  0.1,
+        :minMSE => 0.0, # 0.001,
+        :maxEpochNumbersForEachPhase => [1, 150, 1, 150, 200, 6e2, 200],
+        :trainingSequence =>  MultiPhaseTrainingSequence,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
         :numberOfHiddenLayer1Neurons => 1,
+        :numberOfHiddenLayer2Neurons => 2,
+        :numberOfOutputNeurons => 4,
+
 
         :weightRange => 0.1,
 
         :typeOfLink => LinkWithNormalization,
         :typeOfNeuron => Neuron2,
+        :typeOfLinkToOutput => Link,
+        :typeOfOutputNeuron => OutputNeuron2,
 
         # Training Set parameters
         :angleOfClockwiseRotationOfInputData => 0.0,
         :numberOfExamples => (self.numberOfExamples = 16),
-        :numberOfTestingExamples => numberOfExamples
-   }
+        :numberOfTestingExamples => numberOfExamples,
+
+    }
   end
 
   def createDataSet
     xStart = [-1.0, 1.0, -1.0, 1.0]
-    # xStart = [0.0, 4.0, 0.0, 4.0]
+    # xStart = [0.0, 2.0, 0.0, 2.0]
     # xStart = [1.0, 3.0, 1.0, 3.0]
 
     yStart = [1.0, 1.0, -1.0, -1.0]
-    # yStart = [4.0, 0.0, 4.0, 0.0]
-    # yStart = [2.0, 2.0, 0.0, 0.0]
+    # yStart = [4.0, 4.0, 0.0, 0.0]
+
+    # xInc = [0.0, 0.0, 0.0, 0.0]
     xInc = [0.0, 0.0, 0.0, 0.0]
-    # yInc = [0.2, 0.2, -0.2, -0.2]
+
     yInc = [0.0, 0.0, -0.0, -0.0]
+    # yInc = [0.2, 0.2, -0.2, -0.2]
+
 
     numberOfClasses = xStart.length
     numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
@@ -91,18 +99,17 @@ class Experiment
   end
 
   def createNetworkAndTrainer
-    network = SelfOrg1NeuronNetwork.new(args)
+    network = Context4LayerNetwork.new(args)
 
     selfOrgLayer = network.allNeuronLayers[1]
     selfOrgNeuron = selfOrgLayer[0]
     selfOrgNeuron.inputLinks[0].weight = 0.105
     selfOrgNeuron.inputLinks[1].weight = 0.1
 
-    theTrainer = Trainer1SelfOrgAndContext.new(examples, network, args)
+    theTrainer = Trainer3SelfOrgAndContext.new(examples, network, args)
 
     return network, theTrainer
   end
-
 end
 
 
@@ -110,7 +117,7 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("Proj1NeuronSelfOrgAndContext; 2 in 4 out; divide then integrate", baseRandomNumberSeed)
+experiment = Experiment.new("Proj3NeuronSelfOrgAndContext; 2 in 4 out; divide then integrate", baseRandomNumberSeed)
 
 experiment.performSimulation()
 

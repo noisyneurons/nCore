@@ -36,19 +36,30 @@ end
 class Trainer2SelfOrgAndContext < TrainerSelfOrgWithLinkNormalization
   def train
     distributeSetOfExamples(examples)
+
+    totalEpochs, mse = normalizationAndSelfOrgTraining
+
+    #forEachExampleDisplayInputsAndOutputs
+
+    return totalEpochs, mse, 0.998 # calcTestingMeanSquaredErrors
+  end
+
+
+  def normalizationAndSelfOrgTraining
+
     totalEpochs = 0
 
     inputLayer = allNeuronLayers[0]
     hiddenLayer1 = allNeuronLayers[1]
     hiddenLayer2 = allNeuronLayers[2]
 
-
     ### Now will self-org 1st hidden layer
 
     learningLayers = [hiddenLayer1]
     propagatingLayers = [inputLayer, hiddenLayer1]
 
-    strategyArguments = {:ioFunction => NonMonotonicIOFunction}
+    strategyArguments = {}
+    strategyArguments[:ioFunction] = NonMonotonicIOFunction
 
     attachLearningStrategy(learningLayers, Normalization, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
@@ -62,26 +73,80 @@ class Trainer2SelfOrgAndContext < TrainerSelfOrgWithLinkNormalization
     propagatingLayers = [inputLayer, hiddenLayer1, hiddenLayer2]
 
     theOnlyNeuronInHiddenLayer1 = hiddenLayer1[0]
+
+
+    ## Normalization of both 2nd hidden layer neurons
+    strategyArguments[:strategy] = Normalization
     learningController = LearningControlledByNeuron.new(theOnlyNeuronInHiddenLayer1)
+    strategyArguments[:contextController] = learningController
+    firstNeuronInHiddenLayer2 = learningLayers[0][0]
+    attachLearningStrategy([[firstNeuronInHiddenLayer2]], AdapterForContext, strategyArguments)
 
-    strategyArguments = {:strategy => Normalization, :ioFunction => NonMonotonicIOFunction, :contextController => learningController}
-    attachLearningStrategy(learningLayers, AdapterForContext, strategyArguments)
+    learningControllerNOT = LearningControlledByNeuronNOT.new(theOnlyNeuronInHiddenLayer1)
+    strategyArguments[:contextController] = learningControllerNOT
+    secondNeuronInHiddenLayer2 = learningLayers[0][1]
+    attachLearningStrategy([[secondNeuronInHiddenLayer2]], AdapterForContext, strategyArguments)
+
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
+    #### end normalization
 
-    strategyArguments = {:strategy => SelfOrgStrat, :ioFunction => NonMonotonicIOFunction, :contextController => learningController}
-    attachLearningStrategy(learningLayers, AdapterForContext, strategyArguments)
+    ## Self-Org of both 2nd hidden layer neurons
+    strategyArguments[:strategy] = SelfOrgStrat
+    strategyArguments[:contextController] = learningController
+    attachLearningStrategy([[firstNeuronInHiddenLayer2]], AdapterForContext, strategyArguments)
+
+    strategyArguments[:contextController] = learningControllerNOT
+    attachLearningStrategy([[secondNeuronInHiddenLayer2]], AdapterForContext, strategyArguments)
+
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
-
-
-
-
+    #### end self-organization
 
     layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
     calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
 
-    forEachExampleDisplayInputsAndOutputs
+    return totalEpochs, mse
+  end
+end
 
-    return totalEpochs, mse, 0.998 # calcTestingMeanSquaredErrors
+
+########################################################################
+
+class Trainer3SelfOrgAndContext < Trainer2SelfOrgAndContext
+  def train
+    distributeSetOfExamples(examples)
+
+    totalEpochs, mse = normalizationAndSelfOrgTraining
+
+    totalEpochs, mse = supervisedTraining(totalEpochs)
+
+    #forEachExampleDisplayInputsAndOutputs
+
+    return totalEpochs, mse, calcTestingMeanSquaredErrors
+  end
+
+  def supervisedTraining(totalEpochs)
+
+    inputLayer = allNeuronLayers[0]
+    hiddenLayer1 = allNeuronLayers[1]
+    hiddenLayer2 = allNeuronLayers[2]
+    outputLayer = allNeuronLayers[3]
+
+    ### Now will self-org 1st hidden layer
+
+    learningLayers = [outputLayer]
+    propagatingLayers = [inputLayer, hiddenLayer1, hiddenLayer2, outputLayer]
+
+    strategyArguments = {}
+    strategyArguments[:ioFunction] = NonMonotonicIOFunction
+
+    attachLearningStrategy(learningLayers, LearningBPOutput, strategyArguments)
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
+
+    return mse, totalEpochs, mse
+  end
+
+  def distributeSetOfExamples(examples)
+    distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
   end
 end
 
@@ -122,10 +187,11 @@ class Context4LayerNetwork < ContextNetwork
     #hiddenLayer2.each_with_index do |aNeuron, index|
     #  indexToNeuronControllingNeuronInPrecedingLayer = (index / 2).to_i
     #  controllingNeuron = hiddenLayer1[indexToNeuronControllingNeuronInPrecedingLayer]
+    #  aLearningController = LearningControlledByNeuron.new(controllingNeuron)
     #  aNeuron.learningController = if index.even?
-    #                                 LearningControlledByNeuron.new(controllingNeuron)
+    #                                 aLearningController
     #                               else
-    #                                 LearningControlledByNeuronOutputReversed.new(controllingNeuron)
+    #                                 AdapterForLearningController.new(aLearningController)
     #                               end
     #end
     self.allNeuronLayers << hiddenLayer2
@@ -163,11 +229,22 @@ class LearningControlledByNeuron < LearningController
   end
 end
 
-class LearningControlledByNeuronOutputReversed < LearningControlledByNeuron
-  def transform(input)
-    1.0 - super(input)
+class LearningControlledByNeuronNOT < LearningControlledByNeuron
+  def output
+    logicalNOT(transform(sensor.output))
+  end
+
+  protected
+
+  def logicalNOT(input)
+    returnValue = if input == 1.0
+                    0.0
+                  else
+                    1.0
+                  end
   end
 end
+
 
 class DummyLearningController < LearningController
   def output
