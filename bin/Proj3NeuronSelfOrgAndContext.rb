@@ -33,7 +33,7 @@ class Experiment
         # training parameters
         :learningRate =>  0.1,
         :minMSE => 0.0, # 0.001,
-        :maxEpochNumbersForEachPhase => [1, 150, 1, 150, 800, 6e2, 200],
+        :maxEpochNumbersForEachPhase => [1, 150, 1, 150, 400],
         :trainingSequence =>  MultiPhaseTrainingSequence,
 
         # Network Architecture
@@ -41,7 +41,6 @@ class Experiment
         :numberOfHiddenLayer1Neurons => 1,
         :numberOfHiddenLayer2Neurons => 2,
         :numberOfOutputNeurons => 4,
-
 
         :weightRange => 0.1,
 

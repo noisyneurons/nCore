@@ -208,15 +208,33 @@ class TrainerBase
     return (sse / (numberOfExamples * numberOfOutputNeurons))
   end
 
-  def forEachExampleDisplayInputsAndOutputs
-    puts "At end of Training:"
+  def forEachExampleDisplayInputsAndOutputs(resultsLayer = outputLayer)
+    breakOnNextPass = false
+    propagatingLayers = allNeuronLayers.collect do |aLayer|
+      next if breakOnNextPass
+      breakOnNextPass = true if (aLayer == resultsLayer)
+      aLayer
+    end
+    propagatingLayers.compact!
+    #
     examples.each_with_index do |anExample, exampleNumber|
       inputs = anExample[:inputs]
-      propagateAcrossEntireNetwork(exampleNumber)
-      outputs = outputLayer.collect { |anOutputNeuron| anOutputNeuron.output }
-      puts "\t\t\tinputs= #{inputs}\toutputs= #{outputs}"
+      propagateExampleAcross(propagatingLayers, exampleNumber)
+      results = resultsLayer.collect { |aResultsNeuron| aResultsNeuron.output }
+      puts "\t\t\tinputs= #{inputs}\tresults= #{results}"
     end
   end
+
+
+  #def forEachExampleDisplayInputsAndOutputs
+  #  puts "At end of Training:"
+  #  examples.each_with_index do |anExample, exampleNumber|
+  #    inputs = anExample[:inputs]
+  #    propagateAcrossEntireNetwork(exampleNumber)
+  #    outputs = outputLayer.collect { |anOutputNeuron| anOutputNeuron.output }
+  #    puts "\t\t\tinputs= #{inputs}\toutputs= #{outputs}"
+  #  end
+  #end
 
   def propagateAcrossEntireNetwork(exampleNumber)
     allNeuronsInOneArray.flatten.each { |aNeuron| aNeuron.propagate(exampleNumber) }
@@ -227,151 +245,6 @@ class TrainerBase
   end
 end
 
-
-###################################################################
-
-
-#class TrainerProj2SelfOrgAndContext < TrainerBase
-##  include SelfOrgTraining
-#
-#  def train
-#    distributeSetOfExamples(examples)
-#
-#    puts "phase1: self-org for hidden layer 1 "
-#    puts "allNeuronLayers[1][0].output= #{allNeuronLayers[1][0].output}"
-#
-#    normalize(allNeuronLayers[1])
-#
-#    [0, 1, 2].each do |i|
-#      puts "allNeuronLayers[1][0].inputLinks[#{i}].weight= #{allNeuronLayers[1][0].inputLinks[i].weight}"
-#      puts "allNeuronLayers[1][0].inputLinks[#{i}].normalizationOffset= #{allNeuronLayers[1][0].inputLinks[i].normalizationOffset}"
-#      puts "allNeuronLayers[1][0].inputLinks[#{i}].normalizationMultiplier= #{allNeuronLayers[1][0].inputLinks[i].normalizationMultiplier}"
-#    end
-#
-#    phaseTrain { performSelfOrgTrainingOn(allNeuronLayers[1]) }
-#    forEachExampleDisplayInputsAndOutputs
-#
-#
-#    forEachExampleDisplayInputsAndOutputs
-#    testMSE = calcTestingMeanSquaredErrors
-#    return trainingSequence.epochs, calcMSE, testMSE
-#  end
-#
-#  def phaseTrain
-#    mse = 1e100
-#    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
-#      yield
-#      neuronsWithInputLinks.each { |aNeuron| aNeuron.dbStoreNeuronData }
-#      trainingSequence.nextEpoch
-#    end
-#    allNeuronLayers[1].each { |aNeuron| aNeuron.afterSelfOrgReCalcLinkWeights }
-#    resetAllNormalizationVariables(allNeuronLayers[1])
-#    trainingSequence.startNextPhaseOfTraining
-#    return mse
-#  end
-#
-#  def performSelfOrgTrainingOn(layerOfNeurons)
-#    acrossExamplesAccumulateSelfOrgDeltaWs(layerOfNeurons)
-#    layerOfNeurons.each { |aNeuron| aNeuron.addAccumulationToWeight }
-#  end
-#
-#  def acrossExamplesAccumulateSelfOrgDeltaWs(layerOfNeurons)
-#    startEpoch()
-#    numberOfExamples.times do |exampleNumber|
-#      propagateExampleUpToLayer(exampleNumber, layerOfNeurons)
-#      layerOfNeurons.each { |aNeuron| aNeuron.calcSelfOrgError }
-#
-#      layerOfNeurons.each do |aNeuron|
-#        dataRecord = aNeuron.recordResponsesForExample
-#        aNeuron.calcDeltaWsAndAccumulate
-#        aNeuron.dbStoreDetailedData
-#      end
-#    end
-#  end
-#
-#  def normalize(layer)
-#    resetAllNormalizationVariables(layer)
-#    numberOfExamples.times do |exampleNumber|
-#      propagateForNormalizationToLayer(exampleNumber, layer)
-#    end
-#    calculateNormalizationCoefficients(layer)
-#  end
-#
-#  def resetAllNormalizationVariables(layer)
-#    layer.each { |aNeuron| aNeuron.resetAllNormalizationVariables }
-#  end
-#
-#  def propagateForNormalizationToLayer(exampleNumber, lastLayerOfNeuronsToReceivePropagation)
-#    allNeuronLayers.each do |aLayer|
-#      if aLayer == lastLayerOfNeuronsToReceivePropagation
-#        aLayer.each { |aNeuron| aNeuron.propagateForNormalization(exampleNumber) }
-#      else
-#        aLayer.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-#      end
-#      break if lastLayerOfNeuronsToReceivePropagation == aLayer
-#    end
-#  end
-#
-#  def calculateNormalizationCoefficients(layer)
-#    layer.each { |aNeuron| aNeuron.calculateNormalizationCoefficients }
-#  end
-#
-#
-#  def trainOLD
-#    distributeSetOfExamples(examples)
-#
-#    #puts "phase1: short bp for hidden layer 1 + output layer"
-#    learningNeurons = allNeuronLayers[1] + outputLayer
-#    phaseTrain { performStandardBackPropTrainingOn(learningNeurons) }
-#
-#    puts "phase2: self-org for hidden layer 1 "
-#    phaseTrain { performSelfOrgTrainingOn(allNeuronLayers[1]) }
-#
-#    #puts "phase3: short bp for hidden layer 1 + output layer"
-#    #phaseTrain { performStandardBackPropTrainingOn(learningNeurons) }
-#
-#    #puts "phase4: context learning for hidden layer 2, controlled by hidden layer 1 "
-#    #phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
-#
-#    #puts "phase5: context learning for hidden layer 2, controlled by hidden layer 1"
-#    #phaseTrain { performSelfOrgTrainingOn( allNeuronLayers[2] ) }
-#    #
-#    #puts "phase6"
-#    #phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
-#    #
-#    #allNeuronLayers[2].each do |aNeuron|
-#    #  aNeuron.neuronControllingLearning = theBiasNeuron
-#    #  aNeuron.reverseLearningProbability = false
-#    #end
-#    #
-#    #puts "phase7"
-#    #phaseTrain { performSelfOrgTrainingOn( allNeuronLayers[2] ) }
-#    #
-#    #puts "phase8"
-#    #phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
-#
-#
-#    ##phase6 NON-context bp learning for entire network
-#    #trainingSequence.startNextPhaseOfTraining
-#    #phaseTrain { performStandardBackPropTrainingOn(neuronsWithInputLinks) }
-#
-#
-#    forEachExampleDisplayInputsAndOutputs
-#    testMSE = calcTestingMeanSquaredErrors
-#    return trainingSequence.epochs, calcMSE, testMSE
-#  end
-#
-#  def performStandardBackPropTrainingOn(learningNeurons)
-#    zeroWeightsOfNon(learningNeurons)
-#    acrossExamplesAccumulateDeltaWs(learningNeurons) { |aNeuron, dataRecord| aNeuron.calcDeltaWsAndAccumulate }
-#    neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
-#  end
-#
-#  def zeroWeightsOfNon(learningNeurons)
-#    nonLearningNeurons = neuronsWithInputLinks - learningNeurons.flatten
-#    nonLearningNeurons.each { |neuron| neuron.zeroWeights }
-#  end
-#end
 
 
 ###################################################################
