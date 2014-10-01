@@ -33,7 +33,7 @@ class Experiment
         # training parameters
         :learningRate =>  0.1,
         :minMSE => 0.0, # 0.001,
-        :maxEpochNumbersForEachPhase => [1, 150, 1, 150, 200, 6e2, 200],
+        :maxEpochNumbersForEachPhase => [1, 150, 1, 150, 800, 6e2, 200],
         :trainingSequence =>  MultiPhaseTrainingSequence,
 
         # Network Architecture

@@ -142,7 +142,7 @@ class Trainer3SelfOrgAndContext < Trainer2SelfOrgAndContext
     attachLearningStrategy(learningLayers, LearningBPOutput, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
 
-    return mse, totalEpochs, mse
+    return totalEpochs, mse
   end
 
   def distributeSetOfExamples(examples)

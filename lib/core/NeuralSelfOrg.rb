@@ -33,13 +33,20 @@ class TrainerSelfOrgWithLinkNormalization < TrainerBase
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
       propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
       trainingSequence.nextEpoch
-      mse = calcMeanSumSquaredErrors if(mse != 1e100)
+
+      mse = calcMeanSumSquaredErrors if(entireNetworkSetup?)
       currentEpochNumber = trainingSequence.epochs + totalEpochs
       puts "current epoch number= #{currentEpochNumber}\tmse = #{mse}" if (currentEpochNumber % 100 == 0)
     end
     totalEpochs += trainingSequence.epochs
     trainingSequence.startNextPhaseOfTraining
     return mse, totalEpochs
+  end
+
+  def entireNetworkSetup?
+    allNeuronsThatCanHaveLearningStrategy = (allNeuronLayers[1..-1]).flatten
+    arrayThatMayIncludeNils = allNeuronsThatCanHaveLearningStrategy.collect { |neuron| neuron.learningStrat}
+    !arrayThatMayIncludeNils.include?(nil)
   end
 
   def calcWeightsForUNNormalizedInputs(learningLayers)

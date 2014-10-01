@@ -183,7 +183,7 @@ class TrainerBase
   ###------------  Core Metric Support Section ------------------------------
 
   def calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
-    return genericCalcMeanSumSquaredErrors(numberOfExamples)
+    genericCalcMeanSumSquaredErrors(numberOfExamples)
   end
 
   def calcTestingMeanSquaredErrors
