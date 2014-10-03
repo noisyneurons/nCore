@@ -180,7 +180,6 @@ class BaseNetwork
   end
 end # Base network
 
-
 class Simplest1LayerNet < BaseNetwork
 
   def createNetwork
@@ -194,7 +193,6 @@ class Simplest1LayerNet < BaseNetwork
     self
   end
 end
-
 
 class Standard3LayerNetwork < BaseNetwork
 
@@ -214,7 +212,6 @@ class Standard3LayerNetwork < BaseNetwork
     self.allNeuronLayers << outputLayer
   end
 end
-
 
 class JumpLinked3LayerNetwork < Standard3LayerNetwork
 

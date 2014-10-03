@@ -1,18 +1,24 @@
 ### VERSION "nCore"
 ## ../nCore/bin/Proj3NeuronSelfOrgAndContext.rb
-# Purpose: Get simplest versions of self-org AND CONTEXT understood and "working."
+
+# Specific Purpose for this experiment: Get simplest versions of self-org AND CONTEXT, Combined with Supervised Learning, understood and "working."
+# Purpose:  Start of Project 7; project to split example set to learn sub-parts, and then combine those parts/neuron-functions that
+# didn't need to be separated, but instead need to be integrated to obtain better generalization.
+# Ultimate goal of project 6 is develop analogy processing -- where one function useful for solving one problem
+# can be of use in solving another problem.  The common function(s)/neuron(s) can be thus be 'reused' -- and even potentially made
+# better by improving the accuracy of the function parameters because more examples are used to learn the parameters.
 
 require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
 require_relative '../lib/core/NeuralParts'
 require_relative '../lib/core/NeuralParts2'
 require_relative '../lib/core/NetworkFactories'
+require_relative '../lib/core/NetworkFactories2'
+require_relative '../lib/core/Trainers'
+require_relative '../lib/core/Trainers2'
+
 require_relative '../lib/plot/CorePlottingCode'
 require_relative '../lib/core/SimulationDataStore'
-require_relative '../lib/core/Trainers'
-require_relative '../lib/core/NeuralSelfOrg'
-require_relative '../lib/core/NeuralContext'
-
 
 require_relative 'BaseLearningExperiment'
 ########################################################################
