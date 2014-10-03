@@ -38,8 +38,8 @@ class Experiment
 
         # Network Architecture
         :numberOfInputNeurons => 2,
-        :numberOfHiddenLayer1Neurons => 2,
-        :numberOfHiddenLayer2Neurons => 4,
+        :numberOfHiddenLayer1Neurons => 1,
+        :numberOfHiddenLayer2Neurons => 2,
         :numberOfOutputNeurons => 4,
 
         :weightRange => 0.1,
