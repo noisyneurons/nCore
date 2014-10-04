@@ -246,32 +246,30 @@ class Trainer2SelfOrgAndContext < TrainerBase
     distributeSetOfExamples(examples)
 
     totalEpochs = 0
+    ioFunction = NonMonotonicIOFunction
 
     ### Now will self-org 1st hidden layer
     learningLayers = [hiddenLayer1]
-    controllingLayers = nil
-    propagatingLayers = [inputLayer, hiddenLayer1]
-    ioFunction = NonMonotonicIOFunction
-    totalEpochs, mse = normalizationAndSelfOrgTraining(learningLayers, controllingLayers, propagatingLayers, ioFunction, totalEpochs)
+    totalEpochs, mse = normalizationAndSelfOrgTraining(learningLayers, ioFunction, totalEpochs)
 
 
     ### Now will self-org 2nd hidden layer
     learningLayers = [hiddenLayer2]
-    controllingLayers = [hiddenLayer1]
-    propagatingLayers = [inputLayer, hiddenLayer1, hiddenLayer2]
-    ioFunction = NonMonotonicIOFunction
-    totalEpochs, mse = normalizationAndSelfOrgTraining(learningLayers, controllingLayers, propagatingLayers, ioFunction, totalEpochs)
+    totalEpochs, mse = normalizationAndSelfOrgTraining(learningLayers, ioFunction, totalEpochs)
 
     #forEachExampleDisplayInputsAndOutputs
     return totalEpochs, mse, 0.998 # calcTestingMeanSquaredErrors
   end
 
-  def normalizationAndSelfOrgTraining(learningLayers, controllingLayers, propagatingLayers, ioFunction, totalEpochs)
+  def normalizationAndSelfOrgTraining(learningLayers, ioFunction, totalEpochs)
+
+    propagatingLayers, controllingLayers = layerDetermination(learningLayers)
+    controllingLayer = controllingLayers[0]
 
     strategyArguments = {}
     strategyArguments[:ioFunction] = ioFunction
 
-    if (controllingLayers.nil?)
+    if (controllingLayer == inputLayer)
       mse, totalEpochs = normalizationAndSelfOrgWITHOUTContext(learningLayers, propagatingLayers, strategyArguments, totalEpochs)
     else
       mse, totalEpochs = normalizationAndSelfOrgWithContext(learningLayers, controllingLayers, propagatingLayers, strategyArguments, totalEpochs)
@@ -362,47 +360,60 @@ class Trainer2SelfOrgAndContext < TrainerBase
     learningLayers.each { |neurons| neurons.each { |aNeuron| aNeuron.calcWeightsForUNNormalizedInputs } }
   end
 
+  def layerDetermination(learningLayers)
+    learningLayer = learningLayers[0]
+    propagatingLayers = []
+    controllingLayer = nil
+
+    allNeuronLayers.each do |aLayer|
+      propagatingLayers << aLayer
+      break if aLayer == learningLayer
+      controllingLayer = aLayer
+    end
+
+    controllingLayers = [controllingLayer]
+    return [propagatingLayers, controllingLayers]
+  end
+
 end
 
 class Trainer3SelfOrgAndContext < Trainer2SelfOrgAndContext
+
   def train
     distributeSetOfExamples(examples)
 
     totalEpochs = 0
+    ioFunction = NonMonotonicIOFunction
 
     ### Now will self-org 1st hidden layer
     learningLayers = [hiddenLayer1]
-    controllingLayers = nil
-    propagatingLayers = [inputLayer, hiddenLayer1]
-    ioFunction = NonMonotonicIOFunction
-    totalEpochs, mse = normalizationAndSelfOrgTraining(learningLayers, controllingLayers, propagatingLayers, ioFunction, totalEpochs)
+    totalEpochs, mse = normalizationAndSelfOrgTraining(learningLayers, ioFunction, totalEpochs)
 
 
     ### Now will self-org 2nd hidden layer
     learningLayers = [hiddenLayer2]
-    controllingLayers = [hiddenLayer1]
-    propagatingLayers = [inputLayer, hiddenLayer1, hiddenLayer2]
-    ioFunction = NonMonotonicIOFunction
-    totalEpochs, mse = normalizationAndSelfOrgTraining(learningLayers, controllingLayers, propagatingLayers, ioFunction, totalEpochs)
+    totalEpochs, mse = normalizationAndSelfOrgTraining(learningLayers, ioFunction, totalEpochs)
 
-
+    # TODO what's the value in doing this?
     layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
     calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
 
-    totalEpochs, mse = supervisedTraining(totalEpochs)
+
+    learningLayers = [outputLayer]
+    totalEpochs, mse = supervisedTraining(learningLayers, ioFunction, totalEpochs)
 
     forEachExampleDisplayInputsAndOutputs(outputLayer)
 
     return totalEpochs, mse, calcTestingMeanSquaredErrors
   end
 
-  def supervisedTraining(totalEpochs)
+  def supervisedTraining(learningLayers, ioFunction, totalEpochs)
 
-    learningLayers = [outputLayer]
-    propagatingLayers = [inputLayer, hiddenLayer1, hiddenLayer2, outputLayer]
+    propagatingLayers, controllingLayers = layerDetermination(learningLayers)
+    # controllingLayer = controllingLayers[0] ## not needed right now... maybe later!
 
     strategyArguments = {}
-    strategyArguments[:ioFunction] = NonMonotonicIOFunction
+    strategyArguments[:ioFunction] = ioFunction
 
     attachLearningStrategy(learningLayers, LearningBPOutput, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)

@@ -27,7 +27,6 @@ class Neuron2
   include NonMonotonicIOFunction
 end
 
-
 class Experiment
 
   def setParameters
@@ -116,7 +115,6 @@ class Experiment
     return network, theTrainer
   end
 end
-
 
 ###################################### START of Main Learning  ##########################################
 

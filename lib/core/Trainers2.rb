@@ -7,7 +7,7 @@ class LearningStrategyBase # strategy for standard bp learning for output neuron
   attr_reader :neuron, :strategyArgs, :inputLinks, :outputLinks
   include CommonNeuronCalculations
 
-  def initialize(theEnclosingNeuron, strategyArgs)
+  def initialize(theEnclosingNeuron, **strategyArgs)
     @neuron = theEnclosingNeuron
     @strategyArgs = strategyArgs
     ioFunction = @strategyArgs[:ioFunction]
