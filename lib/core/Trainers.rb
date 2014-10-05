@@ -104,15 +104,15 @@ class TrainerBase
   end
 
   def train
+    distributeSetOfExamples(examples)
+    totalEpochs = 0
+
     learningLayers = allNeuronLayers - [inputLayer]
-    propagatingLayers = allNeuronLayers
+    propagatingLayers, controllingLayers = layerDetermination(learningLayers)
 
     strategyArgs = {:ioFunction => SigmoidIOFunction}
     attachLearningStrategy(learningLayers - [outputLayer], LearningBP, strategyArgs)
     attachLearningStrategy([outputLayer], LearningBPOutput, strategyArgs)
-
-    distributeSetOfExamples(examples)
-    totalEpochs = 0
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
 
     forEachExampleDisplayInputsAndOutputs
@@ -125,16 +125,25 @@ class TrainerBase
 
   def trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
     mse = 1e100
+
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
       propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
       trainingSequence.nextEpoch
-      mse = calcMeanSumSquaredErrors
+      mse = calcMeanSumSquaredErrors if (entireNetworkSetup?)
+
       currentEpochNumber = trainingSequence.epochs + totalEpochs
       puts "current epoch number= #{currentEpochNumber}\tmse = #{mse}" if (currentEpochNumber % 100 == 0)
     end
+
     totalEpochs += trainingSequence.epochs
     trainingSequence.startNextPhaseOfTraining
     return mse, totalEpochs
+  end
+
+  def entireNetworkSetup?
+    allNeuronsThatCanHaveLearningStrategy = (allNeuronLayers[1..-1]).flatten
+    arrayThatMayIncludeNils = allNeuronsThatCanHaveLearningStrategy.collect { |neuron| neuron.learningStrat }
+    !arrayThatMayIncludeNils.include?(nil)
   end
 
   def propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
@@ -170,16 +179,29 @@ class TrainerBase
     end
   end
 
+  ###################################################################
+  ###------------  Core Metric Support Section -------------------###
+
+  def layerDetermination(learningLayers)
+    lastLearningLayer = learningLayers[-1]
+    propagatingLayers = []
+    controllingLayer = nil
+
+    allNeuronLayers.each do |aLayer|
+      propagatingLayers << aLayer
+      break if aLayer == lastLearningLayer
+      controllingLayer = aLayer
+    end
+
+    controllingLayers = [controllingLayer]
+    return [propagatingLayers, controllingLayers]
+  end
+
   def attachLearningStrategy(layers, learningStrategy, strategyArgs)
     layers.each do |neurons|
       neurons.each { |neuron| neuron.learningStrat = learningStrategy.new(neuron, strategyArgs) }
     end
   end
-
-
-  ###########################
-
-  ###------------  Core Metric Support Section ------------------------------
 
   def calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
     genericCalcMeanSumSquaredErrors(numberOfExamples)
@@ -225,12 +247,14 @@ class TrainerBase
   end
 
   def propagateAcrossEntireNetwork(exampleNumber)
-    allNeuronsInOneArray.flatten.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+    propagateExampleAcross(allNeuronLayers, exampleNumber)
+    #allNeuronsInOneArray.flatten.each { |aNeuron| aNeuron.propagate(exampleNumber) }
   end
 
   def calcWeightedErrorMetricForExample
     outputLayer.collect { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
   end
+
 end
 
 class Trainer2SelfOrgAndContext < TrainerBase
@@ -250,18 +274,18 @@ class Trainer2SelfOrgAndContext < TrainerBase
 
     ### Now will self-org 1st hidden layer
     learningLayers = [hiddenLayer1]
-    totalEpochs, mse = normalizationAndSelfOrgTraining(learningLayers, ioFunction, totalEpochs)
+    totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
 
 
     ### Now will self-org 2nd hidden layer
     learningLayers = [hiddenLayer2]
-    totalEpochs, mse = normalizationAndSelfOrgTraining(learningLayers, ioFunction, totalEpochs)
+    totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
 
     #forEachExampleDisplayInputsAndOutputs
     return totalEpochs, mse, 0.998 # calcTestingMeanSquaredErrors
   end
 
-  def normalizationAndSelfOrgTraining(learningLayers, ioFunction, totalEpochs)
+  def simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
 
     propagatingLayers, controllingLayers = layerDetermination(learningLayers)
     controllingLayer = controllingLayers[0]
@@ -335,49 +359,13 @@ class Trainer2SelfOrgAndContext < TrainerBase
     distributeDataToInputAndOutputNeurons(examples, [inputLayer])
   end
 
-  def trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
-    mse = 1e100
-    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
-      propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
-      trainingSequence.nextEpoch
-
-      mse = calcMeanSumSquaredErrors if (entireNetworkSetup?)
-      currentEpochNumber = trainingSequence.epochs + totalEpochs
-      puts "current epoch number= #{currentEpochNumber}\tmse = #{mse}" if (currentEpochNumber % 100 == 0)
-    end
-    totalEpochs += trainingSequence.epochs
-    trainingSequence.startNextPhaseOfTraining
-    return mse, totalEpochs
-  end
-
-  def entireNetworkSetup?
-    allNeuronsThatCanHaveLearningStrategy = (allNeuronLayers[1..-1]).flatten
-    arrayThatMayIncludeNils = allNeuronsThatCanHaveLearningStrategy.collect { |neuron| neuron.learningStrat }
-    !arrayThatMayIncludeNils.include?(nil)
-  end
-
   def calcWeightsForUNNormalizedInputs(learningLayers)
     learningLayers.each { |neurons| neurons.each { |aNeuron| aNeuron.calcWeightsForUNNormalizedInputs } }
   end
-
-  def layerDetermination(learningLayers)
-    learningLayer = learningLayers[0]
-    propagatingLayers = []
-    controllingLayer = nil
-
-    allNeuronLayers.each do |aLayer|
-      propagatingLayers << aLayer
-      break if aLayer == learningLayer
-      controllingLayer = aLayer
-    end
-
-    controllingLayers = [controllingLayer]
-    return [propagatingLayers, controllingLayers]
-  end
-
 end
 
-class Trainer3SelfOrgAndContext < Trainer2SelfOrgAndContext
+
+class Trainer3SelfOrgContextSuper < Trainer2SelfOrgAndContext
 
   def train
     distributeSetOfExamples(examples)
@@ -387,17 +375,15 @@ class Trainer3SelfOrgAndContext < Trainer2SelfOrgAndContext
 
     ### Now will self-org 1st hidden layer
     learningLayers = [hiddenLayer1]
-    totalEpochs, mse = normalizationAndSelfOrgTraining(learningLayers, ioFunction, totalEpochs)
+    totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
 
-
-    ### Now will self-org 2nd hidden layer
+    ### Now will self-org 2nd hidden layer  WITH CONTEXT!!
     learningLayers = [hiddenLayer2]
-    totalEpochs, mse = normalizationAndSelfOrgTraining(learningLayers, ioFunction, totalEpochs)
+    totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
 
-    # TODO what's the value in doing this?
-    layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
-    calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
-
+    ## TODO what's the value in doing this?  -- apparently NOT!
+    #layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
+    #calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
 
     learningLayers = [outputLayer]
     totalEpochs, mse = supervisedTraining(learningLayers, ioFunction, totalEpochs)
@@ -410,12 +396,14 @@ class Trainer3SelfOrgAndContext < Trainer2SelfOrgAndContext
   def supervisedTraining(learningLayers, ioFunction, totalEpochs)
 
     propagatingLayers, controllingLayers = layerDetermination(learningLayers)
-    # controllingLayer = controllingLayers[0] ## not needed right now... maybe later!
 
     strategyArguments = {}
     strategyArguments[:ioFunction] = ioFunction
 
-    attachLearningStrategy(learningLayers, LearningBPOutput, strategyArguments)
+    attachLearningStrategy([outputLayer], LearningBPOutput, strategyArguments) if learningLayers.include?(outputLayer)
+    otherLearningLayers = learningLayers - outputLayer
+    attachLearningStrategy(otherLearningLayers, LearningBP, strategyArguments) if otherLearningLayers.flatten.empty?
+
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
 
     return totalEpochs, mse
@@ -425,6 +413,48 @@ class Trainer3SelfOrgAndContext < Trainer2SelfOrgAndContext
     distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
   end
 end
+
+class Trainer4SelfOrgContextSuper < Trainer3SelfOrgContextSuper
+  def train
+    distributeSetOfExamples(examples)
+
+    totalEpochs = 0
+    ioFunction = NonMonotonicIOFunction
+
+    ### Now will self-org 1st hidden layer
+    learningLayers = [hiddenLayer1]
+    totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
+
+    ### Now will self-org 2nd hidden layer WITH CONTEXT!!
+    learningLayers = [hiddenLayer2]
+    totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
+
+    ### Now will self-org 2nd hidden layer withOUT context!!
+    learningLayers = [hiddenLayer2]
+    propagatingLayers, dumbdumb = layerDetermination(learningLayers)
+    strategyArguments = {}
+    strategyArguments[:ioFunction] = ioFunction
+    totalEpochs, mse = normalizationAndSelfOrgWITHOUTContext(learningLayers, propagatingLayers, strategyArguments, totalEpochs)
+
+    # TODO what's the value in doing this?
+    #layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
+    #calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
+
+    learningLayers = [outputLayer]
+    totalEpochs, mse = supervisedTraining(learningLayers, ioFunction, totalEpochs)
+
+    forEachExampleDisplayInputsAndOutputs(outputLayer)
+
+    return totalEpochs, mse, calcTestingMeanSquaredErrors
+  end
+end
+
+
+class TrainerAD1 < Trainer3SelfOrgContextSuper
+
+
+end
+
 
 ###################################################################
 

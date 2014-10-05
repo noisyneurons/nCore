@@ -1,7 +1,7 @@
 ### VERSION "nCore"
-## ../nCore/bin/Proj3NeuronSelfOrgAndContext.rb
+## ../nCore/bin/Proj3SelfOrgContextSuper.rb
 
-# Specific Purpose for this experiment: Get simplest versions of self-org AND CONTEXT, Combined with Supervised Learning, understood and "working."
+# Specific Purpose for this experiment: Get SIMPLEST versions of self-org, context, AND combined with Supervised Learning,  understood and "working."
 # Purpose:  Start of Project 7; project to split example set to learn sub-parts, and then combine those parts/neuron-functions that
 # didn't need to be separated, but instead need to be integrated to obtain better generalization.
 # Ultimate goal of project 6 is develop analogy processing -- where one function useful for solving one problem
@@ -110,7 +110,7 @@ class Experiment
     selfOrgNeuron.inputLinks[0].weight = 0.105
     selfOrgNeuron.inputLinks[1].weight = 0.1
 
-    theTrainer = Trainer3SelfOrgAndContext.new(examples, network, args)
+    theTrainer = Trainer3SelfOrgContextSuper.new(examples, network, args)
 
     return network, theTrainer
   end
@@ -120,7 +120,7 @@ end
 
 baseRandomNumberSeed = 0
 
-experiment = Experiment.new("Proj3NeuronSelfOrgAndContext; 2 in 4 out; divide then integrate", baseRandomNumberSeed)
+experiment = Experiment.new("Proj3SelfOrgContextSuper; 2 in 4 out; divide then integrate", baseRandomNumberSeed)
 
 experiment.performSimulation()
 
