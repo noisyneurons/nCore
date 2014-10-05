@@ -5,6 +5,7 @@ class Experiment
   attr_accessor :network, :theTrainer, :descriptionOfExperiment, :taskID, :jobID, :jobName, :randomNumberSeed,
                 :experimentLogger, :simulationDataStoreManager, :examples, :numberOfExamples, :args, :trainingSequence
   include ExampleDistribution
+  include DataSetGenerators
 
   def initialize(descriptionOfExperiment, baseRandomNumberSeed)
     @descriptionOfExperiment = descriptionOfExperiment
@@ -220,4 +221,5 @@ class Experiment
   #  generatePlotForEachNeuron(arrayOfNeuronsToPlot) if arrayOfNeuronsToPlot.present?
   #end
 end
+
 

@@ -58,9 +58,10 @@ class Experiment
         :typeOfOutputNeuron => OutputNeuron2,
 
         # Training Set parameters
-        :angleOfClockwiseRotationOfInputData => 0.0,
         :numberOfExamples => (self.numberOfExamples = 16),
         :numberOfTestingExamples => numberOfExamples,
+        :standardDeviationOfAddedGaussianNoise => 0.000001,
+        :angleOfClockwiseRotationOfInputData => 0.0
     }
   end
 
@@ -103,6 +104,10 @@ class Experiment
     angleOfClockwiseRotationOfInputData = args[:angleOfClockwiseRotationOfInputData]
     examples = rotateClockwise(examples, angleOfClockwiseRotationOfInputData)
   end
+
+  #def createDataSet
+  #  gen4ClassDS
+  #end
 
   def createNetworkAndTrainer
     network = Context4LayerNetwork.new(args)

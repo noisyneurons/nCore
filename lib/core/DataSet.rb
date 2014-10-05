@@ -94,6 +94,45 @@ end
 
 ############################# Specialized DATA GENERATION Routines ###########################
 
+module DataSetGenerators
+
+  def gen4ClassDS
+    gaussianRandomNumberGenerator = NormalDistribution.new(meanOfGaussianNoise = 0.0,  args[:standardDeviationOfAddedGaussianNoise])
+
+    xStart = [-1.0, 1.0, -1.0, 1.0]
+    yStart = [1.0, 1.0, -1.0, -1.0]
+
+    xInc = [0.0, 0.0, 0.0, 0.0]
+    yInc = [0.0, 0.0, -0.0, -0.0]
+
+    numberOfClasses = xStart.length
+    numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
+    exampleNumber = 0
+    examples = []
+    numberOfClasses.times do |indexToClass|
+      xS = xStart[indexToClass]
+      xI = xInc[indexToClass]
+      yS = yStart[indexToClass]
+      yI = yInc[indexToClass]
+
+      numberOfExamplesInEachClass.times do |classExNumb|
+        x = xS + (xI * classExNumb) + gaussianRandomNumberGenerator.get_rng
+        y = yS + (yI * classExNumb) + gaussianRandomNumberGenerator.get_rng
+        aPoint = [x, y]
+        desiredOutputs = [0.0, 0.0, 0.0, 0.0]
+        desiredOutputs[indexToClass] = 1.0
+        examples << {:inputs => aPoint, :targets => desiredOutputs, :exampleNumber => exampleNumber, :class => indexToClass}
+        exampleNumber += 1
+      end
+    end
+    STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
+    angleOfClockwiseRotationOfInputData = args[:angleOfClockwiseRotationOfInputData]
+    examples = rotateClockwise(examples, angleOfClockwiseRotationOfInputData)
+  end
+end
+
+
+
 class DataGenerator
   attr_reader :arrayOfExamples
 

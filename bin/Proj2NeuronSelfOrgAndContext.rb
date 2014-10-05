@@ -57,51 +57,16 @@ class Experiment
         :typeOfOutputNeuron => OutputNeuron2,
 
         # Training Set parameters
-        :angleOfClockwiseRotationOfInputData => 0.0,
+
         :numberOfExamples => (self.numberOfExamples = 16),
         :numberOfTestingExamples => numberOfExamples,
-
+        :standardDeviationOfAddedGaussianNoise => 0.000001,
+        :angleOfClockwiseRotationOfInputData => 0.0
     }
   end
 
   def createDataSet
-    xStart = [-1.0, 1.0, -1.0, 1.0]
-    # xStart = [0.0, 2.0, 0.0, 2.0]
-    # xStart = [1.0, 3.0, 1.0, 3.0]
-
-    yStart = [1.0, 1.0, -1.0, -1.0]
-    # yStart = [4.0, 4.0, 0.0, 0.0]
-
-    # xInc = [0.0, 0.0, 0.0, 0.0]
-    xInc = [0.0, 0.0, 0.0, 0.0]
-
-    yInc = [0.0, 0.0, -0.0, -0.0]
-    # yInc = [0.2, 0.2, -0.2, -0.2]
-
-
-    numberOfClasses = xStart.length
-    numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
-    exampleNumber = 0
-    examples = []
-    numberOfClasses.times do |indexToClass|
-      xS = xStart[indexToClass]
-      xI = xInc[indexToClass]
-      yS = yStart[indexToClass]
-      yI = yInc[indexToClass]
-
-      numberOfExamplesInEachClass.times do |classExNumb|
-        x = xS + (xI * classExNumb)
-        y = yS + (yI * classExNumb)
-        aPoint = [x, y]
-        desiredOutputs = [0.0, 0.0, 0.0, 0.0]
-        desiredOutputs[indexToClass] = 1.0
-        examples << {:inputs => aPoint, :targets => desiredOutputs, :exampleNumber => exampleNumber, :class => indexToClass}
-        exampleNumber += 1
-      end
-    end
-    STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
-    angleOfClockwiseRotationOfInputData = args[:angleOfClockwiseRotationOfInputData]
-    examples = rotateClockwise(examples, angleOfClockwiseRotationOfInputData)
+    gen4ClassDS
   end
 
   def createNetworkAndTrainer
