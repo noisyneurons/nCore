@@ -30,6 +30,11 @@ class Neuron2
   include NonMonotonicIOFunction
 end
 
+class OutputNeuron2
+  include NonMonotonicIOFunction
+end
+
+
 class Experiment
 
   def setParameters
@@ -41,7 +46,7 @@ class Experiment
         # training parameters
         :learningRate =>  0.1,
         :minMSE => 0.0, # 0.001,
-        :maxEpochNumbersForEachPhase => [1, 150, 1, 150, 1, 150, 400],
+        :maxEpochNumbersForEachPhase => [1, 150, 1, 150, 1, 150, 600],
         :trainingSequence =>  MultiPhaseTrainingSequence,
 
         # Network Architecture
@@ -66,59 +71,15 @@ class Experiment
   end
 
   def createDataSet
-    xStart = [-1.0, 1.0, -1.0, 1.0]
-    # xStart = [0.0, 2.0, 0.0, 2.0]
-    # xStart = [1.0, 3.0, 1.0, 3.0]
-
-    yStart = [1.0, 1.0, -1.0, -1.0]
-    # yStart = [4.0, 4.0, 0.0, 0.0]
-
-    # xInc = [0.0, 0.0, 0.0, 0.0]
-    xInc = [0.0, 0.0, 0.0, 0.0]
-
-    yInc = [0.0, 0.0, -0.0, -0.0]
-    # yInc = [0.2, 0.2, -0.2, -0.2]
-
-
-    numberOfClasses = xStart.length
-    numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
-    exampleNumber = 0
-    examples = []
-    numberOfClasses.times do |indexToClass|
-      xS = xStart[indexToClass]
-      xI = xInc[indexToClass]
-      yS = yStart[indexToClass]
-      yI = yInc[indexToClass]
-
-      numberOfExamplesInEachClass.times do |classExNumb|
-        x = xS + (xI * classExNumb)
-        y = yS + (yI * classExNumb)
-        aPoint = [x, y]
-        desiredOutputs = [0.0, 0.0, 0.0, 0.0]
-        desiredOutputs[indexToClass] = 1.0
-        examples << {:inputs => aPoint, :targets => desiredOutputs, :exampleNumber => exampleNumber, :class => indexToClass}
-        exampleNumber += 1
-      end
-    end
-    STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
-    angleOfClockwiseRotationOfInputData = args[:angleOfClockwiseRotationOfInputData]
-    examples = rotateClockwise(examples, angleOfClockwiseRotationOfInputData)
+    gen4ClassDS
   end
-
-  #def createDataSet
-  #  gen4ClassDS
-  #end
 
   def createNetworkAndTrainer
     network = Context4LayerNetwork.new(args)
 
-    selfOrgLayer = network.allNeuronLayers[1]
-    selfOrgNeuron = selfOrgLayer[0]
-    selfOrgNeuron.inputLinks[0].weight = 0.105
-    selfOrgNeuron.inputLinks[1].weight = 0.1
+    #temporarilySetSpecificWeights(network)
 
     theTrainer = Trainer4SelfOrgContextSuper.new(examples, network, args)
-
     return network, theTrainer
   end
 end

@@ -381,9 +381,10 @@ class Trainer3SelfOrgContextSuper < Trainer2SelfOrgAndContext
     learningLayers = [hiddenLayer2]
     totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
 
+
     ## TODO what's the value in doing this?  -- apparently NOT!
-    #layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
-    #calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
+    layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
+    calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
 
     learningLayers = [outputLayer]
     totalEpochs, mse = supervisedTraining(learningLayers, ioFunction, totalEpochs)
@@ -394,18 +395,16 @@ class Trainer3SelfOrgContextSuper < Trainer2SelfOrgAndContext
   end
 
   def supervisedTraining(learningLayers, ioFunction, totalEpochs)
-
     propagatingLayers, controllingLayers = layerDetermination(learningLayers)
 
     strategyArguments = {}
     strategyArguments[:ioFunction] = ioFunction
+    attachLearningStrategy(learningLayers, LearningBPOutput, strategyArguments) if learningLayers.include?(outputLayer)
 
-    attachLearningStrategy([outputLayer], LearningBPOutput, strategyArguments) if learningLayers.include?(outputLayer)
-    otherLearningLayers = learningLayers - outputLayer
-    attachLearningStrategy(otherLearningLayers, LearningBP, strategyArguments) if otherLearningLayers.flatten.empty?
+    otherLearningLayers = learningLayers - [outputLayer]
+    attachLearningStrategy(otherLearningLayers, LearningBP, strategyArguments)
 
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
-
     return totalEpochs, mse
   end
 
@@ -415,6 +414,7 @@ class Trainer3SelfOrgContextSuper < Trainer2SelfOrgAndContext
 end
 
 class Trainer4SelfOrgContextSuper < Trainer3SelfOrgContextSuper
+
   def train
     distributeSetOfExamples(examples)
 
@@ -434,13 +434,15 @@ class Trainer4SelfOrgContextSuper < Trainer3SelfOrgContextSuper
     propagatingLayers, dumbdumb = layerDetermination(learningLayers)
     strategyArguments = {}
     strategyArguments[:ioFunction] = ioFunction
-    totalEpochs, mse = normalizationAndSelfOrgWITHOUTContext(learningLayers, propagatingLayers, strategyArguments, totalEpochs)
+    # TODO return arguments below are in reverse order
+    mse, totalEpochs = normalizationAndSelfOrgWITHOUTContext(learningLayers, propagatingLayers, strategyArguments, totalEpochs)
 
     # TODO what's the value in doing this?
-    #layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
-    #calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
+    layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
+    calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
 
     learningLayers = [outputLayer]
+    # learningLayers = [hiddenLayer1, hiddenLayer2, outputLayer]
     totalEpochs, mse = supervisedTraining(learningLayers, ioFunction, totalEpochs)
 
     forEachExampleDisplayInputsAndOutputs(outputLayer)

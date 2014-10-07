@@ -27,6 +27,11 @@ class Neuron2
   include NonMonotonicIOFunction
 end
 
+class OutputNeuron2
+  include NonMonotonicIOFunction
+end
+
+
 class Experiment
 
   def setParameters
@@ -38,7 +43,7 @@ class Experiment
         # training parameters
         :learningRate =>  0.1,
         :minMSE => 0.0, # 0.001,
-        :maxEpochNumbersForEachPhase => [1, 150, 1, 150, 400],
+        :maxEpochNumbersForEachPhase => [1, 150, 1, 150, 600],
         :trainingSequence =>  MultiPhaseTrainingSequence,
 
         # Network Architecture
@@ -59,7 +64,6 @@ class Experiment
         :numberOfTestingExamples => numberOfExamples,
         :standardDeviationOfAddedGaussianNoise => 0.000001,
         :angleOfClockwiseRotationOfInputData => 0.0
-
     }
   end
 
@@ -70,15 +74,13 @@ class Experiment
   def createNetworkAndTrainer
     network = Context4LayerNetwork.new(args)
 
-    selfOrgLayer = network.allNeuronLayers[1]
-    selfOrgNeuron = selfOrgLayer[0]
-    selfOrgNeuron.inputLinks[0].weight = 0.105
-    selfOrgNeuron.inputLinks[1].weight = 0.1
+    #temporarilySetSpecificWeights(network)
 
     theTrainer = Trainer3SelfOrgContextSuper.new(examples, network, args)
 
     return network, theTrainer
   end
+
 end
 
 ###################################### START of Main Learning  ##########################################

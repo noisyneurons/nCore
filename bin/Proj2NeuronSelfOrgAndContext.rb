@@ -72,10 +72,7 @@ class Experiment
   def createNetworkAndTrainer
     network = Context4LayerNetwork.new(args)
 
-    selfOrgLayer = network.allNeuronLayers[1]
-    selfOrgNeuron = selfOrgLayer[0]
-    selfOrgNeuron.inputLinks[0].weight = 0.105
-    selfOrgNeuron.inputLinks[1].weight = 0.1
+    #temporarilySetSpecificWeights(network)
 
     theTrainer = Trainer2SelfOrgAndContext.new(examples, network, args)
 
