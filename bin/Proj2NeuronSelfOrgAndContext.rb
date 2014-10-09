@@ -60,7 +60,7 @@ class Experiment
 
         :numberOfExamples => (self.numberOfExamples = 16),
         :numberOfTestingExamples => numberOfExamples,
-        :standardDeviationOfAddedGaussianNoise => 0.000001,
+        :standardDeviationOfAddedGaussianNoise => 1e-24,
         :angleOfClockwiseRotationOfInputData => 0.0
     }
   end

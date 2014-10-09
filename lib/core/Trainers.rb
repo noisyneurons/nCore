@@ -236,6 +236,24 @@ class TrainerBase
     return (sse / (numberOfExamples * numberOfOutputNeurons))
   end
 
+  def forEachExampleDisplayNetworkInputsAndNetInputTo(resultsLayer = outputLayer)
+    breakOnNextPass = false
+    propagatingLayers = allNeuronLayers.collect do |aLayer|
+      next if breakOnNextPass
+      breakOnNextPass = true if (aLayer == resultsLayer)
+      aLayer
+    end
+    propagatingLayers.compact!
+    #
+    examples.each_with_index do |anExample, exampleNumber|
+      inputs = anExample[:inputs]
+      propagateExampleAcross(propagatingLayers, exampleNumber)
+      results = resultsLayer.collect { |aResultsNeuron| aResultsNeuron.netInput }
+      puts "\t\t\tinputs= #{inputs}\tresults= #{results}"
+    end
+  end
+
+
   def forEachExampleDisplayInputsAndOutputs(resultsLayer = outputLayer)
     breakOnNextPass = false
     propagatingLayers = allNeuronLayers.collect do |aLayer|
@@ -281,11 +299,12 @@ class Trainer2SelfOrgAndContext < TrainerBase
 
     ### Now will self-org 1st hidden layer
     learningLayers = [hiddenLayer1]
+    initWeights(learningLayers)
     totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
-
 
     ### Now will self-org 2nd hidden layer
     learningLayers = [hiddenLayer2]
+    initWeights(learningLayers)
     totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
 
     ## TODO what's the value in doing this?  -- apparently NOT!
@@ -366,15 +385,31 @@ class Trainer2SelfOrgAndContext < TrainerBase
     return mse, totalEpochs
   end
 
-  def distributeSetOfExamples(examples)
-    distributeDataToInputAndOutputNeurons(examples, [inputLayer])
-  end
-
   def calcWeightsForUNNormalizedInputs(learningLayers)
     learningLayers.each { |neurons| neurons.each { |aNeuron| aNeuron.calcWeightsForUNNormalizedInputs } }
   end
-end
 
+  def initWeights(learningLayers)
+    learningLayers.each do |aLayer|
+      aLayer.each {|aNeuron| initNeuronsWeights(aNeuron)}
+    end
+  end
+
+  def initNeuronsWeights(neuron)
+    inputLinks = neuron.inputLinks
+    numberOfInputsToNeuron = inputLinks.length
+    inputLinks.each do |aLink|
+      verySmallNoise = 0.0001 * (rand - 0.5)
+      weight  = (0.2 + verySmallNoise) / numberOfInputsToNeuron
+      aLink.weight = weight
+      aLink.weightAtBeginningOfTraining = weight
+    end
+  end
+
+  def distributeSetOfExamples(examples)
+    distributeDataToInputAndOutputNeurons(examples, [inputLayer])
+  end
+end
 
 class Trainer3SelfOrgContextSuper < Trainer2SelfOrgAndContext
 
@@ -386,12 +421,13 @@ class Trainer3SelfOrgContextSuper < Trainer2SelfOrgAndContext
 
     ### Now will self-org 1st hidden layer
     learningLayers = [hiddenLayer1]
+    initWeights(learningLayers)
     totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
 
     ### Now will self-org 2nd hidden layer  WITH CONTEXT!!
     learningLayers = [hiddenLayer2]
+    initWeights(learningLayers)
     totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
-
 
     ## TODO what's the value in doing this?  -- apparently NOT!
     layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
@@ -434,11 +470,17 @@ class Trainer4SelfOrgContextSuper < Trainer3SelfOrgContextSuper
 
     ### Now will self-org 1st hidden layer
     learningLayers = [hiddenLayer1]
+    initWeights(learningLayers)
     totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
+
+    #forEachExampleDisplayInputsAndOutputs(hiddenLayer1)
 
     ### Now will self-org 2nd hidden layer WITH CONTEXT!!
     learningLayers = [hiddenLayer2]
+    initWeights(learningLayers)
     totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
+
+    # forEachExampleDisplayInputsAndOutputs(hiddenLayer2)
 
     ### Now will self-org 2nd hidden layer withOUT context!!
     learningLayers = [hiddenLayer2]
@@ -448,15 +490,36 @@ class Trainer4SelfOrgContextSuper < Trainer3SelfOrgContextSuper
     # TODO return arguments below are in reverse order
     mse, totalEpochs = normalizationAndSelfOrgWITHOUTContext(learningLayers, propagatingLayers, strategyArguments, totalEpochs)
 
+    #forEachExampleDisplayInputsAndOutputs(hiddenLayer2)
+
     # TODO what's the value in doing this?
     layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
     calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
 
+    #hiddenLayer1.each do |aNeuron|
+    #  aNeuron.inputLinks[1].weight = 0.0
+    #end
+
+    #outputLayer.each do |aNeuron|
+    #  aNeuron.inputLinks[2].learningRate = 0.000001
+    #end
+
+
     learningLayers = [outputLayer]
     # learningLayers = [hiddenLayer1, hiddenLayer2, outputLayer]
+    initWeights(learningLayers)
     totalEpochs, mse = supervisedTraining(learningLayers, ioFunction, totalEpochs)
+    #totalEpochs, mse = supervisedTraining(learningLayers, SigmoidIOFunction, totalEpochs)
 
-    forEachExampleDisplayInputsAndOutputs(outputLayer)
+    puts "Output Layer NETINPUT:"
+    forEachExampleDisplayNetworkInputsAndNetInputTo(outputLayer)
+
+
+    puts "Hidden Layer 1:"
+    forEachExampleDisplayInputsAndOutputs(hiddenLayer1)
+    puts "Hidden Layer 2:"
+    forEachExampleDisplayInputsAndOutputs(hiddenLayer2)
+    #forEachExampleDisplayInputsAndOutputs(outputLayer)
 
     return totalEpochs, mse, calcTestingMeanSquaredErrors
   end

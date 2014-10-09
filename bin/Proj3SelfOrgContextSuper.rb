@@ -31,7 +31,6 @@ class OutputNeuron2
   include NonMonotonicIOFunction
 end
 
-
 class Experiment
 
   def setParameters
@@ -62,7 +61,7 @@ class Experiment
         # Training Set parameters
         :numberOfExamples => (self.numberOfExamples = 16),
         :numberOfTestingExamples => numberOfExamples,
-        :standardDeviationOfAddedGaussianNoise => 0.000001,
+        :standardDeviationOfAddedGaussianNoise => 1e-24,
         :angleOfClockwiseRotationOfInputData => 0.0
     }
   end

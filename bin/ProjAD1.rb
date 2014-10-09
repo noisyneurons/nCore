@@ -55,6 +55,7 @@ class Experiment
 
         # Training Set parameters
         :angleOfClockwiseRotationOfInputData => 0.0,
+        :standardDeviationOfAddedGaussianNoise => 1e-24,
         :numberOfExamples => (self.numberOfExamples = 20),
         :numberOfTestingExamples => numberOfExamples,
 

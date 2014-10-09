@@ -20,7 +20,7 @@ class LearningStrategyBase # strategy for standard bp learning for output neuron
   end
 
   def startStrategy
-    neuron.output = ioFunction(neuron.netInput) # Probably only need to do this in special cases, like simulating recurrent nets
+    ## neuron.output = ioFunction(neuron.netInput) # Probably only need to do this in special cases, like simulating recurrent nets
   end
 
   def finishLearningStrategy
@@ -83,15 +83,14 @@ class LearningBPOutput < LearningStrategyBase # strategy for standard bp learnin
 end
 
 class Normalization < LearningStrategyBase
-  def startStrategy
-    super
-    numberOfInputsToNeuron = inputLinks.length
-    inputLinks.each do |aLink|
-      verySmallNoise = 0.0001 * (rand - 0.5)
-      aLink.weight = (0.2 + verySmallNoise) / numberOfInputsToNeuron
-    end
-    #inputLinks.each {|aLink| aLink.weight = 0.1 } # very simple version; assumes only a few input links to neuron
-  end
+  #def startStrategy
+  #  super
+  #  numberOfInputsToNeuron = inputLinks.length
+  #  inputLinks.each do |aLink|
+  #    verySmallNoise = 0.0001 * (rand - 0.5)
+  #    aLink.weight = (0.2 + verySmallNoise) / numberOfInputsToNeuron
+  #  end
+  #end
 
   def startEpoch
     inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
