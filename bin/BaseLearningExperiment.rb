@@ -75,13 +75,6 @@ class Experiment
     return createDataSet
   end
 
-  def temporarilySetSpecificWeights(network)
-    selfOrgLayer = network.allNeuronLayers[1]
-    selfOrgNeuron = selfOrgLayer[0]
-    selfOrgNeuron.inputLinks[0].weight = 0.105
-    selfOrgNeuron.inputLinks[1].weight = 0.1
-  end
-
   def performSimulation
 
 ######################## Create Network and Trainer ....

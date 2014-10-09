@@ -39,7 +39,7 @@ class Experiment
         # training parameters
         :learningRate =>  0.1,
         :minMSE => 0.0, # 0.001,
-        :maxEpochNumbersForEachPhase => [1, 150, 1, 150, 200, 6e2, 200],
+        :maxEpochNumbersForEachPhase => [1, 150, 1, 150],
         :trainingSequence =>  MultiPhaseTrainingSequence,
 
         # Network Architecture
@@ -65,14 +65,61 @@ class Experiment
     }
   end
 
-  def createDataSet
-    gen4ClassDS
+
+  #### generator to try different simple configurations:  e.g. where one of the input axises contains more "noise" than the other axises.
+  def genTemp
+    gaussianRandomNumberGenerator = NormalDistribution.new(meanOfGaussianNoise = 0.0,  args[:standardDeviationOfAddedGaussianNoise])
+
+    xStart = [-1.0, 1.0, -1.0, 1.0]
+    yStart = [1.0, 1.0, -1.0, -1.0]
+
+
+    xIncVal = 0.0 # 0.002   # "noise level"
+    xInc = [-xIncVal, xIncVal, -xIncVal, xIncVal]
+
+    yIncVal = 0.0      # "noise level"
+    yInc = [yIncVal, yIncVal, -yIncVal, -yIncVal]
+
+    numberOfClasses = xStart.length
+    numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
+    exampleNumber = 0
+    examples = []
+    numberOfClasses.times do |indexToClass|
+      xS = xStart[indexToClass]
+      xI = xInc[indexToClass]
+      yS = yStart[indexToClass]
+      yI = yInc[indexToClass]
+
+      numberOfExamplesInEachClass.times do |classExNumb|
+        x = xS + (xI * classExNumb) + gaussianRandomNumberGenerator.get_rng
+        y = yS + (yI * classExNumb) + gaussianRandomNumberGenerator.get_rng
+        aPoint = [x, y]
+        desiredOutputs = [0.0, 0.0, 0.0, 0.0]
+        desiredOutputs[indexToClass] = 1.0
+        examples << {:inputs => aPoint, :targets => desiredOutputs, :exampleNumber => exampleNumber, :class => indexToClass}
+        exampleNumber += 1
+      end
+    end
+    STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
+    angleOfClockwiseRotationOfInputData = args[:angleOfClockwiseRotationOfInputData]
+    examples = rotateClockwise(examples, angleOfClockwiseRotationOfInputData)
   end
+
+  def createDataSet
+    genTemp # gen4ClassDS
+  end
+
+  #def temporarilySetSpecificWeights(network)
+  #  selfOrgLayer = network.allNeuronLayers[1]
+  #  selfOrgNeuron = selfOrgLayer[0]
+  #  selfOrgNeuron.inputLinks[0].weight = 0.1
+  #  selfOrgNeuron.inputLinks[1].weight = 0.1
+  #end
 
   def createNetworkAndTrainer
     network = Context4LayerNetwork.new(args)
 
-    #temporarilySetSpecificWeights(network)
+    # temporarilySetSpecificWeights(network)
 
     theTrainer = Trainer2SelfOrgAndContext.new(examples, network, args)
 

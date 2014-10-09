@@ -1,4 +1,31 @@
+module IOFunctionUtils
+  def findNetInputThatGeneratesMaximumOutput
+    gridDivisions = 20.0
+    offset = 0.0
+    increment = 5.0 / gridDivisions
+    maxXY = nil
+    40.times do
+      testXs = genTestingArray(offset, increment, gridDivisions)
+      maxXY = testXs.max { |a, b| a[1] <=> b[1] }
+      offset = maxXY[0] - increment
+      increment = 2.0 * increment / gridDivisions
+    end
+    maxXY[0]
+  end
+
+  private
+  def genTestingArray(offset, increment, gridDivisions)
+    testXs = (0..gridDivisions.to_i).collect do |aValue|
+      x = offset + (aValue * increment)
+      y = ioFunction(x)
+      [x, y]
+    end
+  end
+end
+
+
 module SigmoidIOFunction
+  include IOFunctionUtils
 
   def ioFunction(aNetInput)
     1.0/(1.0 + Math.exp(-1.0 * aNetInput))
@@ -11,10 +38,10 @@ module SigmoidIOFunction
   def ioDerivativeFromOutput(neuronsOutput)
     (neuronsOutput * (1.0 - neuronsOutput))
   end
-
 end
 
 module NonMonotonicIOFunction
+  include IOFunctionUtils
 
   def ioFunction(x)
     1.49786971589547 * (i(x) - 0.166192596930178)
@@ -47,6 +74,7 @@ module NonMonotonicIOFunction
 end
 
 module PiecewiseLinNonMonIOFunction
+  include IOFunctionUtils
 
   def slope
     1.0 / 5.0
@@ -84,6 +112,7 @@ module PiecewiseLinNonMonIOFunction
 end
 
 module NonMonotonicIOFunctionSymmetrical
+  include IOFunctionUtils
 
   def ioFunction(x)
     (1.49786971589547 * (i(x) - 0.166192596930178)) - 0.5
@@ -116,6 +145,7 @@ module NonMonotonicIOFunctionSymmetrical
 end
 
 module LinearIOFunction
+  include IOFunctionUtils
 
   def ioFunction(aNetInput)
     aNetInput
@@ -132,6 +162,7 @@ module LinearIOFunction
 end
 
 module SigmoidIOFunctionSymmetrical
+  include IOFunctionUtils
 
   def ioFunction(aNetInput)
     2.0 * ((1.0/(1.0 + Math.exp(-1.0 * aNetInput))) - 0.5)
@@ -149,6 +180,8 @@ end
 
 
 module IOFunctionNotAccessibleHere
+  include IOFunctionUtils
+
   def ioFunction(aNetInput)
     STDERR.puts "IO Function Accessible Only via LearningStrategy class"
     0.5

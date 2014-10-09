@@ -5,6 +5,10 @@
 
 module ForwardingToLearningStrategy
 
+  def  startStrategy
+    learningStrat.startStrategy
+  end
+
   def startEpoch
     learningStrat.startEpoch
   end
@@ -107,10 +111,7 @@ class LinkWithNormalization < Link
   end
 
   def calcWeightsForUNNormalizedInputs
-    puts "weightBefore= #{weight}"
     self.weight = normalizationMultiplier * weight
-    puts "normalizationMultiplier= #{normalizationMultiplier}"
-    puts "weightAfter= #{weight}"
   end
 
   def propagateUsingZeroInput

@@ -126,6 +126,7 @@ class TrainerBase
   def trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
     mse = 1e100
 
+    startStrategy(learningLayers)
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
       propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
       trainingSequence.nextEpoch
@@ -138,6 +139,12 @@ class TrainerBase
     totalEpochs += trainingSequence.epochs
     trainingSequence.startNextPhaseOfTraining
     return mse, totalEpochs
+  end
+
+  def startStrategy(learningLayers)
+    learningLayers.each do |aLayerOfNeurons|
+      aLayerOfNeurons.each {|aNeuron| aNeuron.startStrategy}
+    end
   end
 
   def entireNetworkSetup?
@@ -280,6 +287,10 @@ class Trainer2SelfOrgAndContext < TrainerBase
     ### Now will self-org 2nd hidden layer
     learningLayers = [hiddenLayer2]
     totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
+
+    ## TODO what's the value in doing this?  -- apparently NOT!
+    layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
+    calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
 
     #forEachExampleDisplayInputsAndOutputs
     return totalEpochs, mse, 0.998 # calcTestingMeanSquaredErrors

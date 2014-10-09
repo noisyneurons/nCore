@@ -14,6 +14,9 @@ class LearningStrategyBase # strategy for standard bp learning for output neuron
     self.extend(ioFunction)
     @inputLinks = @neuron.inputLinks
     @outputLinks = @neuron.outputLinks if @neuron.respond_to?(:outputLinks)
+    @targetPlus = self.findNetInputThatGeneratesMaximumOutput
+    @targetMinus = -1.0 * @targetPlus
+    @distanceBetweenTargets = @targetPlus - @targetMinus
   end
 
   def startStrategy
@@ -80,6 +83,16 @@ class LearningBPOutput < LearningStrategyBase # strategy for standard bp learnin
 end
 
 class Normalization < LearningStrategyBase
+  def startStrategy
+    super
+    numberOfInputsToNeuron = inputLinks.length
+    inputLinks.each do |aLink|
+      verySmallNoise = 0.0001 * (rand - 0.5)
+      aLink.weight = (0.2 + verySmallNoise) / numberOfInputsToNeuron
+    end
+    #inputLinks.each {|aLink| aLink.weight = 0.1 } # very simple version; assumes only a few input links to neuron
+  end
+
   def startEpoch
     inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
   end
@@ -102,9 +115,6 @@ class SelfOrgStrat < LearningStrategyBase
 
   def startEpoch
     zeroDeltaWAccumulated
-    @targetPlus = 2.5 # TODO need "exact number" here. -- just for illustration purposes...
-    @targetMinus = -1.0 * @targetPlus
-    @distanceBetweenTargets = @targetPlus - @targetMinus
   end
 
   def propagate(exampleNumber)
