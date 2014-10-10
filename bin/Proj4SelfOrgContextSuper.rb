@@ -47,7 +47,7 @@ class Experiment
         # training parameters
         :learningRate =>  0.1,
         :minMSE => 0.0, # 0.001,
-        :maxEpochNumbersForEachPhase => [1, 150, 1, 150, 1, 150, 600],
+        :maxEpochNumbersForEachPhase => [1, 150, 1, 150, 1, 150, 1, 1, 600],
         :trainingSequence =>  MultiPhaseTrainingSequence,
 
         # Network Architecture
@@ -60,7 +60,7 @@ class Experiment
 
         :typeOfLink => LinkWithNormalization,
         :typeOfNeuron => Neuron2,
-        :typeOfLinkToOutput => Link,
+        :typeOfLinkToOutput => LinkWithNormalization,
         :typeOfOutputNeuron => OutputNeuron2,
 
         # Training Set parameters

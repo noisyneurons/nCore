@@ -55,7 +55,7 @@ class Experiment
 
         :typeOfLink => LinkWithNormalization,
         :typeOfNeuron => Neuron2,
-        :typeOfLinkToOutput => Link,
+        :typeOfLinkToOutput => LinkWithNormalization,
         :typeOfOutputNeuron => OutputNeuron2,
 
         # Training Set parameters
