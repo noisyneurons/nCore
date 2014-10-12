@@ -315,7 +315,7 @@ class Trainer2SelfOrgAndContext < TrainerBase
     return totalEpochs, mse, 0.998 # calcTestingMeanSquaredErrors
   end
 
-  def simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
+  def selfOrgUsingNormalization(learningLayers, ioFunction, totalEpochs)
 
     propagatingLayers, controllingLayers = layerDetermination(learningLayers)
     controllingLayer = controllingLayers[0]
@@ -424,12 +424,12 @@ class Trainer3SelfOrgContextSuper < Trainer2SelfOrgAndContext
     ### Now will self-org 1st hidden layer
     learningLayers = [hiddenLayer1]
     initWeights(learningLayers)
-    totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
+    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, totalEpochs)
 
     ### Now will self-org 2nd hidden layer  WITH CONTEXT!!
     learningLayers = [hiddenLayer2]
     initWeights(learningLayers)
-    totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
+    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, totalEpochs)
 
     ## TODO what's the value in doing this?  -- apparently NOT!
     layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
@@ -470,60 +470,42 @@ class Trainer4SelfOrgContextSuper < Trainer3SelfOrgContextSuper
     totalEpochs = 0
     ioFunction = NonMonotonicIOFunction
 
-
     ### Now will self-org 1st hidden layer
     learningLayers = [hiddenLayer1]
     initWeights(learningLayers)
-    totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
-
+    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, totalEpochs)
 
     ### Now will self-org 2nd hidden layer WITH CONTEXT!!
     learningLayers = [hiddenLayer2]
     initWeights(learningLayers)
-    totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
-
-
-    # puts "Output Layer NETINPUT:"
-    # forEachExampleDisplayNetworkInputsAndNetInputTo(outputLayer)
-    # puts "Hidden Layer 1:"
-    # forEachExampleDisplayInputsAndOutputs(hiddenLayer1)
-    puts "Hidden Layer 2:"
+    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, totalEpochs)
+    puts "Hidden Layer 2 WITH context:"
     forEachExampleDisplayInputsAndOutputs(hiddenLayer2)
-
 
     ### Now will self-org 2nd hidden layer withOUT context!!
-    learningLayers = [hiddenLayer2]
-    propagatingLayers, dumbdumb = layerDetermination(learningLayers)
-    strategyArguments = {}
-    strategyArguments[:ioFunction] = ioFunction
-    # TODO return arguments below are in reverse order
-    mse, totalEpochs = normalizationAndSelfOrgWITHOUTContext(learningLayers, propagatingLayers, strategyArguments, totalEpochs)
-
-    puts "Hidden Layer 2:"
+    mse, totalEpochs = selOrgNoContext(ioFunction, learningLayers, totalEpochs)
+    puts "Hidden Layer 2 with NO context:"
     forEachExampleDisplayInputsAndOutputs(hiddenLayer2)
 
-    learningLayers = [hiddenLayer2]
-    totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
-
-    puts "Hidden Layer 2:"
+    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, totalEpochs)
+    puts "Hidden Layer 2 with effectively NO Learning but with Outputs in Context (i.e., with 'dont know' representation added back)"
     forEachExampleDisplayInputsAndOutputs(hiddenLayer2)
 
-    #forEachExampleDisplayInputsAndOutputs(hiddenLayer2)
-
-    # TODO what's the value in doing this?
     layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
     calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
 
     learningLayers = [outputLayer]
-    # initWeights(learningLayers)
     totalEpochs, mse = supervisedTraining(learningLayers, ioFunction, totalEpochs)
-    # totalEpochs, mse = supervisedTraining(learningLayers, SigmoidIOFunction, totalEpochs)
-
-    ### Now will self-org 2nd hidden layer WITH CONTEXT!!
-    #learningLayers = [outputLayer]
-    #totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
 
     return totalEpochs, mse, calcTestingMeanSquaredErrors
+  end
+
+  def selOrgNoContext(ioFunction, learningLayers, totalEpochs)
+    propagatingLayers, willNotUseControllingLayer = layerDetermination(learningLayers)
+    strategyArguments = {}
+    strategyArguments[:ioFunction] = ioFunction
+    # TODO return arguments below are in reverse order
+    mse, totalEpochs = normalizationAndSelfOrgWITHOUTContext(learningLayers, propagatingLayers, strategyArguments, totalEpochs)
   end
 end
 
