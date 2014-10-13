@@ -344,38 +344,48 @@ class Trainer2SelfOrgAndContext < TrainerBase
     return mse, totalEpochs
   end
 
+
   def setupNormalizationStrategyWithContext(singleLayerControllingLearning, singleLearningLayer, strategyArguments)
     singleLayerControllingLearning.each_with_index do |neuronInControllingLayer, indexToControlNeuron|
       indexToLearningNeuron = 2 * indexToControlNeuron
 
-      strategyArguments[:strategy] = Normalization
-      learningController = LearningControlledByNeuron.new(neuronInControllingLayer)
-      strategyArguments[:contextController] = learningController
-      aLearningNeuron = singleLearningLayer[indexToLearningNeuron]
-      attachLearningStrategy([[aLearningNeuron]], AdapterForContext, strategyArguments)
-
-      learningControllerNOT = LearningControlledByNeuronNOT.new(neuronInControllingLayer)
-      strategyArguments[:contextController] = learningControllerNOT
-      aLearningNeuron = singleLearningLayer[indexToLearningNeuron + 1]
-      attachLearningStrategy([[aLearningNeuron]], AdapterForContext, strategyArguments)
+      normalizationSetup(LearningControlledByNeuron, indexToLearningNeuron, neuronInControllingLayer,
+                         singleLearningLayer, strategyArguments)
+      normalizationSetup(LearningControlledByNeuronNOT, (indexToLearningNeuron + 1), neuronInControllingLayer,
+                         singleLearningLayer, strategyArguments)
     end
   end
+
+  def normalizationSetup(classOfLearningController, indexToLearningNeuron, neuronInControllingLayer,
+      singleLearningLayer, strategyArguments)
+    aLearningNeuron = singleLearningLayer[indexToLearningNeuron]
+    strategy = Normalization.new(aLearningNeuron, strategyArguments)
+    strategy.extend(ContextForLearning)
+    learningController = classOfLearningController.new(neuronInControllingLayer)
+    strategy.learningController = learningController
+    aLearningNeuron.learningStrat = strategy
+  end
+
 
   def setupSelfOrgStrategyWithContext(singleLayerControllingLearning, singleLearningLayer, strategyArguments)
     singleLayerControllingLearning.each_with_index do |neuronInControllingLayer, indexToControlNeuron|
       indexToLearningNeuron = 2 * indexToControlNeuron
 
-      strategyArguments[:strategy] = SelfOrgStrat
-      learningController = LearningControlledByNeuron.new(neuronInControllingLayer)
-      strategyArguments[:contextController] = learningController
-      aLearningNeuron = singleLearningLayer[indexToLearningNeuron]
-      attachLearningStrategy([[aLearningNeuron]], AdapterForContext, strategyArguments)
-
-      learningControllerNOT = LearningControlledByNeuronNOT.new(neuronInControllingLayer)
-      strategyArguments[:contextController] = learningControllerNOT
-      aLearningNeuron = singleLearningLayer[indexToLearningNeuron + 1]
-      attachLearningStrategy([[aLearningNeuron]], AdapterForContext, strategyArguments)
+      selfOrgSetup(LearningControlledByNeuron, indexToLearningNeuron, neuronInControllingLayer,
+                   singleLearningLayer, strategyArguments)
+      selfOrgSetup(LearningControlledByNeuronNOT, (indexToLearningNeuron + 1), neuronInControllingLayer,
+                   singleLearningLayer, strategyArguments)
     end
+  end
+
+  def selfOrgSetup(classOfLearningController, indexToLearningNeuron, neuronInControllingLayer,
+      singleLearningLayer, strategyArguments)
+    aLearningNeuron = singleLearningLayer[indexToLearningNeuron]
+    strategy = SelfOrgStrat.new(aLearningNeuron, strategyArguments)
+    strategy.extend(ContextForLearning)
+    learningController = classOfLearningController.new(neuronInControllingLayer)
+    strategy.learningController = learningController
+    aLearningNeuron.learningStrat = strategy
   end
 
   def normalizationAndSelfOrgWITHOUTContext(learningLayers, propagatingLayers, strategyArguments, totalEpochs)

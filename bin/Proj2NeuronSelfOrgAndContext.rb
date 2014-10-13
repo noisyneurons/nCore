@@ -37,10 +37,10 @@ class Experiment
         :randomNumberSeed => (randomNumberSeed + 0),
 
         # training parameters
-        :learningRate =>  0.1,
+        :learningRate => 0.1,
         :minMSE => 0.0, # 0.001,
         :maxEpochNumbersForEachPhase => [1, 150, 1, 150],
-        :trainingSequence =>  MultiPhaseTrainingSequence,
+        :trainingSequence => MultiPhaseTrainingSequence,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
@@ -68,7 +68,7 @@ class Experiment
 
   #### generator to try different simple configurations:  e.g. where one of the input axises contains more "noise" than the other axises.
   def genTemp
-    gaussianRandomNumberGenerator = NormalDistribution.new(meanOfGaussianNoise = 0.0,  args[:standardDeviationOfAddedGaussianNoise])
+    gaussianRandomNumberGenerator = NormalDistribution.new(meanOfGaussianNoise = 0.0, args[:standardDeviationOfAddedGaussianNoise])
 
     xStart = [-1.0, 1.0, -1.0, 1.0]
     yStart = [1.0, 1.0, -1.0, -1.0]
@@ -77,7 +77,7 @@ class Experiment
     xIncVal = 0.0 # 0.002   # "noise level"
     xInc = [-xIncVal, xIncVal, -xIncVal, xIncVal]
 
-    yIncVal = 0.0      # "noise level"
+    yIncVal = 0.0 # "noise level"
     yInc = [yIncVal, yIncVal, -yIncVal, -yIncVal]
 
     numberOfClasses = xStart.length

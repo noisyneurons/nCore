@@ -60,8 +60,8 @@ class Experiment
     xStart = [-1.0, 1.0, -1.0, 1.0]
     yStart = [1.0, 1.0, -4.0, -4.0]
     xInc = [0.0, 0.0, 0.0, 0.0]
-     yInc = [1.0, 1.0, 1.0, 1.0]
-   # yInc = [0.0, 0.0, 0.0, 0.0]
+    yInc = [1.0, 1.0, 1.0, 1.0]
+    # yInc = [0.0, 0.0, 0.0, 0.0]
     zS = -2.0 # 0.0 # -2.0
     zI = 1.0 # 0.0 # 1.0
 
@@ -83,7 +83,7 @@ class Experiment
         # aPoint = [x, y, z]
         aPoint = [x, y]
         desiredOutputs = [0.0]
-        desiredOutputs[0] = 1.0  if(indexToClass == 1)
+        desiredOutputs[0] = 1.0 if (indexToClass == 1)
         examples << {:inputs => aPoint, :targets => desiredOutputs, :exampleNumber => exampleNumber, :class => indexToClass}
         exampleNumber += 1
       end
@@ -118,7 +118,7 @@ class Experiment
 
     snapShotDataSummary
 
-    plotMSEvsEpochNumber(trainingDataRecords) unless(trainingDataRecords.nil?)
+    plotMSEvsEpochNumber(trainingDataRecords) unless (trainingDataRecords.nil?)
   end
 end
 

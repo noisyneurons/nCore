@@ -5,7 +5,7 @@
 
 module ForwardingToLearningStrategy
 
-  def  startStrategy
+  def startStrategy
     learningStrat.startStrategy
   end
 

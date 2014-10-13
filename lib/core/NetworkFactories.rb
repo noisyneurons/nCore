@@ -224,7 +224,6 @@ class JumpLinked3LayerNetwork < Standard3LayerNetwork
 end
 
 
-
 ###########################################################################################
 # May want to move this to a separate file and place it after this file in the "include manifest of files to load"
 

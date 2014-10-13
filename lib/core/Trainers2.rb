@@ -1,13 +1,13 @@
 ### VERSION "nCore"
 ## ../nCore/lib/core/Trainers2.rb
 
-############################################################
 
+########################################################################
 class LearningStrategyBase # strategy for standard bp learning for output neurons
   attr_reader :neuron, :strategyArgs, :inputLinks, :outputLinks
   include CommonNeuronCalculations
 
-  def initialize(theEnclosingNeuron, **strategyArgs)
+  def initialize(theEnclosingNeuron, ** strategyArgs)
     @neuron = theEnclosingNeuron
     @strategyArgs = strategyArgs
     ioFunction = @strategyArgs[:ioFunction]
@@ -139,48 +139,41 @@ class SelfOrgStrat < LearningStrategyBase
   end
 end
 
-##############
+###
 
-class AdapterForContext
-  attr_accessor :theEnclosingNeuron, :strategyArgs, :learningStrat, :contextController
-  include ForwardingToLearningStrategy
-
-  def initialize(theEnclosingNeuron, strategyArgs)
-    @theEnclosingNeuron = theEnclosingNeuron
-    @strategyArgs = strategyArgs
-    @learningStrat = @strategyArgs[:strategy].new(theEnclosingNeuron, strategyArgs)
-    @contextController = @strategyArgs[:contextController]
-  end
-
-  def startEpoch
-    learningStrat.startEpoch
-  end
+module ContextForLearning
+  attr_accessor :learningController
 
   def propagate(exampleNumber)
-    if contextController.output == 1.0
-      learningStrat.propagate(exampleNumber)
+    if learningController.output == 1.0
+      super(exampleNumber)
     else
       dropOutNeuron
     end
   end
 
   def learnExample
-    if contextController.output == 1.0
-      learningStrat.learnExample
+    if learningController.output == 1.0
+      super
     end
-  end
-
-  def endEpoch
-    learningStrat.endEpoch
   end
 
   protected
 
   def dropOutNeuron
-    theEnclosingNeuron.netInput = netInput = 0.0
-    theEnclosingNeuron.output = learningStrat.ioFunction(netInput)
+    neuron.netInput = netInput = 0.0
+    neuron.output = ioFunction(netInput)
   end
 end
+
+#class SelfOrgStratWithContext < SelfOrgStrat
+#  include ContextForLearning
+#end
+#
+#class NormalizationWithContext < Normalization
+#  include ContextForLearning
+#end
+#
 
 ########################################################################
 

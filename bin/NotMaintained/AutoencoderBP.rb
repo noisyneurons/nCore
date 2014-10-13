@@ -14,7 +14,6 @@ class OutputNeuron
 end
 
 
-
 class Experiment
   include NeuronToNeuronConnection
 

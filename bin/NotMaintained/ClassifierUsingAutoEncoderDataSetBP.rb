@@ -113,7 +113,7 @@ class Experiment
 
     snapShotDataSummary
 
-    plotMSEvsEpochNumber(trainingDataRecords) unless(trainingDataRecords.nil?)
+    plotMSEvsEpochNumber(trainingDataRecords) unless (trainingDataRecords.nil?)
   end
 end
 

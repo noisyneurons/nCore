@@ -236,7 +236,6 @@ class Step2TrainerForJumpLinksOutputErrorBPOnly < AbstractStepTrainerForOutputEr
 end
 
 
-
 class StepTrainerForOutputErrorBPOnlyModLR < AbstractStepTrainerForOutputErrorBPOnly
   def performStandardBackPropTraining
     outputLayerNeurons.each { |aNeuron| aNeuron.learningRate = args[:outputLayerLearningRate] }

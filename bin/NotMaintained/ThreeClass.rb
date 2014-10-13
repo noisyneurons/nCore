@@ -74,8 +74,6 @@ experiment = Experiment.new("3Class2Shared2", baseRandomNumberSeed)
 experiment.performSimulation()
 
 
-
-
 #examples << {:inputs => [0.0, 0.0], :targets => [0.9, 0.1, 0.1], :exampleNumber => 0, :class => 0}
 #examples << {:inputs => [1.0, 0.0], :targets => [0.9, 0.1, 0.1], :exampleNumber => 1, :class => 0}
 #examples << {:inputs => [0.0, 1.0], :targets => [0.1, 0.9, 0.1], :exampleNumber => 2, :class => 1}

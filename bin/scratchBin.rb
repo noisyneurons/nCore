@@ -12,9 +12,9 @@ class TrainerSelfOrg < TrainerBase
 
   def train
     distributeSetOfExamples(examples)
-    phaseTrain {performStandardBackPropTraining}
+    phaseTrain { performStandardBackPropTraining }
     trainingSequence.startNextPhaseOfTraining
-    phaseTrain {performSelfOrgTraining}
+    phaseTrain { performSelfOrgTraining }
     forEachExampleDisplayInputsAndOutputs
     testMSE = calcTestingMeanSquaredErrors
     return trainingSequence.epochs, calcMeanSumSquaredErrors, testMSE

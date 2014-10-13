@@ -322,7 +322,7 @@ module DBAccess
       trainMSE = calcMeanSumSquaredErrors
       testMSE = calcTestingMeanSquaredErrors
       # theWeightsValue = outputLayer[0].inputLinks.last.weight
-      puts "epoch number = #{args[:epochs]}\ttrainMSE = #{trainMSE}\ttestMSE = #{testMSE}"  # "\ttheWeightsValue = #{theWeightsValue}" # unless($currentHost == "master")
+      puts "epoch number = #{args[:epochs]}\ttrainMSE = #{trainMSE}\ttestMSE = #{testMSE}" # "\ttheWeightsValue = #{theWeightsValue}" # unless($currentHost == "master")
       aHash = {:experimentNumber => $globalExperimentNumber, :epochs => args[:epochs], :mse => trainMSE, :testMSE => testMSE}
       TrainingData.new(aHash)
     end

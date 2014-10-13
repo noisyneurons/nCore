@@ -129,7 +129,7 @@ while (mse > 0.01 && epochNumber < 10**4)
   end
   neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
   flockingNeurons.each { |aNeuron| aNeuron.clusterAllResponses } ## Required for calculation of flocking error on subsequent epoch
-                                                                 # std("epoch number ", epochNumber)
+  # std("epoch number ", epochNumber)
   mse = aLearningNetwork.calcNetworksMeanSquareError
   if (epochNumber.modulo(100) == 0)
     puts "At Epoch # #{epochNumber} Network's MSE=\t#{aLearningNetwork.calcNetworksMeanSquareError}\n\n" # if (epochNumber.modulo(100) == 0)

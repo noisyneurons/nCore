@@ -18,7 +18,7 @@ include ExampleDistribution
 class FunctionalBackpropXORTest < MiniTest::Unit::TestCase
   def setup
     srand(0) # For a '0' argument normally takes 6053 epochs to reach error criteria of 0.01
-             # add the training examples...
+    # add the training examples...
     @examples = []
     @examples << {:inputs => [0.0, 0.0], :targets => [0.1], :exampleNumber => 0}
     @examples << {:inputs => [0.0, 1.0], :targets => [0.9], :exampleNumber => 1}

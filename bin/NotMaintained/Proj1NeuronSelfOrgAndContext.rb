@@ -50,7 +50,7 @@ class Experiment
         :angleOfClockwiseRotationOfInputData => 0.0,
         :numberOfExamples => (self.numberOfExamples = 16),
         :numberOfTestingExamples => numberOfExamples
-   }
+    }
   end
 
   def createDataSet

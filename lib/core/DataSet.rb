@@ -97,7 +97,7 @@ end
 module DataSetGenerators
 
   def gen4ClassDS
-    gaussianRandomNumberGenerator = NormalDistribution.new(meanOfGaussianNoise = 0.0,  args[:standardDeviationOfAddedGaussianNoise])
+    gaussianRandomNumberGenerator = NormalDistribution.new(meanOfGaussianNoise = 0.0, args[:standardDeviationOfAddedGaussianNoise])
 
     xStart = [-1.0, 1.0, -1.0, 1.0]
     yStart = [1.0, 1.0, -1.0, -1.0]
@@ -130,7 +130,6 @@ module DataSetGenerators
     examples = rotateClockwise(examples, angleOfClockwiseRotationOfInputData)
   end
 end
-
 
 
 class DataGenerator

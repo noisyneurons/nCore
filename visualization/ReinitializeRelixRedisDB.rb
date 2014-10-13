@@ -9,7 +9,7 @@ puts "\nLast Experiment Number=\t #{lastExperimentNumber}"
 ## --- DANGER ----###
 $redis.flushdb
 
-nextExperimentNumber =  lastExperimentNumber.to_i + 1
+nextExperimentNumber = lastExperimentNumber.to_i + 1
 ExperimentLogger.initializeExperimentNumber(nextExperimentNumber.to_s)
 $redis.save
 

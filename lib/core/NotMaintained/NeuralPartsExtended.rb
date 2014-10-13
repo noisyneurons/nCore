@@ -85,8 +85,8 @@ module CommonClusteringCode
   ## ---------------- Reporting methods ------------------------------
 
   def calc_dPrime(arrayOfVectorsRepresentingPointsInSpace) # very inexact for small numbers of samples... need to use F-st...
-                                                           #puts "dispersionOfInputsForDPrimeCalculation=\t#{clusterer.dispersionOfInputsForDPrimeCalculation(arrayOfVectorsRepresentingPointsInSpace)}"
-                                                           #puts "distanceBetween2ClustersForDimension0=\t#{clusterer.distanceBetween2ClustersForDimension0}"
+    #puts "dispersionOfInputsForDPrimeCalculation=\t#{clusterer.dispersionOfInputsForDPrimeCalculation(arrayOfVectorsRepresentingPointsInSpace)}"
+    #puts "distanceBetween2ClustersForDimension0=\t#{clusterer.distanceBetween2ClustersForDimension0}"
     return (clusterer.distanceBetween2ClustersForDimension0 / clusterer.dispersionOfInputsForDPrimeCalculation(arrayOfVectorsRepresentingPointsInSpace)).abs
   end
 
@@ -169,14 +169,13 @@ end
 
 class FlockingNeuronStepIO < FlockingNeuron
   def ioFunction(netInput)
-    if(netInput >= 0.0)
+    if (netInput >= 0.0)
       return 1.0
     else
       return 0.0
     end
   end
 end
-
 
 
 class FlockingSymmetricalNeuron < SymmetricalNeuron
@@ -323,7 +322,6 @@ class FlockingOutputNeuronRecorder < FlockingNeuronRecorder # TODO Need to separ
     return aHash
   end
 end
-
 
 
 #  SAVE SAVE SAVE  SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE  SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE SAVE

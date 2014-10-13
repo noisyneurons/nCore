@@ -25,7 +25,7 @@ class Experiment
         :numberOfHiddenLayer1Neurons => 2,
         :numberOfHiddenLayer2Neurons => 2,
         :numberOfOutputNeurons => 3,
-        :weightRange =>  1.0,
+        :weightRange => 1.0,
         :typeOfLink => FlockingLink,
 
         # Training Set parameters
@@ -91,7 +91,6 @@ baseRandomNumberSeed = 0
 experiment = Experiment.new('3ClsR02HidLocal ThreeClass2HiddenLayersLocalFlock', baseRandomNumberSeed)
 
 experiment.performSimulation()
-
 
 
 #def createTrainingSet

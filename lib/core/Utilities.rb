@@ -12,7 +12,7 @@ require 'yaml'
 INFINITY = 1.0/0
 
 $currentHost = "localhost"
-$currentHost = "master" unless(ENV['SGE_TASK_ID'].nil?)
+$currentHost = "master" unless (ENV['SGE_TASK_ID'].nil?)
 $redis = Redis.new(:host => $currentHost)
 
 ############################# MODULES ###########################

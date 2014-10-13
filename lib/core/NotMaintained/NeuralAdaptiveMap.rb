@@ -40,8 +40,8 @@ class NeuronSOM < Neuron
 
   def adaptWeight(k, lambda, learningRate)
     # lambda = lambda_i * ( (lambda_f / lambda_i) ** (t / t_max) )
-    h = exp( (-1.0 * k) / lambda )
-    learningRate = learningRate_i * ( (learningRate_f / learningRate_i) ** (t / t_max) )
+    h = exp((-1.0 * k) / lambda)
+    learningRate = learningRate_i * ((learningRate_f / learningRate_i) ** (t / t_max))
     learningRateForNeuronsProximity = learningRate * h
     inputLinks.each { |inputLink| inputLink.adaptWeight(learningRateForNeuronsProximity) }
   end

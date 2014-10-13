@@ -5,7 +5,7 @@ require_relative '../lib/core/Utilities'
 $redis = Redis.new(:host => $currentHost)
 
 
-anArray = [1,2,3,4,5]
+anArray = [1, 2, 3, 4, 5]
 x = Marshal.dump(anArray)
 redis.set("myKey", x)
 y = redis.get("myKey")

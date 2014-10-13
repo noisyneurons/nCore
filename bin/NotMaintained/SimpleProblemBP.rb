@@ -6,7 +6,7 @@ require_relative 'BaseLearningExperiment'
 
 class OutputNeuron
   # include NonMonotonicIOFunctionUnShifted
-  include        NonMonotonicIODerivative
+  include NonMonotonicIODerivative
 end
 
 
@@ -57,7 +57,7 @@ class Experiment
 
   def createNetworkAndTrainer
 
-    network = Simplest1LayerNet.new(args)  # we rally don't use the flocking part of the network here! -- but we need...
+    network = Simplest1LayerNet.new(args) # we rally don't use the flocking part of the network here! -- but we need...
     theTrainer = BPTrainingSupervisorFor1LayerNet.new(examples, network, args)
 
     return network, theTrainer

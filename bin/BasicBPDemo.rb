@@ -28,7 +28,7 @@ class Experiment
         # training parameters re. Output Error
         :learningRate => 3.0,
         :minMSE => 0.001,
-        :trainingSequence =>  TrainingSequence,
+        :trainingSequence => TrainingSequence,
         :maxNumEpochs => 2e3,
 
         # Network Architecture
@@ -40,7 +40,7 @@ class Experiment
         :typeOfLink => Link,
         :typeOfNeuron => Neuron2,
         :typeOfOutputNeuron => OutputNeuron2,
-     #   :typeOfLinkToOutput => Link,
+        #   :typeOfLinkToOutput => Link,
 
 
         # Training Set parameters

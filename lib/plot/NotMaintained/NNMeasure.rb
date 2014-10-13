@@ -469,7 +469,7 @@ class BothErrorsVsNetInputAndFlockingViewClusterPlots < TrainingAndMeasurementTr
       cluster = @theNeuronToExamine.clusterer.determineClusterAssociatedWithExample(exampleNumber)
 
       unless (cluster.measures.has_key?('BeforeFlocking')) # Do we need to init hash values to arrays
-                                                           # YES, Init hash values to arrays:
+        # YES, Init hash values to arrays:
         cluster.measures['BeforeFlocking'] = []
         cluster.measures['EndOfFlocking'] = []
         cluster.measures['CenterOfFlock'] = []

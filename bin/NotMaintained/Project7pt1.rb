@@ -36,10 +36,10 @@ class Experiment
         :randomNumberSeed => randomNumberSeed,
 
         # training parameters
-        :learningRate =>  0.1,
+        :learningRate => 0.1,
         :minMSE => 0.0, # 0.001,
         :maxEpochNumbersForEachPhase => [200, 6e2, 200, 6e2, 200, 6e2, 200],
-        :trainingSequence =>  MultiPhaseTrainingSequence,
+        :trainingSequence => MultiPhaseTrainingSequence,
 
         # Network Architecture
         :numberOfInputNeurons => 2,
