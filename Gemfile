@@ -1,0 +1,6 @@
+source 'https://rubygems.org'
+gem 'relix'
+gem 'redis'
+gem 'hiredis'
+gem 'statsample'
+gem 'rake'

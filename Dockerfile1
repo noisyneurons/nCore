@@ -1,0 +1,19 @@
+# noisyneurons/nn
+
+# Pull base image.
+FROM litaio/ruby:2.1.3
+
+# Set instructions on build.
+ADD Gemfile /NN2012/
+ADD Gemfile.lock /NN2012/
+
+# Define working directory.
+WORKDIR /NN2012
+RUN bundle install
+CMD ["bash"]
+
+
+
+
+
+
