@@ -1,69 +1,28 @@
-require_relative 'Utilities'
-require_relative 'DataSet'
-require_relative 'NeuralIOFunctions'
+require 'rubygems'
+require 'bundler/setup'
 
 
-#class SimObj
-#  attr_accessor :output
-#  def initialize
-#    @output = 20.5
-#  end
-#end
-#
-#class Simple
-#  def initialize
-#    @var1 = 1
-#  end
-#
-#  def classMethod
-#    puts "classMethod"
-#  end
-#end
-#
-#
-#module SimpleModule
-#  attr_accessor :aModuleVariable
-#
-#  def moduleMethod
-#   puts 'test'
-#  end
-#
-#end
-#
-#
-##class Simple
-##  include SimpleModule
-##end
-#
-#oo = SimObj.new
-#
-#aSimpleClass = Simple.new
-#aSimpleClass.extend(SimpleModule)
-#
-#
-##aSimpleClass.moduleMethod
-#
-#aSimpleClass.aModuleVariable= oo
-#
-#puts "variable= #{aSimpleClass.aModuleVariable.output}"
-## aSimpleClass.classMethod
+#require_relative 'Utilities'
+#require_relative 'DataSet'
+#require_relative 'NeuralIOFunctions'
 
 
-class A
-  def say
-    puts "This is class A"
-  end
+
+require 'statsample'
+
+# require '/home/mark/usr/local/ruby2.1.3/ruby/lib/ruby/gems/2.1.0/gems/statsample'
+# Note R like generation of random gaussian variable
+# and correlation matrix
+
+ss_analysis("Statsample::Bivariate.correlation_matrix") do
+  samples=1000
+  ds=data_frame(
+      'a'=>rnorm(samples),
+      'b'=>rnorm(samples),
+      'c'=>rnorm(samples),
+      'd'=>rnorm(samples))
+  cm=cor(ds)
+  summary(cm)
 end
 
-module B
-  def say
-    puts "This is module B"
-  end
-end
-
-
-anA = A.new
-
-anA.extend(B)
-
-anA.say
+Statsample::Analysis.run_batch # Echo output to console

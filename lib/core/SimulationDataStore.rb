@@ -1,7 +1,7 @@
 ### VERSION "nCore"
 ## ../nCore/lib/core/SimulationDataStore.rb
 
-require_relative 'Utilities'
+# require_relative 'Utilities'
 
 module RecordingAndPlottingRoutines
   def generatePlotForEachNeuron(arrayOfNeuronsToPlot)

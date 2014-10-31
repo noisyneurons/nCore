@@ -1,6 +1,7 @@
 # Utilities.rb
 
 require 'rubygems'
+require 'bundler/setup'
 require 'mathn'
 require 'matrix'
 require 'relix'
@@ -11,9 +12,11 @@ require 'yaml'
 # Globals, Constants
 INFINITY = 1.0/0
 
-$currentHost = "localhost"
+# $currentHost = "localhost" # 0.0.0.0" # 172.17.0.44" #  192.168.0.140  "192.168.1.254" # "192.168.0.1"  #"192.168.0.140"   #
+$currentHost = "172.17.0.56"
 $currentHost = "master" unless (ENV['SGE_TASK_ID'].nil?)
-$redis = Redis.new(:host => $currentHost)
+$redis = Redis.new(:host => $currentHost, :password => "com")
+# $redis = Redis.new(:password => "com")
 
 ############################# MODULES ###########################
 
