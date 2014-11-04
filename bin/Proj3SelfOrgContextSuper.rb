@@ -42,6 +42,8 @@ class Experiment
         # training parameters
         :learningRate => 0.1,
         :minMSE => 0.0, # 0.001,
+        :epochsForSelfOrg => 150,
+        :epochsForSupervisedTraining => 600,
         :trainingSequence => TrainingSequence,
 
         # Network Architecture

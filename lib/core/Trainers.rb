@@ -314,19 +314,19 @@ class Trainer3SelfOrgContextSuper < TrainerBase
     ### Now will self-org 1st hidden layer
     learningLayers = [hiddenLayer1]
     initWeights(learningLayers)
-    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, epochsDuringPhase=150, totalEpochs)
+    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
     ### Now will self-org 2nd hidden layer  WITH CONTEXT!!
     learningLayers = [hiddenLayer2]
     initWeights(learningLayers)
-    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, epochsDuringPhase=150, totalEpochs)
+    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
     ## TODO what's the value in doing this?  -- apparently NOT! -- Certainly useful for 'visualization'
     layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
     calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
 
     learningLayers = [outputLayer]
-    totalEpochs, mse = supervisedTraining(learningLayers, ioFunction, epochsDuringPhase=600, totalEpochs)
+    totalEpochs, mse = supervisedTraining(learningLayers, ioFunction, args[:epochsForSupervisedTraining], totalEpochs)
 
     forEachExampleDisplayInputsAndOutputs(outputLayer)
 
@@ -462,17 +462,18 @@ class Trainer4SelfOrgContextSuper < Trainer3SelfOrgContextSuper
     ### Now will self-org 1st hidden layer
     learningLayers = [hiddenLayer1]
     initWeights(learningLayers)
-    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, epochsDuringPhase=150, totalEpochs)
+    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
     ### Now will self-org 2nd hidden layer WITH CONTEXT!!
     learningLayers = [hiddenLayer2]
     initWeights(learningLayers)
-    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, epochsDuringPhase=150, totalEpochs)
+    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
     ### Now will self-org 2nd hidden layer withOUT context!!
-    mse, totalEpochs = selOrgNoContext(learningLayers, ioFunction, epochsDuringPhase=150, totalEpochs)
+    mse, totalEpochs = selOrgNoContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
-    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, epochsDuringPhase=150, totalEpochs)
+    # totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
+    # totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, 1, totalEpochs)
     puts "Hidden Layer 2 with effectively NO Learning but with Outputs in Context (i.e., with 'dont know' representation added back)"
     forEachExampleDisplayInputsAndOutputs(hiddenLayer2)
 
@@ -480,7 +481,7 @@ class Trainer4SelfOrgContextSuper < Trainer3SelfOrgContextSuper
     calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
 
     learningLayers = [outputLayer]
-    totalEpochs, mse = supervisedTraining(learningLayers, ioFunction, epochsDuringPhase=600, totalEpochs)
+    totalEpochs, mse = supervisedTraining(learningLayers, ioFunction, args[:epochsForSupervisedTraining], totalEpochs)
 
     return totalEpochs, mse, calcTestingMeanSquaredErrors
   end
