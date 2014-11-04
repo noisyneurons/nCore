@@ -5,11 +5,11 @@
 #   In this 4th project, we append a "relearning or re- self-org WITHOUT CONTEXT" just prior to the bp supervised training.
 #   Presumably this will improve the accuracy of the hyperplanes in the 2nd hidden layer, compared to those in proj 3.
 
-# General Purpose:  Start of Project 7; project to split example set to learn sub-parts, and then combine those parts/neuron-functions that
+# General Purpose:  Start of Project 4; project to split example set to learn sub-parts, and then combine those parts/neuron-functions that
 # didn't need to be separated, but instead need to be integrated to obtain better generalization.
-# Ultimate goal of project 6 is develop analogy processing -- where one function useful for solving one problem
-# can be of use in solving another problem.  The common function(s)/neuron(s) can be thus be 'reused' -- and even potentially made
-# better by improving the accuracy of the function parameters because more examples are used to learn the parameters.
+# Ultimate goal is develop analogy processing -- where one function useful for solving one problem
+# can be of use in solving another "similar-but-different" problem.  The common function(s)/neuron(s) can be thus be 'reused' -- and even potentially made
+# better by improving the accuracy of the function parameters because more examples are used to learn the parameters. ala Bayes
 
 require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
@@ -47,8 +47,8 @@ class Experiment
         # training parameters
         :learningRate => 0.1,
         :minMSE => 0.0, # 0.001,
-        :maxEpochNumbersForEachPhase => [1, 150, 1, 150, 1, 150, 1, 1, 600],
-        :trainingSequence => MultiPhaseTrainingSequence,
+        # :maxEpochNumbersForEachPhase => [1, 150, 1, 150, 1, 150, 1, 1, 600],
+        :trainingSequence => TrainingSequence,
 
         # Network Architecture
         :numberOfInputNeurons => 2,

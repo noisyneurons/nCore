@@ -11,8 +11,8 @@ class TrainingSequence
 
   def initialize(args)
     @args = args
-    @maxNumberOfEpochs = args[:maxNumEpochs]
     @epochs = -1
+    @maxNumberOfEpochs = 0 # need to do this to enable first 'nextEpoch' to work
     @stillMoreEpochs = true
     nextEpoch
   end
@@ -27,7 +27,8 @@ class TrainingSequence
     self.stillMoreEpochs = areThereStillMoreEpochs?
   end
 
-  def startNextPhaseOfTraining
+  def startTrainingPhase(epochsDuringPhase)
+    self.maxNumberOfEpochs = epochsDuringPhase
     self.epochs = -1
     self.stillMoreEpochs = true
     nextEpoch
@@ -44,26 +45,6 @@ class TrainingSequence
   end
 end
 
-class MultiPhaseTrainingSequence < TrainingSequence
-  attr_accessor :maxEpochNumbersForEachPhase, :phaseIndex, :numberOfPhases
-
-  def initialize(args)
-    @args = args
-    @maxEpochNumbersForEachPhase = args[:maxEpochNumbersForEachPhase]
-    @numberOfPhases = @maxEpochNumbersForEachPhase.length
-    @phaseIndex = -1
-    startNextPhaseOfTraining
-  end
-
-  def startNextPhaseOfTraining
-    self.phaseIndex += 1
-    return if (numberOfPhases == phaseIndex)
-    self.maxNumberOfEpochs = maxEpochNumbersForEachPhase[phaseIndex]
-    self.epochs = -1
-    self.stillMoreEpochs = true
-    nextEpoch
-  end
-end
 
 ###################################################################
 ###################################################################
@@ -113,7 +94,7 @@ class TrainerBase
     strategyArgs = {:ioFunction => SigmoidIOFunction}
     attachLearningStrategy(learningLayers - [outputLayer], LearningBP, strategyArgs)
     attachLearningStrategy([outputLayer], LearningBPOutput, strategyArgs)
-    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase=2000, totalEpochs)
 
     forEachExampleDisplayInputsAndOutputs
     return totalEpochs, mse, calcTestingMeanSquaredErrors
@@ -123,10 +104,13 @@ class TrainerBase
     distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
   end
 
-  def trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
-    mse = 1e100
+  def trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase, totalEpochs)
 
     startStrategy(learningLayers)
+
+    mse = 1e100
+    trainingSequence.startTrainingPhase(epochsDuringPhase)
+
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
       propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
       trainingSequence.nextEpoch
@@ -137,7 +121,6 @@ class TrainerBase
     end
 
     totalEpochs += trainingSequence.epochs
-    trainingSequence.startNextPhaseOfTraining
     return mse, totalEpochs
   end
 
@@ -253,7 +236,6 @@ class TrainerBase
     end
   end
 
-
   def forEachExampleDisplayInputsAndOutputs(resultsLayer = outputLayer)
     breakOnNextPass = false
     propagatingLayers = allNeuronLayers.collect do |aLayer|
@@ -282,7 +264,39 @@ class TrainerBase
 
 end
 
-class Trainer2SelfOrgAndContext < TrainerBase
+#class Trainer2SelfOrgAndContext < TrainerBase
+#
+#  #def train
+#  #  distributeSetOfExamples(examples)
+#  #
+#  #  totalEpochs = 0
+#  #  ioFunction = NonMonotonicIOFunction
+#  #
+#  #  ### Now will self-org 1st hidden layer
+#  #  learningLayers = [hiddenLayer1]
+#  #  initWeights(learningLayers)
+#  #  totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
+#  #
+#  #  ### Now will self-org 2nd hidden layer
+#  #  learningLayers = [hiddenLayer2]
+#  #  initWeights(learningLayers)
+#  #  totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
+#  #
+#  #  ## TODO what's the value in doing this?  -- apparently NOT!
+#  #  layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
+#  #  calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
+#  #
+#  #  #forEachExampleDisplayInputsAndOutputs
+#  #  return totalEpochs, mse, 0.998 # calcTestingMeanSquaredErrors
+#  #end
+#
+#
+#  def distributeSetOfExamples(examples)
+#    distributeDataToInputAndOutputNeurons(examples, [inputLayer])
+#  end
+#end
+
+class Trainer3SelfOrgContextSuper < TrainerBase
 
   attr_accessor :hiddenLayer1, :hiddenLayer2
 
@@ -300,23 +314,26 @@ class Trainer2SelfOrgAndContext < TrainerBase
     ### Now will self-org 1st hidden layer
     learningLayers = [hiddenLayer1]
     initWeights(learningLayers)
-    totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
+    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, epochsDuringPhase=150, totalEpochs)
 
-    ### Now will self-org 2nd hidden layer
+    ### Now will self-org 2nd hidden layer  WITH CONTEXT!!
     learningLayers = [hiddenLayer2]
     initWeights(learningLayers)
-    totalEpochs, mse = simplifiedSelfOrg(learningLayers, ioFunction, totalEpochs)
+    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, epochsDuringPhase=150, totalEpochs)
 
-    ## TODO what's the value in doing this?  -- apparently NOT!
+    ## TODO what's the value in doing this?  -- apparently NOT! -- Certainly useful for 'visualization'
     layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
     calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
 
-    #forEachExampleDisplayInputsAndOutputs
-    return totalEpochs, mse, 0.998 # calcTestingMeanSquaredErrors
+    learningLayers = [outputLayer]
+    totalEpochs, mse = supervisedTraining(learningLayers, ioFunction, epochsDuringPhase=600, totalEpochs)
+
+    forEachExampleDisplayInputsAndOutputs(outputLayer)
+
+    return totalEpochs, mse, calcTestingMeanSquaredErrors
   end
 
-  def selfOrgUsingNormalization(learningLayers, ioFunction, totalEpochs)
-
+  def selfOrgUsingNormalization(learningLayers, ioFunction, epochsForSelfOrg, totalEpochs)
     propagatingLayers, controllingLayers = layerDetermination(learningLayers)
     controllingLayer = controllingLayers[0]
 
@@ -324,26 +341,24 @@ class Trainer2SelfOrgAndContext < TrainerBase
     strategyArguments[:ioFunction] = ioFunction
 
     if (controllingLayer == inputLayer)
-      mse, totalEpochs = normalizationAndSelfOrgWITHOUTContext(learningLayers, propagatingLayers, strategyArguments, totalEpochs)
+      mse, totalEpochs = normalizationAndSelfOrgWITHOUTContext(learningLayers, propagatingLayers, strategyArguments, epochsForSelfOrg, totalEpochs)
     else
-      mse, totalEpochs = normalizationAndSelfOrgWithContext(learningLayers, controllingLayers, propagatingLayers, strategyArguments, totalEpochs)
+      mse, totalEpochs = normalizationAndSelfOrgWithContext(learningLayers, controllingLayers, propagatingLayers, strategyArguments, epochsForSelfOrg, totalEpochs)
     end
     return totalEpochs, mse
   end
 
-  def normalizationAndSelfOrgWithContext(learningLayers, controllingLayers, propagatingLayers, strategyArguments, totalEpochs)
-
+  def normalizationAndSelfOrgWithContext(learningLayers, controllingLayers, propagatingLayers, strategyArguments, epochsForSelfOrg, totalEpochs)
     singleLayerControllingLearning = controllingLayers[0]
     singleLearningLayer = learningLayers[0]
 
     setupNormalizationStrategyWithContext(singleLayerControllingLearning, singleLearningLayer, strategyArguments)
-    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForNormalization=1, totalEpochs)
 
     setupSelfOrgStrategyWithContext(singleLayerControllingLearning, singleLearningLayer, strategyArguments)
-    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForSelfOrg, totalEpochs)
     return mse, totalEpochs
   end
-
 
   def setupNormalizationStrategyWithContext(singleLayerControllingLearning, singleLearningLayer, strategyArguments)
     singleLayerControllingLearning.each_with_index do |neuronInControllingLayer, indexToControlNeuron|
@@ -366,7 +381,6 @@ class Trainer2SelfOrgAndContext < TrainerBase
     aLearningNeuron.learningStrat = strategy
   end
 
-
   def setupSelfOrgStrategyWithContext(singleLayerControllingLearning, singleLearningLayer, strategyArguments)
     singleLayerControllingLearning.each_with_index do |neuronInControllingLayer, indexToControlNeuron|
       indexToLearningNeuron = 2 * indexToControlNeuron
@@ -388,12 +402,12 @@ class Trainer2SelfOrgAndContext < TrainerBase
     aLearningNeuron.learningStrat = strategy
   end
 
-  def normalizationAndSelfOrgWITHOUTContext(learningLayers, propagatingLayers, strategyArguments, totalEpochs)
+  def normalizationAndSelfOrgWITHOUTContext(learningLayers, propagatingLayers, strategyArguments, epochsForSelfOrg, totalEpochs)
     attachLearningStrategy(learningLayers, Normalization, strategyArguments)
-    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForNormalization=1, totalEpochs)
 
     attachLearningStrategy(learningLayers, SelfOrgStrat, strategyArguments)
-    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForSelfOrg, totalEpochs)
     return mse, totalEpochs
   end
 
@@ -418,42 +432,7 @@ class Trainer2SelfOrgAndContext < TrainerBase
     end
   end
 
-  def distributeSetOfExamples(examples)
-    distributeDataToInputAndOutputNeurons(examples, [inputLayer])
-  end
-end
-
-class Trainer3SelfOrgContextSuper < Trainer2SelfOrgAndContext
-
-  def train
-    distributeSetOfExamples(examples)
-
-    totalEpochs = 0
-    ioFunction = NonMonotonicIOFunction
-
-    ### Now will self-org 1st hidden layer
-    learningLayers = [hiddenLayer1]
-    initWeights(learningLayers)
-    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, totalEpochs)
-
-    ### Now will self-org 2nd hidden layer  WITH CONTEXT!!
-    learningLayers = [hiddenLayer2]
-    initWeights(learningLayers)
-    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, totalEpochs)
-
-    ## TODO what's the value in doing this?  -- apparently NOT! -- Certainly useful for 'visualization'
-    layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
-    calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
-
-    learningLayers = [outputLayer]
-    totalEpochs, mse = supervisedTraining(learningLayers, ioFunction, totalEpochs)
-
-    forEachExampleDisplayInputsAndOutputs(outputLayer)
-
-    return totalEpochs, mse, calcTestingMeanSquaredErrors
-  end
-
-  def supervisedTraining(learningLayers, ioFunction, totalEpochs)
+  def supervisedTraining(learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
     propagatingLayers, controllingLayers = layerDetermination(learningLayers)
 
     strategyArguments = {}
@@ -463,7 +442,7 @@ class Trainer3SelfOrgContextSuper < Trainer2SelfOrgAndContext
     otherLearningLayers = learningLayers - [outputLayer]
     attachLearningStrategy(otherLearningLayers, LearningBP, strategyArguments)
 
-    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, totalEpochs)
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase, totalEpochs)
     return totalEpochs, mse
   end
 
@@ -483,17 +462,17 @@ class Trainer4SelfOrgContextSuper < Trainer3SelfOrgContextSuper
     ### Now will self-org 1st hidden layer
     learningLayers = [hiddenLayer1]
     initWeights(learningLayers)
-    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, totalEpochs)
+    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, epochsDuringPhase=150, totalEpochs)
 
     ### Now will self-org 2nd hidden layer WITH CONTEXT!!
     learningLayers = [hiddenLayer2]
     initWeights(learningLayers)
-    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, totalEpochs)
+    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, epochsDuringPhase=150, totalEpochs)
 
     ### Now will self-org 2nd hidden layer withOUT context!!
-    mse, totalEpochs = selOrgNoContext(ioFunction, learningLayers, totalEpochs)
+    mse, totalEpochs = selOrgNoContext(learningLayers, ioFunction, epochsDuringPhase=150, totalEpochs)
 
-    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, totalEpochs)
+    totalEpochs, mse = selfOrgUsingNormalization(learningLayers, ioFunction, epochsDuringPhase=150, totalEpochs)
     puts "Hidden Layer 2 with effectively NO Learning but with Outputs in Context (i.e., with 'dont know' representation added back)"
     forEachExampleDisplayInputsAndOutputs(hiddenLayer2)
 
@@ -501,17 +480,17 @@ class Trainer4SelfOrgContextSuper < Trainer3SelfOrgContextSuper
     calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
 
     learningLayers = [outputLayer]
-    totalEpochs, mse = supervisedTraining(learningLayers, ioFunction, totalEpochs)
+    totalEpochs, mse = supervisedTraining(learningLayers, ioFunction, epochsDuringPhase=600, totalEpochs)
 
     return totalEpochs, mse, calcTestingMeanSquaredErrors
   end
 
-  def selOrgNoContext(ioFunction, learningLayers, totalEpochs)
+  def selOrgNoContext(learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
     propagatingLayers, willNotUseControllingLayer = layerDetermination(learningLayers)
     strategyArguments = {}
     strategyArguments[:ioFunction] = ioFunction
     # TODO return arguments below are in reverse order
-    mse, totalEpochs = normalizationAndSelfOrgWITHOUTContext(learningLayers, propagatingLayers, strategyArguments, totalEpochs)
+    mse, totalEpochs = normalizationAndSelfOrgWITHOUTContext(learningLayers, propagatingLayers, strategyArguments, epochsDuringPhase, totalEpochs)
   end
 end
 
