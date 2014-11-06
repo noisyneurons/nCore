@@ -7,32 +7,53 @@ class LearningStrategyBase # strategy for standard bp learning for output neuron
   attr_reader :neuron, :strategyArgs, :inputLinks, :outputLinks
   include CommonNeuronCalculations
 
-  def initialize(theEnclosingNeuron, **strategyArgs)
+  def initialize(theEnclosingNeuron, ** strategyArgs)
     @neuron = theEnclosingNeuron
     @strategyArgs = strategyArgs
     ioFunction = @strategyArgs[:ioFunction]
     self.extend(ioFunction)
     @inputLinks = @neuron.inputLinks
     @outputLinks = @neuron.outputLinks if @neuron.respond_to?(:outputLinks)
-    @targetPlus = self.findNetInputThatGeneratesMaximumOutput
-    @targetMinus = -1.0 * @targetPlus
-    @distanceBetweenTargets = @targetPlus - @targetMinus
   end
 
-  def startStrategy
-    ## neuron.output = ioFunction(neuron.netInput) # Probably only need to do this in special cases, like simulating recurrent nets
+  def startStrategy;
   end
 
-  def finishLearningStrategy
+  ; ## neuron.output = ioFunction(neuron.netInput) Simulating recurrent nets?
+  def startEpoch;
   end
+
+  ;
+
+  def learnExample;
+  end
+
+  ;
+
+  def endEpoch;
+  end
+
+  ;
+
+  def finishLearningStrategy;
+  end
+
+  ;
 
   # service routines that may be used by various learning strategies
-
   def calcWeightsForUNNormalizedInputs
     biasWeight = inputLinks.inject(0.0) { |sum, link| sum + link.propagateUsingZeroInput }
     inputLinks.each { |aLink| aLink.calcWeightsForUNNormalizedInputs }
     inputLinks[-1].weight = biasWeight
     inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
+  end
+end
+
+class ForwardPropOnly < LearningStrategyBase # just forward propagation
+  def propagate(exampleNumber)
+    neuron.exampleNumber = exampleNumber
+    neuron.netInput = netInput = calcNetInputToNeuron
+    neuron.output = ioFunction(netInput)
   end
 end
 
@@ -83,14 +104,6 @@ class LearningBPOutput < LearningStrategyBase # strategy for standard bp learnin
 end
 
 class Normalization < LearningStrategyBase
-  #def startStrategy
-  #  super
-  #  numberOfInputsToNeuron = inputLinks.length
-  #  inputLinks.each do |aLink|
-  #    verySmallNoise = 0.0001 * (rand - 0.5)
-  #    aLink.weight = (0.2 + verySmallNoise) / numberOfInputsToNeuron
-  #  end
-  #end
 
   def startEpoch
     inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
@@ -111,6 +124,13 @@ end
 
 class SelfOrgStrat < LearningStrategyBase
   attr_accessor :targetMinus, :distanceBetweenTargets
+
+  def initialize(theEnclosingNeuron, ** strategyArgs)
+    super
+    @targetPlus = self.findNetInputThatGeneratesMaximumOutput
+    @targetMinus = -1.0 * @targetPlus
+    @distanceBetweenTargets = @targetPlus - @targetMinus
+  end
 
   def startEpoch
     zeroDeltaWAccumulated
@@ -166,14 +186,6 @@ module ContextForLearning
   end
 end
 
-#class SelfOrgStratWithContext < SelfOrgStrat
-#  include ContextForLearning
-#end
-#
-#class NormalizationWithContext < Normalization
-#  include ContextForLearning
-#end
-#
 
 ########################################################################
 
@@ -219,16 +231,5 @@ class LearningControlledByNeuronNOT < LearningControlledByNeuron
   end
 end
 
-class DummyLearningController < LearningController
-  def output
-    #  aGroupOfExampleNumbers =  [0,1,2,3,8,9,10,11]  # (0..7).to_a #
-    aGroupOfExampleNumbers = (0..15).to_a
-    if aGroupOfExampleNumbers.include?(sensor.exampleNumber)
-      1.0
-    else
-      0.0
-    end
-  end
-end
 
 
