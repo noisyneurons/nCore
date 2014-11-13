@@ -45,153 +45,10 @@ class TrainingSequence
   end
 end
 
-
 ###################################################################
 ###################################################################
 
-class TrainerBase
-  attr_accessor :examples, :network, :numberOfOutputNeurons, :allNeuronLayers, :allNeuronsInOneArray, :inputLayer,
-                :outputLayer, :theBiasNeuron, :neuronsWithInputLinks, :neuronsWithInputLinksInReverseOrder,
-                :args, :trainingSequence, :numberOfExamples, :startTime, :elapsedTime, :minMSE
-  include NeuronToNeuronConnection
-  include ExampleDistribution
-
-  def initialize(examples, network, args)
-    @args = args
-
-    @network = network
-    @allNeuronLayers = network.allNeuronLayers
-    @allNeuronsInOneArray = @allNeuronLayers.flatten
-    @inputLayer = @allNeuronLayers[0]
-    @outputLayer = @allNeuronLayers[-1]
-    @theBiasNeuron = network.theBiasNeuron
-    @neuronsWithInputLinks = (@allNeuronsInOneArray - @inputLayer).flatten
-    @neuronsWithInputLinksInReverseOrder = @neuronsWithInputLinks.reverse
-    @numberOfOutputNeurons = @outputLayer.length
-
-    @examples = examples
-    @numberOfExamples = examples.length
-
-    @minMSE = args[:minMSE]
-    @trainingSequence = args[:trainingSequence]
-
-    @startTime = Time.now
-    @elapsedTime = nil
-
-    postInitialize
-  end
-
-  def postInitialize
-  end
-
-  def train
-    distributeSetOfExamples(examples)
-    totalEpochs = 0
-
-    learningLayers = allNeuronLayers - [inputLayer]
-    propagatingLayers, controllingLayers = layerDetermination(learningLayers)
-
-    strategyArgs = {:ioFunction => SigmoidIOFunction}
-    attachLearningStrategy(learningLayers - [outputLayer], LearningBP, strategyArgs)
-    attachLearningStrategy([outputLayer], LearningBPOutput, strategyArgs)
-    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase=2000, totalEpochs)
-
-    forEachExampleDisplayInputsAndOutputs
-    return totalEpochs, mse, calcTestingMeanSquaredErrors
-  end
-
-  def distributeSetOfExamples(examples)
-    distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
-  end
-
-  def trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase, totalEpochs)
-
-    startStrategy(learningLayers)
-
-    mse = 1e100
-    trainingSequence.startTrainingPhase(epochsDuringPhase)
-
-    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
-      propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
-      trainingSequence.nextEpoch
-      mse = calcMeanSumSquaredErrors if (entireNetworkSetup?)
-
-      currentEpochNumber = trainingSequence.epochs + totalEpochs
-      puts "current epoch number= #{currentEpochNumber}\tmse = #{mse}" if (currentEpochNumber % 100 == 0)
-    end
-
-    totalEpochs += trainingSequence.epochs
-    return mse, totalEpochs
-  end
-
-  def startStrategy(learningLayers)
-    learningLayers.each do |aLayerOfNeurons|
-      aLayerOfNeurons.each { |aNeuron| aNeuron.startStrategy }
-    end
-  end
-
-  def entireNetworkSetup?
-    allNeuronsThatCanHaveLearningStrategy = (allNeuronLayers[1..-1]).flatten
-    arrayThatMayIncludeNils = allNeuronsThatCanHaveLearningStrategy.collect { |neuron| neuron.learningStrat }
-    !arrayThatMayIncludeNils.include?(nil)
-  end
-
-  def propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
-    initializeStartOfEpochAcross(learningLayers)
-    numberOfExamples.times do |exampleNumber|
-      propagateExampleAcross(propagatingLayers, exampleNumber)
-      learnExampleIn(learningLayers, exampleNumber)
-    end
-    endEpochAcross(learningLayers)
-  end
-
-  def initializeStartOfEpochAcross(layers)
-    layers.each do |neurons|
-      neurons.each { |neuron| neuron.startEpoch }
-    end
-  end
-
-  def propagateExampleAcross(propagatingLayers, exampleNumber)
-    propagatingLayers.each do |neurons|
-      neurons.each { |aNeuron| aNeuron.propagate(exampleNumber) }
-    end
-  end
-
-  def learnExampleIn(learningLayers, exampleNumber)
-    learningLayers.reverse.each do |neurons|
-      neurons.each { |aNeuron| aNeuron.learnExample }
-    end
-  end
-
-  def endEpochAcross(layers)
-    layers.each do |neurons|
-      neurons.each { |neuron| neuron.endEpoch }
-    end
-  end
-
-  ###################################################################
-  ###------------  Core Metric Support Section -------------------###
-
-  def layerDetermination(learningLayers)
-    lastLearningLayer = learningLayers[-1]
-    propagatingLayers = []
-    controllingLayer = nil
-
-    allNeuronLayers.each do |aLayer|
-      propagatingLayers << aLayer
-      break if aLayer == lastLearningLayer
-      controllingLayer = aLayer
-    end
-
-    controllingLayers = [controllingLayer]
-    return [propagatingLayers, controllingLayers]
-  end
-
-  def attachLearningStrategy(layers, learningStrategy, strategyArgs)
-    layers.each do |neurons|
-      neurons.each { |neuron| neuron.learningStrat = learningStrategy.new(neuron, strategyArgs) }
-    end
-  end
+module DisplayAndErrorCalculations
 
   def calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
     genericCalcMeanSumSquaredErrors(numberOfExamples)
@@ -217,6 +74,10 @@ class TrainerBase
     end
     sse = squaredErrors.flatten.reduce(:+)
     return (sse / (numberOfExamples * numberOfOutputNeurons))
+  end
+
+  def calcWeightedErrorMetricForExample
+    outputLayer.collect { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
   end
 
   def forEachExampleDisplayNetworkInputsAndNetInputTo(resultsLayer = outputLayer)
@@ -252,16 +113,172 @@ class TrainerBase
       puts "\t\t\tinputs= #{inputs}\tresults= #{results}"
     end
   end
+end
+
+module FunctionsForLayersOfNeurons
+  def startStrategy
+    self.each do |aLayerOfNeurons|
+      aLayerOfNeurons.each { |aNeuron| aNeuron.startStrategy }
+    end
+  end
+
+  def startEpoch
+    self.each do |aLayerOfNeurons|
+      aLayerOfNeurons.each { |aNeuron| aNeuron.startEpoch }
+    end
+  end
+
+
+  def propagateExample(exampleNumber)
+    self.each do |aLayerOfNeurons|
+      aLayerOfNeurons.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+    end
+  end
+
+
+  def learnExample
+    self.reverse.each do |aLayerOfNeurons|
+      aLayerOfNeurons.each { |aNeuron| aNeuron.learnExample }
+    end
+  end
+
+  def endEpoch
+    self.each do |aLayerOfNeurons|
+      aLayerOfNeurons.each { |aNeuron| aNeuron.endEpoch }
+    end
+  end
+
+  def attachLearningStrategy(learningStrategy, strategyArgs)
+    self.each do |aLayerOfNeurons|
+      aLayerOfNeurons.each { |aNeuron| aNeuron.learningStrat = learningStrategy.new(aNeuron, strategyArgs) }
+    end
+  end
+
+  def -(otherArray)
+    resultantArray = super
+    resultantArray.extend(AddToArray)
+  end
+
+  def +(otherArray)
+    resultantArray = super
+    resultantArray.extend(AddToArray)
+  end
+
+  def <<(item)
+    resultantArray = super
+    resultantArray.extend(AddToArray)
+  end
+
+end
+
+class TrainerBase
+  attr_accessor :examples, :network, :numberOfOutputNeurons, :allNeuronLayers, :allNeuronsInOneArray, :inputLayer,
+                :outputLayer, :theBiasNeuron, :neuronsWithInputLinks, :neuronsWithInputLinksInReverseOrder,
+                :args, :trainingSequence, :numberOfExamples, :startTime, :elapsedTime, :minMSE
+  include NeuronToNeuronConnection, ExampleDistribution, DisplayAndErrorCalculations
+
+  def initialize(examples, network, args)
+    @args = args
+
+    @network = network
+    @allNeuronLayers = network.allNeuronLayers.extend(FunctionsForLayersOfNeurons)
+    @allNeuronsInOneArray = @allNeuronLayers.flatten
+    @inputLayer = @allNeuronLayers[0]
+    @outputLayer = @allNeuronLayers[-1]
+    @theBiasNeuron = network.theBiasNeuron
+    @neuronsWithInputLinks = (@allNeuronsInOneArray - @inputLayer).flatten
+    @neuronsWithInputLinksInReverseOrder = @neuronsWithInputLinks.reverse
+    @numberOfOutputNeurons = @outputLayer.length
+
+    @examples = examples
+    @numberOfExamples = examples.length
+
+    @minMSE = args[:minMSE]
+    @trainingSequence = args[:trainingSequence]
+
+    @startTime = Time.now
+    @elapsedTime = nil
+
+    postInitialize
+  end
+
+  def postInitialize
+  end
+
+  def train
+    distributeSetOfExamples(examples)
+    totalEpochs = 0
+
+    learningLayers = allNeuronLayers - [inputLayer]
+    propagatingLayers, controllingLayers = layerDetermination(learningLayers)
+
+    strategyArgs = {:ioFunction => SigmoidIOFunction}
+    hiddenLayers = learningLayers - [outputLayer]
+    hiddenLayers.attachLearningStrategy(LearningBP, strategyArgs)
+    layersOfOutputNeurons = ([outputLayer]).extend(FunctionsForLayersOfNeurons)
+    layersOfOutputNeurons.attachLearningStrategy(LearningBPOutput, strategyArgs)
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase=2000, totalEpochs)
+
+    forEachExampleDisplayInputsAndOutputs
+    return totalEpochs, mse, calcTestingMeanSquaredErrors
+  end
+
+  def distributeSetOfExamples(examples)
+    distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
+  end
+
+  def layerDetermination(learningLayers)
+    lastLearningLayer = learningLayers[-1]
+    propagatingLayers = Array.new.extend(FunctionsForLayersOfNeurons)
+    controllingLayers = Array.new.extend(FunctionsForLayersOfNeurons)
+
+    allNeuronLayers.each do |aLayer|
+      propagatingLayers << aLayer
+      break if aLayer == lastLearningLayer
+      controllingLayers << aLayer
+    end
+
+    return [propagatingLayers, controllingLayers]
+  end
+
+  def trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase, totalEpochs)
+
+    learningLayers.startStrategy
+
+    mse = 1e100
+    trainingSequence.startTrainingPhase(epochsDuringPhase)
+
+    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
+      propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
+      trainingSequence.nextEpoch
+      mse = calcMeanSumSquaredErrors if (entireNetworkSetup?)
+
+      currentEpochNumber = trainingSequence.epochs + totalEpochs
+      puts "current epoch number= #{currentEpochNumber}\tmse = #{mse}" if (currentEpochNumber % 100 == 0)
+    end
+
+    totalEpochs += trainingSequence.epochs
+    return mse, totalEpochs
+  end
+
+  def entireNetworkSetup?
+    allNeuronsThatCanHaveLearningStrategy = (allNeuronLayers[1..-1]).flatten
+    arrayThatMayIncludeNils = allNeuronsThatCanHaveLearningStrategy.collect { |neuron| neuron.learningStrat }
+    !arrayThatMayIncludeNils.include?(nil)
+  end
+
+  def propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
+    learningLayers.startEpoch
+    numberOfExamples.times do |exampleNumber|
+      propagatingLayers.propagateExample(exampleNumber)
+      learningLayers.learnExample
+    end
+    learningLayers.endEpoch
+  end
 
   def propagateAcrossEntireNetwork(exampleNumber)
-    propagateExampleAcross(allNeuronLayers, exampleNumber)
-    #allNeuronsInOneArray.flatten.each { |aNeuron| aNeuron.propagate(exampleNumber) }
+    allNeuronLayers.propagateExample(exampleNumber)
   end
-
-  def calcWeightedErrorMetricForExample
-    outputLayer.collect { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
-  end
-
 end
 
 
@@ -305,7 +322,6 @@ module SelfOrg
   end
 end
 
-
 module ForwardPropWithContext
 
   def forwardPropWithContext(layerReceivingContext, ioFunction)
@@ -338,7 +354,6 @@ module ForwardPropWithContext
   end
 
 end
-
 
 module SelfOrgWithContext
 
@@ -440,7 +455,6 @@ class Trainer3SelfOrgContextSuper < TrainerBase
 
     return totalEpochs, mse, calcTestingMeanSquaredErrors
   end
-
 
   def supervisedTraining(learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
     propagatingLayers, controllingLayers = layerDetermination(learningLayers)
