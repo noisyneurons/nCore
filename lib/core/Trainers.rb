@@ -165,6 +165,11 @@ module FunctionsForLayersOfNeurons
     resultantArray = super
     resultantArray.to_nAry
   end
+
+  def [](index)
+    resultantArray = super
+    resultantArray.to_neuronAry
+  end
 end
 
 class TrainerBase
