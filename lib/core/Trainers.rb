@@ -104,11 +104,11 @@ module DisplayAndErrorCalculations
       breakOnNextPass = true if (aLayer == resultsLayer)
       aLayer
     end
-    propagatingLayers.compact!
+    propagatingLayers = propagatingLayers.compact.to_nAry
     #
     examples.each_with_index do |anExample, exampleNumber|
       inputs = anExample[:inputs]
-      propagateExampleAcross(propagatingLayers, exampleNumber)
+      propagatingLayers.propagateExample(exampleNumber)
       results = resultsLayer.collect { |aResultsNeuron| aResultsNeuron.output }
       puts "\t\t\tinputs= #{inputs}\tresults= #{results}"
     end
@@ -128,13 +128,11 @@ module FunctionsForLayersOfNeurons
     end
   end
 
-
   def propagateExample(exampleNumber)
     self.each do |aLayerOfNeurons|
       aLayerOfNeurons.each { |aNeuron| aNeuron.propagate(exampleNumber) }
     end
   end
-
 
   def learnExample
     self.reverse.each do |aLayerOfNeurons|
@@ -156,17 +154,21 @@ module FunctionsForLayersOfNeurons
 
   def -(otherArray)
     resultantArray = super
-    resultantArray.extend(AddToArray)
+    resultantArray.to_nAry
   end
 
   def +(otherArray)
     resultantArray = super
-    resultantArray.extend(AddToArray)
+    resultantArray.to_nAry
   end
 
   def <<(item)
     resultantArray = super
-    resultantArray.extend(AddToArray)
+    resultantArray.to_nAry
+  end
+
+  def to_s
+    super
   end
 
 end
@@ -181,7 +183,7 @@ class TrainerBase
     @args = args
 
     @network = network
-    @allNeuronLayers = network.allNeuronLayers.extend(FunctionsForLayersOfNeurons)
+    @allNeuronLayers = network.allNeuronLayers.to_nAry
     @allNeuronsInOneArray = @allNeuronLayers.flatten
     @inputLayer = @allNeuronLayers[0]
     @outputLayer = @allNeuronLayers[-1]
@@ -215,7 +217,7 @@ class TrainerBase
     strategyArgs = {:ioFunction => SigmoidIOFunction}
     hiddenLayers = learningLayers - [outputLayer]
     hiddenLayers.attachLearningStrategy(LearningBP, strategyArgs)
-    layersOfOutputNeurons = ([outputLayer]).extend(FunctionsForLayersOfNeurons)
+    layersOfOutputNeurons = [outputLayer].to_nAry
     layersOfOutputNeurons.attachLearningStrategy(LearningBPOutput, strategyArgs)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase=2000, totalEpochs)
 
@@ -229,8 +231,8 @@ class TrainerBase
 
   def layerDetermination(learningLayers)
     lastLearningLayer = learningLayers[-1]
-    propagatingLayers = Array.new.extend(FunctionsForLayersOfNeurons)
-    controllingLayers = Array.new.extend(FunctionsForLayersOfNeurons)
+    propagatingLayers = Array.new.to_nAry
+    controllingLayers = Array.new.to_nAry
 
     allNeuronLayers.each do |aLayer|
       propagatingLayers << aLayer
@@ -292,10 +294,10 @@ module SelfOrg
   end
 
   def normalizationAndSelfOrgNoContext(learningLayers, propagatingLayers, strategyArguments, epochsForSelfOrg, totalEpochs)
-    attachLearningStrategy(learningLayers, Normalization, strategyArguments)
+    learningLayers.attachLearningStrategy(Normalization, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForNormalization=1, totalEpochs)
 
-    attachLearningStrategy(learningLayers, SelfOrgStrat, strategyArguments)
+    learningLayers.attachLearningStrategy(SelfOrgStrat, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForSelfOrg, totalEpochs)
     return mse, totalEpochs
   end
@@ -359,8 +361,15 @@ module SelfOrgWithContext
 
   def normalizationAndSelfOrgWithContext(learningLayers, ioFunction, epochsForSelfOrg, totalEpochs) # (learningLayers, controllingLayers, propagatingLayers, strategyArguments, epochsForSelfOrg, totalEpochs)
     propagatingLayers, controllingLayers = layerDetermination(learningLayers)
-    singleLayerControllingLearning = controllingLayers[0]
+    std("0 propagatingLayers length= ", propagatingLayers.length)
+    std("1 controllingLayers length= ", controllingLayers.length)
+
+
+    singleLayerControllingLearning = controllingLayers[-1]
     singleLearningLayer = learningLayers[0]
+
+    std("A0 singleLearningLayer length= ", singleLearningLayer.length)
+    std("A1 singleControllingLayer length= ", singleLayerControllingLearning.length)
 
     strategyArguments = {:ioFunction => ioFunction}
 
@@ -373,18 +382,23 @@ module SelfOrgWithContext
   end
 
   def setupNormalizationStrategyWithContext(singleLayerControllingLearning, singleLearningLayer, strategyArguments)
+
     singleLayerControllingLearning.each_with_index do |neuronInControllingLayer, indexToControlNeuron|
       indexToLearningNeuron = 2 * indexToControlNeuron
 
       normalizationSetup(LearningControlledByNeuron, indexToLearningNeuron, neuronInControllingLayer,
                          singleLearningLayer, strategyArguments)
-      normalizationSetup(LearningControlledByNeuronNOT, (indexToLearningNeuron + 1), neuronInControllingLayer,
+
+      indexToLearningNeuron = indexToLearningNeuron + 1
+      normalizationSetup(LearningControlledByNeuronNOT, indexToLearningNeuron, neuronInControllingLayer,
                          singleLearningLayer, strategyArguments)
     end
+
   end
 
   def normalizationSetup(classOfLearningController, indexToLearningNeuron, neuronInControllingLayer,
       singleLearningLayer, strategyArguments)
+
     aLearningNeuron = singleLearningLayer[indexToLearningNeuron]
     strategy = Normalization.new(aLearningNeuron, strategyArguments)
     strategy.extend(ContextForLearning)
@@ -434,13 +448,15 @@ class Trainer3SelfOrgContextSuper < TrainerBase
     ioFunction = NonMonotonicIOFunction
 
     ### Now will self-org 1st hidden layer
-    learningLayers = [hiddenLayer1]
+    learningLayers = ([hiddenLayer1]).to_nAry
+    std("length of layer 1= ", learningLayers[0].length)
     initWeights(learningLayers) # Needed only when the given layer is self-organizing for the first time
     mse, totalEpochs = selOrgNoContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
     ### Now will self-org 2nd hidden layer WITH CONTEXT!!
-    learningLayers = [hiddenLayer2]
+    learningLayers = ([hiddenLayer2]).to_nAry
     initWeights(learningLayers) # Needed only when the given layer is self-organizing for the first time
+    std("length of layer 2= ", learningLayers[0].length)
     mse, totalEpochs = normalizationAndSelfOrgWithContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
     mse, totalEpochs = normalizationAndSelfOrgWithContext(learningLayers, ioFunction, 1, totalEpochs)
@@ -450,7 +466,7 @@ class Trainer3SelfOrgContextSuper < TrainerBase
     layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
     calcWeightsForUNNormalizedInputs(layersThatWereNormalized) # for understanding, convert to normal neural weight representation (without normalization variables)
 
-    learningLayers = [outputLayer]
+    learningLayers = [outputLayer].to_nAry
     mse, totalEpochs = supervisedTraining(learningLayers, ioFunction, args[:epochsForSupervisedTraining], totalEpochs)
 
     return totalEpochs, mse, calcTestingMeanSquaredErrors
@@ -460,10 +476,10 @@ class Trainer3SelfOrgContextSuper < TrainerBase
     propagatingLayers, controllingLayers = layerDetermination(learningLayers)
 
     strategyArguments = {:ioFunction => ioFunction}
-    attachLearningStrategy(learningLayers, LearningBPOutput, strategyArguments) if learningLayers.include?(outputLayer)
+    learningLayers.attachLearningStrategy(LearningBPOutput, strategyArguments) if learningLayers.include?(outputLayer)
 
     otherLearningLayers = learningLayers - [outputLayer]
-    attachLearningStrategy(otherLearningLayers, LearningBP, strategyArguments)
+    otherLearningLayers.attachLearningStrategy(LearningBP, strategyArguments)
 
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase, totalEpochs)
     return mse, totalEpochs
@@ -484,12 +500,12 @@ class Trainer4SelfOrgContextSuper < Trainer3SelfOrgContextSuper
     ioFunction = NonMonotonicIOFunction
 
     ### Now will self-org 1st hidden layer
-    learningLayers = [hiddenLayer1]
+    learningLayers = [hiddenLayer1].to_nAry
     initWeights(learningLayers) # Needed only when the given layer is self-organizing for the first time
     mse, totalEpochs = selOrgNoContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
     ### Now will self-org 2nd hidden layer WITH CONTEXT!!
-    learningLayers = [hiddenLayer2]
+    learningLayers = [hiddenLayer2].to_nAry
     initWeights(learningLayers) # Needed only when the given layer is self-organizing for the first time
     mse, totalEpochs = normalizationAndSelfOrgWithContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
@@ -503,7 +519,7 @@ class Trainer4SelfOrgContextSuper < Trainer3SelfOrgContextSuper
     layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
     calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
 
-    learningLayers = [outputLayer]
+    learningLayers = [outputLayer].to_nAry
     # learningLayers = [hiddenLayer1, hiddenLayer2, outputLayer]
     mse, totalEpochs = supervisedTraining(learningLayers, ioFunction, args[:epochsForSupervisedTraining], totalEpochs)
 

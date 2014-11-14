@@ -78,6 +78,10 @@ end
 #	##########################  Array Extensions ##################
 class Array
 
+  def to_nAry
+    return self.extend(FunctionsForLayersOfNeurons)
+  end
+
   def mean
     sumOfArray = self.inject { |sum, n| sum + n }
     return (sumOfArray.to_f / self.length)
