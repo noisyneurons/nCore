@@ -79,8 +79,7 @@ end
 class Array
 
   def to_LayerAry
-    anArray = self.collect {|e| e.to_Layer}
-    return LayerArray.new(anArray)
+    return LayerArray.new(self)
   end
 
   def to_Layer

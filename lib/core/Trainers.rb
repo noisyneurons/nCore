@@ -105,7 +105,7 @@ module DisplayAndErrorCalculations
       breakOnNextPass = true if (aLayer == resultsLayer)
       aLayer
     end
-    propagatingLayers = propagatingLayers.compact.to_nAry
+    propagatingLayers = propagatingLayers.compact.to_LayerAry
     #
     examples.each_with_index do |anExample, exampleNumber|
       inputs = anExample[:inputs]
@@ -125,18 +125,7 @@ class Layer
     @arrayOfNeurons = standardizeInputFormat(anArrayOfNeurons)
   end
 
-  def_delegators :@arrayOfNeurons, :[], :size, :length, :all?
-
-  def standardizeInputFormat(x)
-    if (x.length == 0)
-      return x
-    end
-    if (x.all? { |e| e.kind_of?(NeuronBase) })
-      return x
-    end
-    STDERR.puts "Wrong Type: It is Not an Array of Neurons; nor a Zero Length Array"
-  end
-
+  def_delegators :@arrayOfNeurons, :[], :size, :length, :each, :each_with_index, :collect, :all?
 
   def startStrategy
     arrayOfNeurons.each { |aNeuron| aNeuron.startStrategy }
@@ -166,38 +155,31 @@ class Layer
     return @arrayOfNeurons
   end
 
-  def <<(aNeuron)
-    if aNeuron.kind_of?(NeuronBase)
-      @arrayOfNeurons << aNeuron
-    else
-      STDERR.puts "ERROR: Attempting to append an object that is NOT a neuron to a Layer; The object is #{aNeuron}"
-    end
+  def to_LayerAry
+    LayerArray.new(self)
+  end
+
+  def standardizeInputFormat(x)
+    return x if (x.length == 0)
+    return x if (x.all? { |e| e.kind_of?(NeuronBase) })
+    STDERR.puts "Wrong Type: It is Not an Array of Neurons; nor a Zero Length Array"
+  end
+
+  def setup?
+    statusAry = arrayOfNeurons.collect { |aNeuron| aNeuron.learningStrat }
+    !statusAry.include?(nil)
   end
 end
 
 class LayerArray
   attr_reader :arrayOfLayers
   extend Forwardable
-  @arrayOfLayers = nil
 
   def initialize(arrayOfLayers=[])
     @arrayOfLayers = standardizeInputFormat(arrayOfLayers)
   end
 
-  def_delegators :@arrayOfLayers, :[], :size, :length, :all?
-
-  def standardizeInputFormat(x)
-    if (x.length == 0)
-      return x
-    end
-    if (x.all? { |e| e.kind_of?(Layer) })
-      return x
-    end
-    if (x.all? { |e| e.kind_of?(NeuronBase) })
-      return [x]
-    end
-    STDERR.puts "Wrong Type: It is Not an Array of Layers or Neurons; nor a Zero Length Array"
-  end
+  def_delegators :@arrayOfLayers, :[], :size, :length, :each, :collect, :include?
 
   def startStrategy
     arrayOfLayers.each { |aLayer| aLayer.startStrategy }
@@ -208,7 +190,7 @@ class LayerArray
   end
 
   def propagateExample(exampleNumber)
-    arrayOfLayers.each { |aLayer| aLayer.propagate(exampleNumber) }
+    arrayOfLayers.each { |aLayer| aLayer.propagateExample(exampleNumber) }
   end
 
   def learnExample
@@ -223,18 +205,8 @@ class LayerArray
     arrayOfLayers.each { |aLayer| aLayer.attachLearningStrategy(learningStrategy, strategyArgs) }
   end
 
-  def to_a
-    return arrayOfLayers
-  end
-
   def -(aLayerOraLayerArray)
     return LayerArray.new(arrayOfLayers - stdFormat(aLayerOraLayerArray))
-  end
-
-  def stdFormat(aLayerOraLayerArray)
-    return [aLayerOraLayerArray] if aLayerOraLayerArray.kind_of?(Layer)
-    return aLayerOraLayerArray.to_a if aLayerOraLayerArray.kind_of?(LayerArray)
-    STDERR.puts "ERROR: Attempting to 'delete' a NON-Layer object from a LayerArray; The object is #{otherArray}"
   end
 
   def +(aLayer)
@@ -249,6 +221,32 @@ class LayerArray
       STDERR.puts "ERROR: Attempting to append a NON-Layer object to a LayerArray; The object is #{aLayer}"
     end
   end
+
+  def to_a
+    return arrayOfLayers
+  end
+
+  def to_LayerAry
+    return self
+  end
+
+  def setup?
+    statusAry = arrayOfLayers.collect { |aLayer| aLayer.setup? }
+    !statusAry.include?(false)
+  end
+
+  def standardizeInputFormat(x)
+    return x if (x.length == 0)
+    return x if (x.all? { |e| e.kind_of?(Layer) })
+    return [x] if (x.all? { |e| e.kind_of?(NeuronBase) })
+    STDERR.puts "Wrong Type: It is Not an Array of Layers or Neurons; nor a Zero Length Array"
+  end
+
+  def stdFormat(aLayerOraLayerArray)
+    return [aLayerOraLayerArray] if aLayerOraLayerArray.kind_of?(Layer)
+    return aLayerOraLayerArray.to_a if aLayerOraLayerArray.kind_of?(LayerArray)
+    STDERR.puts "ERROR: Attempting to 'delete' a NON-Layer object from a LayerArray"
+  end
 end
 
 class TrainerBase
@@ -259,9 +257,11 @@ class TrainerBase
 
   def initialize(examples, network, args)
     @args = args
-
     @network = network
-    @allNeuronLayers = network.allNeuronLayers.to_LayerAry
+
+    ary = network.allNeuronLayers
+    aryOfLayers = ary.collect { |e| e.to_Layer }
+    @allNeuronLayers = aryOfLayers.to_LayerAry
     @inputLayer = @allNeuronLayers[0]
     @outputLayer = @allNeuronLayers[-1]
     @theBiasNeuron = network.theBiasNeuron
@@ -306,8 +306,8 @@ class TrainerBase
 
   def layerDetermination(learningLayers)
     lastLearningLayer = learningLayers[-1]
-    propagatingLayers = Array.new.to_nAry
-    controllingLayers = Array.new.to_nAry
+    propagatingLayers = LayerArray.new
+    controllingLayers = LayerArray.new
 
     allNeuronLayers.each do |aLayer|
       propagatingLayers << aLayer
@@ -339,9 +339,11 @@ class TrainerBase
   end
 
   def entireNetworkSetup?
-    allNeuronsThatCanHaveLearningStrategy = (allNeuronLayers[1..-1]).flatten
-    arrayThatMayIncludeNils = allNeuronsThatCanHaveLearningStrategy.collect { |neuron| neuron.learningStrat }
-    !arrayThatMayIncludeNils.include?(nil)
+    aLayerArray = allNeuronLayers[1..-1].to_LayerAry
+    return aLayerArray.setup?
+    #allNeuronsThatCanHaveLearningStrategy = (allNeuronLayers[1..-1]).flatten
+    #arrayThatMayIncludeNils = allNeuronsThatCanHaveLearningStrategy.collect { |neuron| neuron.learningStrat }
+    #!arrayThatMayIncludeNils.include?(nil)
   end
 
   def propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
@@ -543,7 +545,7 @@ class Trainer3SelfOrgContextSuper < TrainerBase
     strategyArguments = {:ioFunction => ioFunction}
     learningLayers.attachLearningStrategy(LearningBPOutput, strategyArguments) if learningLayers.include?(outputLayer)
 
-    otherLearningLayers = learningLayers - [outputLayer]
+    otherLearningLayers = learningLayers - outputLayer
     otherLearningLayers.attachLearningStrategy(LearningBP, strategyArguments)
 
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase, totalEpochs)
@@ -565,19 +567,19 @@ class Trainer4SelfOrgContextSuper < Trainer3SelfOrgContextSuper
     ioFunction = NonMonotonicIOFunction
 
     ### self-org 1st hidden layer
-    learningLayers = [hiddenLayer1].to_nAry
+    learningLayers = hiddenLayer1.to_LayerAry
     initWeights(learningLayers)
     mse, totalEpochs = selOrgNoContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
     ### self-org 2nd hidden layer WITH CONTEXT!!
-    learningLayers = [hiddenLayer2].to_nAry
+    learningLayers = hiddenLayer2.to_LayerAry
     initWeights(learningLayers)
     mse, totalEpochs = normalizationAndSelfOrgWithContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
     ### self-org 2nd hidden layer withOUT context!!
     mse, totalEpochs = selOrgNoContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
-    layersReceivingContext=[hiddenLayer2]
+    layersReceivingContext= hiddenLayer2.to_LayerAry
     forwardPropWithContext(layersReceivingContext, ioFunction)
     puts "Hidden Layer 2 with effectively NO Learning but with Outputs in Context (i.e., with 'dont know' representation added back)"
     forEachExampleDisplayInputsAndOutputs(hiddenLayer2)
@@ -585,7 +587,7 @@ class Trainer4SelfOrgContextSuper < Trainer3SelfOrgContextSuper
     layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
     calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
 
-    learningLayers = [outputLayer].to_nAry
+    learningLayers = outputLayer.to_LayerAry
     mse, totalEpochs = supervisedTraining(learningLayers, ioFunction, args[:epochsForSupervisedTraining], totalEpochs)
 
     return totalEpochs, mse, calcTestingMeanSquaredErrors
