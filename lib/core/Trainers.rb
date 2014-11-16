@@ -117,6 +117,7 @@ module DisplayAndErrorCalculations
 end
 
 
+
 class Layer
   attr_reader :arrayOfNeurons
   extend Forwardable
@@ -159,10 +160,33 @@ class Layer
     LayerArray.new(self)
   end
 
+  def <<(aNeuron)
+    begin
+      if aNeuron.kind_of?(NeuronBase)
+        @arrayOfNeurons << aNeuron
+        return
+      end
+      raise "ERROR: Attempting to append a NON-Neuron object to a Layer"
+    rescue Exception => e
+      puts e.message
+      puts e.backtrace.inspect
+    end
+  end
+
+
   def standardizeInputFormat(x)
-    return x if (x.length == 0)
-    return x if (x.all? { |e| e.kind_of?(NeuronBase) })
-    STDERR.puts "Wrong Type: It is Not an Array of Neurons; nor a Zero Length Array"
+    begin
+      return x if (x.length == 0)
+      return x if (x.all? { |e| e.kind_of?(NeuronBase) })
+      if (x.kind_of?(Array) && x.length == 1) # This is for the weird case where x= [[neuron1,neuron2, neuron3]]
+        y = x[0]
+        return y if (y.all? { |e| e.kind_of?(NeuronBase) })
+      end
+      raise "Wrong Type of argument to initialize Layer: It is Not an Array of Neurons; nor an Array of an Array of Neurons; nor a Zero Length Array"
+    rescue Exception => e
+      puts e.message
+      puts e.backtrace.inspect
+    end
   end
 
   def setup?
@@ -218,7 +242,7 @@ class LayerArray
     if aLayer.kind_of?(Layer)
       @arrayOfLayers << aLayer
     else
-      STDERR.puts "ERROR: Attempting to append a NON-Layer object to a LayerArray; The object is #{aLayer}"
+      STDERR.puts "ERROR: Attempting to append a NON-Layer object to a LayerArray"
     end
   end
 
@@ -236,16 +260,31 @@ class LayerArray
   end
 
   def standardizeInputFormat(x)
-    return x if (x.length == 0)
-    return x if (x.all? { |e| e.kind_of?(Layer) })
-    return [x] if (x.all? { |e| e.kind_of?(NeuronBase) })
-    STDERR.puts "Wrong Type: It is Not an Array of Layers or Neurons; nor a Zero Length Array"
+    begin
+      return x if (x.length == 0)
+      return x if (x.all? { |e| e.kind_of?(Layer) })
+      x = [x] if (x.all? { |e| e.kind_of?(NeuronBase) })  # single array neurons to be converted to a Layer BELOW...
+      if (x.all? { |e| e.kind_of?(Array) })
+        if (x.flatten.all? { |e| e.kind_of?(NeuronBase) })  #  conversion to an array of Layers
+          return x.collect { |e| e.to_Layer }
+        end
+      end
+      raise "Wrong Type: It is Not an Array of Layers or Neurons; nor a Zero Length Array"
+    rescue Exception => e
+      puts e.message
+      puts e.backtrace.inspect
+    end
   end
 
   def stdFormat(aLayerOraLayerArray)
-    return [aLayerOraLayerArray] if aLayerOraLayerArray.kind_of?(Layer)
-    return aLayerOraLayerArray.to_a if aLayerOraLayerArray.kind_of?(LayerArray)
-    STDERR.puts "ERROR: Attempting to 'delete' a NON-Layer object from a LayerArray"
+    begin
+      return [aLayerOraLayerArray] if aLayerOraLayerArray.kind_of?(Layer)
+      return aLayerOraLayerArray.to_a if aLayerOraLayerArray.kind_of?(LayerArray)
+      raise "ERROR: Attempting to 'delete' a NON-Layer object from a LayerArray"
+    rescue Exception => e
+      puts e.message
+      puts e.backtrace.inspect
+    end
   end
 end
 
@@ -517,12 +556,12 @@ class Trainer3SelfOrgContextSuper < TrainerBase
     ioFunction = NonMonotonicIOFunction
 
     ### self-org 1st hidden layer
-    learningLayers = [hiddenLayer1].to_nAry
+    learningLayers = hiddenLayer1.to_LayerAry
     initWeights(learningLayers) # Needed only when the given layer is self-organizing for the first time
     mse, totalEpochs = selOrgNoContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
     ### self-org 2nd hidden layer WITH CONTEXT!!
-    learningLayers = [hiddenLayer2].to_nAry
+    learningLayers = hiddenLayer2.to_LayerAry
     initWeights(learningLayers) # Needed only when the given layer is self-organizing for the first time
     mse, totalEpochs = normalizationAndSelfOrgWithContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
@@ -533,7 +572,7 @@ class Trainer3SelfOrgContextSuper < TrainerBase
     layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
     calcWeightsForUNNormalizedInputs(layersThatWereNormalized) # for understanding, convert to normal neural weight representation (without normalization variables)
 
-    learningLayers = [outputLayer].to_nAry
+    learningLayers = outputLayer.to_LayerAry
     mse, totalEpochs = supervisedTraining(learningLayers, ioFunction, args[:epochsForSupervisedTraining], totalEpochs)
 
     return totalEpochs, mse, calcTestingMeanSquaredErrors

@@ -1,91 +1,9 @@
 require 'rubygems'
 require 'bundler/setup'
+require_relative 'Utilities'
 
 require '/home/mark/usr/local/ruby2.1.3/ruby/lib/ruby/2.1.0/forwardable'
 
-#require_relative 'Utilities'
-#require_relative 'DataSet'
-#require_relative 'NeuralIOFunctions'
-
-#
-#
-#require 'statsample'
-#
-## require '/home/mark/usr/local/ruby2.1.3/ruby/lib/ruby/gems/2.1.0/gems/statsample'
-## Note R like generation of random gaussian variable
-## and correlation matrix
-#
-#ss_analysis("Statsample::Bivariate.correlation_matrix") do
-#  samples=1000
-#  ds=data_frame(
-#      'a'=>rnorm(samples),
-#      'b'=>rnorm(samples),
-#      'c'=>rnorm(samples),
-#      'd'=>rnorm(samples))
-#  cm=cor(ds)
-#  summary(cm)
-#end
-#
-#Statsample::Analysis.run_batch # Echo output to console
-
-#module AddToArray
-#  def testMod
-#    puts "still extended: #{self.to_s}"
-#  end
-#
-#  def -(otherArray)
-#    resultantArray = super
-#    resultantArray.extend(AddToArray)
-#  end
-#
-#  def +(otherArray)
-#    resultantArray = super
-#    resultantArray.extend(AddToArray)
-#  end
-#
-#  def <<(item)
-#    resultantArray = super
-#    resultantArray.extend(AddToArray)
-#  end
-#end
-#
-#
-#a = [1,2,3]
-#a.extend(AddToArray)
-#a.testMod
-#b = [3,4,5]
-#b.extend(AddToArray)
-#b.testMod
-#c = a + b
-#c.testMod
-#c << 4
-#c.testMod
-#
-#
-##class ArrayS < Array
-#  def testMod
-#    puts "still extended: #{self.to_s}"
-#    puts "class= #{self.class}"
-#  end
-#
-#  def -(otherArray)
-#    result = super
-#    ArrayS.new(result)
-#  end
-#end
-#
-#
-#a = ArrayS.new([1, 2, 3])
-#a.testMod
-#b = ArrayS.new([3, 4, 5])
-#b.testMod
-#
-#d = a - b
-#puts "class of d= #{d.class}"
-#d.testMod
-
-#c = ArrayS.new(d)
-#c.testMod
 
 
 class NeuronBase
@@ -132,18 +50,7 @@ class Layer
     @arrayOfNeurons = standardizeInputFormat(anArrayOfNeurons)
   end
 
-  def_delegators :@arrayOfNeurons, :[], :size, :length, :all?
-
-  def standardizeInputFormat(x)
-    if (x.length == 0)
-      return x
-    end
-    if (x.all? { |e| e.kind_of?(NeuronBase) })
-      return x
-    end
-    STDERR.puts "Wrong Type: It is Not an Array of Neurons; nor a Zero Length Array"
-  end
-
+  def_delegators :@arrayOfNeurons, :[], :size, :length, :each, :each_with_index, :collect, :all?
 
   def startStrategy
     arrayOfNeurons.each { |aNeuron| aNeuron.startStrategy }
@@ -173,39 +80,54 @@ class Layer
     return @arrayOfNeurons
   end
 
+  def to_LayerAry
+    LayerArray.new(self)
+  end
+
   def <<(aNeuron)
-    if aNeuron.kind_of?(NeuronBase)
-      @arrayOfNeurons << aNeuron
-    else
-      STDERR.puts "ERROR: Attempting to append an object that is NOT a neuron to a Layer; The object is #{aNeuron}"
+    begin
+      if aNeuron.kind_of?(NeuronBase)
+        @arrayOfNeurons << aNeuron
+        return
+      end
+      raise "ERROR: Attempting to append a NON-Neuron object to a Layer"
+    rescue Exception => e
+      puts e.message
+      puts e.backtrace.inspect
     end
   end
-end
 
+
+  def standardizeInputFormat(x)
+    begin
+      return x if (x.length == 0)
+      return x if (x.all? { |e| e.kind_of?(NeuronBase) })
+      if (x.kind_of?(Array) && x.length == 1) # This is for the weird case where x= [[neuron1,neuron2, neuron3]]
+        y = x[0]
+        return y if (y.all? { |e| e.kind_of?(NeuronBase) })
+      end
+      raise "Wrong Type of argument to initialize Layer: It is Not an Array of Neurons; nor an Array of an Array of Neurons; nor a Zero Length Array"
+    rescue Exception => e
+      puts e.message
+      puts e.backtrace.inspect
+    end
+  end
+
+  def setup?
+    statusAry = arrayOfNeurons.collect { |aNeuron| aNeuron.learningStrat }
+    !statusAry.include?(nil)
+  end
+end
 
 class LayerArray
   attr_reader :arrayOfLayers
   extend Forwardable
-  @arrayOfLayers = nil
 
   def initialize(arrayOfLayers=[])
     @arrayOfLayers = standardizeInputFormat(arrayOfLayers)
   end
 
-  def_delegators :@arrayOfLayers, :[], :size, :length, :all?
-
-  def standardizeInputFormat(x)
-    if (x.length == 0)
-      return x
-    end
-    if (x.all? { |e| e.kind_of?(Layer) })
-      return x
-    end
-    if (x.all? { |e| e.kind_of?(NeuronBase) })
-      return [x]
-    end
-    STDERR.puts "Wrong Type: It is Not an Array of Layers or Neurons; nor a Zero Length Array"
-  end
+  def_delegators :@arrayOfLayers, :[], :size, :length, :each, :collect, :include?
 
   def startStrategy
     arrayOfLayers.each { |aLayer| aLayer.startStrategy }
@@ -216,7 +138,7 @@ class LayerArray
   end
 
   def propagateExample(exampleNumber)
-    arrayOfLayers.each { |aLayer| aLayer.propagate(exampleNumber) }
+    arrayOfLayers.each { |aLayer| aLayer.propagateExample(exampleNumber) }
   end
 
   def learnExample
@@ -231,18 +153,8 @@ class LayerArray
     arrayOfLayers.each { |aLayer| aLayer.attachLearningStrategy(learningStrategy, strategyArgs) }
   end
 
-  def to_a
-    return arrayOfLayers
-  end
-
   def -(aLayerOraLayerArray)
     return LayerArray.new(arrayOfLayers - stdFormat(aLayerOraLayerArray))
-  end
-
-  def stdFormat(aLayerOraLayerArray)
-    return [aLayerOraLayerArray] if aLayerOraLayerArray.kind_of?(Layer)
-    return aLayerOraLayerArray.to_a if aLayerOraLayerArray.kind_of?(LayerArray)
-    STDERR.puts "ERROR: Attempting to 'delete' a NON-Layer object from a LayerArray; The object is #{otherArray}"
   end
 
   def +(aLayer)
@@ -254,10 +166,52 @@ class LayerArray
     if aLayer.kind_of?(Layer)
       @arrayOfLayers << aLayer
     else
-      STDERR.puts "ERROR: Attempting to append a NON-Layer object to a LayerArray; The object is #{aLayer}"
+      STDERR.puts "ERROR: Attempting to append a NON-Layer object to a LayerArray"
+    end
+  end
+
+  def to_a
+    return arrayOfLayers
+  end
+
+  def to_LayerAry
+    return self
+  end
+
+  def setup?
+    statusAry = arrayOfLayers.collect { |aLayer| aLayer.setup? }
+    !statusAry.include?(false)
+  end
+
+  def standardizeInputFormat(x)
+    begin
+      return x if (x.length == 0)
+      return x if (x.all? { |e| e.kind_of?(Layer) })
+      x = [x] if (x.all? { |e| e.kind_of?(NeuronBase) })  # single array neurons to be converted to a Layer BELOW...
+      if (x.all? { |e| e.kind_of?(Array) })
+        if (x.flatten.all? { |e| e.kind_of?(NeuronBase) })  #  conversion to an array of Layers
+          return x.collect { |e| e.to_Layer }
+        end
+      end
+      raise "Wrong Type: It is Not an Array of Layers or Neurons; nor a Zero Length Array"
+    rescue Exception => e
+      puts e.message
+      puts e.backtrace.inspect
+    end
+  end
+
+  def stdFormat(aLayerOraLayerArray)
+    begin
+      return [aLayerOraLayerArray] if aLayerOraLayerArray.kind_of?(Layer)
+      return aLayerOraLayerArray.to_a if aLayerOraLayerArray.kind_of?(LayerArray)
+      raise "ERROR: Attempting to 'delete' a NON-Layer object from a LayerArray"
+    rescue Exception => e
+      puts e.message
+      puts e.backtrace.inspect
     end
   end
 end
+
 
 n0 = NeuronBase.new({})
 n1 = NeuronBase.new({})
@@ -266,33 +220,37 @@ n3 = NeuronBase.new({})
 
 
 aLayerOfNeurons0 = Layer.new([n0, n1])
-aLayerOfNeurons0.startEpoch
-puts
 aLayerOfNeurons1 = Layer.new
 aLayerOfNeurons1 << n2
 aLayerOfNeurons1 << n3
 
+aLayerArrayX1 = LayerArray.new([aLayerOfNeurons0, aLayerOfNeurons1])
 
-aLayerArray = LayerArray.new
-aLayerArray << aLayerOfNeurons0
-aLayerArray << aLayerOfNeurons1
+puts aLayerArrayX1.to_a
+puts
+aLayerArrayX1 = LayerArray.new( [ Layer.new([n1,n2]), Layer.new([n0,n3]) ])
+puts aLayerArrayX1.to_a
 
-
-puts "Here 1"
-newLayerArray = (aLayerArray - aLayerOfNeurons0)
-newLayerArray.startEpoch
-
-
-puts "Here 2"
-newLayerArray2 = aLayerArray + aLayerOfNeurons0
-newLayerArray2.startEpoch
-
-
-puts "Here 3"
-newLayerArray = (newLayerArray2 - LayerArray.new(aLayerOfNeurons0))
-newLayerArray.startEpoch
-
-
-
-
+#aLayerArray = LayerArray.new
+#aLayerArray << aLayerOfNeurons0
+#aLayerArray << aLayerOfNeurons1
+#
+#
+#puts "Here 1"
+#newLayerArray = (aLayerArray - aLayerOfNeurons0)
+#newLayerArray.startEpoch
+#
+#
+#puts "Here 2"
+#newLayerArray2 = aLayerArray + aLayerOfNeurons0
+#newLayerArray2.startEpoch
+#
+#
+#puts "Here 3"
+#newLayerArray = (newLayerArray2 - LayerArray.new(aLayerOfNeurons0))
+#newLayerArray.startEpoch
+#
+#
+#
+#
 
