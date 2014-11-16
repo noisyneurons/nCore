@@ -78,8 +78,13 @@ end
 #	##########################  Array Extensions ##################
 class Array
 
-  def to_nAry
-    return self.extend(FunctionsForLayersOfNeurons)
+  def to_LayerAry
+    anArray = self.collect {|e| e.to_Layer}
+    return LayerArray.new(anArray)
+  end
+
+  def to_Layer
+    return Layer.new(self)
   end
 
   def mean
