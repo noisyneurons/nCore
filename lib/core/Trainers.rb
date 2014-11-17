@@ -116,14 +116,12 @@ module DisplayAndErrorCalculations
   end
 end
 
-
-
 class Layer
   attr_reader :arrayOfNeurons
   extend Forwardable
 
-  def initialize(anArrayOfNeurons = [])
-    @arrayOfNeurons = standardizeInputFormat(anArrayOfNeurons)
+  def initialize(input = [])
+    @arrayOfNeurons = convertInputToArrayOfNeurons(input)
   end
 
   def_delegators :@arrayOfNeurons, :[], :size, :length, :each, :each_with_index, :collect, :all?
@@ -173,15 +171,20 @@ class Layer
     end
   end
 
-
-  def standardizeInputFormat(x)
+  def convertInputToArrayOfNeurons(x)
     begin
-      return x if (x.length == 0)
-      return x if (x.all? { |e| e.kind_of?(NeuronBase) })
-      if (x.kind_of?(Array) && x.length == 1) # This is for the weird case where x= [[neuron1,neuron2, neuron3]]
+      return x if (x.all? { |e| e.kind_of?(NeuronBase) }) # if x is an array of Neurons already!!
+      return x if (x.length == 0)                         # if x is an empty array!!
+
+      if (x.kind_of?(Array) && x.length == 1)             # if x is an array of one array of Neurons already!!
         y = x[0]
         return y if (y.all? { |e| e.kind_of?(NeuronBase) })
       end
+
+      if (x.kind_of?(LayerArray) && x.length == 1)         # if x is a LayerArray with just one Layer within it!!
+        return x[0].to_a
+      end
+
       raise "Wrong Type of argument to initialize Layer: It is Not an Array of Neurons; nor an Array of an Array of Neurons; nor a Zero Length Array"
     rescue Exception => e
       puts e.message
@@ -200,7 +203,7 @@ class LayerArray
   extend Forwardable
 
   def initialize(arrayOfLayers=[])
-    @arrayOfLayers = standardizeInputFormat(arrayOfLayers)
+    @arrayOfLayers = convertInputToArrayOfLayers(arrayOfLayers)
   end
 
   def_delegators :@arrayOfLayers, :[], :size, :length, :each, :collect, :include?
@@ -230,7 +233,7 @@ class LayerArray
   end
 
   def -(aLayerOraLayerArray)
-    return LayerArray.new(arrayOfLayers - stdFormat(aLayerOraLayerArray))
+    return LayerArray.new(arrayOfLayers - aLayerOraLayerArray.to_LayerAry.to_a)
   end
 
   def +(aLayer)
@@ -239,10 +242,15 @@ class LayerArray
   end
 
   def <<(aLayer)
-    if aLayer.kind_of?(Layer)
-      @arrayOfLayers << aLayer
-    else
-      STDERR.puts "ERROR: Attempting to append a NON-Layer object to a LayerArray"
+    begin
+      if aLayer.kind_of?(Layer)
+        @arrayOfLayers << aLayer
+        return
+      end
+      raise "ERROR: Attempting to append a NON-Layer object to a LayerArray"
+    rescue Exception => e
+      STDERR.puts e.message
+      STDERR.puts e.backtrace.inspect
     end
   end
 
@@ -259,28 +267,19 @@ class LayerArray
     !statusAry.include?(false)
   end
 
-  def standardizeInputFormat(x)
+  def convertInputToArrayOfLayers(x)   # convert x to ARRAY of Layers
     begin
-      return x if (x.length == 0)
-      return x if (x.all? { |e| e.kind_of?(Layer) })
-      x = [x] if (x.all? { |e| e.kind_of?(NeuronBase) })  # single array neurons to be converted to a Layer BELOW...
-      if (x.all? { |e| e.kind_of?(Array) })
-        if (x.flatten.all? { |e| e.kind_of?(NeuronBase) })  #  conversion to an array of Layers
+      return x if (x.all? { |e| e.kind_of?(Layer) })   # if array of array of Layers
+      return [] if (x.length == 0)                     # if empty array
+      return [x] if (x.kind_of?(Layer))                # if a single Layer
+
+      x = [x] if (x.all? { |e| e.kind_of?(NeuronBase) })  # if single array neurons, then convert to array of array of neurons
+      if (x.all? { |e| e.kind_of?(Array) })               # if array of array of neurons
+        if (x.flatten.all? { |e| e.kind_of?(NeuronBase) })
           return x.collect { |e| e.to_Layer }
         end
       end
       raise "Wrong Type: It is Not an Array of Layers or Neurons; nor a Zero Length Array"
-    rescue Exception => e
-      puts e.message
-      puts e.backtrace.inspect
-    end
-  end
-
-  def stdFormat(aLayerOraLayerArray)
-    begin
-      return [aLayerOraLayerArray] if aLayerOraLayerArray.kind_of?(Layer)
-      return aLayerOraLayerArray.to_a if aLayerOraLayerArray.kind_of?(LayerArray)
-      raise "ERROR: Attempting to 'delete' a NON-Layer object from a LayerArray"
     rescue Exception => e
       puts e.message
       puts e.backtrace.inspect
@@ -298,9 +297,7 @@ class TrainerBase
     @args = args
     @network = network
 
-    ary = network.allNeuronLayers
-    aryOfLayers = ary.collect { |e| e.to_Layer }
-    @allNeuronLayers = aryOfLayers.to_LayerAry
+    @allNeuronLayers = network.allNeuronLayers.to_LayerAry
     @inputLayer = @allNeuronLayers[0]
     @outputLayer = @allNeuronLayers[-1]
     @theBiasNeuron = network.theBiasNeuron
@@ -325,14 +322,13 @@ class TrainerBase
     distributeSetOfExamples(examples)
     totalEpochs = 0
 
-    learningLayers = allNeuronLayers - [inputLayer]
+    learningLayers = allNeuronLayers - inputLayer
     propagatingLayers, controllingLayers = layerDetermination(learningLayers)
 
     strategyArgs = {:ioFunction => SigmoidIOFunction}
-    hiddenLayers = learningLayers - [outputLayer]
+    hiddenLayers = learningLayers - outputLayer
     hiddenLayers.attachLearningStrategy(LearningBP, strategyArgs)
-    layersOfOutputNeurons = [outputLayer].to_nAry
-    layersOfOutputNeurons.attachLearningStrategy(LearningBPOutput, strategyArgs)
+    outputLayer.attachLearningStrategy(LearningBPOutput, strategyArgs)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase=2000, totalEpochs)
 
     forEachExampleDisplayInputsAndOutputs
@@ -380,9 +376,6 @@ class TrainerBase
   def entireNetworkSetup?
     aLayerArray = allNeuronLayers[1..-1].to_LayerAry
     return aLayerArray.setup?
-    #allNeuronsThatCanHaveLearningStrategy = (allNeuronLayers[1..-1]).flatten
-    #arrayThatMayIncludeNils = allNeuronsThatCanHaveLearningStrategy.collect { |neuron| neuron.learningStrat }
-    #!arrayThatMayIncludeNils.include?(nil)
   end
 
   def propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
