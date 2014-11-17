@@ -40,6 +40,17 @@ module CommonNeuronCalculations
   def zeroWeights
     inputLinks.each { |inputLink| inputLink.weight = 0.0 }
   end
+
+  def initWeights
+    numberOfInputsToNeuron = inputLinks.length
+    inputLinks.each do |aLink|
+      verySmallNoise = 0.0001 * (rand - 0.5)
+      weight = (0.2 + verySmallNoise) / numberOfInputsToNeuron # TODO may want sqrt(numberOfInputsToNeuron)
+      aLink.weight = weight
+      aLink.weightAtBeginningOfTraining = weight
+    end
+  end
+
 end
 
 ############################################################

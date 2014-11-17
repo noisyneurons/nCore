@@ -70,7 +70,7 @@ module DisplayAndErrorCalculations
   def genericCalcMeanSumSquaredErrors(numberOfExamples)
     squaredErrors = []
     numberOfExamples.times do |exampleNumber|
-      propagateAcrossEntireNetwork(exampleNumber)
+      allNeuronLayers.propagateExample(exampleNumber)
       squaredErrors << calcWeightedErrorMetricForExample()
     end
     sse = squaredErrors.flatten.reduce(:+)
@@ -126,6 +126,10 @@ class Layer
 
   def_delegators :@arrayOfNeurons, :[], :size, :length, :each, :each_with_index, :collect, :all?
 
+  def initWeights
+    arrayOfNeurons.each { |aNeuron| aNeuron.initWeights }
+  end
+
   def startStrategy
     arrayOfNeurons.each { |aNeuron| aNeuron.startStrategy }
   end
@@ -148,6 +152,10 @@ class Layer
 
   def attachLearningStrategy(learningStrategy, strategyArgs)
     arrayOfNeurons.each { |aNeuron| aNeuron.learningStrat = learningStrategy.new(aNeuron, strategyArgs) }
+  end
+
+  def calcWeightsForUNNormalizedInputs
+    arrayOfNeurons.each { |aNeuron| aNeuron.calcWeightsForUNNormalizedInputs }
   end
 
   def to_a
@@ -174,14 +182,14 @@ class Layer
   def convertInputToArrayOfNeurons(x)
     begin
       return x if (x.all? { |e| e.kind_of?(NeuronBase) }) # if x is an array of Neurons already!!
-      return x if (x.length == 0)                         # if x is an empty array!!
+      return x if (x.length == 0) # if x is an empty array!!
 
-      if (x.kind_of?(Array) && x.length == 1)             # if x is an array of one array of Neurons already!!
+      if (x.kind_of?(Array) && x.length == 1) # if x is an array of one array of Neurons already!!
         y = x[0]
         return y if (y.all? { |e| e.kind_of?(NeuronBase) })
       end
 
-      if (x.kind_of?(LayerArray) && x.length == 1)         # if x is a LayerArray with just one Layer within it!!
+      if (x.kind_of?(LayerArray) && x.length == 1) # if x is a LayerArray with just one Layer within it!!
         return x[0].to_a
       end
 
@@ -208,6 +216,10 @@ class LayerArray
 
   def_delegators :@arrayOfLayers, :[], :size, :length, :each, :collect, :include?
 
+  def initWeights
+    arrayOfLayers.each { |aLayer| aLayer.initWeights }
+  end
+
   def startStrategy
     arrayOfLayers.each { |aLayer| aLayer.startStrategy }
   end
@@ -228,8 +240,21 @@ class LayerArray
     arrayOfLayers.each { |aLayer| aLayer.endEpoch }
   end
 
+  def propagateAndLearnForAnEpoch(learningLayers, numberOfExamples)
+    learningLayers.startEpoch
+    numberOfExamples.times do |exampleNumber|
+      propagateExample(exampleNumber)
+      learningLayers.learnExample
+    end
+    learningLayers.endEpoch
+  end
+
   def attachLearningStrategy(learningStrategy, strategyArgs)
     arrayOfLayers.each { |aLayer| aLayer.attachLearningStrategy(learningStrategy, strategyArgs) }
+  end
+
+  def calcWeightsForUNNormalizedInputs
+    arrayOfLayers.each { |aLayer| aLayer.calcWeightsForUNNormalizedInputs }
   end
 
   def -(aLayerOraLayerArray)
@@ -267,14 +292,14 @@ class LayerArray
     !statusAry.include?(false)
   end
 
-  def convertInputToArrayOfLayers(x)   # convert x to ARRAY of Layers
+  def convertInputToArrayOfLayers(x) # convert x to ARRAY of Layers
     begin
-      return x if (x.all? { |e| e.kind_of?(Layer) })   # if array of array of Layers
-      return [] if (x.length == 0)                     # if empty array
-      return [x] if (x.kind_of?(Layer))                # if a single Layer
+      return x if (x.all? { |e| e.kind_of?(Layer) }) # if array of array of Layers
+      return [] if (x.length == 0) # if empty array
+      return [x] if (x.kind_of?(Layer)) # if a single Layer
 
-      x = [x] if (x.all? { |e| e.kind_of?(NeuronBase) })  # if single array neurons, then convert to array of array of neurons
-      if (x.all? { |e| e.kind_of?(Array) })               # if array of array of neurons
+      x = [x] if (x.all? { |e| e.kind_of?(NeuronBase) }) # if single array neurons, then convert to array of array of neurons
+      if (x.all? { |e| e.kind_of?(Array) }) # if array of array of neurons
         if (x.flatten.all? { |e| e.kind_of?(NeuronBase) })
           return x.collect { |e| e.to_Layer }
         end
@@ -285,6 +310,7 @@ class LayerArray
       puts e.backtrace.inspect
     end
   end
+
 end
 
 class TrainerBase
@@ -361,7 +387,7 @@ class TrainerBase
     trainingSequence.startTrainingPhase(epochsDuringPhase)
 
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
-      propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
+      propagatingLayers.propagateAndLearnForAnEpoch(learningLayers, numberOfExamples)
       trainingSequence.nextEpoch
       mse = calcMeanSumSquaredErrors if (entireNetworkSetup?)
 
@@ -377,25 +403,12 @@ class TrainerBase
     aLayerArray = allNeuronLayers[1..-1].to_LayerAry
     return aLayerArray.setup?
   end
-
-  def propagateAndLearnForAnEpoch(propagatingLayers, learningLayers)
-    learningLayers.startEpoch
-    numberOfExamples.times do |exampleNumber|
-      propagatingLayers.propagateExample(exampleNumber)
-      learningLayers.learnExample
-    end
-    learningLayers.endEpoch
-  end
-
-  def propagateAcrossEntireNetwork(exampleNumber)
-    allNeuronLayers.propagateExample(exampleNumber)
-  end
 end
 
 module SelfOrg
 
   def selOrgNoContext(learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
-    propagatingLayers, willNotUseControllingLayer = layerDetermination(learningLayers)
+    propagatingLayers, willNotUseControllingLayer = layerDetermination(learningLayers.to_LayerAry)
     strategyArguments = {:ioFunction => ioFunction}
     mse, totalEpochs = normalizationAndSelfOrgNoContext(learningLayers, propagatingLayers, strategyArguments, epochsDuringPhase, totalEpochs)
     return mse, totalEpochs
@@ -409,37 +422,15 @@ module SelfOrg
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForSelfOrg, totalEpochs)
     return mse, totalEpochs
   end
-
-  def initWeights(learningLayers)
-    learningLayers.each do |aLayer|
-      aLayer.each { |aNeuron| initNeuronsWeights(aNeuron) }
-    end
-  end
-
-  def initNeuronsWeights(neuron)
-    inputLinks = neuron.inputLinks
-    numberOfInputsToNeuron = inputLinks.length
-    inputLinks.each do |aLink|
-      verySmallNoise = 0.0001 * (rand - 0.5)
-      weight = (0.2 + verySmallNoise) / numberOfInputsToNeuron # TODO may want sqrt(numberOfInputsToNeuron)
-      aLink.weight = weight
-      aLink.weightAtBeginningOfTraining = weight
-    end
-  end
-
-  def calcWeightsForUNNormalizedInputs(learningLayers)
-    learningLayers.each { |neurons| neurons.each { |aNeuron| aNeuron.calcWeightsForUNNormalizedInputs } }
-  end
 end
 
 module ForwardPropWithContext
 
   def forwardPropWithContext(layerReceivingContext, ioFunction)
-    propagatingLayers, controllingLayers = layerDetermination(layerReceivingContext)
+    propagatingLayers, controllingLayers = layerDetermination(layerReceivingContext.to_LayerAry)
     singleLayerControllingLearning = controllingLayers[-1]
-    singleLayerReceivingContext = layerReceivingContext[0]
     strategyArguments = {:ioFunction => ioFunction}
-    setupForwardPropWithContext(singleLayerControllingLearning, singleLayerReceivingContext, strategyArguments)
+    setupForwardPropWithContext(singleLayerControllingLearning, layerReceivingContext, strategyArguments)
   end
 
   def setupForwardPropWithContext(singleLayerControllingLearning, singleLayerReceivingContext, strategyArguments)
@@ -468,7 +459,7 @@ end
 module SelfOrgWithContext
 
   def normalizationAndSelfOrgWithContext(learningLayers, ioFunction, epochsForSelfOrg, totalEpochs) # (learningLayers, controllingLayers, propagatingLayers, strategyArguments, epochsForSelfOrg, totalEpochs)
-
+    learningLayers = learningLayers.to_LayerAry
     propagatingLayers, controllingLayers = layerDetermination(learningLayers)
     singleLayerControllingLearning = controllingLayers[-1]
     singleLearningLayer = learningLayers[0]
@@ -549,21 +540,21 @@ class Trainer3SelfOrgContextSuper < TrainerBase
     ioFunction = NonMonotonicIOFunction
 
     ### self-org 1st hidden layer
-    learningLayers = hiddenLayer1.to_LayerAry
-    initWeights(learningLayers) # Needed only when the given layer is self-organizing for the first time
+    learningLayers = hiddenLayer1
+    learningLayers.initWeights # Needed only when the given layer is self-organizing for the first time
     mse, totalEpochs = selOrgNoContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
     ### self-org 2nd hidden layer WITH CONTEXT!!
-    learningLayers = hiddenLayer2.to_LayerAry
-    initWeights(learningLayers) # Needed only when the given layer is self-organizing for the first time
+    learningLayers = hiddenLayer2
+    learningLayers.initWeights # Needed only when the given layer is self-organizing for the first time
     mse, totalEpochs = normalizationAndSelfOrgWithContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
     mse, totalEpochs = normalizationAndSelfOrgWithContext(learningLayers, ioFunction, 1, totalEpochs)
     puts "Hidden Layer 2 with effectively NO Learning but with Outputs in Context (i.e., with 'dont know' representation added back)"
     forEachExampleDisplayInputsAndOutputs(hiddenLayer2)
 
-    layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
-    calcWeightsForUNNormalizedInputs(layersThatWereNormalized) # for understanding, convert to normal neural weight representation (without normalization variables)
+    layersThatWereNormalized = [hiddenLayer1, hiddenLayer2].to_LayerAry
+    layersThatWereNormalized.calcWeightsForUNNormalizedInputs # for understanding, convert to normal neural weight representation (without normalization variables)
 
     learningLayers = outputLayer.to_LayerAry
     mse, totalEpochs = supervisedTraining(learningLayers, ioFunction, args[:epochsForSupervisedTraining], totalEpochs)
@@ -599,25 +590,25 @@ class Trainer4SelfOrgContextSuper < Trainer3SelfOrgContextSuper
     ioFunction = NonMonotonicIOFunction
 
     ### self-org 1st hidden layer
-    learningLayers = hiddenLayer1.to_LayerAry
-    initWeights(learningLayers)
+    learningLayers = hiddenLayer1
+    learningLayers.initWeights
     mse, totalEpochs = selOrgNoContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
     ### self-org 2nd hidden layer WITH CONTEXT!!
-    learningLayers = hiddenLayer2.to_LayerAry
-    initWeights(learningLayers)
+    learningLayers = hiddenLayer2
+    learningLayers.initWeights
     mse, totalEpochs = normalizationAndSelfOrgWithContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
     ### self-org 2nd hidden layer withOUT context!!
     mse, totalEpochs = selOrgNoContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
-    layersReceivingContext= hiddenLayer2.to_LayerAry
-    forwardPropWithContext(layersReceivingContext, ioFunction)
+    layerReceivingContext = hiddenLayer2
+    forwardPropWithContext(layerReceivingContext, ioFunction)
     puts "Hidden Layer 2 with effectively NO Learning but with Outputs in Context (i.e., with 'dont know' representation added back)"
     forEachExampleDisplayInputsAndOutputs(hiddenLayer2)
 
-    layersThatWereNormalized = [hiddenLayer1, hiddenLayer2]
-    calcWeightsForUNNormalizedInputs(layersThatWereNormalized)
+    layersThatWereNormalized = [hiddenLayer1, hiddenLayer2].to_LayerAry
+    layersThatWereNormalized.calcWeightsForUNNormalizedInputs
 
     learningLayers = outputLayer.to_LayerAry
     mse, totalEpochs = supervisedTraining(learningLayers, ioFunction, args[:epochsForSupervisedTraining], totalEpochs)
