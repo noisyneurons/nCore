@@ -6,16 +6,13 @@
 require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
 require_relative '../lib/core/NeuralParts'
-require_relative '../lib/core/NeuralParts2'
 require_relative '../lib/core/NetworkFactories'
-require_relative '../lib/core/Trainers'
-require_relative '../lib/core/Trainers2'
+require_relative '../lib/core/TrainingBase'
 
 require_relative '../lib/plot/CorePlottingCode'
 require_relative '../lib/core/SimulationDataStore'
 
 require_relative 'BaseLearningExperiment'
-
 
 class Experiment
 

@@ -14,27 +14,16 @@
 require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
 require_relative '../lib/core/NeuralParts'
-require_relative '../lib/core/NeuralParts2'
 require_relative '../lib/core/NetworkFactories'
 require_relative '../lib/core/NetworkFactories2'
+require_relative '../lib/core/TrainingBase'
 require_relative '../lib/core/Trainers'
-require_relative '../lib/core/Trainers2'
 
 require_relative '../lib/plot/CorePlottingCode'
 require_relative '../lib/core/SimulationDataStore'
 
 require_relative 'BaseLearningExperiment'
 ########################################################################
-
-class Neuron2
-  include NonMonotonicIOFunction
-end
-
-class OutputNeuron2
-  #include SigmoidIOFunction
-  include NonMonotonicIOFunction
-end
-
 
 class Experiment
 

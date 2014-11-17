@@ -8,7 +8,6 @@ require_relative 'NeuralIOFunctions'
 module CommonNeuronCalculations
   public
 
-
   def zeroDeltaWAccumulated
     inputLinks.each { |inputLink| inputLink.deltaWAccumulated = 0.0 }
   end
@@ -35,13 +34,13 @@ module CommonNeuronCalculations
 
   def randomizeLinkWeights
     inputLinks.each { |anInputLink| anInputLink.randomizeWeightWithinTheRange(anInputLink.weightRange) }
-  end
+  end   ###  standard method for with initialization
 
   def zeroWeights
     inputLinks.each { |inputLink| inputLink.weight = 0.0 }
   end
 
-  def initWeights
+  def initWeights   ###  only used for special form of self-org/normalization
     numberOfInputsToNeuron = inputLinks.length
     inputLinks.each do |aLink|
       verySmallNoise = 0.0001 * (rand - 0.5)
@@ -128,10 +127,14 @@ class Neuron < NeuronBase
   def postInitialize
     @inputLinks = []
     @netInput = 0.0
-    self.output = self.ioFunction(@netInput) # Only doing this in case we wish to use this code for recurrent networks
     @outputLinks = []
     @error = 0.0
     @exampleNumber = nil
+    self.particularInits
+  end
+
+  def particularInits
+    self.output = self.ioFunction(netInput) # Only doing this in case we wish to use this code for recurrent networks
     @metricRecorder= NeuronRecorder.new(self, args)
   end
 
@@ -158,6 +161,8 @@ class Neuron < NeuronBase
     end
     return description
   end
+
+
 end
 
 class OutputNeuron < NeuronBase
@@ -168,7 +173,6 @@ class OutputNeuron < NeuronBase
 
   def postInitialize
     @netInput = 0.0
-    self.output = ioFunction(netInput) # Only doing this in case we wish to use this code for recurrent networks
     @inputLinks = []
     @error = 0.0
     @outputError = nil
@@ -177,6 +181,11 @@ class OutputNeuron < NeuronBase
     @weightedErrorMetric = nil
     @target = nil
     @keyToExampleData = :targets
+    self.particularInits
+  end
+
+  def particularInits
+    self.output = self.ioFunction(netInput) # Only doing this in case we wish to use this code for recurrent networks
     @metricRecorder = OutputNeuronRecorder.new(self, args)
   end
 

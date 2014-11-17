@@ -13,6 +13,16 @@ module IOFunctionUtils
     maxXY[0]
   end
 
+  def ioDerivativeFromOutput(neuronsOutput)
+    begin
+      raise "ioDerivativeFromOutput should not have been called for THIS ioFunction"
+    rescue Exception => e
+      STDERR.puts e.message
+      STDERR.puts e.backtrace.inspect
+    end
+  end
+
+
   private
   def genTestingArray(offset, increment, gridDivisions)
     testXs = (0..gridDivisions.to_i).collect do |aValue|
@@ -178,22 +188,3 @@ module SigmoidIOFunctionSymmetrical
 
 end
 
-
-module IOFunctionNotAccessibleHere
-  include IOFunctionUtils
-
-  def ioFunction(aNetInput)
-    STDERR.puts "IO Function Accessible Only via LearningStrategy class"
-    0.5
-  end
-
-  def ioDerivativeFromNetInput(aNetInput) # TODO speed this up.  Use sage to get the simpler analytical expression.
-    STDERR.puts "IO Function Accessible Only via LearningStrategy class"
-    0.0
-  end
-
-  def ioDerivativeFromOutput(neuronsOutput)
-    STDERR.puts "IO Function Accessible Only via LearningStrategy class"
-    0.0
-  end
-end
