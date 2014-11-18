@@ -26,14 +26,19 @@ require_relative 'BaseLearningExperiment'
 class Experiment
 
   def setParameters
+    self.numberOfExamples = 16
     @args = {
         :experimentNumber => $globalExperimentNumber,
-        :descriptionOfExperiment => descriptionOfExperiment,
+        :descriptionOfExperiment => "Proj3SelfOrgContextSuper; 2 in 4 out; divide but do NOT INTEGRATE!",
         :randomNumberSeed => (randomNumberSeed + 0),
+
+        :classOfTheNetwork => Context4LayerNetwork,
+        :classOfTheTrainer => Trainer3SelfOrgContextSuper,
+        :classOfDataSetGenerator => Generate4ClassDataSet,
 
         # training parameters
         :learningRate => 0.1,
-        :minMSE => 0.0, # 0.001,
+        :minMSE => 0.0,
         :epochsForSelfOrg => 150,
         :epochsForSupervisedTraining => 600,
         :trainingSequence => TrainingSequence,
@@ -52,35 +57,42 @@ class Experiment
         :typeOfOutputNeuron => OutputNeuron2,
 
         # Training Set parameters
-        :numberOfExamples => (self.numberOfExamples = 16),
-        :numberOfTestingExamples => numberOfExamples,
-        :standardDeviationOfAddedGaussianNoise => 1e-24,
+        :numberOfExamples => numberOfExamples,
+        :numberOfTestingExamples => 4,
+        :standardDeviationOfAddedGaussianNoise => 0.0,
         :angleOfClockwiseRotationOfInputData => 0.0
     }
   end
-
-  def createDataSet
-    gen4ClassDS
-  end
-
-  def createNetworkAndTrainer
-    network = Context4LayerNetwork.new(args)
-
-    #temporarilySetSpecificWeights(network)
-
-    theTrainer = Trainer3SelfOrgContextSuper.new(examples, network, args)
-
-    return network, theTrainer
-  end
-
 end
 
-###################################### START of Main Learning  ##########################################
+####################################### START of Main Learning  ##########################################
+#
+#baseRandomNumberSeed = 0
+#
+#experiment = Experiment.new("Proj3SelfOrgContextSuper; 2 in 4 out; divide then integrate", baseRandomNumberSeed)
+#
+#experiment.performSimulation()
+#
+#puts experiment.network
 
-baseRandomNumberSeed = 0
+###################################### START of REPEATED Experiments ##########################################
 
-experiment = Experiment.new("Proj3SelfOrgContextSuper; 2 in 4 out; divide then integrate", baseRandomNumberSeed)
+def repeatSimulation(numberOfReps = 1, randomSeedForSimulationSequence = 0)
+  aryOfTrainingMSEs = []
+  aryOfTestMSEs = []
+  experiment = nil
 
-experiment.performSimulation()
+  numberOfReps.times do |i|
+    experimentsRandomNumberSeed = (i + randomSeedForSimulationSequence)
+    experiment = Experiment.new(experimentsRandomNumberSeed)
+    lastEpoch, trainingMSE, testMSE, startingTime, endingTime = experiment.performSimulation()
+    aryOfTrainingMSEs << trainingMSE
+    aryOfTestMSEs << testMSE
+  end
+  puts "\n\nmean TrainingMSE= #{aryOfTrainingMSEs.mean},\tmean TestingMSE= #{aryOfTestMSEs.mean}"
+  return experiment
+end
 
+experiment = repeatSimulation
 puts experiment.network
+

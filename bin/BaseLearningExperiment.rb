@@ -3,41 +3,41 @@
 
 class Experiment
   attr_accessor :network, :theTrainer, :descriptionOfExperiment, :taskID, :jobID, :jobName, :randomNumberSeed,
-                :experimentLogger, :simulationDataStoreManager, :examples, :numberOfExamples, :args, :trainingSequence
+                :experimentLogger, :simulationDataStoreManager,
+                :dataSetGenerator, :examples, :numberOfExamples, :args, :trainingSequence
   include ExampleDistribution
   include DataSetGenerators
 
-  def initialize(descriptionOfExperiment, baseRandomNumberSeed)
-    @descriptionOfExperiment = descriptionOfExperiment
+  def initialize(baseRandomNumberSeed)
 
     @taskID = ((ENV['SGE_TASK_ID']).to_i) || 0
     @randomNumberSeed = baseRandomNumberSeed + (taskID * 10000)
+    @numberOfExamples = nil
     @args = self.setParameters
     srand(@args[:randomNumberSeed])
 
     puts "sleeping" unless ($currentHost == "localhost")
     sleep(rand * 30) unless ($currentHost == "localhost")
 
+    @descriptionOfExperiment = args[:descriptionOfExperiment]
     @jobID = ((ENV['JOB_ID']).to_i) || 0
     @jobName = descriptionOfExperiment[0...10]
 
     @experimentLogger = ExperimentLogger.new(descriptionOfExperiment, jobName)
     $globalExperimentNumber = experimentLogger.experimentNumber
-    #@args = self.setParameters
+
     @examples = createTrainingSet
-    args[:testingExamples] = createTestingSet
+    args[:testingExamples] = self.createTestingSet  # TODO clumsy putting testing examples in args hash
 
     @trainingSequence = args[:trainingSequence].new(args)
-
-    #   @simulationDataStoreManager = SimulationDataStoreManager.new(args)
-    @args[:trainingSequence] = trainingSequence
+    args[:trainingSequence] = trainingSequence     # TODO clumsy putting trainingSequence in args hash  ... create later
   end
 
   def setParameters
-
+    self.numberOfExamples = nil
     @args = {
         :experimentNumber => $globalExperimentNumber,
-        :descriptionOfExperiment => descriptionOfExperiment,
+        :descriptionOfExperiment => "NA",
         :randomNumberSeed => randomNumberSeed,
 
         # training parameters re. Output Error
@@ -54,25 +54,37 @@ class Experiment
         :typeOfLink => Link,
 
         # Training Set parameters
-        :numberOfExamples => (self.numberOfExamples = nil),
+        :numberOfExamples => numberOfExamples,
     }
   end
 
   def createDataSet
     STDERR.puts "Error: base class method called!!"
     STDERR.puts "Error: Incorrect Number of Examples Generated and/or Specified" unless (examples.length == args[:numberOfExamples])
-    return examples
   end
 
   def createTrainingSet
-    examples = createDataSet
+    classOfDataSetGenerator = args[:classOfDataSetGenerator]
+    self.dataSetGenerator = classOfDataSetGenerator.new(args)
+    examples = dataSetGenerator.generate(args[:numberOfExamples], args[:standardDeviationOfAddedGaussianNoise])
     puts "length of examples = #{examples.length}"
-    puts examples
     return examples
   end
 
   def createTestingSet
-    return createDataSet
+    testExamples = dataSetGenerator.generate(args[:numberOfTestingExamples], 0.0)
+    puts "Test Examples:"
+    puts testExamples
+    return testExamples
+  end
+
+  def createNetworkAndTrainer
+    classOfTheNetwork = args[:classOfTheNetwork]
+    classOfTheTrainer = args[:classOfTheTrainer]
+
+    network = classOfTheNetwork.new(args)
+    theTrainer = classOfTheTrainer.new(examples, network, args)
+    return network, theTrainer
   end
 
   def performSimulation
@@ -89,7 +101,8 @@ class Experiment
 ############################## reporting results....
 
     puts "lastEpoch, trainingMSE, testMSE, startingTime, endingTime "
-    puts lastEpoch, trainingMSE, testMSE, startingTime, endingTime
+    puts "#{lastEpoch}, #{trainingMSE}, #{testMSE}, #{startingTime}, #{endingTime}"
+    return [lastEpoch, trainingMSE, testMSE, startingTime, endingTime]
   end
 
   # routines supporting 'reporting results':

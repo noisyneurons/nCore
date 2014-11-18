@@ -17,10 +17,15 @@ require_relative 'BaseLearningExperiment'
 class Experiment
 
   def setParameters
+    self.numberOfExamples = 4
     @args = {
         :experimentNumber => $globalExperimentNumber,
-        :descriptionOfExperiment => descriptionOfExperiment,
+        :descriptionOfExperiment => "Proj3SelfOrgContextSuper; 2 in 4 out; divide but do NOT INTEGRATE!",
         :randomNumberSeed => randomNumberSeed,
+
+        :classOfTheNetwork => Standard3LayerNetwork,
+        :classOfTheTrainer => TrainerBase,
+        :classOfDataSetGenerator => XORDataGenerator,
 
         # training parameters re. Output Error
         :learningRate => 3.0,
@@ -41,33 +46,31 @@ class Experiment
 
 
         # Training Set parameters
-        :numberOfExamples => (self.numberOfExamples = 4),
+        :numberOfExamples => numberOfExamples,
         :numberOfTestingExamples => numberOfExamples,
-
     }
-  end
-
-  def createDataSet
-    examples = []
-    examples << {:inputs => [0.0, 0.0], :targets => [0.0], :exampleNumber => 0, :class => 0}
-    examples << {:inputs => [0.0, 1.0], :targets => [1.0], :exampleNumber => 1, :class => 1}
-    examples << {:inputs => [1.0, 0.0], :targets => [1.0], :exampleNumber => 2, :class => 1}
-    examples << {:inputs => [1.0, 1.0], :targets => [0.0], :exampleNumber => 3, :class => 0}
-    return examples
-  end
-
-  def createNetworkAndTrainer
-    network = Standard3LayerNetwork.new(args)
-    theTrainer = TrainerBase.new(examples, network, args)
-    return network, theTrainer
   end
 end
 
 
-###################################### START of Main Learning  ##########################################
+###################################### START of REPEATED Experiments ##########################################
 
-baseRandomNumberSeed = 0
+def repeatSimulation(numberOfReps = 1, randomSeedForSimulationSequence = 0)
+  aryOfTrainingMSEs = []
+  aryOfTestMSEs = []
+  experiment = nil
 
-experiment = Experiment.new("BasicBPDemo1 both layers NonMon", baseRandomNumberSeed)
+  numberOfReps.times do |i|
+    experimentsRandomNumberSeed = (i + randomSeedForSimulationSequence)
+    experiment = Experiment.new(experimentsRandomNumberSeed)
+    lastEpoch, trainingMSE, testMSE, startingTime, endingTime = experiment.performSimulation()
+    aryOfTrainingMSEs << trainingMSE
+    aryOfTestMSEs << testMSE
+  end
+  puts "\n\nmean TrainingMSE= #{aryOfTrainingMSEs.mean},\tmean TestingMSE= #{aryOfTestMSEs.mean}"
+  return experiment
+end
 
-experiment.performSimulation()
+experiment = repeatSimulation
+puts experiment.network
+

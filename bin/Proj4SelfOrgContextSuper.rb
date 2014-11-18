@@ -28,14 +28,19 @@ require_relative 'BaseLearningExperiment'
 class Experiment
 
   def setParameters
+    self.numberOfExamples = 16
     @args = {
         :experimentNumber => $globalExperimentNumber,
-        :descriptionOfExperiment => descriptionOfExperiment,
-        :randomNumberSeed => (randomNumberSeed + 0),
+        :descriptionOfExperiment => "Proj4SelfOrgContextSuper; 2 in 4 out; divide then integrate",
+        :randomNumberSeed => (randomNumberSeed + 0),   # TODO redundant/unnecessarily-complicated?
+
+        :classOfTheNetwork => Context4LayerNetwork,
+        :classOfTheTrainer => Trainer4SelfOrgContextSuper,
+        :classOfDataSetGenerator => Generate4ClassDataSet,
 
         # training parameters
         :learningRate => 0.1,
-        :minMSE => 0.0, # 0.001,
+        :minMSE => 0.0,
         :epochsForSelfOrg => 150,
         :epochsForSupervisedTraining => 600,
         :trainingSequence => TrainingSequence,
@@ -46,41 +51,41 @@ class Experiment
         :numberOfHiddenLayer2Neurons => 2,
         :numberOfOutputNeurons => 4,
 
-        :weightRange => 0.1,
-
+        # Neural Parts Specifications
         :typeOfLink => LinkWithNormalization,
         :typeOfNeuron => Neuron2,
         :typeOfLinkToOutput => LinkWithNormalization,
         :typeOfOutputNeuron => OutputNeuron2,
 
+        :weightRange => 0.1,
+
         # Training Set parameters
-        :numberOfExamples => (self.numberOfExamples = 16),
-        :numberOfTestingExamples => numberOfExamples,
-        :standardDeviationOfAddedGaussianNoise => 1e-24,
+        :numberOfExamples => numberOfExamples,
+        :numberOfTestingExamples => 4,
+        :standardDeviationOfAddedGaussianNoise => 0.0, #1e-24,
         :angleOfClockwiseRotationOfInputData => 0.0
     }
   end
-
-  def createDataSet
-    gen4ClassDS
-  end
-
-  def createNetworkAndTrainer
-    network = Context4LayerNetwork.new(args)
-
-    #temporarilySetSpecificWeights(network)
-
-    theTrainer = Trainer4SelfOrgContextSuper.new(examples, network, args)
-    return network, theTrainer
-  end
 end
 
-###################################### START of Main Learning  ##########################################
+###################################### START of REPEATED Experiments ##########################################
 
-baseRandomNumberSeed = 0
+def repeatSimulation(numberOfReps = 1, randomSeedForSimulationSequence = 0)
+  aryOfTrainingMSEs = []
+  aryOfTestMSEs = []
+  experiment = nil
 
-experiment = Experiment.new("Proj4SelfOrgContextSuper; 2 in 4 out; divide then integrate", baseRandomNumberSeed)
+  numberOfReps.times do |i|
+    experimentsRandomNumberSeed = (i + randomSeedForSimulationSequence)
+    experiment = Experiment.new(experimentsRandomNumberSeed)
+    lastEpoch, trainingMSE, testMSE, startingTime, endingTime = experiment.performSimulation()
+    aryOfTrainingMSEs << trainingMSE
+    aryOfTestMSEs << testMSE
+  end
+  puts "\n\nmean TrainingMSE= #{aryOfTrainingMSEs.mean},\tmean TestingMSE= #{aryOfTestMSEs.mean}"
+  return experiment
+end
 
-experiment.performSimulation()
-
+experiment = repeatSimulation
 puts experiment.network
+
