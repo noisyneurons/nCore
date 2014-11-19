@@ -65,16 +65,6 @@ class Experiment
   end
 end
 
-####################################### START of Main Learning  ##########################################
-#
-#baseRandomNumberSeed = 0
-#
-#experiment = Experiment.new("Proj3SelfOrgContextSuper; 2 in 4 out; divide then integrate", baseRandomNumberSeed)
-#
-#experiment.performSimulation()
-#
-#puts experiment.network
-
 ###################################### START of REPEATED Experiments ##########################################
 
 def repeatSimulation(numberOfReps = 1, randomSeedForSimulationSequence = 0)

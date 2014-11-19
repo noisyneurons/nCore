@@ -694,7 +694,7 @@ class TrainerBase
     @numberOfExamples = examples.length
 
     @minMSE = args[:minMSE]
-    @trainingSequence = args[:trainingSequence]
+    @trainingSequence = args[:trainingSequence].new(args)
 
     @startTime = Time.now
     @elapsedTime = nil

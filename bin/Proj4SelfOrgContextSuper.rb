@@ -25,67 +25,69 @@ require_relative '../lib/core/SimulationDataStore'
 require_relative 'BaseLearningExperiment'
 ########################################################################
 
-class Experiment
 
-  def setParameters
-    self.numberOfExamples = 16
-    @args = {
-        :experimentNumber => $globalExperimentNumber,
-        :descriptionOfExperiment => "Proj4SelfOrgContextSuper; 2 in 4 out; divide then integrate",
-        :randomNumberSeed => (randomNumberSeed + 0),   # TODO redundant/unnecessarily-complicated?
+args = {
+    :experimentNumber => $globalExperimentNumber,
+#    :descriptionOfExperiment => "Proj4SelfOrgContextSuper; 2 in 4 out; divide then integrate",
+    :baseRandomNumberSeed => 0,
 
-        :classOfTheNetwork => Context4LayerNetwork,
-        :classOfTheTrainer => Trainer4SelfOrgContextSuper,
-        :classOfDataSetGenerator => Generate4ClassDataSet,
+    :classOfTheNetwork => Context4LayerNetwork,
+#    :classOfTheTrainer => Trainer3SelfOrgContextSuper,
+    :classOfDataSetGenerator => Generate4ClassDataSet,
 
-        # training parameters
-        :learningRate => 0.1,
-        :minMSE => 0.0,
-        :epochsForSelfOrg => 150,
-        :epochsForSupervisedTraining => 600,
-        :trainingSequence => TrainingSequence,
+    # training parameters
+    :learningRate => 0.1,
+    :minMSE => 0.0,
+    :epochsForSelfOrg => 150,
+    :epochsForSupervisedTraining => 600,
+    :trainingSequence => TrainingSequence,
 
-        # Network Architecture
-        :numberOfInputNeurons => 2,
-        :numberOfHiddenLayer1Neurons => 1,
-        :numberOfHiddenLayer2Neurons => 2,
-        :numberOfOutputNeurons => 4,
+    # Network Architecture
+    :numberOfInputNeurons => 2,
+    :numberOfHiddenLayer1Neurons => 1,
+    :numberOfHiddenLayer2Neurons => 2,
+    :numberOfOutputNeurons => 4,
 
-        # Neural Parts Specifications
-        :typeOfLink => LinkWithNormalization,
-        :typeOfNeuron => Neuron2,
-        :typeOfLinkToOutput => LinkWithNormalization,
-        :typeOfOutputNeuron => OutputNeuron2,
+    # Neural Parts Specifications
+    :typeOfLink => LinkWithNormalization,
+    :typeOfNeuron => Neuron2,
+    :typeOfLinkToOutput => LinkWithNormalization,
+    :typeOfOutputNeuron => OutputNeuron2,
 
-        :weightRange => 0.1,
+    :weightRange => 0.1,
 
-        # Training Set parameters
-        :numberOfExamples => numberOfExamples,
-        :numberOfTestingExamples => 4,
-        :standardDeviationOfAddedGaussianNoise => 0.0, #1e-24,
-        :angleOfClockwiseRotationOfInputData => 0.0
-    }
-  end
-end
+    # Training Set parameters
+    :numberOfExamples => 16,
+    :numberOfTestingExamples => 4,
+    :standardDeviationOfAddedGaussianNoise => 0.2,
+    :angleOfClockwiseRotationOfInputData => 0.0
+}
 
-###################################### START of REPEATED Experiments ##########################################
+ std("baseRandomNumberSeed",args[:baseRandomNumberSeed])
 
-def repeatSimulation(numberOfReps = 1, randomSeedForSimulationSequence = 0)
-  aryOfTrainingMSEs = []
-  aryOfTestMSEs = []
-  experiment = nil
+#class Proj3 < Experiment
+#end
+#
+#
+#class Proj4 < Experiment
+#end
 
-  numberOfReps.times do |i|
-    experimentsRandomNumberSeed = (i + randomSeedForSimulationSequence)
-    experiment = Experiment.new(experimentsRandomNumberSeed)
-    lastEpoch, trainingMSE, testMSE, startingTime, endingTime = experiment.performSimulation()
-    aryOfTrainingMSEs << trainingMSE
-    aryOfTestMSEs << testMSE
-  end
-  puts "\n\nmean TrainingMSE= #{aryOfTrainingMSEs.mean},\tmean TestingMSE= #{aryOfTestMSEs.mean}"
-  return experiment
-end
+###################################### REPEATED Experiments for comparison ##########################################
 
-experiment = repeatSimulation
-puts experiment.network
+numberOfRepetitions = 10
+
+
+args[:classOfTheTrainer] = Trainer3SelfOrgContextSuper
+args[:descriptionOfExperiment] = "Proj3SelfOrgContextSuper; 2 in 4 out; divide but NO Integration"
+runner = ExperimentRunner.new(args)
+lastExperimentRun = runner.repeatSimulation(numberOfRepetitions)
+puts lastExperimentRun.network
+
+
+args[:classOfTheTrainer] = Trainer4SelfOrgContextSuper
+args[:descriptionOfExperiment] = "Proj4SelfOrgContextSuper; 2 in 4 out; divide then integrate"
+runner = ExperimentRunner.new(args)
+lastExperimentRun = runner.repeatSimulation(numberOfRepetitions)
+puts lastExperimentRun.network
+
 

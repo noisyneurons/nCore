@@ -2,19 +2,21 @@
 ## ../nCore/bin/BaseLearningExperiments.rb
 
 class Experiment
-  attr_accessor :network, :theTrainer, :descriptionOfExperiment, :taskID, :jobID, :jobName, :randomNumberSeed,
-                :experimentLogger, :simulationDataStoreManager,
+  attr_accessor :network, :theTrainer, :descriptionOfExperiment, :taskID, :jobID, :jobName,
+                :experimentLogger, :simulationDataStoreManager, :randomNumberSeed,
                 :dataSetGenerator, :examples, :numberOfExamples, :args, :trainingSequence
   include ExampleDistribution
   include DataSetGenerators
 
-  def initialize(baseRandomNumberSeed)
+  def initialize(args)
+    @args = args
 
     @taskID = ((ENV['SGE_TASK_ID']).to_i) || 0
+    baseRandomNumberSeed = args[:baseRandomNumberSeed]
     @randomNumberSeed = baseRandomNumberSeed + (taskID * 10000)
-    @numberOfExamples = nil
-    @args = self.setParameters
-    srand(@args[:randomNumberSeed])
+
+    @numberOfExamples = args[:numberOfExamples]
+    srand(randomNumberSeed)
 
     puts "sleeping" unless ($currentHost == "localhost")
     sleep(rand * 30) unless ($currentHost == "localhost")
@@ -27,40 +29,7 @@ class Experiment
     $globalExperimentNumber = experimentLogger.experimentNumber
 
     @examples = createTrainingSet
-    args[:testingExamples] = self.createTestingSet  # TODO clumsy putting testing examples in args hash
-
-    @trainingSequence = args[:trainingSequence].new(args)
-    args[:trainingSequence] = trainingSequence     # TODO clumsy putting trainingSequence in args hash  ... create later
-  end
-
-  def setParameters
-    self.numberOfExamples = nil
-    @args = {
-        :experimentNumber => $globalExperimentNumber,
-        :descriptionOfExperiment => "NA",
-        :randomNumberSeed => randomNumberSeed,
-
-        # training parameters re. Output Error
-        :outputErrorLearningRate => 0.02,
-        :minMSE => 0.0001,
-        :maxNumEpochs => 4e3,
-        :numLoops => 10,
-
-        # Network Architecture
-        :numberOfInputNeurons => 2,
-        :numberOfHiddenNeurons => 0,
-        :numberOfOutputNeurons => 1,
-        :weightRange => 1.0,
-        :typeOfLink => Link,
-
-        # Training Set parameters
-        :numberOfExamples => numberOfExamples,
-    }
-  end
-
-  def createDataSet
-    STDERR.puts "Error: base class method called!!"
-    STDERR.puts "Error: Incorrect Number of Examples Generated and/or Specified" unless (examples.length == args[:numberOfExamples])
+    args[:testingExamples] = createTestingSet # TODO clumsy putting testing examples in args hash
   end
 
   def createTrainingSet
@@ -105,31 +74,41 @@ class Experiment
     return [lastEpoch, trainingMSE, testMSE, startingTime, endingTime]
   end
 
-  # routines supporting 'reporting results':
-
-  #def reportTrainingResults(neuronToDisplay, descriptionOfExperiment, lastEpoch, lastTrainingMSE, lastTestingMSE, network, startingTime)
-  #
-  #  endOfTrainingReport(lastEpoch, lastTestingMSE, lastTrainingMSE, network)
-  #
-  #  #neuronDataSummary(neuronToDisplay)
-  #
-  #  #detailedNeuronDataSummary(neuronToDisplay)
-  #
-  #  trainingDataRecords = trainingDataSummary
-  #
-  #  storeSnapShotData(descriptionOfExperiment, lastEpoch, lastTestingMSE, lastTrainingMSE, network, startingTime)
-  #
-  #  snapShotDataSummary
-  #
-  #  plotMSEvsEpochNumber(trainingDataRecords)
-  #
-  #  # plotTrainingResults(neuronToDisplay)
-  #end
-
-
   #def plotTrainingResults(arrayOfNeuronsToPlot)
   #  generatePlotForEachNeuron(arrayOfNeuronsToPlot) if arrayOfNeuronsToPlot.present?
   #end
 end
+
+
+class ExperimentRunner
+  attr_reader :args
+  def initialize(args)
+    @args = args
+  end
+
+  def repeatSimulation(numberOfReps = 1, randomSeedForSimulationSequence = 0)
+    aryOfTrainingMSEs = []
+    aryOfTestMSEs = []
+    experiment = nil
+
+    numberOfReps.times do |i|
+      experimentsRandomNumberSeed = randomSeedForSimulationSequence + i
+      args[:baseRandomNumberSeed] = experimentsRandomNumberSeed
+      experiment = Experiment.new(args)
+      lastEpoch, trainingMSE, testMSE, startingTime, endingTime = experiment.performSimulation()
+      aryOfTrainingMSEs << trainingMSE
+      aryOfTestMSEs << testMSE
+    end
+    puts "\n\nmean TrainingMSE= #{aryOfTrainingMSEs.mean},\tmean TestingMSE= #{aryOfTestMSEs.mean}"
+    return experiment
+  end
+end
+
+
+
+
+#experiment = repeatSimulation
+#puts experiment.network
+
 
 
