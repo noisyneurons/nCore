@@ -57,6 +57,11 @@ class Neuron2 < Neuron
   def particularInits
   end
 
+  def to_s
+    description = super
+    description += "IOFunction=\t#{learningStrat.strategyArgs[:ioFunction]}\n"
+    return description
+  end
 end
 
 class OutputNeuron2 < OutputNeuron
@@ -71,6 +76,11 @@ class OutputNeuron2 < OutputNeuron
   def particularInits
   end
 
+  def to_s
+    description = super
+    description += "IOFunction=\t#{learningStrat.strategyArgs[:ioFunction]}\n"
+    return description
+  end
 end
 
 ###################################################################

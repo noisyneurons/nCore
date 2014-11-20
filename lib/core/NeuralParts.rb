@@ -161,8 +161,6 @@ class Neuron < NeuronBase
     end
     return description
   end
-
-
 end
 
 class OutputNeuron < NeuronBase

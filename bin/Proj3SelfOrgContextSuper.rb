@@ -23,66 +23,50 @@ require_relative 'BaseLearningExperiment'
 ########################################################################
 
 
-class Experiment
+args = {
+    :experimentNumber => $globalExperimentNumber,
+    :descriptionOfExperiment =>  "Proj3SelfOrgContextSuper; 2 in 4 out; divide but NO Integration",
+    :baseRandomNumberSeed => 0,
 
-  def setParameters
-    self.numberOfExamples = 16
-    @args = {
-        :experimentNumber => $globalExperimentNumber,
-        :descriptionOfExperiment => "Proj3SelfOrgContextSuper; 2 in 4 out; divide but do NOT INTEGRATE!",
-        :randomNumberSeed => (randomNumberSeed + 0),
+    :classOfTheNetwork => Context4LayerNetwork,
+    :classOfTheTrainer => Trainer3SelfOrgContextSuper,
+    :classOfDataSetGenerator => Generate4ClassDataSet,
 
-        :classOfTheNetwork => Context4LayerNetwork,
-        :classOfTheTrainer => Trainer3SelfOrgContextSuper,
-        :classOfDataSetGenerator => Generate4ClassDataSet,
+    # training parameters
+    :learningRate => 0.1,
+    :minMSE => 0.0,
+    :epochsForSelfOrg => 150,
+    :epochsForSupervisedTraining => 600,
+    :trainingSequence => TrainingSequence,
 
-        # training parameters
-        :learningRate => 0.1,
-        :minMSE => 0.0,
-        :epochsForSelfOrg => 150,
-        :epochsForSupervisedTraining => 600,
-        :trainingSequence => TrainingSequence,
+    # Network Architecture
+    :numberOfInputNeurons => 2,
+    :numberOfHiddenLayer1Neurons => 1,
+    :numberOfHiddenLayer2Neurons => 2,
+    :numberOfOutputNeurons => 4,
 
-        # Network Architecture
-        :numberOfInputNeurons => 2,
-        :numberOfHiddenLayer1Neurons => 1,
-        :numberOfHiddenLayer2Neurons => 2,
-        :numberOfOutputNeurons => 4,
+    # Neural Parts Specifications
+    :typeOfLink => LinkWithNormalization,
+    :typeOfNeuron => Neuron2,
+    :typeOfLinkToOutput => LinkWithNormalization,
+    :typeOfOutputNeuron => OutputNeuron2,
 
-        :weightRange => 0.1,
+    :weightRange => 0.1,
 
-        :typeOfLink => LinkWithNormalization,
-        :typeOfNeuron => Neuron2,
-        :typeOfLinkToOutput => LinkWithNormalization,
-        :typeOfOutputNeuron => OutputNeuron2,
+    # Training Set parameters
+    :numberOfExamples => 16,
+    :numberOfTestingExamples => 4,
+    :standardDeviationOfAddedGaussianNoise => 0.0,
+    :angleOfClockwiseRotationOfInputData => 0.0
+}
 
-        # Training Set parameters
-        :numberOfExamples => numberOfExamples,
-        :numberOfTestingExamples => 4,
-        :standardDeviationOfAddedGaussianNoise => 0.0,
-        :angleOfClockwiseRotationOfInputData => 0.0
-    }
-  end
-end
 
-###################################### START of REPEATED Experiments ##########################################
+###################################### REPEATED Experiments for comparison ##########################################
 
-def repeatSimulation(numberOfReps = 1, randomSeedForSimulationSequence = 0)
-  aryOfTrainingMSEs = []
-  aryOfTestMSEs = []
-  experiment = nil
+numberOfRepetitions = 1
 
-  numberOfReps.times do |i|
-    experimentsRandomNumberSeed = (i + randomSeedForSimulationSequence)
-    experiment = Experiment.new(experimentsRandomNumberSeed)
-    lastEpoch, trainingMSE, testMSE, startingTime, endingTime = experiment.performSimulation()
-    aryOfTrainingMSEs << trainingMSE
-    aryOfTestMSEs << testMSE
-  end
-  puts "\n\nmean TrainingMSE= #{aryOfTrainingMSEs.mean},\tmean TestingMSE= #{aryOfTestMSEs.mean}"
-  return experiment
-end
+runner = ExperimentRunner.new(args)
+lastExperimentRun, results = runner.repeatSimulation(numberOfRepetitions)
+puts lastExperimentRun.network
 
-experiment = repeatSimulation
-puts experiment.network
 

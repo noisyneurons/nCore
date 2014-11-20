@@ -12,10 +12,7 @@ class Experiment
     @args = args
 
     @taskID = ((ENV['SGE_TASK_ID']).to_i) || 0
-    baseRandomNumberSeed = args[:baseRandomNumberSeed]
-    @randomNumberSeed = baseRandomNumberSeed + (taskID * 10000)
-
-    @numberOfExamples = args[:numberOfExamples]
+    @randomNumberSeed = args[:baseRandomNumberSeed] + (taskID * 10000)
     srand(randomNumberSeed)
 
     puts "sleeping" unless ($currentHost == "localhost")
@@ -28,6 +25,7 @@ class Experiment
     @experimentLogger = ExperimentLogger.new(descriptionOfExperiment, jobName)
     $globalExperimentNumber = experimentLogger.experimentNumber
 
+    @numberOfExamples = args[:numberOfExamples]
     @examples = createTrainingSet
     args[:testingExamples] = createTestingSet # TODO clumsy putting testing examples in args hash
   end
@@ -36,14 +34,15 @@ class Experiment
     classOfDataSetGenerator = args[:classOfDataSetGenerator]
     self.dataSetGenerator = classOfDataSetGenerator.new(args)
     examples = dataSetGenerator.generate(args[:numberOfExamples], args[:standardDeviationOfAddedGaussianNoise])
-    puts "length of examples = #{examples.length}"
+    puts "Number of Training examples = #{examples.length}"
     return examples
   end
 
   def createTestingSet
-    testExamples = dataSetGenerator.generate(args[:numberOfTestingExamples], 0.0)
-    puts "Test Examples:"
-    puts testExamples
+    testExamples = dataSetGenerator.generate(args[:numberOfTestingExamples], args[:standardDeviationOfAddedGaussianNoise])
+    puts "Number of Testing examples = #{testExamples.length}"
+    # puts "Test Examples:"
+    # puts testExamples
     return testExamples
   end
 
@@ -74,9 +73,6 @@ class Experiment
     return [lastEpoch, trainingMSE, testMSE, startingTime, endingTime]
   end
 
-  #def plotTrainingResults(arrayOfNeuronsToPlot)
-  #  generatePlotForEachNeuron(arrayOfNeuronsToPlot) if arrayOfNeuronsToPlot.present?
-  #end
 end
 
 
@@ -88,27 +84,22 @@ class ExperimentRunner
 
   def repeatSimulation(numberOfReps = 1, randomSeedForSimulationSequence = 0)
     aryOfTrainingMSEs = []
-    aryOfTestMSEs = []
+    aryOfTestingMSEs = []
     experiment = nil
 
     numberOfReps.times do |i|
       experimentsRandomNumberSeed = randomSeedForSimulationSequence + i
       args[:baseRandomNumberSeed] = experimentsRandomNumberSeed
       experiment = Experiment.new(args)
-      lastEpoch, trainingMSE, testMSE, startingTime, endingTime = experiment.performSimulation()
+      lastEpoch, trainingMSE, testingMSE, startingTime, endingTime = experiment.performSimulation()
       aryOfTrainingMSEs << trainingMSE
-      aryOfTestMSEs << testMSE
+      aryOfTestingMSEs << testingMSE
     end
-    puts "\n\nmean TrainingMSE= #{aryOfTrainingMSEs.mean},\tmean TestingMSE= #{aryOfTestMSEs.mean}"
-    return experiment
+    lastExperiment = experiment
+    results = {:trainingMSEs => aryOfTrainingMSEs, :testingMSEs => aryOfTestingMSEs}
+    return [lastExperiment, results]
   end
 end
-
-
-
-
-#experiment = repeatSimulation
-#puts experiment.network
 
 
 

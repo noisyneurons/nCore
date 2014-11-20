@@ -1,9 +1,7 @@
 ### VERSION "nCore"
-## ../nCore/bin/Proj4SelfOrgContextSuper.rb
+## ../nCore/bin/Proj3vsProj4.rb
 
-# Specific Purpose for this experiment: Get NEXT simplest versions of self-org, context, AND combined with Supervised Learning, understood and "working."
-#   In this 4th project, we append a "relearning or re- self-org WITHOUT CONTEXT" just prior to the bp supervised training.
-#   Presumably this will improve the accuracy of the hyperplanes in the 2nd hidden layer, compared to those in proj 3.
+# Comparing Proj 3 and Proj 4's generalization performance
 
 # General Purpose:  Start of Project 4; project to split example set to learn sub-parts, and then combine those parts/neuron-functions that
 # didn't need to be separated, but instead need to be integrated to obtain better generalization.
@@ -39,7 +37,7 @@ args = {
     :learningRate => 0.1,
     :minMSE => 0.0,
     :epochsForSelfOrg => 150,
-    :epochsForSupervisedTraining => 600,
+    :epochsForSupervisedTraining => 2400,
     :trainingSequence => TrainingSequence,
 
     # Network Architecture
@@ -57,19 +55,40 @@ args = {
     :weightRange => 0.1,
 
     # Training Set parameters
-    :numberOfExamples => 16,
-    :numberOfTestingExamples => 4,
-    :standardDeviationOfAddedGaussianNoise => 0.0,
+    :numberOfExamples => (n=16),
+    :numberOfTestingExamples => (16 * n),
+    :standardDeviationOfAddedGaussianNoise => 0.2,
     :angleOfClockwiseRotationOfInputData => 0.0
 }
 
 
 ###################################### REPEATED Experiments for comparison ##########################################
 
-numberOfRepetitions = 1
+numberOfRepetitions = 16
 
+
+args[:classOfTheTrainer] = Trainer3SelfOrgContextSuper
+args[:descriptionOfExperiment] = "Proj3SelfOrgContextSuper; 2 in 4 out; divide but NO Integration"
 runner = ExperimentRunner.new(args)
-lastExperimentRun, results = runner.repeatSimulation(numberOfRepetitions)
-puts lastExperimentRun.network
+lastExperimentProj3, resultsProj3 = runner.repeatSimulation(numberOfRepetitions)
+
+
+args[:classOfTheTrainer] = Trainer4SelfOrgContextSuper
+args[:descriptionOfExperiment] = "Proj4SelfOrgContextSuper; 2 in 4 out; divide then integrate"
+runner = ExperimentRunner.new(args)
+lastExperimentProj4, resultsProj4 = runner.repeatSimulation(numberOfRepetitions)
+
+puts "\n\nNetwork's State at End of Last Experiment for Project 3:"
+puts lastExperimentProj3.network
+puts "\n\nNetwork's State at End of Last Experiment for Project 4:"
+puts lastExperimentProj4.network
+
+
+puts "\n\nExperimentName    MeanTrainingMSE               MeanTestingMSE\n"
+trainingMSEs, testingMSEs = resultsProj3[:trainingMSEs],  resultsProj3[:testingMSEs]
+puts "Proj3             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+trainingMSEs, testingMSEs = resultsProj4[:trainingMSEs],  resultsProj4[:testingMSEs]
+puts "Proj4             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+
 
 

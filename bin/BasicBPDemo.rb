@@ -14,63 +14,45 @@ require_relative '../lib/core/SimulationDataStore'
 
 require_relative 'BaseLearningExperiment'
 
-class Experiment
 
-  def setParameters
-    self.numberOfExamples = 4
-    @args = {
-        :experimentNumber => $globalExperimentNumber,
-        :descriptionOfExperiment => "Proj3SelfOrgContextSuper; 2 in 4 out; divide but do NOT INTEGRATE!",
-        :randomNumberSeed => randomNumberSeed,
+args = {
+    :experimentNumber => $globalExperimentNumber,
+    :descriptionOfExperiment => "Basic XOR Demo",
+    :randomNumberSeed => 0,
 
-        :classOfTheNetwork => Standard3LayerNetwork,
-        :classOfTheTrainer => TrainerBase,
-        :classOfDataSetGenerator => XORDataGenerator,
+    :classOfTheNetwork => Standard3LayerNetwork,
+    :classOfTheTrainer => TrainerBase,
+    :classOfDataSetGenerator => XORDataGenerator,
 
-        # training parameters re. Output Error
-        :learningRate => 3.0,
-        :minMSE => 0.001,
-        :trainingSequence => TrainingSequence,
-        :maxNumEpochs => 2e3,
+    # training parameters re. Output Error
+    :learningRate => 3.0,
+    :minMSE => 0.001,
+    :trainingSequence => TrainingSequence,
+    :maxNumEpochs => 2e3,
 
-        # Network Architecture
-        :numberOfInputNeurons => 2,
-        :numberOfHiddenNeurons => 2,
-        :numberOfOutputNeurons => 1,
-        :weightRange => 1.0,
+    # Network Architecture
+    :numberOfInputNeurons => 2,
+    :numberOfHiddenNeurons => 2,
+    :numberOfOutputNeurons => 1,
+    :weightRange => 1.0,
 
-        :typeOfLink => Link,
-        :typeOfNeuron => Neuron2,
-        :typeOfOutputNeuron => OutputNeuron2,
-        #   :typeOfLinkToOutput => Link,
+    :typeOfLink => Link,
+    :typeOfNeuron => Neuron2,
+    :typeOfOutputNeuron => OutputNeuron2,
 
 
-        # Training Set parameters
-        :numberOfExamples => numberOfExamples,
-        :numberOfTestingExamples => numberOfExamples,
-    }
-  end
-end
+    # Training Set parameters
+    :numberOfExamples => 4,
+    :numberOfTestingExamples => 4
+
+}
+
+###################################### REPEATED Experiments for comparison ##########################################
+
+numberOfRepetitions = 1
 
 
-###################################### START of REPEATED Experiments ##########################################
-
-def repeatSimulation(numberOfReps = 1, randomSeedForSimulationSequence = 0)
-  aryOfTrainingMSEs = []
-  aryOfTestMSEs = []
-  experiment = nil
-
-  numberOfReps.times do |i|
-    experimentsRandomNumberSeed = (i + randomSeedForSimulationSequence)
-    experiment = Experiment.new(experimentsRandomNumberSeed)
-    lastEpoch, trainingMSE, testMSE, startingTime, endingTime = experiment.performSimulation()
-    aryOfTrainingMSEs << trainingMSE
-    aryOfTestMSEs << testMSE
-  end
-  puts "\n\nmean TrainingMSE= #{aryOfTrainingMSEs.mean},\tmean TestingMSE= #{aryOfTestMSEs.mean}"
-  return experiment
-end
-
-experiment = repeatSimulation
-puts experiment.network
+runner = ExperimentRunner.new(args)
+lastExperimentRun = runner.repeatSimulation(numberOfRepetitions)
+puts lastExperimentRun.network
 
