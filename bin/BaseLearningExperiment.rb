@@ -6,7 +6,6 @@ class Experiment
                 :experimentLogger, :simulationDataStoreManager, :randomNumberSeed,
                 :dataSetGenerator, :examples, :numberOfExamples, :args, :trainingSequence
   include ExampleDistribution
-  include DataSetGenerators
 
   def initialize(args)
     @args = args

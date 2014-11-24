@@ -93,45 +93,6 @@ end
 
 ############################# Specialized DATA GENERATION Routines ###########################
 
-module DataSetGenerators
-
-  #def gen4ClassDS(numberOfExamples, standardDeviationOfAddedGaussianNoise)
-  #  gaussianRandomNumberGenerator = NormalDistribution.new(meanOfGaussianNoise = 0.0, standardDeviationOfAddedGaussianNoise)
-  #
-  #  xStart = [-1.0, 1.0, -1.0, 1.0]
-  #  yStart = [1.0, 1.0, -1.0, -1.0]
-  #
-  #  xInc = [0.0, 0.0, 0.0, 0.0]
-  #  yInc = [0.0, 0.0, 0.0, 0.0]
-  #
-  #  numberOfClasses = xStart.length
-  #  numberOfExamplesInEachClass = numberOfExamples / numberOfClasses
-  #  exampleNumber = 0
-  #  examples = []
-  #  numberOfClasses.times do |indexToClass|
-  #    xS = xStart[indexToClass]
-  #    xI = xInc[indexToClass]
-  #    yS = yStart[indexToClass]
-  #    yI = yInc[indexToClass]
-  #
-  #    numberOfExamplesInEachClass.times do |classExNumb|
-  #      x = xS + (xI * classExNumb)
-  #      x += gaussianRandomNumberGenerator.get_rng unless (standardDeviationOfAddedGaussianNoise < 1e-30)
-  #      y = yS + (yI * classExNumb)
-  #      y += gaussianRandomNumberGenerator.get_rng unless (standardDeviationOfAddedGaussianNoise < 1e-30)
-  #      aPoint = [x, y]
-  #      desiredOutputs = [0.0, 0.0, 0.0, 0.0]
-  #      desiredOutputs[indexToClass] = 1.0
-  #      examples << {:inputs => aPoint, :targets => desiredOutputs, :exampleNumber => exampleNumber, :class => indexToClass}
-  #      exampleNumber += 1
-  #    end
-  #  end
-  #  STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
-  #  angleOfClockwiseRotationOfInputData = args[:angleOfClockwiseRotationOfInputData]
-  #  examples = rotateClockwise(examples, angleOfClockwiseRotationOfInputData)
-  #end
-end
-
 
 class GenerateDataSet
   attr_accessor :args
@@ -158,8 +119,11 @@ class Generate4ClassDataSet < GenerateDataSet
   def generate(numberOfExamples, standardDeviationOfAddedGaussianNoise)
     gaussianRandomNumberGenerator = NormalDistribution.new(meanOfGaussianNoise = 0.0, standardDeviationOfAddedGaussianNoise)
 
-    xStart = [-1.0, 1.0, -1.0, 1.0]
-    yStart = [1.0, 1.0, -1.0, -1.0]
+    vs = args[:verticalShift]
+    hs = args[:horizontalShift]
+
+    xStart = [(-1.0 + hs), (1.0 + hs), (-1.0 + hs), (1.0 + hs)]
+    yStart = [(1.0 + vs), (1.0 + vs), (-1.0 + vs), (-1.0 + vs)]
 
     xInc = [0.0, 0.0, 0.0, 0.0]
     yInc = [0.0, 0.0, 0.0, 0.0]
@@ -190,7 +154,6 @@ class Generate4ClassDataSet < GenerateDataSet
     angleOfClockwiseRotationOfInputData = args[:angleOfClockwiseRotationOfInputData]
     examples = rotateClockwise(examples, angleOfClockwiseRotationOfInputData)
   end
-
 end
 
 

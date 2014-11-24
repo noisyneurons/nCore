@@ -58,13 +58,15 @@ args = {
     :numberOfExamples => (n=16),
     :numberOfTestingExamples => (16 * n),
     :standardDeviationOfAddedGaussianNoise => 0.2,
+    :verticalShift => 0.0,
+    :horizontalShift => 0.0,
     :angleOfClockwiseRotationOfInputData => 0.0
 }
 
 
 ###################################### REPEATED Experiments for comparison ##########################################
 
-numberOfRepetitions = 16
+numberOfRepetitions = 1
 
 
 args[:classOfTheTrainer] = Trainer3SelfOrgContextSuper
