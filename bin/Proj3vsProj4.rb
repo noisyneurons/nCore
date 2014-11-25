@@ -36,7 +36,7 @@ args = {
     # training parameters
     :learningRate => 0.1,
     :minMSE => 0.0,
-    :epochsForSelfOrg => 150,
+    :epochsForSelfOrg => 300,
     :epochsForSupervisedTraining => 2400,
     :trainingSequence => TrainingSequence,
 
@@ -66,8 +66,8 @@ args = {
 
 ###################################### REPEATED Experiments for comparison ##########################################
 
-numberOfRepetitions = 1
-
+numberOfRepetitions = 16
+#--------------------------------------------------------------------------------------
 
 args[:classOfTheTrainer] = Trainer3SelfOrgContextSuper
 args[:descriptionOfExperiment] = "Proj3SelfOrgContextSuper; 2 in 4 out; divide but NO Integration"
@@ -80,17 +80,48 @@ args[:descriptionOfExperiment] = "Proj4SelfOrgContextSuper; 2 in 4 out; divide t
 runner = ExperimentRunner.new(args)
 lastExperimentProj4, resultsProj4 = runner.repeatSimulation(numberOfRepetitions)
 
+#--------------------------------------------------------------------------------------
+
+args[:angleOfClockwiseRotationOfInputData] = 30.0
+
+args[:classOfTheTrainer] = Trainer3SelfOrgContextSuper
+args[:descriptionOfExperiment] = "Proj3SelfOrgContextSuper; 2 in 4 out; divide but NO Integration"
+runner = ExperimentRunner.new(args)
+lastExperimentProj3b, resultsProj3b = runner.repeatSimulation(numberOfRepetitions)
+
+
+args[:classOfTheTrainer] = Trainer4SelfOrgContextSuper
+args[:descriptionOfExperiment] = "Proj4SelfOrgContextSuper; 2 in 4 out; divide then integrate"
+runner = ExperimentRunner.new(args)
+lastExperimentProj4b, resultsProj4b = runner.repeatSimulation(numberOfRepetitions)
+
+#--------------------------------------------------------------------------------------
+
 puts "\n\nNetwork's State at End of Last Experiment for Project 3:"
 puts lastExperimentProj3.network
 puts "\n\nNetwork's State at End of Last Experiment for Project 4:"
 puts lastExperimentProj4.network
 
+puts "\n\nNetwork's State at End of Last Experiment for Project 3b (30degrees):"
+puts lastExperimentProj3b.network
+puts "\n\nNetwork's State at End of Last Experiment for Project 4b (30degrees):"
+puts lastExperimentProj4b.network
+
+#--------------------------------------------------------------------------------------
 
 puts "\n\nExperimentName    MeanTrainingMSE               MeanTestingMSE\n"
-trainingMSEs, testingMSEs = resultsProj3[:trainingMSEs],  resultsProj3[:testingMSEs]
+trainingMSEs, testingMSEs = resultsProj3[:trainingMSEs], resultsProj3[:testingMSEs]
 puts "Proj3             #{trainingMSEs.mean}          #{testingMSEs.mean}"
-trainingMSEs, testingMSEs = resultsProj4[:trainingMSEs],  resultsProj4[:testingMSEs]
+trainingMSEs, testingMSEs = resultsProj4[:trainingMSEs], resultsProj4[:testingMSEs]
 puts "Proj4             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+
+puts "\n\nExperimentName    MeanTrainingMSE               MeanTestingMSE\n"
+trainingMSEs, testingMSEs = resultsProj3b[:trainingMSEs], resultsProj3b[:testingMSEs]
+puts "Proj3b             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+trainingMSEs, testingMSEs = resultsProj4b[:trainingMSEs], resultsProj4b[:testingMSEs]
+puts "Proj4b             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+
+
 
 
 

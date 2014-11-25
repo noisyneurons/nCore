@@ -35,7 +35,7 @@ args = {
     # training parameters
     :learningRate => 0.1,
     :minMSE => 0.0,
-    :epochsForSelfOrg => 150,
+    :epochsForSelfOrg => 150, # 300, for 30 degree angle rotation of data
     :epochsForSupervisedTraining => 600,
     :trainingSequence => TrainingSequence,
 
@@ -59,7 +59,7 @@ args = {
     :standardDeviationOfAddedGaussianNoise => 0.0,
     :verticalShift => 0.0,
     :horizontalShift => 0.0,
-    :angleOfClockwiseRotationOfInputData => 0.0
+    :angleOfClockwiseRotationOfInputData => 30.0
 }
 
 
