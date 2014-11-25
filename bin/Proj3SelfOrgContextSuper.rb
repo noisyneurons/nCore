@@ -55,11 +55,11 @@ args = {
 
     # Training Set parameters
     :numberOfExamples => 16,
-    :numberOfTestingExamples => 4,
+    :numberOfTestingExamples => 160,
     :standardDeviationOfAddedGaussianNoise => 0.0,
     :verticalShift => 0.0,
     :horizontalShift => 0.0,
-    :angleOfClockwiseRotationOfInputData => 30.0
+    :angleOfClockwiseRotationOfInputData => 0.0
 }
 
 

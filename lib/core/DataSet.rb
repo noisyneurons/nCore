@@ -157,7 +157,7 @@ class Generate4ClassDataSet < GenerateDataSet
 end
 
 
-class DataGenerator
+class PreviousDataGenerator
   attr_reader :arrayOfExamples
 
   def initialize(arrayOf2DInputSeedArrays, numberOfExamplesPerClass = 1, increment = 1.0)

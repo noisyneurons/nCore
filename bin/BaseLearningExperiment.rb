@@ -34,6 +34,8 @@ class Experiment
     self.dataSetGenerator = classOfDataSetGenerator.new(args)
     examples = dataSetGenerator.generate(args[:numberOfExamples], args[:standardDeviationOfAddedGaussianNoise])
     puts "Number of Training examples = #{examples.length}"
+    puts "Training Examples:"
+    puts examples
     return examples
   end
 
