@@ -1,9 +1,0 @@
-# Pull on-build image
-FROM noisyneurons/ruby-runtime
-
-# CMD ruby /NN2012/nCore/bin/Proj4SelfOrgContextSuper.rb
-
-CMD ["bash"]
-
-
-

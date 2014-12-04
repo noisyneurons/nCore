@@ -12,11 +12,14 @@ require 'yaml'
 # Globals, Constants
 INFINITY = 1.0/0
 
-$currentHost = "localhost" # 0.0.0.0" # 172.17.0.44" #  192.168.0.140  "192.168.1.254" # "192.168.0.1"  #"192.168.0.140"   #
-# $currentHost = "172.17.0.56"
-$currentHost = "master" unless (ENV['SGE_TASK_ID'].nil?)
-# $redis = Redis.new(:host => $currentHost, :password => "com")
-$redis = Redis.new(:host => $currentHost,)
+if (ENV['DB_NAME'])
+  $currentHost = "db"
+  $redis = Redis.new(:host => $currentHost, :password => "com")
+else
+  $currentHost = "localhost"
+  $redis = Redis.new(:host => $currentHost,)
+end
+
 
 ############################# MODULES ###########################
 

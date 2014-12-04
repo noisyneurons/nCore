@@ -1,7 +1,0 @@
-# runs noisyneurons/nn
-sudo docker run --rm -ti -v ~/Code/Ruby/NN2012:/NN2012 noisyneurons/nn
-
-
-# runs rubyrunner linked to redis database |||| START rediscontainer first
-sudo docker run --rm -ti --name rubyrunner --link rediscontainer:db -v ~/Code/Ruby/NN2012:/NN2012 noisyneurons/nn
-
