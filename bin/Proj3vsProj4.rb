@@ -66,7 +66,7 @@ args = {
 
 ###################################### REPEATED Experiments for comparison ##########################################
 
-numberOfRepetitions = 16
+numberOfRepetitions = 1
 #--------------------------------------------------------------------------------------
 
 args[:classOfTheTrainer] = Trainer3SelfOrgContextSuper
