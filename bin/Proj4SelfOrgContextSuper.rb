@@ -38,8 +38,8 @@ args = {
     # training parameters
     :learningRate => 0.1,
     :minMSE => 0.0,
-    :epochsForSelfOrg => 150,
-    :epochsForSupervisedTraining => 600,
+    :epochsForSelfOrg => 300,  #150,
+    :epochsForSupervisedTraining => 2400, # 600,
     :trainingSequence => TrainingSequence,
 
     # Network Architecture
