@@ -14,7 +14,14 @@ require 'yaml'
 # Globals, Constants
 INFINITY = 1.0/0
 
-dbURL = ENV['DB_PORT']
+dbURL = ENV['DB_PORT_6379_TCP_ADDR']
+# dbURL = "54.164.134.152"
+
+def std(txt, x)
+  STDOUT.puts "#{txt}\t#{x}"; STDOUT.flush
+end
+
+std("dbURL=   ", dbURL)
 
 #if (ENV['DB_NAME'])
 #  $currentHost = "db"
