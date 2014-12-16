@@ -17,6 +17,8 @@ INFINITY = 1.0/0
 dbURL = ENV['DB_PORT_6379_TCP_ADDR']
 puts "dbURL=\t#{dbURL}"
 
+dbURL = "54.164.134.152" if(dbURL.nil?)
+puts "dbURL=\t#{dbURL}"
 
 if (dbURL)
   $currentHost = dbURL
