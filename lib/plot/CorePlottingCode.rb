@@ -677,7 +677,7 @@ class Plotter
     Dir.chdir("~/Code/Ruby/NN2012") do
       testPlotFilename= "#{Dir.pwd}/../../plots/TestPlot.plt"
       currentDirectory = Dir.pwd
-      puts "#{currentDirectory}"
+      logger.puts "#{currentDirectory}"
       ENV['RB_GNUPLOT'] = "#{currentDirectory}/gnuplot/bin/wgnuplot_pipes.exe"
       plotProgramToRun = "#{currentDirectory}/gnuplot/bin/wgnuplot_pipes.exe"
       system("#{plotProgramToRun} #{testPlotFilename}")
@@ -686,8 +686,8 @@ class Plotter
   end
 
   def print
-    puts "Printing xy Array to Plot"
-    @xyValues.each { |pair| puts "#{pair[0]}, #{pair[1]}" }
+    logger.puts "Printing xy Array to Plot"
+    @xyValues.each { |pair| logger.puts "#{pair[0]}, #{pair[1]}" }
   end
 
   def sortClustersWithinEachEpoch(arrayOfSingleEpochClusterArrays)
@@ -777,7 +777,79 @@ class Plotter
       return xAxisLabels
     end
   end
+end
 
+
+module RecordingAndPlottingRoutines
+  def generatePlotForEachNeuron(arrayOfNeuronsToPlot)
+    arrayOfNeuronsToPlot.each do |theNeuron|
+      xAry, yAry = getZeroXingExampleSet(theNeuron)
+      plotDotsWhereOutputGtPt5(xAry, yAry, theNeuron, args[:epochs])
+    end
+  end
+
+  def getZeroXingExampleSet(theNeuron)
+    minX1 = -4.0
+    maxX1 = 4.0
+    numberOfTrials = 100
+    increment = (maxX1 - minX1) / numberOfTrials
+    x0Array = []
+    x1Array = []
+    numberOfTrials.times do |index|
+      x1 = minX1 + index * increment
+      x0 = findZeroCrossingFast(x1, theNeuron)
+      next if (x0.nil?)
+      x1Array << x1
+      x0Array << x0
+    end
+    [x0Array, x1Array]
+  end
+
+  def findZeroCrossingFast(x1, theNeuron)
+    minX0 = -2.0
+    maxX0 = 2.0
+    range = maxX0 - minX0
+
+    initialOutput = ioFunctionFor2inputs(minX0, x1, theNeuron)
+    initialOutputLarge = false
+    initialOutputLarge = true if (initialOutput >= 0.5)
+
+    wasThereACrossing = false
+    20.times do |count|
+      range = maxX0 - minX0
+      bisectedX0 = minX0 + (range / 2.0)
+      currentOutput = ioFunctionFor2inputs(bisectedX0, x1, theNeuron)
+      currentOutputLarge = false
+      currentOutputLarge = true if (currentOutput > 0.5)
+      if (currentOutputLarge != initialOutputLarge)
+        maxX0 = bisectedX0
+        wasThereACrossing = true
+      else
+        minX0 = bisectedX0
+      end
+    end
+    return nil if (wasThereACrossing == false)
+    estimatedCrossingForX0 = (minX0 + maxX0) / 2.0
+    return estimatedCrossingForX0
+  end
+
+  def ioFunctionFor2inputs(x0, x1, theNeuron) # TODO should this be moved to an analysis or plotting class?
+    clampOutputsOfTheInputNeuronsThatDrive(x0, x1, theNeuron)
+    theNeuron.propagate(0)
+    return theNeuron.output
+  end
+
+  def clampOutputsOfTheInputNeuronsThatDrive(x0, x1, theNeuron)
+    inputLinks = theNeuron.inputLinks
+    neuronsDrivingTheNeuron = []
+    inputLinks.length.times do |index|
+      neuronsDrivingTheNeuron << inputLinks[index].inputNeuron
+    end
+    index = 0
+    neuronsDrivingTheNeuron[index].output = x0
+    index += 1
+    neuronsDrivingTheNeuron[index].output = x1
+  end
 end
 
 

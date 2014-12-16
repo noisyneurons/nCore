@@ -35,7 +35,7 @@ def createTrainingSet(numberOfExamples, separationBetweenDataPoints)
       exampleNumber += 1
     end
   end
-  STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
+  logger.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
   examples
 end
 
@@ -45,11 +45,11 @@ def reportMetrics(outputNeuron, epochNumber, aLearningNetwork, dataArray, args)
   mse = aLearningNetwork.calcNetworksMeanSquareError
   aLearningNetwork.recordResponse(mse, epochNumber)
   if (epochNumber.modulo(5) == 0)
-    puts "At Epoch # #{epochNumber} Network's MSE=\t#{aLearningNetwork.calcNetworksMeanSquareError}\n"
+    logger.puts "At Epoch # #{epochNumber} Network's MSE=\t#{aLearningNetwork.calcNetworksMeanSquareError}\n"
     theFlockLearningRate = args[:flockLearningRate]
     #oneEpochsMeasures.each_with_index do |measuresForAnExample, exampleNumber|
     #  # std("measuresForAnExample",measuresForAnExample)
-    #  puts "ex #{exampleNumber}\tBP Error=\t#{measuresForAnExample[:error]}\tFlocking Error=\t#{theFlockLearningRate * measuresForAnExample[:localFlockingError]}"
+    #  logger.puts "ex #{exampleNumber}\tBP Error=\t#{measuresForAnExample[:error]}\tFlocking Error=\t#{theFlockLearningRate * measuresForAnExample[:localFlockingError]}"
     #end
   end
   mse
@@ -85,7 +85,7 @@ def simpleLearningWithFlocking(epochSwitch, aLearningNetwork, allNeuronsInOneArr
       flockingNeurons.each { |aNeuron| aNeuron.flockLearningRate = 0.0 } if (epochNumber < epochSwitch)
       flockingNeurons.each { |aNeuron| aNeuron.flockLearningRate = args[:flockLearningRate] } if (epochNumber >= epochSwitch)
       flockingNeurons.each { |aNeuron| aNeuron.bpLearningRate = 0.0 } if (epochNumber >= epochSwitch)
-      puts aLearningNetwork if (epochNumber == epochSwitch)
+      logger.puts aLearningNetwork if (epochNumber == epochSwitch)
     end
 
     neuronsWithInputLinks.each { |aNeuron| aNeuron.zeroDeltaWAccumulated }
@@ -157,10 +157,10 @@ case demoToPerform
   when "flockingWithNOSupervision"
     epochNumber, mse = simpleLearningWithFlocking(epochSwitch, aLearningNetwork, allNeuronsInOneArray, args, dataArray, epochNumber, flockingNeurons, mse, neuronsWithInputLinks, neuronsWithInputLinksInReverseOrder, numberOfExamples, outputLayer)
   else
-    STDERR.puts "did not understand CHOICE!"
+    logger.puts "did not understand CHOICE!"
 end
 
 plotMSEvsEpochNumber(aLearningNetwork)
 plotFlockingErrorVsEpochNumber(dataArray)
-puts "At Epoch # #{epochNumber} Network's MSE=\t#{mse}\n\n"
-puts aLearningNetwork # display neural network's final state -- after training is complete.
+logger.puts "At Epoch # #{epochNumber} Network's MSE=\t#{mse}\n\n"
+logger.puts aLearningNetwork # display neural network's final state -- after training is complete.

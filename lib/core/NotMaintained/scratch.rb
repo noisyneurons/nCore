@@ -13,4 +13,4 @@ end
 outputLinks = [1, 2, 3, 4, 5]
 inputLinks = [6, 7, 225, 21]
 
-puts "result of search=\t #{findCommonLink(outputLinks, inputLinks)}"
+logger.puts "result of search=\t #{findCommonLink(outputLinks, inputLinks)}"

@@ -1,28 +1,38 @@
 ### VERSION "nCore"
 ## ../nCore/bin/BaseLearningExperiments.rb
 
+
 class Experiment
+
+  #@logger  = nil
+  #
+  #def self.logger
+  #  @logger
+  #end
+  #
+  #def self.logger=(aLogger)
+  #  @logger = aLogger
+  #end
+
   attr_accessor :network, :theTrainer, :descriptionOfExperiment, :taskID, :jobID, :jobName,
-                :experimentLogger, :simulationDataStoreManager, :randomNumberSeed,
+                :logger, :randomNumberSeed,
                 :dataSetGenerator, :examples, :numberOfExamples, :args, :trainingSequence
   include ExampleDistribution
 
   def initialize(args)
     @args = args
 
-    @taskID = ((ENV['SGE_TASK_ID']).to_i) || 0
+    @logger = @args[:resultsStringIOorFileIO]
+
+    @taskID = ((ENV['TASK_ID']).to_i) || 0
     @randomNumberSeed = args[:baseRandomNumberSeed] + (taskID * 10000)
     srand(randomNumberSeed)
-
-    puts "sleeping" unless ($currentHost == "localhost")
-    sleep(rand * 30) unless ($currentHost == "localhost")
 
     @descriptionOfExperiment = args[:descriptionOfExperiment]
     @jobID = ((ENV['JOB_ID']).to_i) || 0
     @jobName = descriptionOfExperiment[0...10]
 
-    @experimentLogger = ExperimentLogger.new(descriptionOfExperiment, jobName)
-    $globalExperimentNumber = experimentLogger.experimentNumber
+    $globalExperimentNumber = 0 # experimentLogger.experimentNumber
 
     @numberOfExamples = args[:numberOfExamples]
     @examples = createTrainingSet
@@ -33,17 +43,17 @@ class Experiment
     classOfDataSetGenerator = args[:classOfDataSetGenerator]
     self.dataSetGenerator = classOfDataSetGenerator.new(args)
     examples = dataSetGenerator.generate(args[:numberOfExamples], args[:standardDeviationOfAddedGaussianNoise])
-    puts "Number of Training examples = #{examples.length}"
-    puts "Training Examples:"
-    puts examples
+    logger.puts "Number of Training examples = #{examples.length}"
+    logger.puts "Training Examples:"
+    logger.puts examples
     return examples
   end
 
   def createTestingSet
     testExamples = dataSetGenerator.generate(args[:numberOfTestingExamples], args[:standardDeviationOfAddedGaussianNoise])
-    puts "Number of Testing examples = #{testExamples.length}"
-    # puts "Test Examples:"
-    # puts testExamples
+    logger.puts "Number of Testing examples = #{testExamples.length}"
+    # logger.puts "Test Examples:"
+    # logger.puts testExamples
     return testExamples
   end
 
@@ -69,8 +79,8 @@ class Experiment
 
 ############################## reporting results....
 
-    puts "lastEpoch, trainingMSE, testMSE, startingTime, endingTime "
-    puts "#{lastEpoch}, #{trainingMSE}, #{testMSE}, #{startingTime}, #{endingTime}"
+    logger.puts "lastEpoch, trainingMSE, testMSE, startingTime, endingTime "
+    logger.puts "#{lastEpoch}, #{trainingMSE}, #{testMSE}, #{startingTime}, #{endingTime}"
     return [lastEpoch, trainingMSE, testMSE, startingTime, endingTime]
   end
 
@@ -78,9 +88,10 @@ end
 
 
 class ExperimentRunner
-  attr_reader :args
+  attr_reader :args, :logger
   def initialize(args)
     @args = args
+    @logger = @args[:resultsStringIOorFileIO]
   end
 
   def repeatSimulation(numberOfReps = 1, randomSeedForSimulationSequence = 0)

@@ -51,10 +51,10 @@ class TestOfFlockingNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
   end
 
   def printDebugInfo
-    puts "#{@metricRecorder.vectorizeEpochMeasures}"
+    logger.puts "#{@metricRecorder.vectorizeEpochMeasures}"
     @aFlockingNeuron.clusterer.clusters.each_with_index do |aCluster, clusterNumber|
-      puts "Cluster #{clusterNumber} center= #{aCluster.center};  dispersion= #{aCluster.dispersion(@vectorizedTestData)}"
-      puts "\t\t\tCluster Weightings= #{aCluster.membershipWeightForEachExample}"
+      logger.puts "Cluster #{clusterNumber} center= #{aCluster.center};  dispersion= #{aCluster.dispersion(@vectorizedTestData)}"
+      logger.puts "\t\t\tCluster Weightings= #{aCluster.membershipWeightForEachExample}"
     end
   end
 
@@ -124,10 +124,10 @@ class Test2OfFlockingNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
   end
 
   def printDebugInfo
-    puts "#{@metricRecorder.vectorizeEpochMeasures}"
+    logger.puts "#{@metricRecorder.vectorizeEpochMeasures}"
     @aFlockingNeuron.clusterer.clusters.each_with_index do |aCluster, clusterNumber|
-      puts "Cluster #{clusterNumber} center= #{aCluster.center};  dispersion= #{aCluster.dispersion(@vectorizedTestData)}"
-      puts "\t\t\tCluster Weightings= #{aCluster.membershipWeightForEachExample}"
+      logger.puts "Cluster #{clusterNumber} center= #{aCluster.center};  dispersion= #{aCluster.dispersion(@vectorizedTestData)}"
+      logger.puts "\t\t\tCluster Weightings= #{aCluster.membershipWeightForEachExample}"
     end
   end
 
@@ -237,10 +237,10 @@ class TestOfFlockingOutputNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
   end
 
   def printDebugInfo
-    puts "#{@metricRecorder.vectorizeEpochMeasures}"
+    logger.puts "#{@metricRecorder.vectorizeEpochMeasures}"
     @aFlockingNeuron.clusterer.clusters.each_with_index do |aCluster, clusterNumber|
-      puts "Cluster #{clusterNumber} center= #{aCluster.center};  dispersion= #{aCluster.dispersion(@vectorizedTestData)}"
-      puts "\t\t\tCluster Weightings= #{aCluster.membershipWeightForEachExample}"
+      logger.puts "Cluster #{clusterNumber} center= #{aCluster.center};  dispersion= #{aCluster.dispersion(@vectorizedTestData)}"
+      logger.puts "\t\t\tCluster Weightings= #{aCluster.membershipWeightForEachExample}"
     end
   end
 
@@ -310,10 +310,10 @@ class Test2OfFlockingOutputNeuronAndDynamicClusterer < MiniTest::Unit::TestCase
   end
 
   def printDebugInfo
-    puts "#{@metricRecorder.vectorizeEpochMeasures}"
+    logger.puts "#{@metricRecorder.vectorizeEpochMeasures}"
     @aFlockingNeuron.clusterer.clusters.each_with_index do |aCluster, clusterNumber|
-      puts "Cluster #{clusterNumber} center= #{aCluster.center};  dispersion= #{aCluster.dispersion(@vectorizedTestData)}"
-      puts "\t\t\tCluster Weightings= #{aCluster.membershipWeightForEachExample}"
+      logger.puts "Cluster #{clusterNumber} center= #{aCluster.center};  dispersion= #{aCluster.dispersion(@vectorizedTestData)}"
+      logger.puts "\t\t\tCluster Weightings= #{aCluster.membershipWeightForEachExample}"
     end
   end
 

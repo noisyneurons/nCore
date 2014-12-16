@@ -54,7 +54,7 @@ end
 
 ############################################################
 class NeuronBase
-  attr_accessor :id, :args, :output
+  attr_accessor :id, :args, :output, :logger
   @@ID = 0
 
   def NeuronBase.zeroID
@@ -65,6 +65,7 @@ class NeuronBase
     @id = @@ID
     @@ID += 1
     @args = args
+    @logger = @args[:resultsStringIOorFileIO]
     @output = 0.0
     postInitialize
   end
@@ -244,7 +245,7 @@ class NoisyNeuron < Neuron
         signal = super(exampleNumber) - outputWhenNeuronDisabled
         self.output = (signal / probabilityOfBeingEnabled) + outputWhenNeuronDisabled
       else
-        STDERR.puts "error, 'learning' variable not set to true or false!!"
+        logger.puts "error, 'learning' variable not set to true or false!!"
     end
     output
   end
@@ -261,12 +262,13 @@ end
 ############################################################
 class Link
   attr_accessor :inputNeuron, :outputNeuron, :weightAtBeginningOfTraining,
-                :learningRate, :deltaWAccumulated, :deltaW, :weightRange, :args
+                :learningRate, :deltaWAccumulated, :deltaW, :weightRange, :args, :logger
 
   def initialize(inputNeuron, outputNeuron, args)
     @inputNeuron = inputNeuron
     @outputNeuron = outputNeuron
     @args = args
+    @logger = @args[:resultsStringIOorFileIO]
     @learningRate = args[:learningRate]
     @weight = 0.0
     @weightRange = args[:weightRange]
@@ -343,11 +345,12 @@ end
 
 ############################################################      N
 class NeuronRecorder
-  attr_accessor :neuron, :args, :withinEpochMeasures
+  attr_accessor :neuron, :args, :withinEpochMeasures, :logger
 
   def initialize(neuron, args = {})
     @neuron = neuron
     @args = args
+    @logger = @args[:resultsStringIOorFileIO]
     @withinEpochMeasures = []
   end
 

@@ -4,35 +4,35 @@
 require_relative '../lib/core/SimulationDataStore'
 
 experimentNumber = $redis.get("experimentNumber")
-puts "\nLast Experiment Number=\t #{experimentNumber}\n\n"
+logger.puts "\nLast Experiment Number=\t #{experimentNumber}\n\n"
 
 arrayOfKeys = $redis.keys("SnapShotData*")
-puts "Number of 'Snap Shot db Keys' in Redis database: #{arrayOfKeys.length}"
-puts "Snap Shot db Keys in Redis database: #{arrayOfKeys}\n\n"
+logger.puts "Number of 'Snap Shot db Keys' in Redis database: #{arrayOfKeys.length}"
+logger.puts "Snap Shot db Keys in Redis database: #{arrayOfKeys}\n\n"
 
 arrayOfKeys = $redis.keys("SSD*")
-puts "Number of 'SSD Data Keys' in Redis database: #{arrayOfKeys.length}"
-puts "SSD Keys in Redis database: #{arrayOfKeys}\n\n"
+logger.puts "Number of 'SSD Data Keys' in Redis database: #{arrayOfKeys.length}"
+logger.puts "SSD Keys in Redis database: #{arrayOfKeys}\n\n"
 
 arrayOfKeys = $redis.keys("ND*")
-puts "Number of 'ND data Keys' in Redis database: #{arrayOfKeys.length}"
-puts "NeuronData Keys in Redis database: #{arrayOfKeys}\n\n"
+logger.puts "Number of 'ND data Keys' in Redis database: #{arrayOfKeys.length}"
+logger.puts "NeuronData Keys in Redis database: #{arrayOfKeys}\n\n"
 
 arrayOfKeys = $redis.keys("DND*")
-puts "Number of 'DND data Keys' in Redis database: #{arrayOfKeys.length}"
-puts "DetailedNeuronData Keys in Redis database: #{arrayOfKeys}\n\n"
+logger.puts "Number of 'DND data Keys' in Redis database: #{arrayOfKeys.length}"
+logger.puts "DetailedNeuronData Keys in Redis database: #{arrayOfKeys}\n\n"
 
 arrayOfKeys = $redis.keys("TrainingData*")
-puts "Number of 'TrainingData db Keys' in Redis database: #{arrayOfKeys.length}"
-puts "TrainingData db Keys in Redis database: #{arrayOfKeys}\n\n"
+logger.puts "Number of 'TrainingData db Keys' in Redis database: #{arrayOfKeys.length}"
+logger.puts "TrainingData db Keys in Redis database: #{arrayOfKeys}\n\n"
 
 arrayOfKeys = $redis.keys("TD*")
-puts "Number of 'TD Data Keys' in Redis database: #{arrayOfKeys.length}"
-puts "TD Data Keys in Redis database: #{arrayOfKeys}\n\n"
+logger.puts "Number of 'TD Data Keys' in Redis database: #{arrayOfKeys.length}"
+logger.puts "TD Data Keys in Redis database: #{arrayOfKeys}\n\n"
 
 arrayOfKeys = $redis.keys("*")
-puts "Number of Keys in Redis database: #{arrayOfKeys.length}"
-puts "Keys in Redis database: #{arrayOfKeys}\n\n"
+logger.puts "Number of Keys in Redis database: #{arrayOfKeys.length}"
+logger.puts "Keys in Redis database: #{arrayOfKeys}\n\n"
 
 
 #theComputersName = Socket.gethostname

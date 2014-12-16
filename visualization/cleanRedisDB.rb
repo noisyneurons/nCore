@@ -6,7 +6,7 @@ require_relative '../lib/core/SimulationDataStore'
 # $redis = Redis.new(:host => currentHost)
 
 experimentNumber = $redis.get("experimentNumber")
-puts "\nNext Experiment Number=\t #{experimentNumber}"
+logger.puts "\nNext Experiment Number=\t #{experimentNumber}"
 
 dataStore = SimulationDataStoreManager.new
 
@@ -26,30 +26,30 @@ lastExperimentForDeletion = 2039
 
 $redis.save
 
-STDERR.puts "just after deleting early snapshot keys and data"
+logger.puts "just after deleting early snapshot keys and data"
 
 dataStore.deleteAllDataAndIndexesExceptSnapShot!
 
 arrayOfKeys = $redis.keys("SSD*")
-puts "Number of 'Snap Shot Keys' in Redis database: #{arrayOfKeys.length}"
-puts "Snap Shot Keys in Redis database: #{arrayOfKeys}\n\n"
+logger.puts "Number of 'Snap Shot Keys' in Redis database: #{arrayOfKeys.length}"
+logger.puts "Snap Shot Keys in Redis database: #{arrayOfKeys}\n\n"
 
 
 selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
 unless (selectedData.empty?)
-  puts "\n##################################################################################################################################################"
+  logger.puts "\n##################################################################################################################################################"
 
-  puts "Number\tDescription\tLastEpoch\tTrainMSE\tTestMSE\tTime"
-  puts
+  logger.puts "Number\tDescription\tLastEpoch\tTrainMSE\tTestMSE\tTime"
+  logger.puts
   selectedData.each do |aSelectedExperiment|
     aHash = SnapShotData.values(aSelectedExperiment)
-    puts "#{aHash[:experimentNumber]}\t#{aHash[:descriptionOfExperiment]}\t#{aHash[:epochs]}\t#{aHash[:trainMSE]}\t#{aHash[:testMSE]}\t#{aHash[:time]}"
+    logger.puts "#{aHash[:experimentNumber]}\t#{aHash[:descriptionOfExperiment]}\t#{aHash[:epochs]}\t#{aHash[:trainMSE]}\t#{aHash[:testMSE]}\t#{aHash[:time]}"
   end
-  puts "################################################################################################################################################## \n\n"
+  logger.puts "################################################################################################################################################## \n\n"
 end
 
 arrayOfKeys = $redis.keys("*")
-puts "Remaining Keys in Redis database after selective deletion: #{arrayOfKeys}"
+logger.puts "Remaining Keys in Redis database after selective deletion: #{arrayOfKeys}"
 
 ## --- DANGER ----###
-## puts redis.flushdb
+## logger.puts redis.flushdb

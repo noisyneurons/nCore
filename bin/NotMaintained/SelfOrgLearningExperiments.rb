@@ -74,24 +74,24 @@ class Experiment
   end
 
   def reportTrainingResults(neuronToDisplay, accumulatedAbsoluteFlockingErrors, descriptionOfExperiment, lastEpoch, lastTrainingMSE, network, startingTime)
-    puts network
+    logger.puts network
 
     lastTestingMSE = nil
-    puts "lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE"
-    puts lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE
+    logger.puts "lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE"
+    logger.puts lastEpoch, lastTrainingMSE, accumulatedAbsoluteFlockingErrors, lastTestingMSE
 
-    puts "\n\n############ NeuronData #############"
+    logger.puts "\n\n############ NeuronData #############"
     keysToRecords = []
     NeuronData.lookup_values(:epochs).each do |epochNumber|
       keysToRecords << NeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: $globalExperimentNumber, epochs: epochNumber, neuron: neuronToDisplay}) }
     end
     keysToRecords.reject! { |recordKey| recordKey.empty? }
     neuronDataRecords = keysToRecords.collect { |recordKey| NeuronData.values(recordKey) } unless (keysToRecords.empty?)
-    puts neuronDataRecords
+    logger.puts neuronDataRecords
 
 
-    puts "\n\n############ DetailedNeuronData #############\n"
-    puts "Epoch\t\t\t\tEx0\t\t\t\tEx1\t\t\t\tEx2\t\t\t\tEx3"
+    logger.puts "\n\n############ DetailedNeuronData #############\n"
+    logger.puts "Epoch\t\t\t\tEx0\t\t\t\tEx1\t\t\t\tEx2\t\t\t\tEx3"
     keysToRecords = []
     epochsArray = []
     examplesNetInputs = []
@@ -112,22 +112,22 @@ class Experiment
       end
 
       aStringToPrint = netInputs.join("\t\t")
-      puts "#{epochNumber}\t\t#{aStringToPrint}"
+      logger.puts "#{epochNumber}\t\t#{aStringToPrint}"
     end
 
     aPlotter = Plotter.new(title="Inputs to Neuron vs. Time", "Number of Epochs", "Net Input to Neuron", plotOutputFilenameBase = "#{Dir.home}/Code/Ruby/NN2012/plots/netInputVsEpochs")
     aPlotter.plotNetInputs(epochsArray, examplesNetInputs)
 
 
-    puts "\n\n############ TrainingData #############"
+    logger.puts "\n\n############ TrainingData #############"
     keysToRecords = TrainingData.lookup { |q| q[:experimentNumber].eq({experimentNumber: $globalExperimentNumber}) }
     keysToRecords.reject! { |recordKey| recordKey.empty? }
     trainingDataRecords = keysToRecords.collect { |recordKey| TrainingData.values(recordKey) } unless (keysToRecords.empty?)
-    puts trainingDataRecords
+    logger.puts trainingDataRecords
 
     theOutputNeuron = network.allNeuronLayers[1][0]
 
-    puts "\n\n############ SnapShotData #############"
+    logger.puts "\n\n############ SnapShotData #############"
     dataToStoreLongTerm = {:experimentNumber => $globalExperimentNumber, :descriptionOfExperiment => descriptionOfExperiment,
                            :network => network, :time => Time.now, :elapsedTime => (Time.now - startingTime),
                            :epochs => lastEpoch, :trainMSE => lastTrainingMSE, :testMSE => lastTestingMSE,
@@ -139,11 +139,11 @@ class Experiment
     keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(10) }
     keysToRecords.reject! { |recordKey| recordKey.empty? }
     unless (keysToRecords.empty?)
-      puts
-      puts "Number\tLastEpoch\tTrainMSE\t\tTestMSE\t\t\tAccumulatedAbsoluteFlockingErrors\tTime\t\t\t\t\t\t\tDescription"
+      logger.puts
+      logger.puts "Number\tLastEpoch\tTrainMSE\t\tTestMSE\t\t\tAccumulatedAbsoluteFlockingErrors\tTime\t\t\t\t\t\t\tDescription"
       keysToRecords.each do |keyToOneRecord|
         recordHash = SnapShotData.values(keyToOneRecord)
-        puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t\t\t#{recordHash[:trainMSE]}\t#{recordHash[:testMSE]}\t\t\t#{recordHash[:accumulatedAbsoluteFlockingErrors][0]}\t\t\t\t#{recordHash[:time]}\t\t#{recordHash[:descriptionOfExperiment]}\t\t#{recordHash[:examplesInClusters]}"
+        logger.puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t\t\t#{recordHash[:trainMSE]}\t#{recordHash[:testMSE]}\t\t\t#{recordHash[:accumulatedAbsoluteFlockingErrors][0]}\t\t\t\t#{recordHash[:time]}\t\t#{recordHash[:descriptionOfExperiment]}\t\t#{recordHash[:examplesInClusters]}"
       end
 
       # recordHash = SnapShotData.values(keysToRecords.last)

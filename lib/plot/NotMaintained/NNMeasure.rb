@@ -550,11 +550,11 @@ class DataStoreAndDeltaStore
   end
 
   def endOfTrainingMeasures
-    #STDOUT.puts "For Vector, @multiEpochStorageArray.length #{@multiEpochStorageArray.length}\n\n\n"; STDOUT.flush
+    #STDOUT.logger.puts "For Vector, @multiEpochStorageArray.length #{@multiEpochStorageArray.length}\n\n\n"; STDOUT.flush
     eachMeasureInAnArray = []
     arrayContainingASingleMeasureOrganizedByEpochSubArrays = []
     numberOfMeasuresPerExample = @multiEpochStorageArray[0][0].length
-    #STDOUT.puts "For Vector, numberOfMeasuresPerExample #{numberOfMeasuresPerExample}\n\n\n"; STDOUT.flush
+    #STDOUT.logger.puts "For Vector, numberOfMeasuresPerExample #{numberOfMeasuresPerExample}\n\n\n"; STDOUT.flush
 
     numberOfMeasuresPerExample.times { |i| eachMeasureInAnArray << [] }
 

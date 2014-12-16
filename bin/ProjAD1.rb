@@ -93,7 +93,7 @@ class Experiment
         exampleNumber += 1
       end
     end
-    STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
+    logger.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
     examples
   end
 
@@ -119,4 +119,4 @@ experiment = Experiment.new("ProjAD1; 1 in 2 out; A to D converter problem", bas
 
 experiment.performSimulation()
 
-puts experiment.network
+logger.puts experiment.network

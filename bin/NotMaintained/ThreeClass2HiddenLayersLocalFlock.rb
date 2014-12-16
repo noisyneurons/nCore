@@ -77,7 +77,7 @@ class Experiment
 
   def createNetworkAndTrainer
     network = Recurrent2HiddenLayerNetworkSpecial.new(args)
-    # puts network.to_s
+    # logger.puts network.to_s
     theTrainer = ThreeClass2HiddenSupervisorLocalFlock.new(examples, network, args)
     return network, theTrainer
   end

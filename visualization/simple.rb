@@ -10,24 +10,24 @@ x = Marshal.dump(anArray)
 redis.set("myKey", x)
 y = redis.get("myKey")
 maybeAnArray = Marshal.load(y)
-puts "maybeAnArray=\t#{maybeAnArray.class}"
-puts "array= #{maybeAnArray}"
-puts "*****************************"
+logger.puts "maybeAnArray=\t#{maybeAnArray.class}"
+logger.puts "array= #{maybeAnArray}"
+logger.puts "*****************************"
 
 
 arrayOfKeys = redis.keys("Net*")
-puts arrayOfKeys
+logger.puts arrayOfKeys
 
-puts "*****************************"
+logger.puts "*****************************"
 
-puts redis.get("myKey").class
+logger.puts redis.get("myKey").class
 
-puts "*****************************"
+logger.puts "*****************************"
 
-#puts redis.smembers("NetInputs:epochs:primary_key")
+#logger.puts redis.smembers("NetInputs:epochs:primary_key")
 
-puts "type=\t#{redis.type("NetInputs:values:4")}"
+logger.puts "type=\t#{redis.type("NetInputs:values:4")}"
 
-puts "get field names and values for the key ('NetInputs:values:4')=\t#{redis.hgetall("NetInputs:values:4")}"
+logger.puts "get field names and values for the key ('NetInputs:values:4')=\t#{redis.hgetall("NetInputs:values:4")}"
 
-## puts redis.flushdb
+## logger.puts redis.flushdb

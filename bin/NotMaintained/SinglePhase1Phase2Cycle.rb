@@ -43,7 +43,7 @@ def createTrainingSetWith2InputDimensions2Classes(numberOfExamples, rightShiftUp
       exampleNumber += 1
     end
   end
-  STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
+  logger.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
   examples
 end
 
@@ -53,11 +53,11 @@ def reportMetrics(outputNeuron, epochNumber, aLearningNetwork, dataArray, args)
   mse = aLearningNetwork.calcNetworksMeanSquareError
   aLearningNetwork.recordResponse(mse, epochNumber)
   if (epochNumber.modulo(5) == 0)
-    puts "At Epoch # #{epochNumber} Network's MSE=\t#{aLearningNetwork.calcNetworksMeanSquareError}\n"
+    logger.puts "At Epoch # #{epochNumber} Network's MSE=\t#{aLearningNetwork.calcNetworksMeanSquareError}\n"
     theFlockLearningRate = args[:flockLearningRate]
     #oneEpochsMeasures.each_with_index do |measuresForAnExample, exampleNumber|
     #  # std("measuresForAnExample",measuresForAnExample)
-    #  puts "ex #{exampleNumber}\tBP Error=\t#{measuresForAnExample[:error]}\tFlocking Error=\t#{theFlockLearningRate * measuresForAnExample[:localFlockingError]}"
+    #  logger.puts "ex #{exampleNumber}\tBP Error=\t#{measuresForAnExample[:error]}\tFlocking Error=\t#{theFlockLearningRate * measuresForAnExample[:localFlockingError]}"
     #end
   end
   mse
@@ -101,7 +101,7 @@ def epochWithRecenteringOfClusters(epochsSinceBeginningOfCycle, aLearningNetwork
   flockingNeurons.each { |aNeuron| aNeuron.clusterAllResponses }
 
   mse = reportMetrics(outputLayer[0], epochNumber, aLearningNetwork, dataArray, args)
-  puts aLearningNetwork if ((epochNumber+1).modulo(phase1Epochs) == 0)
+  logger.puts aLearningNetwork if ((epochNumber+1).modulo(phase1Epochs) == 0)
   epochNumber += 1
   epochsSinceBeginningOfCycle += 1
   return [mse, epochNumber, epochsSinceBeginningOfCycle]
@@ -121,7 +121,7 @@ def epochNoClusterRecentering(epochsSinceBeginningOfCycle, aLearningNetwork, dat
   neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
 
   mse = reportMetrics(outputLayer[0], epochNumber, aLearningNetwork, dataArray, args)
-  puts aLearningNetwork if ((epochNumber+1).modulo(phase1Epochs) == 0)
+  logger.puts aLearningNetwork if ((epochNumber+1).modulo(phase1Epochs) == 0)
   epochNumber += 1
   epochsSinceBeginningOfCycle += 1
   return [mse, epochNumber, epochsSinceBeginningOfCycle]
@@ -145,7 +145,7 @@ def epochWithRecenteringOfClustersUsingMomentum(epochsSinceBeginningOfCycle, aLe
   flockingNeurons.each { |aNeuron| aNeuron.clusterAllResponses }
 
   mse = reportMetrics(outputLayer[0], epochNumber, aLearningNetwork, dataArray, args)
-  puts aLearningNetwork if ((epochNumber+1).modulo(phase1Epochs) == 0)
+  logger.puts aLearningNetwork if ((epochNumber+1).modulo(phase1Epochs) == 0)
   epochNumber += 1
   epochsSinceBeginningOfCycle += 1
   return [mse, epochNumber, epochsSinceBeginningOfCycle]
@@ -167,7 +167,7 @@ def epochNoClusterRecenteringUsingMomentum(epochsSinceBeginningOfCycle, aLearnin
   neuronsWithInputLinks.each { |aNeuron| aNeuron.addAccumulationToWeight }
 
   mse = reportMetrics(outputLayer[0], epochNumber, aLearningNetwork, dataArray, args)
-  puts aLearningNetwork if ((epochNumber+1).modulo(phase1Epochs) == 0)
+  logger.puts aLearningNetwork if ((epochNumber+1).modulo(phase1Epochs) == 0)
   epochNumber += 1
   epochsSinceBeginningOfCycle += 1
   return [mse, epochNumber, epochsSinceBeginningOfCycle]
@@ -187,7 +187,7 @@ def simpleLearningWithFlocking(phase1Epochs, phase2Epochs, aLearningNetwork,
       flockingNeurons.each { |aNeuron| aNeuron.bpLearningRate = 0.0 } if (epochsSinceBeginningOfCycle >= phase1Epochs)
       flockingNeurons.each { |aNeuron| aNeuron.bpLearningRate = args[:bpLearningRate] } if (epochsSinceBeginningOfCycle >= phase1PlusPhase2Epochs)
       epochsSinceBeginningOfCycle = 0 if (epochsSinceBeginningOfCycle >= phase1PlusPhase2Epochs)
-      puts aLearningNetwork if (epochNumber == phase1Epochs)
+      logger.puts aLearningNetwork if (epochNumber == phase1Epochs)
     end
 
     mse, epochNumber, epochsSinceBeginningOfCycle = epochWithRecenteringOfClusters(epochsSinceBeginningOfCycle, aLearningNetwork, dataArray, allNeuronsInOneArray, epochNumber, flockingNeurons, neuronsWithInputLinks, neuronsWithInputLinksInReverseOrder, numberOfExamples, outputLayer, phase1Epochs, args)
@@ -207,12 +207,12 @@ def learningWithFocusedFlocking(phase1Epochs, phase2Epochs, aLearningNetwork,
 
     if (phase1Epochs > 0)
       if (epochsSinceBeginningOfCycle >= phase1Epochs)
-        puts aLearningNetwork if (phase1)
+        logger.puts aLearningNetwork if (phase1)
         phase1 = false
         flockingNeurons.each { |aNeuron| aNeuron.bpLearningRate = 0.0 } #TODO WARNING: BP LEARNING Will Still Occur with regular neurons!!
       end
       if (epochsSinceBeginningOfCycle >= phase1PlusPhase2Epochs)
-        puts aLearningNetwork unless (phase1)
+        logger.puts aLearningNetwork unless (phase1)
         phase1 = true
         epochsSinceBeginningOfCycle = 0
         flockingNeurons.each { |aNeuron| aNeuron.bpLearningRate = args[:bpLearningRate] }
@@ -247,12 +247,12 @@ def learningWithMomentumAndFocusedFlocking(phase1Epochs, phase2Epochs, aLearning
 
     if (phase1Epochs > 0)
       if (epochsSinceBeginningOfCycle >= phase1Epochs)
-        puts aLearningNetwork if (phase1)
+        logger.puts aLearningNetwork if (phase1)
         phase1 = false
         flockingNeurons.each { |aNeuron| aNeuron.bpLearningRate = 0.0 } #TODO WARNING: BP LEARNING Will Still Occur with regular neurons!!
       end
       if (epochsSinceBeginningOfCycle >= phase1PlusPhase2Epochs)
-        puts aLearningNetwork unless (phase1)
+        logger.puts aLearningNetwork unless (phase1)
         phase1 = true
         epochsSinceBeginningOfCycle = 0
         flockingNeurons.each { |aNeuron| aNeuron.bpLearningRate = args[:bpLearningRate] }
@@ -330,13 +330,13 @@ case demoToPerform
   when "learningWithMomentumAndFocusedFlocking"
     epochNumber, mse = learningWithMomentumAndFocusedFlocking(phase1Epochs, phase2Epochs, aLearningNetwork, allNeuronsInOneArray, args, dataArray, epochNumber, epochsOfFlockingOnly, flockingNeurons, mse, neuronsWithInputLinks, neuronsWithInputLinksInReverseOrder, numberOfExamples, outputLayer)
   else
-    STDERR.puts "did not understand CHOICE!"
+    logger.puts "did not understand CHOICE!"
 end
 
 plotMSEvsEpochNumber(aLearningNetwork)
 
 plotFlockingErrorVsEpochNumber(dataArray)
 
-puts "At Epoch # #{epochNumber} Network's MSE=\t#{mse}\n\n"
+logger.puts "At Epoch # #{epochNumber} Network's MSE=\t#{mse}\n\n"
 
-puts aLearningNetwork # display neural network's final state -- after training is complete.
+logger.puts aLearningNetwork # display neural network's final state -- after training is complete.

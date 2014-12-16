@@ -156,7 +156,7 @@ class Trainer3SelfOrgContextSuper < TrainerBase
     mse, totalEpochs = hook(ioFunction, mse, totalEpochs)
 
     #display:
-    puts "Hidden Layer 2 outputs:"
+    logger.puts "Hidden Layer 2 outputs:"
     forEachExampleDisplayInputsAndOutputs(hiddenLayer2)
 
     layersThatWereNormalized = [hiddenLayer1, hiddenLayer2].to_LayerAry

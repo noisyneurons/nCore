@@ -28,9 +28,9 @@ class FlockingNeuronRecorder ##  TODO temporary
 
   def quickReportOfExampleWeightings(epochDataToRecord)
     neuron.clusters.each_with_index do |cluster, numberOfCluster|
-      cluster.membershipWeightForEachExample.each { |exampleWeight| puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
-      puts
-      puts "NumExamples=\t#{cluster.numExamples}\tNum Membership Weights=\t#{cluster.exampleMembershipWeightsForCluster.length}"
+      cluster.membershipWeightForEachExample.each { |exampleWeight| logger.puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
+      logger.puts
+      logger.puts "NumExamples=\t#{cluster.numExamples}\tNum Membership Weights=\t#{cluster.exampleMembershipWeightsForCluster.length}"
     end
   end
 end
@@ -52,12 +52,12 @@ end
 
 def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
     lastTestingMSE, lastTrainingMSE, network, theTrainer, trainingSequence)
-  puts network
-  puts "Elapsed Time=\t#{theTrainer.elapsedTime}"
-  puts "\tAt Epoch #{trainingSequence.epochs}"
-  puts "\tAt Epoch #{lastEpoch}"
-  puts "\t\tThe Network's Training MSE=\t#{lastTrainingMSE}\t and TEST MSE=\t#{lastTestingMSE}\n"
-  puts "\t\t\tThe dPrime(s) at the end of training are: #{dPrimes}"
+  logger.puts network
+  logger.puts "Elapsed Time=\t#{theTrainer.elapsedTime}"
+  logger.puts "\tAt Epoch #{trainingSequence.epochs}"
+  logger.puts "\tAt Epoch #{lastEpoch}"
+  logger.puts "\t\tThe Network's Training MSE=\t#{lastTrainingMSE}\t and TEST MSE=\t#{lastTestingMSE}\n"
+  logger.puts "\t\t\tThe dPrime(s) at the end of training are: #{dPrimes}"
 
 #############################  plotting and visualization....
   plotMSEvsEpochNumber(network)
@@ -132,7 +132,7 @@ dataStoreManager = SimulationDataStoreManager.create(databaseFilename, examples,
 
 ######################## Create Network....
 network = Flocking1LayerNetwork.new(dataStoreManager, args)
-puts network
+logger.puts network
 
 ############################### train ...
 trainingSequence = TrainingSequence.create(network, args)

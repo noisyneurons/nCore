@@ -35,7 +35,7 @@ args = {:learningRate => 0.3, #1.0,
 aLearningNetwork = BaseNetwork.new(args)
 allNeuronLayers = aLearningNetwork.createSimpleLearningANN
 
-puts "Bias Neuron output= #{aLearningNetwork.theBiasNeuron.output}"
+logger.puts "Bias Neuron output= #{aLearningNetwork.theBiasNeuron.output}"
 
 allNeuronsInOneArray = allNeuronLayers.flatten
 inputLayer = allNeuronLayers[0]
@@ -61,15 +61,15 @@ while (mse > 0.001)
   mse = aLearningNetwork.calcNetworksMeanSquareError
 
   if (epochNumber.modulo(1) == 0)
-    puts "At Epoch # #{epochNumber} Network's MSE=\t#{aLearningNetwork.calcNetworksMeanSquareError}\n\n" if (epochNumber.modulo(100) == 0)
+    logger.puts "At Epoch # #{epochNumber} Network's MSE=\t#{aLearningNetwork.calcNetworksMeanSquareError}\n\n" if (epochNumber.modulo(100) == 0)
     aLearningNetwork.recordResponse(epochNumber)
   end
 
   epochNumber += 1
 end
-puts "At Epoch # #{epochNumber} Network's MSE=\t#{mse}\n\n"
+logger.puts "At Epoch # #{epochNumber} Network's MSE=\t#{mse}\n\n"
 
-#puts aLearningNetwork
+#logger.puts aLearningNetwork
 
 mseVsEpochMeasurements = aLearningNetwork.measures
 x = mseVsEpochMeasurements.collect { |aMeasure| aMeasure[:epochNumber] }

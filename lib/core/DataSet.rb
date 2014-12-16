@@ -67,9 +67,9 @@ module ExampleDistribution
     angleInRadians = angleInDegrees * ((2.0*Math::PI)/360.0)
     s = Math.sin(angleInRadians)
     c = Math.cos(angleInRadians)
-    # puts "angleInRadians= #{angleInRadians}\ts= #{s}\tc= #{c}\t    "
+    # logger.puts "angleInRadians= #{angleInRadians}\ts= #{s}\tc= #{c}\t    "
     rotationMatrix = Matrix[[c, -s], [s, c]]
-    # puts "rotationMatrix= #{rotationMatrix} "
+    # logger.puts "rotationMatrix= #{rotationMatrix} "
     return rotationMatrix
   end
 
@@ -95,11 +95,12 @@ end
 
 
 class GenerateDataSet
-  attr_accessor :args
+  attr_accessor :args, :logger
   include ExampleDistribution
 
   def initialize(args)
     @args = args
+    @logger = @args[:resultsStringIOorFileIO]
   end
 end
 
@@ -150,7 +151,7 @@ class Generate4ClassDataSet < GenerateDataSet
         exampleNumber += 1
       end
     end
-    STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
+    logger.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
     angleOfClockwiseRotationOfInputData = args[:angleOfClockwiseRotationOfInputData]
     examples = rotateClockwise(examples, angleOfClockwiseRotationOfInputData)
   end
@@ -181,7 +182,7 @@ class PreviousDataGenerator
     @arrayOfExamples.each_with_index do |anExample, exampleNumber|
       inputs = anExample[0]
       outputs = anExample[1]
-      puts "#{exampleNumber}\tinputs= #{inputs};\toutputs= #{outputs};"
+      logger.puts "#{exampleNumber}\tinputs= #{inputs};\toutputs= #{outputs};"
     end
     return @arrayOfExamples
   end

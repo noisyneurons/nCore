@@ -2,6 +2,8 @@
 
 require 'rubygems'
 require 'bundler/setup'
+# require 'logger'
+require 'stringio'
 require 'mathn'
 require 'matrix'
 require 'relix'
@@ -22,6 +24,20 @@ end
 
 
 ############################# MODULES ###########################
+
+#module Logger
+#  attr_accessor :theLogger
+#
+#  def logger=(aLogger)
+#    @theLogger = aLogger
+#  end
+#
+#  def logger
+#    @theLogger
+#  end
+#
+#end
+#
 
 module OS
   def OS.windows?
@@ -44,7 +60,7 @@ end
 ############################# DEBUG UTILITY FUNCTIONS ###########################
 
 def std(txt, x)
-  STDOUT.puts "#{txt}\t#{x}"; STDOUT.flush
+  STDOUT.logger.puts "#{txt}\t#{x}"; STDOUT.flush
 end
 
 def qreport(dataArray, epochNumber, interval)
@@ -54,7 +70,7 @@ def qreport(dataArray, epochNumber, interval)
       STDOUT.print "dataItem #{indexToDataItem} =\t#{dataItem};\t"
     end
     STDOUT.flush
-    STDOUT.puts
+    STDOUT.logger.puts
   end
 end
 
@@ -65,7 +81,7 @@ def periodicallyDisplayContentsOfHash(hashWithData, epochNumber, interval)
       STDOUT.print "#{key} =\t#{value};\t"
     end
     STDOUT.flush
-    STDOUT.puts
+    STDOUT.logger.puts
   end
 end
 

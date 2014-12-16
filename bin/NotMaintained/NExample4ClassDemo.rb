@@ -48,7 +48,7 @@ def create4ClassTrainingSet(numberOfExamples, rightShiftUpper2Classes = 0.0)
       exampleNumber += 1
     end
   end
-  STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
+  logger.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
   examples
 end
 
@@ -87,7 +87,7 @@ flockingNeurons = hiddenLayer
 # create the training examples...
 examples = create4ClassTrainingSet(numberOfExamples, rightShiftUpper2Classes = 0.0)
 distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
-# puts examples
+# logger.puts examples
 
 dataArray = []
 
@@ -114,7 +114,7 @@ while (mse > 0.01 && epochNumber < 10**4)
     if (epochNumber > 0)
       flockingNeurons.each do |aNeuron|
         aNeuron.calcLocalFlockingError do |localFE, arg2, arg3|
-          puts "localFE\t#{localFE}\targ2\t#{arg2}\targ3\t#{arg3}" if (epochNumber.modulo(500) == 0)
+          logger.puts "localFE\t#{localFE}\targ2\t#{arg2}\targ3\t#{arg3}" if (epochNumber.modulo(500) == 0)
         end
       end
     end
@@ -122,7 +122,7 @@ while (mse > 0.01 && epochNumber < 10**4)
 #    neuronsWithInputLinks.each { |aNeuron| aNeuron.calcDeltaWsAndAccumulate { |bpError, flockError| bpError + flockError } }
     neuronsWithInputLinks.each do |aNeuron|
       aNeuron.calcDeltaWsAndAccumulate do |bpError, flockError, unAdjFlockingError, flockLearningRate|
-        puts "epochNumber\t#{epochNumber}\texampleNumber\t#{exampleNumber}\tNeurons id\t#{aNeuron.id}\tbpError\t#{bpError}\tflockError\t#{flockError}\tunAdjFlockingError\t#{unAdjFlockingError}\tflockLearningRate\t#{flockLearningRate}" if (epochNumber.modulo(500) == 0)
+        logger.puts "epochNumber\t#{epochNumber}\texampleNumber\t#{exampleNumber}\tNeurons id\t#{aNeuron.id}\tbpError\t#{bpError}\tflockError\t#{flockError}\tunAdjFlockingError\t#{unAdjFlockingError}\tflockLearningRate\t#{flockLearningRate}" if (epochNumber.modulo(500) == 0)
         bpError + flockError
       end
     end
@@ -132,19 +132,19 @@ while (mse > 0.01 && epochNumber < 10**4)
   # std("epoch number ", epochNumber)
   mse = aLearningNetwork.calcNetworksMeanSquareError
   if (epochNumber.modulo(100) == 0)
-    puts "At Epoch # #{epochNumber} Network's MSE=\t#{aLearningNetwork.calcNetworksMeanSquareError}\n\n" # if (epochNumber.modulo(100) == 0)
+    logger.puts "At Epoch # #{epochNumber} Network's MSE=\t#{aLearningNetwork.calcNetworksMeanSquareError}\n\n" # if (epochNumber.modulo(100) == 0)
     aLearningNetwork.recordResponse(mse, epochNumber)
   end
 
 #mse = reportMetrics(hiddenLayer[0], epochNumber, aLearningNetwork, dataArray, args)
-#puts "At Epoch # #{epochNumber} Network's MSE=\t#{mse}\n\n"
+#logger.puts "At Epoch # #{epochNumber} Network's MSE=\t#{mse}\n\n"
 
   epochNumber += 1
 end
 
-puts "At Epoch # #{epochNumber} Network's MSE=\t#{mse}\n\n"
+logger.puts "At Epoch # #{epochNumber} Network's MSE=\t#{mse}\n\n"
 
-puts aLearningNetwork # display neural network's final state -- after training is complete.
+logger.puts aLearningNetwork # display neural network's final state -- after training is complete.
 
 
 #plotMSEvsEpochNumber(aLearningNetwork)

@@ -83,25 +83,25 @@ Example_response.new(:epochNumber => 2, :exampleNumber => 2, :epoch_response_id 
 Example_response.new(:epochNumber => 2, :exampleNumber => 2, :epoch_response_id => er.id).save
 Example_response.new(:epochNumber => 2, :exampleNumber => 4, :epoch_response_id => er.id).save
 
-puts
-puts Epoch_response.all
-puts
-puts Example_response.all
+logger.puts
+logger.puts Epoch_response.all
+logger.puts
+logger.puts Example_response.all
 
-#puts
+#logger.puts
 #Epoch_response.joins(:example_responses)
-#puts
-#puts Epoch_response.all
+#logger.puts
+#logger.puts Epoch_response.all
 
 
 #Epoch_response.find_each do |epochResponse|
 #
-#  puts "000\t#{Example_response.where(:epoch_response_id => epochResponse.id)}"
+#  logger.puts "000\t#{Example_response.where(:epoch_response_id => epochResponse.id)}"
 #
 #end
 
 anEpochRecord = Epoch_response.first
 
-puts anEpochRecord
-puts
-anEpochRecord.example_responses.each { |r| puts r }
+logger.puts anEpochRecord
+logger.puts
+anEpochRecord.example_responses.each { |r| logger.puts r }

@@ -31,7 +31,7 @@ class Sequencer
   end
 
   def printSampleNeuron
-    puts @neuronsInHiddenLayer[1]
+    logger.puts @neuronsInHiddenLayer[1]
   end
 
   def allNeurons(*command)
@@ -75,7 +75,7 @@ class Sequencer
   def processOneEpoch
     @neuronsForBPLearning.each { |aNeuron| aNeuron.clearWithinEpochMeasures }
     yield(self)
-    puts "network.calcNetworksMeanSquareError, epochNumber = #{network.calcNetworksMeanSquareError},\t#{epochNumber}"
+    logger.puts "network.calcNetworksMeanSquareError, epochNumber = #{network.calcNetworksMeanSquareError},\t#{epochNumber}"
     networkRecorder.recordResponse(network.calcNetworksMeanSquareError, epochNumber)
     self.epochNumber += 1
   end

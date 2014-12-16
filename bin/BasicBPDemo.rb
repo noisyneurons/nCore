@@ -54,5 +54,5 @@ numberOfRepetitions = 1
 
 runner = ExperimentRunner.new(args)
 lastExperimentRun = runner.repeatSimulation(numberOfRepetitions)
-puts lastExperimentRun.network
+logger.puts lastExperimentRun.network
 

@@ -76,7 +76,7 @@ class TestInputNeuron < MiniTest::Unit::TestCase
   end
 
   def test_to_s
-    puts @inputNeuron.to_s
+    logger.puts @inputNeuron.to_s
   end
 end
 
@@ -172,7 +172,7 @@ class TestOutputNeuron < MiniTest::Unit::TestCase
   end
 
   def test_to_s
-    puts @outputNeuron.to_s
+    logger.puts @outputNeuron.to_s
   end
 end
 
@@ -187,7 +187,7 @@ class TestBiasNeuron < MiniTest::Unit::TestCase
   end
 
   def test_to_s
-    puts @aBiasNeuron.to_s
+    logger.puts @aBiasNeuron.to_s
   end
 end
 
@@ -290,7 +290,7 @@ class TestNeuron < MiniTest::Unit::TestCase
 
   def test_to_s
     @neuron.inputLinks << DummyLink.new << DummyLink.new
-    puts @neuron.to_s
+    logger.puts @neuron.to_s
   end
 end
 

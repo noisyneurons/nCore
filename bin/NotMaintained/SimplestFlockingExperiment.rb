@@ -30,11 +30,11 @@ def reportMetrics(outputNeuron, epochNumber, aLearningNetwork, dataArray, args)
   mse = aLearningNetwork.calcNetworksMeanSquareError
   aLearningNetwork.recordResponse(mse, epochNumber)
   if (epochNumber.modulo(250) == 0)
-    puts "At Epoch # #{epochNumber} Network's MSE=\t#{aLearningNetwork.calcNetworksMeanSquareError}\n"
+    logger.puts "At Epoch # #{epochNumber} Network's MSE=\t#{aLearningNetwork.calcNetworksMeanSquareError}\n"
     theFlockLearningRate = args[:flockLearningRate]
     oneEpochsMeasures.each_with_index do |measuresForAnExample, exampleNumber|
       # std("measuresForAnExample",measuresForAnExample)
-      puts "ex #{exampleNumber}\tBP Error=\t#{measuresForAnExample[:error]}\tFlocking Error=\t#{theFlockLearningRate * measuresForAnExample[:localFlockingError]}"
+      logger.puts "ex #{exampleNumber}\tBP Error=\t#{measuresForAnExample[:error]}\tFlocking Error=\t#{theFlockLearningRate * measuresForAnExample[:localFlockingError]}"
     end
   end
   mse
@@ -144,9 +144,9 @@ plotMSEvsEpochNumber(aLearningNetwork)
 
 plotFlockingErrorVsEpochNumber(dataArray)
 
-puts "At Epoch # #{epochNumber} Network's MSE=\t#{mse}\n\n"
+logger.puts "At Epoch # #{epochNumber} Network's MSE=\t#{mse}\n\n"
 
-puts aLearningNetwork # display neural network's final state -- after training is complete.
+logger.puts aLearningNetwork # display neural network's final state -- after training is complete.
 
 
 

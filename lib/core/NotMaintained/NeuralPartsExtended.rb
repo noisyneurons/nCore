@@ -41,8 +41,8 @@ module CommonClusteringCode
   def clusterAllResponses
     arrayOfVectorsRepresentingPointsInSpace = metricRecorder.vectorizeEpochMeasures
     dummy, iterationNumber, largestEuclidianDistanceMoved = clusterer.clusterData(arrayOfVectorsRepresentingPointsInSpace)
-    STDERR.puts "exceeded max number of clustering iterations.  Maximum number=  #{maxNumberOfClusteringIterations}" if (iterationNumber == (maxNumberOfClusteringIterations - 1))
-    STDERR.puts "too big a 'move'. The move was=  #{largestEuclidianDistanceMoved}" if (largestEuclidianDistanceMoved > args[:maxLargestEuclidianDistanceMovedThatIsWOErrorMsg])
+    logger.puts "exceeded max number of clustering iterations.  Maximum number=  #{maxNumberOfClusteringIterations}" if (iterationNumber == (maxNumberOfClusteringIterations - 1))
+    logger.puts "too big a 'move'. The move was=  #{largestEuclidianDistanceMoved}" if (largestEuclidianDistanceMoved > args[:maxLargestEuclidianDistanceMovedThatIsWOErrorMsg])
     return iterationNumber
   end
 
@@ -85,8 +85,8 @@ module CommonClusteringCode
   ## ---------------- Reporting methods ------------------------------
 
   def calc_dPrime(arrayOfVectorsRepresentingPointsInSpace) # very inexact for small numbers of samples... need to use F-st...
-    #puts "dispersionOfInputsForDPrimeCalculation=\t#{clusterer.dispersionOfInputsForDPrimeCalculation(arrayOfVectorsRepresentingPointsInSpace)}"
-    #puts "distanceBetween2ClustersForDimension0=\t#{clusterer.distanceBetween2ClustersForDimension0}"
+    #logger.puts "dispersionOfInputsForDPrimeCalculation=\t#{clusterer.dispersionOfInputsForDPrimeCalculation(arrayOfVectorsRepresentingPointsInSpace)}"
+    #logger.puts "distanceBetween2ClustersForDimension0=\t#{clusterer.distanceBetween2ClustersForDimension0}"
     return (clusterer.distanceBetween2ClustersForDimension0 / clusterer.dispersionOfInputsForDPrimeCalculation(arrayOfVectorsRepresentingPointsInSpace)).abs
   end
 
@@ -270,7 +270,7 @@ class FlockingLink < Link
   end
 
   def calcDeltaW
-    STDERR.puts " ERROR from a FlockingLink: The method 'calcDeltaW' was called!"
+    logger.puts " ERROR from a FlockingLink: The method 'calcDeltaW' was called!"
   end
 end
 
@@ -339,9 +339,9 @@ end
 #
 #def quickReportOfExampleWeightings(epochDataToRecord)
 #  neuron.clusters.each_with_index do |cluster, numberOfCluster|
-#    cluster.membershipWeightForEachExample.each { |exampleWeight| puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
-#    puts
-#    puts "NumExamples=\t#{cluster.numExamples}\tNum Membership Weights=\t#{cluster.membershipWeightForEachExample.length}"
+#    cluster.membershipWeightForEachExample.each { |exampleWeight| logger.puts "Epoch Number, Cluster Number and Example Weighting= #{epochDataToRecord[:epochNumber]}\t#{numberOfCluster}\t#{exampleWeight}" }
+#    logger.puts
+#    logger.puts "NumExamples=\t#{cluster.numExamples}\tNum Membership Weights=\t#{cluster.membershipWeightForEachExample.length}"
 #  end
 #end
 #

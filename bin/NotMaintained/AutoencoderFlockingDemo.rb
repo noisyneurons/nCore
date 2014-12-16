@@ -42,7 +42,7 @@ def createTrainingSet(numberOfExamples)
       exampleNumber += 1
     end
   end
-  STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
+  logger.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
   examples
 end
 
@@ -52,10 +52,10 @@ end
 #  aLearningNetwork.recordResponse(mse, epochNumber)
 #  oneEpochsMeasures = neuronOfInterest.metricRecorder.withinEpochMeasures
 #  if (epochNumber.modulo(25000) == 0)
-#    puts "At Epoch # #{epochNumber} Network's MSE=\t#{aLearningNetwork.calcNetworksMeanSquareError}\n"
+#    logger.puts "At Epoch # #{epochNumber} Network's MSE=\t#{aLearningNetwork.calcNetworksMeanSquareError}\n"
 #    theFlockLearningRate = args[:flockLearningRate]
 #    oneEpochsMeasures.each_with_index do |measuresForAnExample, exampleNumber|
-#      puts "ex #{exampleNumber}\tBP Error=\t#{measuresForAnExample[:error]}\tFlocking Error=\t#{theFlockLearningRate * measuresForAnExample[:localFlockingError]}"
+#      logger.puts "ex #{exampleNumber}\tBP Error=\t#{measuresForAnExample[:error]}\tFlocking Error=\t#{theFlockLearningRate * measuresForAnExample[:localFlockingError]}"
 #    end
 #  end
 #  mse
@@ -116,7 +116,7 @@ flockingNeurons = hiddenLayer
 # create the training examples...
 examples = createTrainingSet(numberOfExamples)
 distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
-# puts examples
+# logger.puts examples
 
 dataArray = []
 
@@ -146,19 +146,19 @@ while (mse > 0.01 && epochNumber < 10**5)
   # std("epoch number ", epochNumber)
   mse = aLearningNetwork.calcNetworksMeanSquareError
   if (epochNumber.modulo(100) == 0)
-    puts "At Epoch # #{epochNumber} Network's MSE=\t#{aLearningNetwork.calcNetworksMeanSquareError}\n\n" # if (epochNumber.modulo(100) == 0)
+    logger.puts "At Epoch # #{epochNumber} Network's MSE=\t#{aLearningNetwork.calcNetworksMeanSquareError}\n\n" # if (epochNumber.modulo(100) == 0)
     aLearningNetwork.recordResponse(mse, epochNumber)
   end
 
   #mse = reportMetrics(hiddenLayer[0], epochNumber, aLearningNetwork, dataArray, args)
-  #puts "At Epoch # #{epochNumber} Network's MSE=\t#{mse}\n\n"
+  #logger.puts "At Epoch # #{epochNumber} Network's MSE=\t#{mse}\n\n"
 
   epochNumber += 1
 end
 
-puts "At Epoch # #{epochNumber} Network's MSE=\t#{mse}\n\n"
+logger.puts "At Epoch # #{epochNumber} Network's MSE=\t#{mse}\n\n"
 
-puts aLearningNetwork # display neural network's final state -- after training is complete.
+logger.puts aLearningNetwork # display neural network's final state -- after training is complete.
 
 
 #plotMSEvsEpochNumber(aLearningNetwork)

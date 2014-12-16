@@ -65,7 +65,7 @@ class Experiment
     examples << {:inputs => [-1.0, -1.0], :targets => [0.0], :exampleNumber => 2, :class => 0}
     examples << {:inputs => [-1.0, 1.0], :targets => [1.0], :exampleNumber => 3, :class => 1}
     if (args[:numberOfExamples] != examples.length)
-      STDERR.puts "****************Incorrect Number of Examples Specified!! ************************"
+      logger.puts "****************Incorrect Number of Examples Specified!! ************************"
     end
     examples
   end

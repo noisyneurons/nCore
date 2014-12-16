@@ -83,8 +83,8 @@ epR = simDataStoreManager.epochDataSet
 epR.insert(:epochNumber => 1, :neuronID => 1, :dPrime => rand)
 epR.insert(:epochNumber => 1, :neuronID => 2, :dPrime => rand)
 epR.insert(:epochNumber => 1, :neuronID => 3, :dPrime => rand)
-puts "epochs record count: #{epR.count}"
-puts "The average dprime is: #{epR.avg(:dPrime)}"
+logger.puts "epochs record count: #{epR.count}"
+logger.puts "The average dprime is: #{epR.avg(:dPrime)}"
 
 
 exR = simDataStoreManager.exampleDataSet
@@ -97,8 +97,8 @@ exR.insert(:neuronID => 3, :epochNumber => 1, :exampleNumber => 6, :netInput => 
 exR.insert(:neuronID => 1, :epochNumber => 1, :exampleNumber => 7, :netInput => 0.33)
 exR.insert(:neuronID => 2, :epochNumber => 1, :exampleNumber => 8, :netInput => 0.63)
 exR.insert(:neuronID => 3, :epochNumber => 1, :exampleNumber => 9, :netInput => 0.93)
-puts "examples count: #{exR.count}"
-puts "The average neuron number is: #{exR.avg(:neuronID)}"
+logger.puts "examples count: #{exR.count}"
+logger.puts "The average neuron number is: #{exR.avg(:neuronID)}"
 
 
 exF = simDataStoreManager.exampleFeatureDataSet
@@ -134,7 +134,7 @@ def createMultiClassTrainingSet(numberOfExamples, rightShiftUpper2Classes = 0.0)
       exampleNumber += 1
     end
   end
-  STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
+  logger.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
   examples
 end
 
@@ -150,5 +150,5 @@ expDesc.insert(:description => descriptionOfExperiment, :dateTime => Time.now)
 aJoinedDS = simDataStoreManager.joinDataSets
 
 aJoinedDS.each_with_index do |r, aCount|
-  puts "r\t#{r.to_hash}  \tCount=\t#{aCount}"
+  logger.puts "r\t#{r.to_hash}  \tCount=\t#{aCount}"
 end

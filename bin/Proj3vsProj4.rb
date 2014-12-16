@@ -18,7 +18,6 @@ require_relative '../lib/core/TrainingBase'
 require_relative '../lib/core/Trainers'
 
 require_relative '../lib/plot/CorePlottingCode'
-require_relative '../lib/core/SimulationDataStore'
 
 require_relative 'BaseLearningExperiment'
 ########################################################################
@@ -60,7 +59,10 @@ args = {
     :standardDeviationOfAddedGaussianNoise => 0.2,
     :verticalShift => 0.0,
     :horizontalShift => 0.0,
-    :angleOfClockwiseRotationOfInputData => 0.0
+    :angleOfClockwiseRotationOfInputData => 0.0,
+
+    # Results and debugging information storage/access
+    :resultsStringIOorFileIO =>  StringIO.new
 }
 
 
@@ -97,29 +99,32 @@ lastExperimentProj4b, resultsProj4b = runner.repeatSimulation(numberOfRepetition
 
 #--------------------------------------------------------------------------------------
 
-puts "\n\nNetwork's State at End of Last Experiment for Project 3:"
-puts lastExperimentProj3.network
-puts "\n\nNetwork's State at End of Last Experiment for Project 4:"
-puts lastExperimentProj4.network
+logger.puts "\n\nNetwork's State at End of Last Experiment for Project 3:"
+logger.puts lastExperimentProj3.network
+logger.puts "\n\nNetwork's State at End of Last Experiment for Project 4:"
+logger.puts lastExperimentProj4.network
 
-puts "\n\nNetwork's State at End of Last Experiment for Project 3b (30degrees):"
-puts lastExperimentProj3b.network
-puts "\n\nNetwork's State at End of Last Experiment for Project 4b (30degrees):"
-puts lastExperimentProj4b.network
+logger.puts "\n\nNetwork's State at End of Last Experiment for Project 3b (30degrees):"
+logger.puts lastExperimentProj3b.network
+logger.puts "\n\nNetwork's State at End of Last Experiment for Project 4b (30degrees):"
+logger.puts lastExperimentProj4b.network
 
 #--------------------------------------------------------------------------------------
 
-puts "\n\nExperimentName    MeanTrainingMSE               MeanTestingMSE\n"
+logger.puts "\n\nExperimentName    MeanTrainingMSE               MeanTestingMSE\n"
 trainingMSEs, testingMSEs = resultsProj3[:trainingMSEs], resultsProj3[:testingMSEs]
-puts "Proj3             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+logger.puts "Proj3             #{trainingMSEs.mean}          #{testingMSEs.mean}"
 trainingMSEs, testingMSEs = resultsProj4[:trainingMSEs], resultsProj4[:testingMSEs]
-puts "Proj4             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+logger.puts "Proj4             #{trainingMSEs.mean}          #{testingMSEs.mean}"
 
-puts "\n\nExperimentName    MeanTrainingMSE               MeanTestingMSE\n"
+logger.puts "\n\nExperimentName    MeanTrainingMSE               MeanTestingMSE\n"
 trainingMSEs, testingMSEs = resultsProj3b[:trainingMSEs], resultsProj3b[:testingMSEs]
-puts "Proj3b             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+logger.puts "Proj3b             #{trainingMSEs.mean}          #{testingMSEs.mean}"
 trainingMSEs, testingMSEs = resultsProj4b[:trainingMSEs], resultsProj4b[:testingMSEs]
-puts "Proj4b             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+logger.puts "Proj4b             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+
+puts runner.logger.string
+
 
 
 

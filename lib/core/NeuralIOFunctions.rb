@@ -17,8 +17,8 @@ module IOFunctionUtils
     begin
       raise "ioDerivativeFromOutput should not have been called for THIS ioFunction"
     rescue Exception => e
-      STDERR.puts e.message
-      STDERR.puts e.backtrace.inspect
+      logger.puts e.message
+      logger.puts e.backtrace.inspect
     end
   end
 

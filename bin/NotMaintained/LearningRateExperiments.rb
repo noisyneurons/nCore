@@ -27,18 +27,18 @@ def createTrainingSet(args)
   examples << {:inputs => [-1.0, -2.0], :targets => [0.0], :exampleNumber => 5, :class => 0}
   examples << {:inputs => [-1.0, -3.0], :targets => [0.0], :exampleNumber => 6, :class => 0}
   examples << {:inputs => [-1.0, -4.0], :targets => [0.0], :exampleNumber => 7, :class => 0}
-  STDERR.puts "****************Incorrect Number of Examples Specified!! ************************" if (args[:numberOfExamples] != examples.length)
+  logger.puts "****************Incorrect Number of Examples Specified!! ************************" if (args[:numberOfExamples] != examples.length)
   return examples
 end
 
 def displayAndPlotResults(args, dPrimes, dataStoreManager, lastEpoch,
     lastTestingMSE, lastTrainingMSE, network, theTrainer, trainingSequence)
-  puts network
-  puts "Elapsed Time=\t#{theTrainer.elapsedTime}"
-  puts "\tAt Epoch #{trainingSequence.epochs}"
-  puts "\tAt Epoch #{lastEpoch}"
-  puts "\t\tThe Network's Training MSE=\t#{lastTrainingMSE}\t and TEST MSE=\t#{lastTestingMSE}\n"
-  puts "\t\t\tThe dPrime(s) at the end of training are: #{dPrimes}"
+  logger.puts network
+  logger.puts "Elapsed Time=\t#{theTrainer.elapsedTime}"
+  logger.puts "\tAt Epoch #{trainingSequence.epochs}"
+  logger.puts "\tAt Epoch #{lastEpoch}"
+  logger.puts "\t\tThe Network's Training MSE=\t#{lastTrainingMSE}\t and TEST MSE=\t#{lastTestingMSE}\n"
+  logger.puts "\t\t\tThe dPrime(s) at the end of training are: #{dPrimes}"
 
 #############################  plotting and visualization....
   plotMSEvsEpochNumber(network)
@@ -112,7 +112,7 @@ examples = createTrainingSet(args)
 
 ######################## Create Network....
 network = Flocking1LayerNetwork.new(dataStoreManager, args) # TODO Currently need to insure that TrainingSequence.create has been called before network creation!!!
-puts network
+logger.puts network
 
 ############################### Create Trainer ...
 theTrainer = SimpleAdjustableLearningRateTrainer.new(trainingSequence, network, args)
@@ -127,16 +127,16 @@ lastTestingMSE = nil
 ###################################### END of Main Learning ##########################################
 
 
-puts "############ Include Example Numbers #############"
+logger.puts "############ Include Example Numbers #############"
 4000.times do |epochNumber|
   selectedData = DetailedNeuronData.lookup { |q| q[:experimentNumber_epochs_neuron].eq({experimentNumber: $globalExperimentNumber, epochs: epochNumber,
                                                                                         neuron: 2}) }
-  puts "For epoch number=\t#{epochNumber}" unless (selectedData.empty?)
+  logger.puts "For epoch number=\t#{epochNumber}" unless (selectedData.empty?)
 
-  selectedData.each { |itemKey| puts DetailedNeuronData.values(itemKey) } unless (selectedData.empty?)
+  selectedData.each { |itemKey| logger.puts DetailedNeuronData.values(itemKey) } unless (selectedData.empty?)
 
 end
-puts "####################################"
+logger.puts "####################################"
 
 displayAndPlotResults(args, accumulatedAbsoluteFlockingErrors, dataStoreManager, lastEpoch, lastTestingMSE,
                       lastTrainingMSE, network, theTrainer, trainingSequence)
@@ -147,11 +147,11 @@ selectedData = SnapShotData.lookup { |q| q[:experimentNumber_epochs].eq({experim
 
 selectedData = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(5) }
 unless (selectedData.empty?)
-  puts
-  puts "Number\tDescription\tLastEpoch\tTrainMSE\tTestMSE\tTime"
+  logger.puts
+  logger.puts "Number\tDescription\tLastEpoch\tTrainMSE\tTestMSE\tTime"
   selectedData.each do |aSelectedExperiment|
     aHash = SnapShotData.values(aSelectedExperiment)
-    puts "#{aHash[:experimentNumber]}\t#{aHash[:descriptionOfExperiment]}\t#{aHash[:epochs]}\t#{aHash[:trainMSE]}\t#{aHash[:testMSE]}\t#{aHash[:time]}"
+    logger.puts "#{aHash[:experimentNumber]}\t#{aHash[:descriptionOfExperiment]}\t#{aHash[:epochs]}\t#{aHash[:trainMSE]}\t#{aHash[:testMSE]}\t#{aHash[:time]}"
   end
 end
 

@@ -20,7 +20,6 @@ require_relative '../lib/core/TrainingBase'
 require_relative '../lib/core/Trainers'
 
 require_relative '../lib/plot/CorePlottingCode'
-require_relative '../lib/core/SimulationDataStore'
 
 require_relative 'BaseLearningExperiment'
 ########################################################################
@@ -38,8 +37,8 @@ args = {
     # training parameters
     :learningRate => 0.1,
     :minMSE => 0.0,
-    :epochsForSelfOrg => 300,  #150,
-    :epochsForSupervisedTraining => 2400, # 600,
+    :epochsForSelfOrg => 150,  #150,
+    :epochsForSupervisedTraining => 600, # 600,
     :trainingSequence => TrainingSequence,
 
     # Network Architecture
@@ -62,7 +61,10 @@ args = {
     :standardDeviationOfAddedGaussianNoise => 0.0,
     :verticalShift => 0.0,
     :horizontalShift => 0.0,
-    :angleOfClockwiseRotationOfInputData => 0.0
+    :angleOfClockwiseRotationOfInputData => 0.0,
+
+    # Results and debugging information storage/access
+    :resultsStringIOorFileIO =>  StringIO.new
 }
 
 
@@ -72,6 +74,7 @@ numberOfRepetitions = 1
 
 runner = ExperimentRunner.new(args)
 lastExperimentRun, results = runner.repeatSimulation(numberOfRepetitions)
-puts lastExperimentRun.network
+runner.logger.puts lastExperimentRun.network
 
+puts runner.logger.string
 

@@ -69,14 +69,14 @@ class Experiment
   def displayLastSnapShotRecords
     #keysToRecords = SnapShotData.lookup { |q| q[:experimentNumber].gte(0).order(:desc).limit(2) }
     #unless (keysToRecords.empty?)
-    #  puts
-    #  puts "Number\tLastEpoch\t\tTrainMSE\t\t\tTestMSE\t\t\tAccumulatedAbsoluteFlockingErrors\t\t\t\tTime\t\tTaskID\t\t\t\t\tDescription"
+    #  logger.puts
+    #  logger.puts "Number\tLastEpoch\t\tTrainMSE\t\t\tTestMSE\t\t\tAccumulatedAbsoluteFlockingErrors\t\t\t\tTime\t\tTaskID\t\t\t\t\tDescription"
     #  keysToRecords.each do |keyToOneRecord|
     #    begin
     #      recordHash = SnapShotData.values(keyToOneRecord)
-    #      puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t\t#{recordHash[:trainMSE]}\t\t#{recordHash[:testMSE]}\t\t\t#{recordHash[:accumulatedAbsoluteFlockingErrors]}\t\t\t#{recordHash[:time]}\t\t\t#{recordHash[:gridTaskID]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
+    #      logger.puts "#{recordHash[:experimentNumber]}\t\t#{recordHash[:epochs]}\t\t#{recordHash[:trainMSE]}\t\t#{recordHash[:testMSE]}\t\t\t#{recordHash[:accumulatedAbsoluteFlockingErrors]}\t\t\t#{recordHash[:time]}\t\t\t#{recordHash[:gridTaskID]}\t\t\t\t#{recordHash[:descriptionOfExperiment]}"
     #    rescue
-    #      puts "problem in yaml conversion"
+    #      logger.puts "problem in yaml conversion"
     #    end
     #  end
     #  # recordHash = SnapShotData.values(keysToRecords.last)
@@ -112,7 +112,7 @@ class Experiment
         exampleNumber += 1
       end
     end
-    STDERR.puts "cross-check failed on: 'number of theCreatedExamples'" if (theCreatedExamples.length != (numberOfExamplesInEachClass * numberOfClasses))
+    logger.puts "cross-check failed on: 'number of theCreatedExamples'" if (theCreatedExamples.length != (numberOfExamplesInEachClass * numberOfClasses))
     theCreatedExamples
   end
 end

@@ -206,7 +206,7 @@ class FunctionNetworkFactoriesTest3 < MiniTest::Unit::TestCase
     actual = @outputNeuron0.target
     expected = 0.1
     assert_equal(expected, actual, "wrong target registered for output neuron")
-    # puts @outputNeuron0
+    # logger.puts @outputNeuron0
   end
 
   def test_propagate5
@@ -218,7 +218,7 @@ class FunctionNetworkFactoriesTest3 < MiniTest::Unit::TestCase
 
   def test_propagate6
     @outputNeuron0.propagate(0)
-    # puts @aCreatedLearningNetwork
+    # logger.puts @aCreatedLearningNetwork
     actual = @outputNeuron0.output
     expected = ioFunction((@hiddenNeuron0.output * @linkToOutputNeuron0.weight) + @linkFromBiasNeuronToOutputNeuron0.weight)
     assert_equal(expected, actual, "wrong output for output neuron")

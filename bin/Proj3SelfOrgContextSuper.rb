@@ -17,7 +17,6 @@ require_relative '../lib/core/TrainingBase'
 require_relative '../lib/core/Trainers'
 
 require_relative '../lib/plot/CorePlottingCode'
-require_relative '../lib/core/SimulationDataStore'
 
 require_relative 'BaseLearningExperiment'
 ########################################################################
@@ -25,7 +24,7 @@ require_relative 'BaseLearningExperiment'
 
 args = {
     :experimentNumber => $globalExperimentNumber,
-    :descriptionOfExperiment =>  "Proj3SelfOrgContextSuper; 2 in 4 out; divide but NO Integration",
+    :descriptionOfExperiment => "Proj3SelfOrgContextSuper; 2 in 4 out; divide but NO Integration",
     :baseRandomNumberSeed => 0,
 
     :classOfTheNetwork => Context4LayerNetwork,
@@ -59,7 +58,11 @@ args = {
     :standardDeviationOfAddedGaussianNoise => 0.0,
     :verticalShift => 0.0,
     :horizontalShift => 0.0,
-    :angleOfClockwiseRotationOfInputData => 0.0
+    :angleOfClockwiseRotationOfInputData => 0.0,
+
+    # Results and debugging information storage/access
+    :resultsStringIOorFileIO => StringIO.new
+
 }
 
 
@@ -69,6 +72,6 @@ numberOfRepetitions = 1
 
 runner = ExperimentRunner.new(args)
 lastExperimentRun, results = runner.repeatSimulation(numberOfRepetitions)
-puts lastExperimentRun.network
+runner.logger.puts lastExperimentRun.network
 
-
+puts runner.logger.string

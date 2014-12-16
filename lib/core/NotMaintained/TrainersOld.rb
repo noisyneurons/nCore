@@ -274,7 +274,7 @@ class TrainingSupervisorBase
   end
 
   def postInitialize
-    STDERR.puts "postInitialize of base class called!"
+    logger.puts "postInitialize of base class called!"
   end
 
   def train
@@ -314,7 +314,7 @@ class Project6pt2TrainingSupervisor < TrainingSupervisorBase
 
   def train
     stepTrainer1.train
-    puts network
+    logger.puts network
     stepTrainer2.train
   end
 

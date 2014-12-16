@@ -55,10 +55,10 @@ filename = "#{Dir.home}/Code/Ruby/NN2012/analysisResults/PostProcessing_#{jobNam
 
 
 File.open(filename, "w") do |fileOut|
-  fileOut.puts "\n\n############ Analysis of Simulation Output #############"
+  fileOut.logger.puts "\n\n############ Analysis of Simulation Output #############"
 
-  fileOut.puts "jobName=\t #{jobName}"
-  fileOut.puts experimentNumbers
+  fileOut.logger.puts "jobName=\t #{jobName}"
+  fileOut.logger.puts experimentNumbers
   dataFromMultipleExperiments = []
   unless (experimentNumbers.empty?)
     experimentNumbers.each do |anExperimentNumber|
@@ -72,7 +72,7 @@ File.open(filename, "w") do |fileOut|
     [:mse, :testMSE].each do |aMeasure|
       [:min].each do |aCriteria|
         aString = printableStatsForMetricAndCriteria(aMeasure, aCriteria, dataFromMultipleExperiments)
-        fileOut.puts aString
+        fileOut.logger.puts aString
       end
     end
   end

@@ -67,7 +67,7 @@ class FunctionalBackpropXORTest < MiniTest::Unit::TestCase
       mse = @aLearningNetwork.calcNetworksMeanSquareError
       epochNumber += 1
     end
-    #puts aLearningNetwork
+    #logger.puts aLearningNetwork
     assert_equal(2080, epochNumber, "Did not converge at the rate that was expected")
   end
 end

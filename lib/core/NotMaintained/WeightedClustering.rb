@@ -161,7 +161,7 @@ class Cluster
 
   # Recenters the cluster
   def recenter!(examples)
-    STDERR.puts "Error: Number of Examples is INCORRECT!! i.e. #{numExamples} versus #{examples.length}" if (numExamples != examples.length)
+    logger.puts "Error: Number of Examples is INCORRECT!! i.e. #{numExamples} versus #{examples.length}" if (numExamples != examples.length)
     old_center = center
     self.calcCenterInVectorSpace(examples)
     return old_center.dist_to(center) # this is currently a Euclidian Distance Measure.
@@ -338,7 +338,7 @@ end
 #        end
 #
 #      else
-#        STDERR.puts "error: Example Vector Length incorrectly specified"
+#        logger.puts "error: Example Vector Length incorrectly specified"
 #    end
 #  end
 #end

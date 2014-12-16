@@ -100,7 +100,7 @@ class Experiment
         exampleNumber += 1
       end
     end
-    STDERR.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
+    logger.puts "cross-check failed on: 'number of examples'" if (examples.length != (numberOfExamplesInEachClass * numberOfClasses))
     angleOfClockwiseRotationOfInputData = args[:angleOfClockwiseRotationOfInputData]
     examples = rotateClockwise(examples, angleOfClockwiseRotationOfInputData)
   end
@@ -136,4 +136,4 @@ experiment = Experiment.new("Proj2NeuronSelfOrgAndContext; 2 in 4 out; divide th
 
 experiment.performSimulation()
 
-puts experiment.network
+logger.puts experiment.network

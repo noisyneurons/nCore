@@ -32,7 +32,7 @@ module NeuronToNeuronConnection
   def shareWeightBetweenCorrespondingLinks(sendingLayer1, receivingLayer1, sendingLayer2, receivingLayer2)
     arrayOfLinks1 = retrieveLinksBetweenGroupsOfNeurons(sendingLayer1, receivingLayer1)
     arrayOfLinks2 = retrieveLinksBetweenGroupsOfNeurons(sendingLayer2, receivingLayer2)
-    STDERR.puts "Error: Number of links in the 2 groups are unequal." unless (arrayOfLinks1.length == arrayOfLinks2.length)
+    logger.puts "Error: Number of links in the 2 groups are unequal." unless (arrayOfLinks1.length == arrayOfLinks2.length)
     arrayOfLinkArrays = arrayOfLinks1.zip(arrayOfLinks2)
     giveEachLinkArrayASingleSharedWeight(arrayOfLinkArrays)
   end
@@ -103,7 +103,7 @@ module NeuronToNeuronConnection
   def zeroWeightInCommonLink(outputLinks, inputLinks)
     theCommonLink = findTheConnectingLink(inputLinks, outputLinks)
     if (theCommonLink.nil?)
-      STDERR.puts "Possible ERROR: No common link between 2 Neurons"
+      logger.puts "Possible ERROR: No common link between 2 Neurons"
     else
       theCommonLink.weight = 0.0
     end
@@ -122,7 +122,7 @@ module NeuronToNeuronConnection
   def zeroLearningRateInCommonLink(outputLinks, inputLinks)
     theCommonLink = findTheConnectingLink(inputLinks, outputLinks)
     if (theCommonLink.nil?)
-      STDERR.puts "Possible ERROR: No common link between 2 Neurons"
+      logger.puts "Possible ERROR: No common link between 2 Neurons"
     else
       theCommonLink.learningRate = 0.0
     end
@@ -142,11 +142,12 @@ end
 ############################################################
 class BaseNetwork
   attr_accessor :args, :allNeuronLayers, :theBiasNeuron,
-                :inputLayer, :outputLayer
+                :inputLayer, :outputLayer, :logger
   include NeuronToNeuronConnection
 
   def initialize(args)
     @args = args
+    @logger = @args[:resultsStringIOorFileIO]
     @allNeuronLayers = []
     NeuronBase.zeroID
     @theBiasNeuron = BiasNeuron.new(args)
@@ -273,7 +274,7 @@ end
 #  attr_accessor :hiddenLayer1, :hiddenLayer2, :linksBetweenHidden2Layers
 #
 #  def createStandardNetworkWithStandardFullyConnectedArchitecture
-#    STDERR.puts "Error: number of neurons in hidden layers are not identical" if (args[:numberOfHiddenLayer1Neurons] != args[:numberOfHiddenLayer2Neurons])
+#    logger.puts "Error: number of neurons in hidden layers are not identical" if (args[:numberOfHiddenLayer1Neurons] != args[:numberOfHiddenLayer2Neurons])
 #
 #    self.inputLayer = createAndConnectLayer(inputLayerToLayerToBeCreated = nil, typeOfNeuron= InputNeuron, args[:numberOfInputNeurons])
 #    self.allNeuronLayers << inputLayer

@@ -252,12 +252,12 @@ class TestDynamicClustering < Test::Unit::TestCase
     dummyVariable, numberOfIterations = @aClusterer.clusterData(@points)
     ################ prior 2 lines are assumed to do the right thing! ##############################
 
-    # @aClusterer.clusters.each { |cluster| puts "cluster=\t#{cluster}\n" }
-    # puts "********************************************************"
+    # @aClusterer.clusters.each { |cluster| logger.puts "cluster=\t#{cluster}\n" }
+    # logger.puts "********************************************************"
     exampleNumber = 0
     aCluster = @aClusterer.determineClusterAssociatedWithExample(exampleNumber)
-    # puts aCluster.to_s
-    # puts
+    # logger.puts aCluster.to_s
+    # logger.puts
     actual = aCluster
     expected = @cluster0
     assert_equal(expected, actual, "Error: Wrong Cluster Chosen")

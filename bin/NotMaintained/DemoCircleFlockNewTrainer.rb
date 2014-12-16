@@ -192,5 +192,5 @@ trainerOfNetwork.trainingAndMeasurementTriggers << outputNeuronsBPandFlockError 
 
 trainerOfNetwork.train
 
-puts networkToTest
-puts "Error Criteria Reached at Epoch: #{trainerOfNetwork.epochNumber}\t with a Training MSE = #{trainerOfNetwork.trainingMSE}"
+logger.puts networkToTest
+logger.puts "Error Criteria Reached at Epoch: #{trainerOfNetwork.epochNumber}\t with a Training MSE = #{trainerOfNetwork.trainingMSE}"

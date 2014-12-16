@@ -145,8 +145,8 @@ class Layer
       end
       raise "ERROR: Attempting to append a NON-Neuron object to a Layer"
     rescue Exception => e
-      puts e.message
-      puts e.backtrace.inspect
+      logger.puts e.message
+      logger.puts e.backtrace.inspect
     end
   end
 
@@ -166,8 +166,8 @@ class Layer
 
       raise "Wrong Type of argument to initialize Layer: It is Not an Array of Neurons; nor an Array of an Array of Neurons; nor a Zero Length Array"
     rescue Exception => e
-      puts e.message
-      puts e.backtrace.inspect
+      logger.puts e.message
+      logger.puts e.backtrace.inspect
     end
   end
 
@@ -247,8 +247,8 @@ class LayerArray
       end
       raise "ERROR: Attempting to append a NON-Layer object to a LayerArray"
     rescue Exception => e
-      STDERR.puts e.message
-      STDERR.puts e.backtrace.inspect
+      logger.puts e.message
+      logger.puts e.backtrace.inspect
     end
   end
 
@@ -279,8 +279,8 @@ class LayerArray
       end
       raise "Wrong Type: It is Not an Array of Layers or Neurons; nor a Zero Length Array"
     rescue Exception => e
-      puts e.message
-      puts e.backtrace.inspect
+      logger.puts e.message
+      logger.puts e.backtrace.inspect
     end
   end
 end
@@ -614,7 +614,7 @@ module DisplayAndErrorCalculations
       inputs = anExample[:inputs]
       propagateExampleAcross(propagatingLayers, exampleNumber)
       results = resultsLayer.collect { |aResultsNeuron| aResultsNeuron.netInput }
-      puts "\t\t\tinputs= #{inputs}\tresults= #{results}"
+      logger.puts "\t\t\tinputs= #{inputs}\tresults= #{results}"
     end
   end
 
@@ -631,7 +631,7 @@ module DisplayAndErrorCalculations
       inputs = anExample[:inputs]
       propagatingLayers.propagateExample(exampleNumber)
       results = resultsLayer.collect { |aResultsNeuron| aResultsNeuron.output }
-      puts "\t\t\tinputs= #{inputs}\tresults= #{results}"
+      logger.puts "\t\t\tinputs= #{inputs}\tresults= #{results}"
     end
   end
 end
@@ -687,11 +687,12 @@ end
 class TrainerBase
   attr_accessor :examples, :network, :numberOfOutputNeurons, :allNeuronLayers, :inputLayer,
                 :outputLayer, :theBiasNeuron, :args, :trainingSequence, :numberOfExamples,
-                :startTime, :elapsedTime, :minMSE
+                :startTime, :elapsedTime, :minMSE, :logger
   include NeuronToNeuronConnection, ExampleDistribution, DisplayAndErrorCalculations
 
   def initialize(examples, network, args)
     @args = args
+    @logger = @args[:resultsStringIOorFileIO]
     @network = network
 
     @allNeuronLayers = network.allNeuronLayers.to_LayerAry
@@ -763,7 +764,7 @@ class TrainerBase
       mse = calcMeanSumSquaredErrors if (entireNetworkSetup?)
 
       currentEpochNumber = trainingSequence.epochs + totalEpochs
-      puts "current epoch number= #{currentEpochNumber}\tmse = #{mse}" if (currentEpochNumber % 100 == 0)
+      logger.puts "current epoch number= #{currentEpochNumber}\tmse = #{mse}" if (currentEpochNumber % 100 == 0)
     end
 
     totalEpochs += trainingSequence.epochs
