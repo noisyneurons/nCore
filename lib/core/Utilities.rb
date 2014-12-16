@@ -15,21 +15,8 @@ require 'yaml'
 INFINITY = 1.0/0
 
 dbURL = ENV['DB_PORT_6379_TCP_ADDR']
-# dbURL = "54.164.134.152"
+puts "dbURL=\t#{dbURL}"
 
-def std(txt, x)
-  STDOUT.puts "#{txt}\t#{x}"; STDOUT.flush
-end
-
-std("dbURL=   ", dbURL)
-
-#if (ENV['DB_NAME'])
-#  $currentHost = "db"
-#  $redis = Redis.new(:host => $currentHost, :password => "com")
-#else
-#  $currentHost = "localhost"
-#  $redis = Redis.new(:host => $currentHost,)
-#end
 
 if (dbURL)
   $currentHost = dbURL
@@ -38,7 +25,6 @@ else
   $currentHost = "localhost"
   $redis = Redis.new(:host => $currentHost,)
 end
-
 
 
 ############################# MODULES ###########################
