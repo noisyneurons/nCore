@@ -2,31 +2,26 @@
 
 require 'rubygems'
 require 'bundler/setup'
-# require 'logger'
 require 'stringio'
 require 'mathn'
 require 'matrix'
-require 'relix'
+# require 'relix'
 require 'redis'
-require 'hiredis'
+# require 'hiredis'
 require 'yaml'
 
 # Globals, Constants
 INFINITY = 1.0/0
 
-dbURL = ENV['DB_PORT_6379_TCP_ADDR']
-puts "dbURL=\t#{dbURL}"
+#dbURL = ENV['DB_PORT_6379_TCP_ADDR']
+#puts "dbURL=\t#{dbURL}"  unless (dbURL.nil?)
+## NOTE:  alwaysOn URL is "54.164.134.152"
+#dbURL = "localhost" if (dbURL.nil?)
+#puts "dbURL=\t#{dbURL}"
 
-dbURL = "54.164.134.152" if(dbURL.nil?)
-puts "dbURL=\t#{dbURL}"
 
-if (dbURL)
-  $currentHost = dbURL
-  $redis = Redis.new(:host => $currentHost, :password => "com")
-else
-  $currentHost = "localhost"
-  $redis = Redis.new(:host => $currentHost,)
-end
+$currentHost = ENV['DB_PORT_6379_TCP_ADDR']  # ENV['IPSERVER']  # "54.164.134.152" #    #  ENV['DB_PORT_6379_TCP_ADDR']
+$redis = Redis.new(:host => $currentHost, :password => "com")
 
 
 ############################# MODULES ###########################

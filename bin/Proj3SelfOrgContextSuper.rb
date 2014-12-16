@@ -74,4 +74,14 @@ runner = ExperimentRunner.new(args)
 lastExperimentRun, results = runner.repeatSimulation(numberOfRepetitions)
 runner.logger.puts lastExperimentRun.network
 
-puts runner.logger.string
+loggedData = runner.logger.string
+
+$redis.rpush("SimulationList", loggedData)
+
+retrievedData = $redis.rpoplpush("SimulationList", "SimulationList")
+
+puts retrievedData
+
+numberOfExperimentsStoredInList = $redis.llen("SimulationList")
+
+puts "number Of Experiments Stored In List =\t#{numberOfExperimentsStoredInList}"
