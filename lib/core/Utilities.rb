@@ -14,8 +14,18 @@ require 'yaml'
 # Globals, Constants
 INFINITY = 1.0/0
 
-if (ENV['DB_NAME'])
-  $currentHost = "db"
+dbURL = ENV['DB_PORT']
+
+#if (ENV['DB_NAME'])
+#  $currentHost = "db"
+#  $redis = Redis.new(:host => $currentHost, :password => "com")
+#else
+#  $currentHost = "localhost"
+#  $redis = Redis.new(:host => $currentHost,)
+#end
+
+if (dbURL)
+  $currentHost = dbURL
   $redis = Redis.new(:host => $currentHost, :password => "com")
 else
   $currentHost = "localhost"
@@ -23,21 +33,9 @@ else
 end
 
 
+
 ############################# MODULES ###########################
 
-#module Logger
-#  attr_accessor :theLogger
-#
-#  def logger=(aLogger)
-#    @theLogger = aLogger
-#  end
-#
-#  def logger
-#    @theLogger
-#  end
-#
-#end
-#
 
 module OS
   def OS.windows?

@@ -99,29 +99,29 @@ lastExperimentProj4b, resultsProj4b = runner.repeatSimulation(numberOfRepetition
 
 #--------------------------------------------------------------------------------------
 
-logger.puts "\n\nNetwork's State at End of Last Experiment for Project 3:"
-logger.puts lastExperimentProj3.network
-logger.puts "\n\nNetwork's State at End of Last Experiment for Project 4:"
-logger.puts lastExperimentProj4.network
+runner.logger.puts "\n\nNetwork's State at End of Last Experiment for Project 3:"
+runner.logger.puts lastExperimentProj3.network
+runner.logger.puts "\n\nNetwork's State at End of Last Experiment for Project 4:"
+runner.logger.puts lastExperimentProj4.network
 
-logger.puts "\n\nNetwork's State at End of Last Experiment for Project 3b (30degrees):"
-logger.puts lastExperimentProj3b.network
-logger.puts "\n\nNetwork's State at End of Last Experiment for Project 4b (30degrees):"
-logger.puts lastExperimentProj4b.network
+runner.logger.puts "\n\nNetwork's State at End of Last Experiment for Project 3b (30degrees):"
+runner.logger.puts lastExperimentProj3b.network
+runner.logger.puts "\n\nNetwork's State at End of Last Experiment for Project 4b (30degrees):"
+runner.logger.puts lastExperimentProj4b.network
 
 #--------------------------------------------------------------------------------------
 
-logger.puts "\n\nExperimentName    MeanTrainingMSE               MeanTestingMSE\n"
+runner.logger.puts "\n\nExperimentName    MeanTrainingMSE               MeanTestingMSE\n"
 trainingMSEs, testingMSEs = resultsProj3[:trainingMSEs], resultsProj3[:testingMSEs]
-logger.puts "Proj3             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+runner.logger.puts "Proj3             #{trainingMSEs.mean}          #{testingMSEs.mean}"
 trainingMSEs, testingMSEs = resultsProj4[:trainingMSEs], resultsProj4[:testingMSEs]
-logger.puts "Proj4             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+runner.logger.puts "Proj4             #{trainingMSEs.mean}          #{testingMSEs.mean}"
 
-logger.puts "\n\nExperimentName    MeanTrainingMSE               MeanTestingMSE\n"
+runner.logger.puts "\n\nExperimentName    MeanTrainingMSE               MeanTestingMSE\n"
 trainingMSEs, testingMSEs = resultsProj3b[:trainingMSEs], resultsProj3b[:testingMSEs]
-logger.puts "Proj3b             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+runner.logger.puts "Proj3b             #{trainingMSEs.mean}          #{testingMSEs.mean}"
 trainingMSEs, testingMSEs = resultsProj4b[:trainingMSEs], resultsProj4b[:testingMSEs]
-logger.puts "Proj4b             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+runner.logger.puts "Proj4b             #{trainingMSEs.mean}          #{testingMSEs.mean}"
 
 puts runner.logger.string
 

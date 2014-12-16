@@ -37,7 +37,7 @@ args = {
     # training parameters
     :learningRate => 0.1,
     :minMSE => 0.0,
-    :epochsForSelfOrg => 150,  #150,
+    :epochsForSelfOrg => 150, #150,
     :epochsForSupervisedTraining => 600, # 600,
     :trainingSequence => TrainingSequence,
 
@@ -64,7 +64,7 @@ args = {
     :angleOfClockwiseRotationOfInputData => 0.0,
 
     # Results and debugging information storage/access
-    :resultsStringIOorFileIO =>  StringIO.new
+    :resultsStringIOorFileIO => StringIO.new
 }
 
 
@@ -76,5 +76,14 @@ runner = ExperimentRunner.new(args)
 lastExperimentRun, results = runner.repeatSimulation(numberOfRepetitions)
 runner.logger.puts lastExperimentRun.network
 
-puts runner.logger.string
+loggedData = runner.logger.string
 
+$redis.rpush("SimulationList", loggedData)
+
+retrievedData = $redis.rpoplpush("SimulationList", "SimulationList")
+
+puts retrievedData
+
+numberOfExperimentsStoredInList = $redis.llen("SimulationList")
+
+puts "number Of Experiments Stored In List =\t#{numberOfExperimentsStoredInList}"
