@@ -13,7 +13,7 @@ require 'yaml'
 # Globals, Constants
 INFINITY = 1.0/0
 
-# $currentHost = ENV['REDIS_IP']  # ENV['IPSERVER']  # "54.164.134.152" #
+$currentHost = ENV['REDIS_IP']  # ENV['IPSERVER']  # "54.164.134.152" #
 $currentHost = 'db' # if($currentHost.nil?)
 $redis = Redis.new(:host => $currentHost, :password => "com")
 
