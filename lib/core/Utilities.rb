@@ -13,8 +13,8 @@ require 'yaml'
 # Globals, Constants
 INFINITY = 1.0/0
 
-$currentHost = ENV['DB_PORT_6379_TCP_ADDR']  # ENV['IPSERVER']  # "54.164.134.152" #    #  ENV['DB_PORT_6379_TCP_ADDR']
-$currentHost = 'db'
+$currentHost = ENV['REDIS_IP']  # ENV['IPSERVER']  # "54.164.134.152" #
+$currentHost = 'db' if($currentHost.nil?)
 $redis = Redis.new(:host => $currentHost, :password => "com")
 
 ############################# MODULES ###########################
