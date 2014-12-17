@@ -13,19 +13,11 @@ require 'yaml'
 # Globals, Constants
 INFINITY = 1.0/0
 
-#dbURL = ENV['DB_PORT_6379_TCP_ADDR']
-#puts "dbURL=\t#{dbURL}"  unless (dbURL.nil?)
-## NOTE:  alwaysOn URL is "54.164.134.152"
-#dbURL = "localhost" if (dbURL.nil?)
-#puts "dbURL=\t#{dbURL}"
-
-
 $currentHost = ENV['DB_PORT_6379_TCP_ADDR']  # ENV['IPSERVER']  # "54.164.134.152" #    #  ENV['DB_PORT_6379_TCP_ADDR']
+$currentHost = 'db'
 $redis = Redis.new(:host => $currentHost, :password => "com")
 
-
 ############################# MODULES ###########################
-
 
 module OS
   def OS.windows?
