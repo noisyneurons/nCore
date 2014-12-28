@@ -24,6 +24,7 @@ require_relative '../lib/plot/CorePlottingCode'
 require_relative 'BaseLearningExperiment'
 ########################################################################
 
+logger = StringIO.new
 
 args = {
     :experimentNumber => $globalExperimentNumber,
@@ -64,7 +65,7 @@ args = {
     :angleOfClockwiseRotationOfInputData => 0.0,
 
     # Results and debugging information storage/access
-    :resultsStringIOorFileIO => StringIO.new
+    :logger => logger
 }
 
 
@@ -74,9 +75,9 @@ numberOfRepetitions = 1
 
 runner = ExperimentRunner.new(args)
 lastExperimentRun, results = runner.repeatSimulation(numberOfRepetitions)
-runner.logger.puts lastExperimentRun.network
+logger.puts lastExperimentRun.network
 
-loggedData = runner.logger.string
+loggedData = logger.string
 
 $redis.rpush("SimulationList", loggedData)
 
@@ -86,4 +87,4 @@ puts retrievedData
 
 numberOfExperimentsStoredInList = $redis.llen("SimulationList")
 
-puts "number Of Experiments Stored In List =\t#{numberOfExperimentsStoredInList}"
+puts "\n\nnumber Of Experiments Stored In List =\t#{numberOfExperimentsStoredInList}"

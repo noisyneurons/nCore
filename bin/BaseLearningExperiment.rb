@@ -4,25 +4,16 @@
 
 class Experiment
 
-  #@logger  = nil
-  #
-  #def self.logger
-  #  @logger
-  #end
-  #
-  #def self.logger=(aLogger)
-  #  @logger = aLogger
-  #end
-
   attr_accessor :network, :theTrainer, :descriptionOfExperiment, :taskID, :jobID, :jobName,
-                :logger, :randomNumberSeed,
-                :dataSetGenerator, :examples, :numberOfExamples, :args, :trainingSequence
+                :randomNumberSeed, :dataSetGenerator, :examples, :numberOfExamples,
+                :args, :trainingSequence
+  attr_reader :logger
   include ExampleDistribution
 
   def initialize(args)
     @args = args
 
-    @logger = @args[:resultsStringIOorFileIO]
+    @logger = @args[:logger]
 
     @taskID = ((ENV['TASK_ID']).to_i) || 0
     @randomNumberSeed = args[:baseRandomNumberSeed] + (taskID * 10000)
@@ -88,10 +79,9 @@ end
 
 
 class ExperimentRunner
-  attr_reader :args, :logger
+  attr_reader :args
   def initialize(args)
     @args = args
-    @logger = @args[:resultsStringIOorFileIO]
   end
 
   def repeatSimulation(numberOfReps = 1, randomSeedForSimulationSequence = 0)

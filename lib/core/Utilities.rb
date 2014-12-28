@@ -5,16 +5,14 @@ require 'bundler/setup'
 require 'stringio'
 require 'mathn'
 require 'matrix'
-# require 'relix'
 require 'redis'
-# require 'hiredis'
 require 'yaml'
 
 # Globals, Constants
 INFINITY = 1.0/0
 
-$currentHost = ENV['REDIS_IP']  # ENV['IPSERVER']  # "54.164.134.152" #
-$currentHost = 'db' # if($currentHost.nil?)
+$currentHost = ENV['REDIS_IP']
+$currentHost = 'db'  if($currentHost.nil?)
 $redis = Redis.new(:host => $currentHost, :password => "com")
 
 ############################# MODULES ###########################

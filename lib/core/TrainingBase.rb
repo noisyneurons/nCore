@@ -692,7 +692,7 @@ class TrainerBase
 
   def initialize(examples, network, args)
     @args = args
-    @logger = @args[:resultsStringIOorFileIO]
+    @logger = @args[:logger]
     @network = network
 
     @allNeuronLayers = network.allNeuronLayers.to_LayerAry

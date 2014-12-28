@@ -14,6 +14,7 @@ require_relative '../lib/core/SimulationDataStore'
 
 require_relative 'BaseLearningExperiment'
 
+logger = StringIO.new
 
 args = {
     :experimentNumber => $globalExperimentNumber,
@@ -43,7 +44,10 @@ args = {
 
     # Training Set parameters
     :numberOfExamples => 4,
-    :numberOfTestingExamples => 4
+    :numberOfTestingExamples => 4,
+
+    # Results and debugging information storage/access
+    :logger => logger
 
 }
 
@@ -53,6 +57,18 @@ numberOfRepetitions = 1
 
 
 runner = ExperimentRunner.new(args)
-lastExperimentRun = runner.repeatSimulation(numberOfRepetitions)
+lastExperimentRun, results  = runner.repeatSimulation(numberOfRepetitions)
 logger.puts lastExperimentRun.network
 
+
+loggedData = logger.string
+
+$redis.rpush("SimulationList", loggedData)
+
+retrievedData = $redis.rpoplpush("SimulationList", "SimulationList")
+
+puts retrievedData
+
+numberOfExperimentsStoredInList = $redis.llen("SimulationList")
+
+puts "\n\nnumber Of Experiments Stored In List =\t#{numberOfExperimentsStoredInList}"

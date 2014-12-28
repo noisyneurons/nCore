@@ -184,21 +184,6 @@ class Trainer3SelfOrgContextSuper < TrainerBase
     return mse, totalEpochs
   end
 
-  #def supervisedTraining(learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
-  #  propagatingLayers, controllingLayers = layerDetermination(learningLayers)
-  #
-  #  outputLayersIOFunction = SigmoidIOFunction
-  #  strategyArguments = {:ioFunction => outputLayersIOFunction}
-  #  learningLayers.attachLearningStrategy(LearningBPOutput, strategyArguments) if learningLayers.include?(outputLayer)
-  #
-  #  strategyArguments = {:ioFunction => SigmoidIOFunction}
-  #  otherLayers = [hiddenLayer1, hiddenLayer2].to_LayerAry
-  #  otherLayers.attachLearningStrategy(LearningBP, strategyArguments)
-  #
-  #  mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase, totalEpochs)
-  #  return mse, totalEpochs
-  #end
-
 
   def distributeSetOfExamples(examples)
     distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])

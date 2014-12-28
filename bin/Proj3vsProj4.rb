@@ -22,6 +22,7 @@ require_relative '../lib/plot/CorePlottingCode'
 require_relative 'BaseLearningExperiment'
 ########################################################################
 
+logger = StringIO.new
 
 args = {
     :experimentNumber => $globalExperimentNumber,
@@ -35,8 +36,8 @@ args = {
     # training parameters
     :learningRate => 0.1,
     :minMSE => 0.0,
-    :epochsForSelfOrg => 300,
-    :epochsForSupervisedTraining => 2400,
+    :epochsForSelfOrg => 150, # 300,
+    :epochsForSupervisedTraining => 600, # 2400,
     :trainingSequence => TrainingSequence,
 
     # Network Architecture
@@ -62,7 +63,7 @@ args = {
     :angleOfClockwiseRotationOfInputData => 0.0,
 
     # Results and debugging information storage/access
-    :resultsStringIOorFileIO =>  StringIO.new
+    :logger =>  logger
 }
 
 
@@ -99,31 +100,44 @@ lastExperimentProj4b, resultsProj4b = runner.repeatSimulation(numberOfRepetition
 
 #--------------------------------------------------------------------------------------
 
-runner.logger.puts "\n\nNetwork's State at End of Last Experiment for Project 3:"
-runner.logger.puts lastExperimentProj3.network
-runner.logger.puts "\n\nNetwork's State at End of Last Experiment for Project 4:"
-runner.logger.puts lastExperimentProj4.network
+logger.puts "\n\nNetwork's State at End of Last Experiment for Project 3:"
+logger.puts lastExperimentProj3.network
+logger.puts "\n\nNetwork's State at End of Last Experiment for Project 4:"
+logger.puts lastExperimentProj4.network
 
-runner.logger.puts "\n\nNetwork's State at End of Last Experiment for Project 3b (30degrees):"
-runner.logger.puts lastExperimentProj3b.network
-runner.logger.puts "\n\nNetwork's State at End of Last Experiment for Project 4b (30degrees):"
-runner.logger.puts lastExperimentProj4b.network
+logger.puts "\n\nNetwork's State at End of Last Experiment for Project 3b (30degrees):"
+logger.puts lastExperimentProj3b.network
+logger.puts "\n\nNetwork's State at End of Last Experiment for Project 4b (30degrees):"
+logger.puts lastExperimentProj4b.network
 
 #--------------------------------------------------------------------------------------
-
-runner.logger.puts "\n\nExperimentName    MeanTrainingMSE               MeanTestingMSE\n"
+logger.puts "\n\nExperimentName    MeanTrainingMSE               MeanTestingMSE\n"
 trainingMSEs, testingMSEs = resultsProj3[:trainingMSEs], resultsProj3[:testingMSEs]
-runner.logger.puts "Proj3             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+logger.puts "Proj3             #{trainingMSEs.mean}          #{testingMSEs.mean}"
 trainingMSEs, testingMSEs = resultsProj4[:trainingMSEs], resultsProj4[:testingMSEs]
-runner.logger.puts "Proj4             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+logger.puts "Proj4             #{trainingMSEs.mean}          #{testingMSEs.mean}"
 
-runner.logger.puts "\n\nExperimentName    MeanTrainingMSE               MeanTestingMSE\n"
+logger.puts "\n\nExperimentName    MeanTrainingMSE               MeanTestingMSE\n"
 trainingMSEs, testingMSEs = resultsProj3b[:trainingMSEs], resultsProj3b[:testingMSEs]
-runner.logger.puts "Proj3b             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+logger.puts "Proj3b             #{trainingMSEs.mean}          #{testingMSEs.mean}"
 trainingMSEs, testingMSEs = resultsProj4b[:trainingMSEs], resultsProj4b[:testingMSEs]
-runner.logger.puts "Proj4b             #{trainingMSEs.mean}          #{testingMSEs.mean}"
+logger.puts "Proj4b             #{trainingMSEs.mean}          #{testingMSEs.mean}"
 
-puts runner.logger.string
+
+loggedData = logger.string
+
+$redis.rpush("SimulationList", loggedData)
+
+$redis.save
+
+retrievedData = $redis.rpoplpush("SimulationList", "SimulationList")
+
+puts retrievedData
+
+numberOfExperimentsStoredInList = $redis.llen("SimulationList")
+
+puts "\n\nnumber Of Experiments Stored In List =\t#{numberOfExperimentsStoredInList}"
+
 
 
 
