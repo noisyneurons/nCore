@@ -1,9 +1,177 @@
 ### VERSION "nCore"
-## ../nCore/lib/core/Trainers.rb
+; ## ../nCore/lib/core/Trainers.rb
 
 ###################################################################
 ###################################################################
-; #################### SelfOrg and ForwardProp modules #############
+; ################# MODULE: DisplayAndErrorCalculations #############
+
+module DisplayAndErrorCalculations
+
+  def calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
+    genericCalcMeanSumSquaredErrors(numberOfExamples)
+  end
+
+  def calcTestingMeanSquaredErrors
+    testMSE = nil
+    testingExamples = args[:testingExamples]
+    numberOfTestingExamples = args[:numberOfTestingExamples]
+    unless (testingExamples.nil?)
+      distributeSetOfExamples(testingExamples)
+      testMSE = genericCalcMeanSumSquaredErrors(numberOfTestingExamples)
+      distributeSetOfExamples(examples)
+    end
+    return testMSE
+  end
+
+  def genericCalcMeanSumSquaredErrors(numberOfExamples)
+    squaredErrors = []
+    numberOfExamples.times do |exampleNumber|
+      allNeuronLayers.propagateExample(exampleNumber)
+      squaredErrors << calcWeightedErrorMetricForExample()
+    end
+    sse = squaredErrors.flatten.reduce(:+)
+    return (sse / (numberOfExamples * numberOfOutputNeurons))
+  end
+
+  def calcWeightedErrorMetricForExample
+    outputLayer.collect { |aNeuron| aNeuron.calcWeightedErrorMetricForExample }
+  end
+
+  def forEachExampleDisplayNetworkInputsAndNetInputTo(resultsLayer = outputLayer)
+    breakOnNextPass = false
+    propagatingLayers = allNeuronLayers.collect do |aLayer|
+      next if breakOnNextPass
+      breakOnNextPass = true if (aLayer == resultsLayer)
+      aLayer
+    end
+    propagatingLayers.compact!
+    #
+    examples.each_with_index do |anExample, exampleNumber|
+      inputs = anExample[:inputs]
+      propagateExampleAcross(propagatingLayers, exampleNumber)
+      results = resultsLayer.collect { |aResultsNeuron| aResultsNeuron.netInput }
+      logger.puts "\t\t\tinputs= #{inputs}\tresults= #{results}"
+    end
+  end
+
+  def forEachExampleDisplayInputsAndOutputs(resultsLayer = outputLayer)
+    breakOnNextPass = false
+    propagatingLayers = allNeuronLayers.collect do |aLayer|
+      next if breakOnNextPass
+      breakOnNextPass = true if (aLayer == resultsLayer)
+      aLayer
+    end
+    propagatingLayers = propagatingLayers.compact.to_LayerAry
+    #
+    examples.each_with_index do |anExample, exampleNumber|
+      inputs = anExample[:inputs]
+      propagatingLayers.propagateExample(exampleNumber)
+      results = resultsLayer.collect { |aResultsNeuron| aResultsNeuron.output }
+      logger.puts "\t\t\tinputs= #{inputs}\tresults= #{results}"
+    end
+  end
+end
+
+###################################################################
+###################################################################
+; ######################## Base Trainer  #############################
+
+class TrainerBase
+  attr_accessor :examples, :network, :numberOfOutputNeurons, :allNeuronLayers, :inputLayer,
+                :outputLayer, :theBiasNeuron, :args, :trainingSequence, :numberOfExamples,
+                :startTime, :elapsedTime, :minMSE, :logger
+  include NeuronToNeuronConnection, ExampleDistribution, DisplayAndErrorCalculations
+
+  def initialize(examples, network, args)
+    @args = args
+    @logger = @args[:logger]
+    @network = network
+
+    @allNeuronLayers = network.allNeuronLayers.to_LayerAry
+    @inputLayer = @allNeuronLayers[0]
+    @outputLayer = @allNeuronLayers[-1]
+    @theBiasNeuron = network.theBiasNeuron
+    @numberOfOutputNeurons = @outputLayer.length
+
+    @examples = examples
+    @numberOfExamples = examples.length
+
+    @minMSE = args[:minMSE]
+    @trainingSequence = args[:trainingSequence].new(args)
+
+    @startTime = Time.now
+    @elapsedTime = nil
+
+    postInitialize
+  end
+
+  def postInitialize
+  end
+
+  def train
+    distributeSetOfExamples(examples)
+    totalEpochs = 0
+
+    learningLayers = allNeuronLayers - inputLayer
+    propagatingLayers, controllingLayers = layerDetermination(learningLayers)
+
+    strategyArgs = {:ioFunction => SigmoidIOFunction}
+    hiddenLayers = learningLayers - outputLayer
+    hiddenLayers.attachLearningStrategy(LearningBP, strategyArgs)
+    outputLayer.attachLearningStrategy(LearningBPOutput, strategyArgs)
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase=2000, totalEpochs)
+
+    forEachExampleDisplayInputsAndOutputs
+    return totalEpochs, mse, calcTestingMeanSquaredErrors
+  end
+
+  def distributeSetOfExamples(examples)
+    distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
+  end
+
+  def layerDetermination(learningLayers)
+    lastLearningLayer = learningLayers[-1]
+    propagatingLayers = LayerArray.new
+    controllingLayers = LayerArray.new
+
+    allNeuronLayers.each do |aLayer|
+      propagatingLayers << aLayer
+      break if aLayer == lastLearningLayer
+      controllingLayers << aLayer
+    end
+
+    return [propagatingLayers, controllingLayers]
+  end
+
+  def trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase, totalEpochs)
+
+    learningLayers.startStrategy
+
+    mse = 1e100
+    trainingSequence.startTrainingPhase(epochsDuringPhase)
+
+    while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
+      propagatingLayers.propagateAndLearnForAnEpoch(learningLayers, numberOfExamples)
+      trainingSequence.nextEpoch
+      mse = calcMeanSumSquaredErrors if (entireNetworkSetup?)
+
+      currentEpochNumber = trainingSequence.epochs + totalEpochs
+      logger.puts "current epoch number= #{currentEpochNumber}\tmse = #{mse}" if (currentEpochNumber % 100 == 0)
+    end
+
+    totalEpochs += trainingSequence.epochs
+    return mse, totalEpochs
+  end
+
+  def entireNetworkSetup?
+    aLayerArray = allNeuronLayers[1..-1].to_LayerAry
+    return aLayerArray.setup?
+  end
+end
+
+###################################################################
+###################################################################
+; ########### MODULES: SelfOrg and ForwardProp modules #############
 
 module SelfOrg
 
@@ -122,7 +290,7 @@ module SelfOrgWithContext
 
 end
 
-###################################################################
+#################################################################
 ###################################################################
 ; ######################## Trainer3SelfOrgContextSuper #############
 
@@ -184,7 +352,6 @@ class Trainer3SelfOrgContextSuper < TrainerBase
     return mse, totalEpochs
   end
 
-
   def distributeSetOfExamples(examples)
     distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
   end
@@ -220,33 +387,50 @@ end
 
 
 class TrainerAD1 < Trainer3SelfOrgContextSuper
-
-
 end
 
 ###################################################################
+###################################################################
+; ######################## Training Sequencer ######################
 
-#class WeightChangeNormalizer
-#  attr_accessor :layer, :weightChangeSetPoint
-#
-#  def initialize(layer, args, weightChangeSetPoint = 0.08)
-#    @layer = layer
-#    @weightChangeSetPoint = weightChangeSetPoint
-#  end
-#
-#  def normalizeWeightChanges
-#    layerGain = weightChangeSetPoint / maxWeightChange
-#    layer.each { |neuron| neuron.inputLinks.each { |aLink| aLink.deltaWAccumulated = layerGain * aLink.deltaWAccumulated } }
-#  end
-#
-#  private
-#
-#  def maxWeightChange
-#    acrossLayerMaxValues = layer.collect do |aNeuron|
-#      accumulatedDeltaWsAbs = aNeuron.inputLinks.collect { |aLink| aLink.deltaWAccumulated.abs }
-#      accumulatedDeltaWsAbs.max
-#    end
-#    return acrossLayerMaxValues.max
-#  end
-#end
+class TrainingSequence
+  attr_accessor :args, :epochs, :maxNumberOfEpochs,
+                :stillMoreEpochs
+
+  def initialize(args)
+    @args = args
+    @epochs = -1
+    @maxNumberOfEpochs = 0 # need to do this to enable first 'nextEpoch' to work
+    @stillMoreEpochs = true
+    nextEpoch
+  end
+
+  def epochs=(value)
+    @epochs = value
+    args[:epochs] = value
+  end
+
+  def nextEpoch
+    self.epochs += 1
+    self.stillMoreEpochs = areThereStillMoreEpochs?
+  end
+
+  def startTrainingPhase(epochsDuringPhase)
+    self.maxNumberOfEpochs = epochsDuringPhase
+    self.epochs = -1
+    self.stillMoreEpochs = true
+    nextEpoch
+  end
+
+  protected
+
+  def areThereStillMoreEpochs?
+    if epochs >= maxNumberOfEpochs
+      false
+    else
+      true
+    end
+  end
+end
+
 

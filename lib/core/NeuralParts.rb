@@ -3,6 +3,8 @@
 
 require_relative 'Utilities'
 require_relative 'NeuralIOFunctions'
+require 'forwardable'
+
 ############################################################
 
 module CommonNeuronCalculations
@@ -34,13 +36,15 @@ module CommonNeuronCalculations
 
   def randomizeLinkWeights
     inputLinks.each { |anInputLink| anInputLink.randomizeWeightWithinTheRange(anInputLink.weightRange) }
-  end   ###  standard method for with initialization
+  end
+
+  ###  standard method for with initialization
 
   def zeroWeights
     inputLinks.each { |inputLink| inputLink.weight = 0.0 }
   end
 
-  def initWeights   ###  only used for special form of self-org/normalization
+  def initWeights ###  only used for special form of self-org/normalization
     numberOfInputsToNeuron = inputLinks.length
     inputLinks.each do |aLink|
       verySmallNoise = 0.0001 * (rand - 0.5)
@@ -131,12 +135,7 @@ class Neuron < NeuronBase
     @outputLinks = []
     @error = 0.0
     @exampleNumber = nil
-    self.particularInits
-  end
-
-  def particularInits
-    self.output = self.ioFunction(netInput) # Only doing this in case we wish to use this code for recurrent networks
-    @metricRecorder= NeuronRecorder.new(self, args)
+    # self.output = self.ioFunction(netInput) # Only doing this in case we wish to use this code for recurrent networks
   end
 
   def propagate(exampleNumber)
@@ -180,12 +179,7 @@ class OutputNeuron < NeuronBase
     @weightedErrorMetric = nil
     @target = nil
     @keyToExampleData = :targets
-    self.particularInits
-  end
-
-  def particularInits
-    self.output = self.ioFunction(netInput) # Only doing this in case we wish to use this code for recurrent networks
-    @metricRecorder = OutputNeuronRecorder.new(self, args)
+    # self.output = self.ioFunction(netInput) # Only doing this in case we wish to use this code for recurrent networks
   end
 
   def propagate(exampleNumber)
@@ -222,44 +216,78 @@ class OutputNeuron < NeuronBase
   end
 end
 
-class NoisyNeuron < Neuron
-  attr_accessor :probabilityOfBeingEnabled, :enabled, :outputWhenNeuronDisabled, :learning
+###### MODULE for Forwarding To Learning Strategy for Neuron ######
 
-  def postInitialize
-    super
-    @learning = true
-    @probabilityOfBeingEnabled = [args[:probabilityOfBeingEnabled], 0.01].max
-    @outputWhenNeuronDisabled = self.ioFunction(0.0)
+module ForwardingToLearningStrategy
+
+  def startStrategy
+    learningStrat.startStrategy
+  end
+
+  def startEpoch
+    learningStrat.startEpoch
   end
 
   def propagate(exampleNumber)
-    case
-      when learning == true
-        self.output = if (self.enabled = rand < probabilityOfBeingEnabled)
-                        super(exampleNumber)
-                      else
-                        outputWhenNeuronDisabled
-                      end
-
-      when learning == false
-        signal = super(exampleNumber) - outputWhenNeuronDisabled
-        self.output = (signal / probabilityOfBeingEnabled) + outputWhenNeuronDisabled
-      else
-        logger.puts "error, 'learning' variable not set to true or false!!"
-    end
-    output
+    learningStrat.propagate(exampleNumber)
   end
 
-  def backPropagate
-    self.error = if (enabled)
-                   super
-                 else
-                   0.0
-                 end
+  def learnExample
+    learningStrat.learnExample
+  end
+
+  def endEpoch
+    learningStrat.endEpoch
+  end
+
+  def finishLearningStrategy
+    learningStrat.finishLearningStrategy
+  end
+
+  # service routines that may be used by various learning strategies
+
+  def calcWeightsForUNNormalizedInputs
+    learningStrat.calcWeightsForUNNormalizedInputs
+  end
+
+end
+
+####### Neurons with Plug-in Learning Strategies ################
+
+class Neuron2 < Neuron
+  attr_accessor :learningStrat
+  include ForwardingToLearningStrategy
+
+  def postInitialize
+    super
+    @learningStrat = nil
+  end
+
+  def to_s
+    description = super
+    description += "IOFunction=\t#{learningStrat.strategyArgs[:ioFunction]}\n"
+    return description
   end
 end
 
-############################################################
+class OutputNeuron2 < OutputNeuron
+  attr_accessor :learningStrat
+  include ForwardingToLearningStrategy
+
+  def postInitialize
+    super
+    @learningStrat = nil
+  end
+
+  def to_s
+    description = super
+    description += "IOFunction=\t#{learningStrat.strategyArgs[:ioFunction]}\n"
+    return description
+  end
+end
+
+#####################  Links & Weights     #########################
+
 class Link
   attr_accessor :inputNeuron, :outputNeuron, :weightAtBeginningOfTraining,
                 :learningRate, :deltaWAccumulated, :deltaW, :weightRange, :args, :logger
@@ -335,6 +363,57 @@ class Link
   end
 end
 
+### Link for normalization of inputs
+
+class LinkWithNormalization < Link
+  attr_accessor :inputsOverEpoch, :normalizationOffset, :largestAbsoluteArrayElement, :normalizationMultiplier
+
+  def initialize(inputNeuron, outputNeuron, args)
+    super(inputNeuron, outputNeuron, args)
+    @inputsOverEpoch = []
+    resetAllNormalizationVariables
+  end
+
+  def resetAllNormalizationVariables
+    self.inputsOverEpoch.clear
+    self.normalizationOffset = 0.0
+    self.largestAbsoluteArrayElement = 1.0
+    self.normalizationMultiplier = 1.0
+  end
+
+  def storeEpochHistory
+    self.inputsOverEpoch << inputNeuron.output
+  end
+
+  def propagate
+    return normalizationMultiplier * weight * (inputNeuron.output - normalizationOffset)
+  end
+
+  def calculateNormalizationCoefficients
+    averageOfInputs = inputsOverEpoch.mean
+    self.normalizationOffset = averageOfInputs
+    centeredArray = inputsOverEpoch.collect { |value| value - normalizationOffset }
+    largestAbsoluteArrayElement = centeredArray.minmax.abs.max.to_f
+    self.normalizationMultiplier = if largestAbsoluteArrayElement > 1.0e-5
+                                     1.0 / largestAbsoluteArrayElement
+                                   else
+                                     0.0
+                                   end
+  end
+
+  def calcWeightsForUNNormalizedInputs
+    self.weight = normalizationMultiplier * weight
+  end
+
+  def propagateUsingZeroInput
+    return -1.0 * normalizationMultiplier * weight * normalizationOffset
+  end
+
+  def to_s
+    return "Weight=\t#{weight}\tOffset=\t#{normalizationOffset}\tMultiplier=\t#{normalizationMultiplier}\tDeltaW=\t#{deltaW}\tAccumulatedDeltaW=\t#{deltaWAccumulated}\tWeightAtBeginningOfTraining=\t#{weightAtBeginningOfTraining}\tFROM: #{inputNeuron.class.to_s} #{inputNeuron.id} TO: #{outputNeuron.class.to_s} #{outputNeuron.id}"
+  end
+end
+
 class SharedWeight
   attr_accessor :value
 
@@ -343,34 +422,4 @@ class SharedWeight
   end
 end
 
-############################################################      N
-class NeuronRecorder
-  attr_accessor :neuron, :args, :withinEpochMeasures, :logger
-
-  def initialize(neuron, args = {})
-    @neuron = neuron
-    @args = args
-    @logger = @args[:resultsStringIOorFileIO]
-    @withinEpochMeasures = []
-  end
-
-  def dataToRecord
-    {:neuronID => neuron.id, :netInput => neuron.netInput, :output => neuron.output, :error => neuron.error, :exampleNumber => neuron.exampleNumber}
-  end
-
-  def recordResponsesForExample
-    self.withinEpochMeasures << dataToRecord
-    return dataToRecord
-  end
-
-  def clearWithinEpochMeasures
-    withinEpochMeasures.clear
-  end
-end
-
-class OutputNeuronRecorder < NeuronRecorder
-  def dataToRecord
-    {:neuronID => neuron.id, :netInput => neuron.netInput, :output => neuron.output, :error => neuron.error, :exampleNumber => neuron.exampleNumber,
-     :weightedErrorMetric => neuron.weightedErrorMetric}
-  end
-end
+############
