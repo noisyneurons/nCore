@@ -60,7 +60,7 @@ numberOfRepetitions = 1
 
 runner = ExperimentRunner.new(args)
 lastExperimentRun, results  = runner.repeatSimulation(numberOfRepetitions)
-logger.puts lastExperimentRun.network
+#logger.puts lastExperimentRun.network
 
 
 loggedData = logger.string

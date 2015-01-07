@@ -58,11 +58,10 @@ end
 class ForwardPropOnly < LearningStrategyBase # just forward propagation
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
-    netInput = calcNetInputToNeuron
+    self.netInput = calcNetInputToNeuron
     neuron.output = ioFunction(netInput)
   end
 end
-
 
 class LearningBP < LearningStrategyBase # strategy for standard bp learning for hidden neurons
 
@@ -72,7 +71,7 @@ class LearningBP < LearningStrategyBase # strategy for standard bp learning for 
 
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
-    netInput = calcNetInputToNeuron
+    self.netInput = calcNetInputToNeuron
     neuron.output = ioFunction(netInput)
   end
 
@@ -86,12 +85,11 @@ class LearningBP < LearningStrategyBase # strategy for standard bp learning for 
   end
 end
 
-
 class LearningBPOutput < LearningBP
 
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
-    netInput = calcNetInputToNeuron()
+    self.netInput = calcNetInputToNeuron()
     neuron.output = output = ioFunction(netInput)
     neuron.target = target = neuron.arrayOfSelectedData[exampleNumber]
     neuron.outputError = output - target
@@ -138,7 +136,7 @@ class SelfOrgStrat < LearningStrategyBase
 
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
-    netInput = calcNetInputToNeuron
+    self.netInput = calcNetInputToNeuron
     neuron.output = ioFunction(netInput)
   end
 
@@ -153,13 +151,12 @@ class SelfOrgStrat < LearningStrategyBase
 end
 
 
-
 class   EstimateInputDistribution < LearningStrategyBase
 
   def initialize(theEnclosingNeuron, ** strategyArgs)
     super
     classOfInputDistributionModel = @strategyArgs[:classOfInputDistributionModel]
-    neuron.inputDistributionModel = classOfInputDistributionModel.new
+    neuron.inputDistributionModel = classOfInputDistributionModel.new(@strategyArgs)   # keeping inputDistributionModel in neuron for continuity across the invoking of different learning strategies.
   end
 
 
@@ -173,7 +170,7 @@ class   EstimateInputDistribution < LearningStrategyBase
 
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
-    neuron.netInput = netInput = calcNetInputToNeuron
+    self.netInput = calcNetInputToNeuron
     neuron.output = ioFunction(netInput)
     inputDistributionModel.weightAndIncludeExample(netInput)
   end
@@ -198,7 +195,7 @@ class SelfOrgByContractingBothLobesOfDistribution < LearningStrategyBase
 
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
-    netInput = calcNetInputToNeuron
+    self.netInput = calcNetInputToNeuron
     neuron.output = ioFunction(netInput)
   end
 
@@ -217,8 +214,6 @@ class SelfOrgByContractingBothLobesOfDistribution < LearningStrategyBase
     return neuron.inputDistributionModel
   end
 end
-
-
 
 
 #########
