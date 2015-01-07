@@ -22,7 +22,6 @@ module IOFunctionUtils
     end
   end
 
-
   private
   def genTestingArray(offset, increment, gridDivisions)
     testXs = (0..gridDivisions.to_i).collect do |aValue|
@@ -80,7 +79,6 @@ module NonMonotonicIOFunction
   def g(x, s)
     Math.exp((-1.0 * x) + s) / ((Math.exp((-1.0 * x) + s)) + 1.0) ** 2.0
   end
-
 end
 
 module PiecewiseLinNonMonIOFunction

@@ -286,6 +286,27 @@ class OutputNeuron2 < OutputNeuron
   end
 end
 
+
+class Neuron3 < Neuron2
+  attr_accessor :inputDistributionModel
+
+  def postInitialize
+    super
+    @inputDistributionModel = nil
+  end
+end
+
+class OutputNeuron3 < OutputNeuron2
+  attr_accessor :inputDistributionModel
+
+  def postInitialize
+    super
+    @inputDistributionModel = nil
+  end
+end
+
+
+
 #####################  Links & Weights     #########################
 
 class Link
