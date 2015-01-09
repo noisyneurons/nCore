@@ -43,6 +43,8 @@ class LearningStrategyBase # strategy for standard bp learning for output neuron
     inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
   end
 
+
+  # simple accessors to neuron's embedded objects
   protected
 
   def netInput
@@ -52,8 +54,12 @@ class LearningStrategyBase # strategy for standard bp learning for output neuron
   def netInput=(aValue)
     neuron.netInput = aValue
   end
-end
 
+  def inputDistributionModel
+    return neuron.inputDistributionModel
+  end
+
+end
 
 class ForwardPropOnly < LearningStrategyBase # just forward propagation
   def propagate(exampleNumber)
@@ -150,15 +156,38 @@ class SelfOrgStrat < LearningStrategyBase
   end
 end
 
+class InputDistributionSymmetrical
+  def initialize
+  end
 
-class   EstimateInputDistribution < LearningStrategyBase
+  def createInitialModel
+  end
+
+  def startNextIterationToImproveModel
+
+  end
+
+  def weightAndIncludeExample(netInput)
+
+  end
+
+  def calculateModelParams
+    return
+  end
+
+  def calcError(netInput)
+
+  end
+end
+
+class EstimateInputDistribution < LearningStrategyBase
 
   def initialize(theEnclosingNeuron, ** strategyArgs)
     super
     classOfInputDistributionModel = @strategyArgs[:classOfInputDistributionModel]
-    neuron.inputDistributionModel = classOfInputDistributionModel.new(@strategyArgs)   # keeping inputDistributionModel in neuron for continuity across the invoking of different learning strategies.
+    neuron.inputDistributionModel = classOfInputDistributionModel.new(@strategyArgs) # keeping inputDistributionModel
+    # in neuron for continuity across the invoking of different learning strategies.
   end
-
 
   def startStrategy
     inputDistributionModel.createInitialModel
@@ -179,13 +208,7 @@ class   EstimateInputDistribution < LearningStrategyBase
     inputDistributionModel.calculateModelParams
   end
 
-  protected
-
-  def inputDistributionModel
-    return neuron.inputDistributionModel
-  end
 end
-
 
 class SelfOrgByContractingBothLobesOfDistribution < LearningStrategyBase
 
@@ -208,11 +231,6 @@ class SelfOrgByContractingBothLobesOfDistribution < LearningStrategyBase
     addAccumulationToWeight
   end
 
-  protected
-
-  def inputDistributionModel
-    return neuron.inputDistributionModel
-  end
 end
 
 

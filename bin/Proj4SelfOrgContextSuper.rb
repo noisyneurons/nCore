@@ -81,6 +81,7 @@ lastExperimentRun, results = runner.repeatSimulation(numberOfRepetitions)
 loggedData = logger.string
 
 $redis.rpush("SimulationList", loggedData)
+$redis.save
 
 retrievedData = $redis.rpoplpush("SimulationList", "SimulationList")
 
