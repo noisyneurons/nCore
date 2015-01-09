@@ -11,14 +11,14 @@ require 'yaml'
 # Globals, Constants
 INFINITY = 1.0/0
 
+localhostIP = "127.0.0.1"
 alwaysOnIP = "54.164.134.152"
 
 # $currentHost = ENV['REDIS_IP']
 # $currentHost = ENV['IPSERVER']
-#
 # $currentHost = 'db'  if($currentHost.nil?)
 
-$currentHost = alwaysOnIP
+$currentHost = alwaysOnIP # localhostIP # alwaysOnIP
 $redis = Redis.new(:host => $currentHost, :password => "com")
 
 ############################# MODULES ###########################
