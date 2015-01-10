@@ -12,15 +12,16 @@ require 'yaml'
 INFINITY = 1.0/0
 
 localhostIP = "127.0.0.1"
-alwaysOnIP = "54.164.134.152"
-currentRediscontainerIP = "db"
-currentRediscontainerIP = "172.17.0.2"
+remoteAlwaysOnIP = "54.164.134.152"
+rediscontainerDomainName = "db"
+localRediscontainerIP = "172.17.0.2"
 
 # $currentHost = ENV['REDIS_IP']
 # $currentHost = ENV['IPSERVER']
-# $currentHost = 'db'  if($currentHost.nil?)
+ $currentHost = 'db'
 
-$currentHost = currentRediscontainerIP
+# $currentHost = localRediscontainerIP
+# $currentHost = remoteAlwaysOnIP
 # $currentHost = localhostIP
 # $currentHost = alwaysOnIP
 $redis = Redis.new(:host => $currentHost, :password => "com")
