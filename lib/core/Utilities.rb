@@ -18,7 +18,8 @@ alwaysOnIP = "54.164.134.152"
 # $currentHost = ENV['IPSERVER']
 # $currentHost = 'db'  if($currentHost.nil?)
 
-$currentHost = alwaysOnIP # localhostIP # alwaysOnIP
+$currentHost = localhostIP
+# $currentHost = alwaysOnIP
 $redis = Redis.new(:host => $currentHost, :password => "com")
 
 ############################# MODULES ###########################
