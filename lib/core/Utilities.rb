@@ -13,11 +13,13 @@ INFINITY = 1.0/0
 
 localhostIP = "127.0.0.1"
 alwaysOnIP = "54.164.134.152"
+currentRediscontainerIP = "db" # "172.17.0.2"
 
 # $currentHost = ENV['REDIS_IP']
 # $currentHost = ENV['IPSERVER']
-$currentHost = 'db'  if($currentHost.nil?)
+# $currentHost = 'db'  if($currentHost.nil?)
 
+$currentHost = currentRediscontainerIP
 # $currentHost = localhostIP
 # $currentHost = alwaysOnIP
 $redis = Redis.new(:host => $currentHost, :password => "com")
