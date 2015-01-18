@@ -16,14 +16,12 @@ remoteAlwaysOnIP = "54.164.134.152"
 rediscontainerDomainName = "db"
 localRediscontainerIP = "172.17.0.2"
 
-# $currentHost = ENV['REDIS_IP']
-# $currentHost = ENV['IPSERVER']
- $currentHost = 'db'
-
+# $currentHost = 'db'
 # $currentHost = localRediscontainerIP
-# $currentHost = remoteAlwaysOnIP
+$currentHost = remoteAlwaysOnIP
 # $currentHost = localhostIP
-# $currentHost = alwaysOnIP
+# $currentHost = rediscontainerDomainName
+
 $redis = Redis.new(:host => $currentHost, :password => "com")
 
 ############################# MODULES ###########################

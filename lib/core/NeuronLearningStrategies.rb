@@ -156,18 +156,51 @@ class SelfOrgStrat < LearningStrategyBase
   end
 end
 
-class InputDistributionSymmetrical
-  def initialize
+#########
+
+class Model
+  attr_accessor :mean, :std, :inclusionProbability
+
+  def initialize(mean, std, inclusionProbability)
+    @mean = mean
+    @std = std
+    @inclusionProbability = inclusionProbability
   end
 
-  def createInitialModel
+end
+
+class InputDistributionSymmetrical
+  attr_accessor :models
+
+  def initialize(strategyArgs)
+    @mean = 1.0
+    @std = 3.0
+    @inclusionProbability = 0.5
+    @models = []
+    self.createInitialModels
+  end
+
+  def createInitialModels
+    @models <<  GaussModel.new(@mean, @std, @inclusionProbability)
+    @models <<  GaussModel.new((-1.0 * @mean), @std, (1.0 - @inclusionProbability) )
+    @models <<  UniformModel.new(bottom=-4.0, top=4.0)
   end
 
   def startNextIterationToImproveModel
+    thetaModelN = {:mean => (-1.0 * revisedMean), :std => revisedStd}
+
 
   end
 
   def weightAndIncludeExample(netInput)
+
+
+    posteriorProbabilityThatExampleIsFromModelA =  (likelihoodForModelA * aPriorityA) /
+      ( (likelihoodForModelA * aPriorityA) + (likelihoodForModelB * aPriorityB) + (likelihoodForModelC * aPriorityC) )
+
+
+
+   # models.collect
 
   end
 
@@ -176,7 +209,6 @@ class InputDistributionSymmetrical
   end
 
   def calcError(netInput)
-
   end
 end
 
@@ -232,7 +264,6 @@ class SelfOrgByContractingBothLobesOfDistribution < LearningStrategyBase
   end
 
 end
-
 
 #########
 

@@ -1,68 +1,34 @@
 require 'rubygems'
+require 'mathn'
 require 'bundler/setup'
 require_relative 'Utilities'
+require 'distribution'
 
-## require '/home/mark/usr/local/ruby2.1.3/ruby/lib/ruby/2.1.0/forwardable'
-#require 'logger'
-#
-require 'stringio'
-#require 'logger'
-#stringFile = StringIO.new
-#logger = Logger.new(stringFile)
-#
-##logger = Logger.new('test.log')
-#
-##logger = Logger.new($stdout)
-#
-##logger = Logger.new(stringFile).tap do |log|
-##  log.progname = 'MarksProg'
-##end
-#
-#
-#logger.info 'doing some stuff'
-#logger.info 'doing some stuff2'
-#
-#stringFile.logger.puts "something AFTER"
-#
-#logger.puts stringFile.string
-#
-##p stringFile.inspect
-##log = stringFile.rewind
-##logger.puts log
+puts Distribution::Normal.cdf(1.96)
 
-
-module Logger
-  # attr_accessor :logger
-
-  def logger=(aLogger)
-    @logger = aLogger
-  end
-
-  def logger
-    @logger
-  end
-
+randomNumberGenerator = Distribution::Normal.rng
+ary = []
+100.times do
+  v = randomNumberGenerator.call
+  ary << v
+  print "#{v}\t"
 end
+puts
 
-class MyClass
-  include Logger
-  def initialize
-    # loggerSet(StringIO.new)
-    self.logger = StringIO.new
-  end
+puts ary.mean
+puts ary.standardError
 
-  def start
-    logger.puts " Hi There"
-  end
-
-  def endProgram
-    logger.puts logger.string
-  end
+ary = []
+10000.times do
+  v = randomNumberGenerator.call
+  ary << v
+  #dprint "#{v}\t"
 end
+puts
 
-myClass = MyClass.new
+puts ary.mean
+puts ary.standardError
 
-myClass.start
-myClass.start
 
-myClass.endProgram
+
+
