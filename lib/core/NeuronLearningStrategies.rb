@@ -158,54 +158,139 @@ end
 
 #########
 
-class Model
-  attr_accessor :mean, :std, :inclusionProbability
 
-  def initialize(mean, std, inclusionProbability)
+# A Gaussian model to incorporate into a "mixture of models" distribution model
+# of a neuron's netInputs or outputs across examples
+#
+# Using the following iterative method for single pass variance estimation:
+# FROM  Wikipedia  http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
+#def online_variance(data):
+#    n = 0
+#mean = 0
+#M2 = 0
+#
+#for x in data:
+#  n = n + 1
+#  delta = x - mean
+#  mean = mean + delta/n
+#  M2 = M2 + delta*(x - mean)
+#
+#  if (n < 2):
+#      return 0
+#
+#  variance = M2/(n - 1)
+#  return variance
+#end
+class GaussModel
+  attr_reader :mean, :std, :prior, :bayesNumerator
+
+  def initialize(mean, std, prior, numberOfExamples)
+    @numberOfExamples = numberOfExamples
     @mean = mean
     @std = std
-    @inclusionProbability = inclusionProbability
+    @prior = prior
+    @bayesNumerator = nil
+    @examplesProbability = nil
+
+    @n = nil
+    @newMean = nil
+    @m2 = nil
+    @delta = nil
+
+    self.reInitialize
   end
 
+  def reInitialize
+    @n = 0.0
+    @newMean = 0.0
+    @m2 = 0.0
+  end
+
+  def calculateBayesNumerator(neuronsInputOrOutput)
+    @bayesNumerator = Distribution::Normal.pdf(neuronsInputOrOutput) * @prior
+  end
+
+  def estimateProbabilityOfExample(bayesDenominator)
+    @examplesProbability = @bayesNumerator / bayesDenominator
+  end
+
+# Had to Modify this for weighting examples according to estimated probability that example came from the model.
+#  def prepForRecalculatingModelsParams(x)
+#    @effectiveNumberOfExamplesRepresentedByModel += @examplesProbability
+#    @weightedX = @examplesProbability * x
+#
+#    @n = @n + 1
+#    @delta = x - @newMean
+#    @newMean = @newMean + (@delta / @n)
+#    @m2 = @m2 + (@delta*(x - @newMean))
+#  end
+#
+#  def recalculateModelsParamsAtEndOfEpoch
+#    @mean = @newMean
+#
+#    variance = @m2/(@n - 1)
+#    newStd = Math.sqrt(variance)
+#    @std = newStd
+#
+#    @prior = @effectiveNumberOfExamplesRepresentedByModel / @numberOfExamples
+#  end
+
+
+  def prepForRecalculatingModelsParams(x)
+    @n += @examplesProbability
+    @delta = (x - @newMean) * @examplesProbability
+    @newMean = @newMean + (@delta / @n)
+    deltaPrime = (x - @newMean) * @examplesProbability
+    @m2 = @m2 + (@delta * deltaPrime)
+  end
+
+  def recalculateModelsParamsAtEndOfEpoch
+    @mean = @newMean
+
+    variance = @m2/(@n - 1)
+    newStd = Math.sqrt(variance)
+    @std = newStd
+
+    @prior = @n / @numberOfExamples
+  end
 end
 
-class InputDistributionSymmetrical
+#  Using a mixture of simple models to model the "changing" distribution of the examples within a given neuron
+#    posteriorProbabilityThatExampleIsFromModelA = (likelihoodForModelA * aPriorityA) /
+#        ((likelihoodForModelA * aPriorityA) + (likelihoodForModelB * aPriorityB) + (likelihoodForModelC * aPriorityC))
+class ExampleDistributionModel
   attr_accessor :models
 
-  def initialize(strategyArgs)
-    @mean = 1.0
-    @std = 3.0
-    @inclusionProbability = 0.5
+  def initialize(args)
+    @args = args
+    @mean = [1.0, -1.0, 0.0]
+    @std = [3.0, 3.0, 9.0]
+    @prior = [0.333, 0.333, 0.334]
     @models = []
     self.createInitialModels
   end
 
   def createInitialModels
-    @models <<  GaussModel.new(@mean, @std, @inclusionProbability)
-    @models <<  GaussModel.new((-1.0 * @mean), @std, (1.0 - @inclusionProbability) )
-    @models <<  UniformModel.new(bottom=-4.0, top=4.0)
+    numberOfModels = @mean.length
+    numberOfModels.times {|i| @models << GaussModel.new(@mean[i], @std[i], @prior[i], args)}
   end
 
   def startNextIterationToImproveModel
-    thetaModelN = {:mean => (-1.0 * revisedMean), :std => revisedStd}
-
-
+    @models.each { |model| model.reInitialize }
   end
 
-  def weightAndIncludeExample(netInput)
+  def useExampleToImproveDistributionModel(netInputOrOutput)
 
-
-    posteriorProbabilityThatExampleIsFromModelA =  (likelihoodForModelA * aPriorityA) /
-      ( (likelihoodForModelA * aPriorityA) + (likelihoodForModelB * aPriorityB) + (likelihoodForModelC * aPriorityC) )
-
-
-
-   # models.collect
-
+    @models.each { |model| model.calculateBayesNumerator(netInputOrOutput) }
+    bayesDenominator = @models.inject(0.0) { |sum, model| sum + model.bayesNumerator }
+    @models.each do |model|
+      model.estimateProbabilityOfExample(bayesDenominator)
+      model.prepForRecalculatingModelsParams(netInputOrOutput)
+    end
   end
 
   def calculateModelParams
-    return
+    @models.each { |model| model.recalculateModelsParamsAtEndOfEpoch }
   end
 
   def calcError(netInput)
@@ -233,7 +318,7 @@ class EstimateInputDistribution < LearningStrategyBase
     neuron.exampleNumber = exampleNumber
     self.netInput = calcNetInputToNeuron
     neuron.output = ioFunction(netInput)
-    inputDistributionModel.weightAndIncludeExample(netInput)
+    inputDistributionModel.useExampleToImproveDistributionModel(netInputOrOutput = netInput)
   end
 
   def endEpoch
