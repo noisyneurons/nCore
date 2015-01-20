@@ -36,40 +36,30 @@ class GaussModel
   end
 
   def calculateBayesNumerator(neuronsInputOrOutput)
-
-    @bayesNumerator = @prior * norm_pdf( (neuronsInputOrOutput- @mean) / @std )
-    #puts "\nmean= #{mean}"
-    #puts "neuronsInputOrOutput= #{neuronsInputOrOutput}"
-    #puts "bayesNumerator= #{@bayesNumerator}"
+    @bayesNumerator = 0.0
+    extremityMeasure = (neuronsInputOrOutput - @mean) / @std
+    @bayesNumerator = @prior * norm_pdf( (neuronsInputOrOutput - @mean) / @std )  if(extremityMeasure.abs < 5.0)
+    puts "@bayesNumerator= #{@bayesNumerator}"
+    @bayesNumerator = 0.0 if(@bayesNumerator < 1.0e-100)
   end
 
   def estimateProbabilityOfExample(bayesDenominator)
     @examplesProbability = @bayesNumerator / bayesDenominator
-    #puts "\nmean= #{mean}"
-    #puts "bayesDenominator= #{bayesDenominator}"
-    #puts "@examplesProbability= #{@examplesProbability}"
   end
 
   def prepForRecalculatingModelsParams(x)
-    puts "\nmean= #{mean}"
     @n += @examplesProbability
-    puts "n= #{@n}"
     @delta = (x - @newMean) * @examplesProbability
-    puts "newMean1= #{@newMean}"
-    @newMean = @newMean + (@delta / @n)  if(@n > 0.0)
-    puts "newMean2= #{@newMean}"
+    @newMean = @newMean + (@delta / @n)  if(@n > 1.0e-10)
     deltaPrime = (x - @newMean) * @examplesProbability
     @m2 = @m2 + (@delta * deltaPrime)
-    puts "m2= #{@m2}"
   end
 
   def recalculateModelsParamsAtEndOfEpoch
     @mean = @newMean
-
     variance = @m2/(@n - 1)
     newStd = Math.sqrt(variance)
     @std = newStd
-
     @prior = @n / @numberOfExamples
   end
 
@@ -79,12 +69,6 @@ class GaussModel
 end
 
 
-#mean = 0.0
-#std = 1.0
-#prior = 1.0
-#numberOfExamples = 10
-#
-#bMod =  GaussModel.new(mean, std, prior, numberOfExamples)
 
 class ExampleDistributionModel
   attr_reader :models
@@ -137,15 +121,19 @@ include Distribution
 include Distribution::Shorthand
 
 ## Just creating synthetic data
-positiveDist = norm_rng(mean = 0.5, sigma = 0.05)
-negativeDist = norm_rng(mean = -1.5, sigma = 0.05)
-numDataExamples = 6
+positiveDist = norm_rng(mean = 0.8, sigma = 0.05)
+negativeDist = norm_rng(mean = -1.3, sigma = 0.05)
+numDataExamples = 30
 args = {}
 args[:numberOfExamples] = numDataExamples
 syntheticData = []
 
-(numDataExamples/2).times { syntheticData << positiveDist.call }
-(numDataExamples/2).times { syntheticData << negativeDist.call }
+
+numExamplesFromPositiveDistribution = (0.666 * numDataExamples).round
+numExamplesFromNegativeDistribution = numDataExamples - numExamplesFromPositiveDistribution
+
+numExamplesFromPositiveDistribution.times { syntheticData << positiveDist.call }
+numExamplesFromNegativeDistribution.times { syntheticData << negativeDist.call }
 syntheticData.shuffle!
 puts syntheticData
 
@@ -169,7 +157,3 @@ end
    puts distributionModel.to_s
   puts
 end
-# distributionModel.startNextIterationToImproveModel
-
-
-#distributionModel.useExampleToImproveDistributionModel(x)
