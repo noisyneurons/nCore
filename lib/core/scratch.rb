@@ -151,9 +151,9 @@ class ExampleDistributionModel
     @args = args
     @numberOfExamples = args[:numberOfExamples]
     @classOfModels = [GaussModelAdaptable, GaussModelAdaptable, GaussModel]
-    @mean = [0.8, -1.3, 0.0]
-    @std = [0.05, 0.05, 4.0]
-    @prior = [0.49, 0.49, 0.02]
+    @mean = [1.0, -1.0, 0.0]
+    @std = [2.0, 2.0, 4.0]
+    @prior = [0.33, 0.33, 0.34]
     @models = []
   end
 
