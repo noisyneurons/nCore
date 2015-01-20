@@ -64,7 +64,7 @@ args = {
     :angleOfClockwiseRotationOfInputData => 0.0,
 
     # Results and debugging information storage/access
-    :logger =>  logger
+    :logger => logger
 }
 
 

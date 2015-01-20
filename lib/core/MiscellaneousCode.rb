@@ -1,9 +1,5 @@
-;### VERSION "nCore"
-;## ../nCore/lib/core/MiscellaneousCode.rb
-
-
-
-
+; ### VERSION "nCore"
+; ## ../nCore/lib/core/MiscellaneousCode.rb
 ; ###################################################################
 
 class WeightChangeNormalizer

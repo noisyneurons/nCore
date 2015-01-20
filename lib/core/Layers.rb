@@ -1,7 +1,5 @@
 ### VERSION "nCore"
 ; ## ../nCore/lib/core/Layers.rb
-
-
 ; ######################## Layer and LayerAry ######################
 
 class Layer

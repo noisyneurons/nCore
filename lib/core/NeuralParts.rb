@@ -306,7 +306,6 @@ class OutputNeuron3 < OutputNeuron2
 end
 
 
-
 #####################  Links & Weights     #########################
 
 class Link

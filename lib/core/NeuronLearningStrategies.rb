@@ -197,7 +197,7 @@ class GaussModel
     @m2 = nil
     @delta = nil
 
-    self.reInitialize
+    reInitialize
   end
 
   def reInitialize
@@ -263,6 +263,7 @@ class ExampleDistributionModel
 
   def initialize(args)
     @args = args
+    @numberOfExamples = args[:numberOfExamples]
     @mean = [1.0, -1.0, 0.0]
     @std = [3.0, 3.0, 9.0]
     @prior = [0.333, 0.333, 0.334]
@@ -272,7 +273,7 @@ class ExampleDistributionModel
 
   def createInitialModels
     numberOfModels = @mean.length
-    numberOfModels.times {|i| @models << GaussModel.new(@mean[i], @std[i], @prior[i], args)}
+    numberOfModels.times { |i| @models << GaussModel.new(@mean[i], @std[i], @prior[i], @numberOfExamples) }
   end
 
   def startNextIterationToImproveModel
