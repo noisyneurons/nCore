@@ -17,6 +17,7 @@ require_relative '../lib/core/NeuralParts'
 require_relative '../lib/core/Layers'
 require_relative '../lib/core/NetworkFactories'
 require_relative '../lib/core/NetworkFactories2'
+# require 'distribution'
 require_relative '../lib/core/NeuronLearningStrategies'
 require_relative '../lib/core/Trainers'
 

@@ -159,6 +159,9 @@ end
 #########
 
 
+# base Gaussian model for estimating a single gaussian's parameters
+# This base model is only useful as part of a mixture of models, where some
+# models parameters are "more adaptable."
 # A Gaussian model to incorporate into a "mixture of models" distribution model
 # of a neuron's netInputs or outputs across examples
 #
@@ -181,8 +184,11 @@ end
 #  variance = M2/(n - 1)
 #  return variance
 #end
+
 class GaussModel
   attr_reader :mean, :std, :prior, :bayesNumerator
+  include Distribution
+  include Distribution::Shorthand
 
   def initialize(mean, std, prior, numberOfExamples)
     @numberOfExamples = numberOfExamples
@@ -191,97 +197,110 @@ class GaussModel
     @prior = prior
     @bayesNumerator = nil
     @examplesProbability = nil
+    @n = 0.0
+  end
 
-    @n = nil
+  # called at the beginning of each epoch
+  def initEpoch
+    @n = 0.0
+  end
+
+  # called for each example
+  # @param [real] inputOrOutputForExample net summed input to neuron; or analog output of neuron
+  def calculateBayesNumerator(inputOrOutputForExample)
+    @bayesNumerator = 0.0
+    stdErr = (inputOrOutputForExample - @mean) / @std
+    @bayesNumerator = norm_pdf(stdErr).abs * (@prior / @std) if (stdErr.abs < 15.0)
+  end
+
+  # called for each example
+  # @param [real] bayesDenominator
+  def estimateProbabilityOfExample(bayesDenominator)
+    @examplesProbability = @bayesNumerator / bayesDenominator
+  end
+
+  # called for each example
+  # @param [real] x  aka inputOrOutputForExample; net summed input to neuron; or analog output of neuron
+  def prepForRecalculatingModelsParams(inputOrOutputForExample=0.0)
+    x = inputOrOutputForExample
+    @n += @examplesProbability
+  end
+
+  # called at the end of each epoch
+  def atEpochsEndCalculateModelParams
+    @prior = @n / @numberOfExamples
+  end
+
+  def to_s
+    "\t\tmean=\t#{mean}\tstd=\t#{std}\tprior=\t#{prior}\n"
+  end
+end
+
+class GaussModelAdaptable < GaussModel
+
+  def initialize(mean, std, prior, numberOfExamples)
+    super
     @newMean = nil
     @m2 = nil
     @delta = nil
-
-    reInitialize
+    self.initEpoch
   end
 
-  def reInitialize
+  def initEpoch
     @n = 0.0
     @newMean = 0.0
     @m2 = 0.0
   end
 
-  def calculateBayesNumerator(neuronsInputOrOutput)
-    @bayesNumerator = Distribution::Normal.pdf(neuronsInputOrOutput) * @prior
-  end
-
-  def estimateProbabilityOfExample(bayesDenominator)
-    @examplesProbability = @bayesNumerator / bayesDenominator
-  end
-
-# Had to Modify this for weighting examples according to estimated probability that example came from the model.
-#  def prepForRecalculatingModelsParams(x)
-#    @effectiveNumberOfExamplesRepresentedByModel += @examplesProbability
-#    @weightedX = @examplesProbability * x
-#
-#    @n = @n + 1
-#    @delta = x - @newMean
-#    @newMean = @newMean + (@delta / @n)
-#    @m2 = @m2 + (@delta*(x - @newMean))
-#  end
-#
-#  def recalculateModelsParamsAtEndOfEpoch
-#    @mean = @newMean
-#
-#    variance = @m2/(@n - 1)
-#    newStd = Math.sqrt(variance)
-#    @std = newStd
-#
-#    @prior = @effectiveNumberOfExamplesRepresentedByModel / @numberOfExamples
-#  end
-
-
-  def prepForRecalculatingModelsParams(x)
+  def prepForRecalculatingModelsParams(inputOrOutputForExample)
+    x = inputOrOutputForExample
     @n += @examplesProbability
     @delta = (x - @newMean) * @examplesProbability
-    @newMean = @newMean + (@delta / @n)
+    @newMean = @newMean + (@delta / @n) if (@n > 1.0e-10)
     deltaPrime = (x - @newMean) * @examplesProbability
     @m2 = @m2 + (@delta * deltaPrime)
   end
 
-  def recalculateModelsParamsAtEndOfEpoch
+  def atEpochsEndCalculateModelParams
+    @prior = @n / @numberOfExamples
     @mean = @newMean
-
     variance = @m2/(@n - 1)
     newStd = Math.sqrt(variance)
     @std = newStd
+    #@prior = @n / @numberOfExamples
+  end
 
-    @prior = @n / @numberOfExamples
+  def to_s
+    "\t\tmean=\t#{mean}\tstd=\t#{std}\tprior=\t#{prior}\n"
   end
 end
 
-#  Using a mixture of simple models to model the "changing" distribution of the examples within a given neuron
-#    posteriorProbabilityThatExampleIsFromModelA = (likelihoodForModelA * aPriorityA) /
-#        ((likelihoodForModelA * aPriorityA) + (likelihoodForModelB * aPriorityB) + (likelihoodForModelC * aPriorityC))
 class ExampleDistributionModel
-  attr_accessor :models
+  attr_reader :models
 
   def initialize(args)
     @args = args
     @numberOfExamples = args[:numberOfExamples]
+    @classesOfModels = [GaussModelAdaptable, GaussModelAdaptable, GaussModel]
     @mean = [1.0, -1.0, 0.0]
-    @std = [3.0, 3.0, 9.0]
-    @prior = [0.333, 0.333, 0.334]
+    @std = [2.0, 2.0, 4.0] # [0.05, 0.05, 4.0]
+    @prior = [0.33, 0.33, 0.34]
     @models = []
-    self.createInitialModels
   end
 
-  def createInitialModels
-    numberOfModels = @mean.length
-    numberOfModels.times { |i| @models << GaussModel.new(@mean[i], @std[i], @prior[i], @numberOfExamples) }
+  # use this method at beginning of EACH META-EPOCH
+  def initMetaEpoch
+    numberOfModels = @classesOfModels.length
+    numberOfModels.times { |i| @models << @classesOfModels[i].new(@mean[i], @std[i], @prior[i], @numberOfExamples) }
   end
 
-  def startNextIterationToImproveModel
-    @models.each { |model| model.reInitialize }
+  # use this method at beginning of EACH EPOCH  -- YES
+  def initEpoch
+    @models.each { |model| model.initEpoch }
   end
 
+  # use this method for EACH EXAMPLE   -- YES
   def useExampleToImproveDistributionModel(netInputOrOutput)
-
     @models.each { |model| model.calculateBayesNumerator(netInputOrOutput) }
     bayesDenominator = @models.inject(0.0) { |sum, model| sum + model.bayesNumerator }
     @models.each do |model|
@@ -290,14 +309,21 @@ class ExampleDistributionModel
     end
   end
 
-  def calculateModelParams
-    @models.each { |model| model.recalculateModelsParamsAtEndOfEpoch }
+  # use this method at the END of EACH EPOCH -- YES
+  def atEpochsEndCalculateModelParams
+    @models.each { |model| model.atEpochsEndCalculateModelParams }
   end
 
-  def calcError(netInput)
+  def calcError(netInputOrOutput)
+  end
+
+  def to_s
+    models.inject("") { |concat, model| concat + model.to_s }
   end
 end
 
+# Using Mixture Model to Estimate the distribution a Neuron's netInputs from all examples in an epoch
+# This class is one part of of a multi-part learning strategy...
 class EstimateInputDistribution < LearningStrategyBase
 
   def initialize(theEnclosingNeuron, ** strategyArgs)
@@ -308,22 +334,22 @@ class EstimateInputDistribution < LearningStrategyBase
   end
 
   def startStrategy
-    inputDistributionModel.createInitialModel
+    inputDistributionModel.initMetaEpoch
   end
 
   def startEpoch
-    inputDistributionModel.startNextIterationToImproveModel
+    inputDistributionModel.initEpoch
   end
 
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
     self.netInput = calcNetInputToNeuron
     neuron.output = ioFunction(netInput)
-    inputDistributionModel.useExampleToImproveDistributionModel(netInputOrOutput = netInput)
+    inputDistributionModel.useExampleToImproveDistributionModel(netInput)
   end
 
   def endEpoch
-    inputDistributionModel.calculateModelParams
+    inputDistributionModel.atEpochsEndCalculateModelParams
   end
 
 end
