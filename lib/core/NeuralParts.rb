@@ -286,7 +286,6 @@ class OutputNeuron2 < OutputNeuron
   end
 end
 
-
 class Neuron3 < Neuron2
   attr_accessor :inputDistributionModel
 

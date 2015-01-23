@@ -354,6 +354,35 @@ class EstimateInputDistribution < LearningStrategyBase
 
 end
 
+
+#class MixSelfOrgStrat < LearningStrategyBase
+#
+#  def initialize(theEnclosingNeuron, ** strategyArgs)
+#    super
+#  end
+#
+#  def startEpoch
+#    zeroDeltaWAccumulated
+#  end
+#
+#  def propagate(exampleNumber)
+#    neuron.exampleNumber = exampleNumber
+#    self.netInput = calcNetInputToNeuron
+#    neuron.output = ioFunction(netInput)
+#  end
+#
+#  def learnExample
+#    neuron.error = -1.0 * neuron.ioDerivativeFromNetInput(netInput) * (((netInput - targetMinus)/distanceBetweenTargets) - 0.5)
+#    calcDeltaWsAndAccumulate
+#  end
+#
+#  def endEpoch
+#    addAccumulationToWeight
+#  end
+#
+#end
+
+
 class SelfOrgByContractingBothLobesOfDistribution < LearningStrategyBase
 
   def startEpoch
@@ -376,6 +405,7 @@ class SelfOrgByContractingBothLobesOfDistribution < LearningStrategyBase
   end
 
 end
+
 
 #########
 

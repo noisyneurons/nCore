@@ -192,6 +192,25 @@ module SelfOrg
   end
 end
 
+module SelfOrgMixture
+
+  def selOrgNoContext(learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
+    propagatingLayers, willNotUseControllingLayer = layerDetermination(learningLayers.to_LayerAry)
+    strategyArguments = {:ioFunction => ioFunction, :numberOfExamples => args[:numberOfExamples], :classOfInputDistributionModel => ExampleDistributionModel}
+    mse, totalEpochs = normalizationAndSelfOrgNoContext(learningLayers, propagatingLayers, strategyArguments, epochsDuringPhase, totalEpochs)
+    return mse, totalEpochs
+  end
+
+  def normalizationAndSelfOrgNoContext(learningLayers, propagatingLayers, strategyArguments, epochsForSelfOrg, totalEpochs)
+    learningLayers.attachLearningStrategy(Normalization, strategyArguments)
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForNormalization=1, totalEpochs)
+
+    learningLayers.attachLearningStrategy(EstimateInputDistribution, strategyArguments)
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForSelfOrg, totalEpochs)
+    return mse, totalEpochs
+  end
+end
+
 module ForwardPropWithContext
 
   def forwardPropWithContext(layerReceivingContext, ioFunction)
@@ -289,6 +308,59 @@ module SelfOrgWithContext
   end
 
 end
+; ######################## Trainer3SelfOrgContextSuper #############
+
+class OneNeuronMixtureTrainer < TrainerBase
+  include SelfOrgMixture
+
+  def postInitialize
+  end
+
+  def train
+    distributeSetOfExamples(examples)
+
+    totalEpochs = 0
+    ioFunction = SigmoidIOFunction
+
+    ### self-org 1st hidden layer
+    learningLayers = outputLayer
+    learningLayers.initWeights # Needed only when the given layer is self-organizing for the first time
+    mse, totalEpochs = selOrgNoContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
+
+    mse, totalEpochs = hook(ioFunction, mse, totalEpochs) ## ?? TODO is this necessary for this version??
+
+    #display:
+    logger.puts "Output Layer:"
+    forEachExampleDisplayInputsAndOutputs(outputLayer)
+
+    layersThatWereNormalized = outputLayer.to_LayerAry
+    layersThatWereNormalized.calcWeightsForUNNormalizedInputs # for understanding, convert to normal neural weight representation (without normalization variables)
+
+    learningLayers = outputLayer.to_LayerAry
+    mse, totalEpochs = supervisedTraining(learningLayers, ioFunction, args[:epochsForSupervisedTraining], totalEpochs)
+
+    return totalEpochs, mse, calcTestingMeanSquaredErrors
+  end
+
+  def supervisedTraining(learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
+    propagatingLayers, controllingLayers = layerDetermination(learningLayers)
+
+    strategyArguments = {:ioFunction => ioFunction}
+    learningLayers.attachLearningStrategy(LearningBPOutput, strategyArguments) if learningLayers.include?(outputLayer)
+
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase, totalEpochs)
+    return mse, totalEpochs
+  end
+
+  def distributeSetOfExamples(examples)
+    distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
+  end
+
+  def hook(ioFunction, mse, totalEpochs)
+    return [mse, totalEpochs]
+  end
+end
+
 
 #################################################################
 ###################################################################

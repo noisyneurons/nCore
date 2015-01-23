@@ -33,14 +33,15 @@ args = {
     :descriptionOfExperiment => "Proj5MixtureModel; single neuron test of mixture model and related learning strategy components",
     :baseRandomNumberSeed => 0,
 
-    :classOfTheNetwork => OneNeuronNetwork,
-    :classOfTheTrainer => OneNeuron,
-    :classOfDataSetGenerator => OneNeuronDistributionDataSet,
+    :classOfTheNetwork => Simplest1LayerNet,
+    :classOfTheTrainer => OneNeuronMixtureTrainer,
+    :classOfDataSetGenerator => Generate4ClassDataSet,
 
     # training parameters
     :learningRate => 0.1,
     :minMSE => 0.0,
     :epochsForSelfOrg => 150, #150,
+    :epochsForSupervisedTraining => 0, # 600,
     :trainingSequence => TrainingSequence,
 
     # Network Architecture
@@ -49,9 +50,9 @@ args = {
 
     # Neural Parts Specifications
     :typeOfLink => LinkWithNormalization,
-    :typeOfNeuron => Neuron2,
+    :typeOfNeuron => Neuron3,
     :typeOfLinkToOutput => LinkWithNormalization,
-    :typeOfOutputNeuron => OutputNeuron2,
+    :typeOfOutputNeuron => OutputNeuron3,
 
     :weightRange => 0.1,
 
