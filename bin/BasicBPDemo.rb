@@ -1,7 +1,6 @@
 ### VERSION "nCore"
 ## ../nCore/bin/BasicBPDemo.rb
-## Simple backprop demo. For XOR, and given parameters, requires 2080 epochs to converge.
-##                       For OR, and given parameters, requires 166 epochs to converge.
+## Simple backprop demo. For XOR, and given parameters, requires 1659 epochs to converge.
 
 require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
@@ -25,7 +24,7 @@ args = {
 
     :classOfTheNetwork => Standard3LayerNetwork,
     :classOfTheTrainer => TrainerBase,
-    :classOfDataSetGenerator => XORDataGenerator,
+    :classOfDataSetGenerator => XORDataGenerator, # ORDataGenerator,
 
     # training parameters re. Output Error
     :learningRate => 3.0,
@@ -61,7 +60,6 @@ numberOfRepetitions = 1
 runner = ExperimentRunner.new(args)
 lastExperimentRun, results = runner.repeatSimulation(numberOfRepetitions)
 #logger.puts lastExperimentRun.network
-
 
 loggedData = logger.string
 

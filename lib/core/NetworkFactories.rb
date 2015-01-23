@@ -191,7 +191,6 @@ class Simplest1LayerNet < BaseNetwork
     self.allNeuronLayers << outputLayer
 
     connectAllNeuronsToBiasNeuronExceptForThe(inputLayer)
-    self
   end
 end
 

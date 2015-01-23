@@ -192,24 +192,26 @@ module SelfOrg
   end
 end
 
-module SelfOrgMixture
+module SelfOrgAtOutput
 
   def selOrgNoContext(learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
     propagatingLayers, willNotUseControllingLayer = layerDetermination(learningLayers.to_LayerAry)
-    strategyArguments = {:ioFunction => ioFunction, :numberOfExamples => args[:numberOfExamples], :classOfInputDistributionModel => ExampleDistributionModel}
+    strategyArguments = {:ioFunction => ioFunction}
     mse, totalEpochs = normalizationAndSelfOrgNoContext(learningLayers, propagatingLayers, strategyArguments, epochsDuringPhase, totalEpochs)
     return mse, totalEpochs
   end
 
   def normalizationAndSelfOrgNoContext(learningLayers, propagatingLayers, strategyArguments, epochsForSelfOrg, totalEpochs)
-    learningLayers.attachLearningStrategy(Normalization, strategyArguments)
+    learningLayers.attachLearningStrategy(NormalizationForOutputNeuron, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForNormalization=1, totalEpochs)
 
-    learningLayers.attachLearningStrategy(EstimateInputDistribution, strategyArguments)
+    learningLayers.attachLearningStrategy(SelfOrgStratOutput, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForSelfOrg, totalEpochs)
     return mse, totalEpochs
   end
 end
+
+
 
 module ForwardPropWithContext
 
@@ -310,8 +312,31 @@ module SelfOrgWithContext
 end
 ; ######################## Trainer3SelfOrgContextSuper #############
 
-class OneNeuronMixtureTrainer < TrainerBase
-  include SelfOrgMixture
+
+module SelfOrgMixture
+
+  def selOrgNoContext(learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
+    propagatingLayers, willNotUseControllingLayer = layerDetermination(learningLayers.to_LayerAry)
+    strategyArguments = {:ioFunction => ioFunction, :numberOfExamples => args[:numberOfExamples], :classOfInputDistributionModel => ExampleDistributionModel}
+    mse, totalEpochs = normalizationAndSelfOrgNoContext(learningLayers, propagatingLayers, strategyArguments, epochsDuringPhase, totalEpochs)
+    return mse, totalEpochs
+  end
+
+  def normalizationAndSelfOrgNoContext(learningLayers, propagatingLayers, strategyArguments, epochsForSelfOrg, totalEpochs)
+    learningLayers.attachLearningStrategy(Normalization, strategyArguments)
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForNormalization=1, totalEpochs)
+
+    learningLayers.attachLearningStrategy(EstimateInputDistribution, strategyArguments)
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForSelfOrg, totalEpochs)
+    return mse, totalEpochs
+  end
+end
+
+
+class OneNeuronSelfOrgTrainer < TrainerBase
+
+  include SelfOrgAtOutput
+  # include SelfOrgMixture
 
   def postInitialize
   end
@@ -320,7 +345,7 @@ class OneNeuronMixtureTrainer < TrainerBase
     distributeSetOfExamples(examples)
 
     totalEpochs = 0
-    ioFunction = SigmoidIOFunction
+    ioFunction = SigmoidIOFunction #NonMonotonicIOFunction
 
     ### self-org 1st hidden layer
     learningLayers = outputLayer

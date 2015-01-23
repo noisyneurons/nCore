@@ -47,7 +47,7 @@ end
 ############################# DEBUG UTILITY FUNCTIONS ###########################
 
 def std(txt, x)
-  STDOUT.logger.puts "#{txt}\t#{x}"; STDOUT.flush
+  STDOUT.puts "#{txt}\t#{x}"; STDOUT.flush
 end
 
 def qreport(dataArray, epochNumber, interval)

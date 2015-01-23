@@ -90,6 +90,12 @@ class Layer
     statusAry = arrayOfNeurons.collect { |aNeuron| aNeuron.learningStrat }
     !statusAry.include?(nil)
   end
+
+  def to_s
+    description = "Layer:\t"
+    @arrayOfNeurons.each { |aNeuron| description += aNeuron.to_s }
+    return description
+  end
 end
 
 ###############
@@ -198,5 +204,12 @@ class LayerArray
       logger.puts e.backtrace.inspect
     end
   end
+
+  def to_s
+    description = "LayerArray:\n"
+    @arrayOfLayers.each { |aLayer| description += aLayer.to_s }
+    return description
+  end
+
 end
 

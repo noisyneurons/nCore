@@ -1,6 +1,8 @@
 ### VERSION "nCore"
 ; ## ../nCore/lib/core/NeuronLearningStrategies.rb
 
+require 'distribution'
+
 ###################################################################
 ###################################################################
 ; ####################### Learning Strategies #######################
@@ -126,6 +128,20 @@ class Normalization < LearningStrategyBase
   end
 end
 
+
+class NormalizationForOutputNeuron < Normalization
+
+  def propagate(exampleNumber)
+    neuron.exampleNumber = exampleNumber
+
+    self.netInput = calcNetInputToNeuron()
+    neuron.output = output = ioFunction(netInput)
+    neuron.target = target = neuron.arrayOfSelectedData[exampleNumber]
+    neuron.outputError = output - target
+  end
+end
+
+
 class SelfOrgStrat < LearningStrategyBase
   attr_accessor :targetMinus, :distanceBetweenTargets
 
@@ -144,6 +160,39 @@ class SelfOrgStrat < LearningStrategyBase
     neuron.exampleNumber = exampleNumber
     self.netInput = calcNetInputToNeuron
     neuron.output = ioFunction(netInput)
+  end
+
+  def learnExample
+    neuron.error = -1.0 * neuron.ioDerivativeFromNetInput(netInput) * (((netInput - targetMinus)/distanceBetweenTargets) - 0.5)
+    calcDeltaWsAndAccumulate
+  end
+
+  def endEpoch
+    addAccumulationToWeight
+  end
+end
+
+
+class SelfOrgStratOutput < LearningStrategyBase
+  attr_accessor :targetMinus, :distanceBetweenTargets
+
+  def initialize(theEnclosingNeuron, ** strategyArgs)
+    super
+    @targetPlus = self.findNetInputThatGeneratesMaximumOutput
+    @targetMinus = -1.0 * @targetPlus
+    @distanceBetweenTargets = @targetPlus - @targetMinus
+  end
+
+  def startEpoch
+    zeroDeltaWAccumulated
+  end
+
+  def propagate(exampleNumber)
+    neuron.exampleNumber = exampleNumber
+    self.netInput = calcNetInputToNeuron
+    neuron.output = output = ioFunction(netInput)
+    neuron.target = target = neuron.arrayOfSelectedData[exampleNumber]
+    neuron.outputError = output - target
   end
 
   def learnExample
@@ -351,8 +400,40 @@ class EstimateInputDistribution < LearningStrategyBase
   def endEpoch
     inputDistributionModel.atEpochsEndCalculateModelParams
   end
+end
+
+class EstimateInputDistributionOutput < LearningStrategyBase
+
+  def initialize(theEnclosingNeuron, ** strategyArgs)
+    super
+    classOfInputDistributionModel = @strategyArgs[:classOfInputDistributionModel]
+    neuron.inputDistributionModel = classOfInputDistributionModel.new(@strategyArgs) # keeping inputDistributionModel
+    # in neuron for continuity across the invoking of different learning strategies.
+  end
+
+  def startStrategy
+    inputDistributionModel.initMetaEpoch
+  end
+
+  def startEpoch
+    inputDistributionModel.initEpoch
+  end
+
+  def propagate(exampleNumber)
+    neuron.exampleNumber = exampleNumber
+    self.netInput = calcNetInputToNeuron
+    neuron.output = output = ioFunction(netInput)
+    neuron.target = target = neuron.arrayOfSelectedData[exampleNumber]
+    neuron.outputError = output - targe
+    inputDistributionModel.useExampleToImproveDistributionModel(netInput)
+  end
+
+  def endEpoch
+    inputDistributionModel.atEpochsEndCalculateModelParams
+  end
 
 end
+
 
 
 #class MixSelfOrgStrat < LearningStrategyBase

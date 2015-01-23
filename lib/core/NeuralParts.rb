@@ -265,7 +265,7 @@ class Neuron2 < Neuron
 
   def to_s
     description = super
-    description += "IOFunction=\t#{learningStrat.strategyArgs[:ioFunction]}\n"
+    description += "IOFunction=\t#{learningStrat.strategyArgs[:ioFunction]}\n"  unless(learningStrat.nil?)
     return description
   end
 end
@@ -281,7 +281,7 @@ class OutputNeuron2 < OutputNeuron
 
   def to_s
     description = super
-    description += "IOFunction=\t#{learningStrat.strategyArgs[:ioFunction]}\n"
+    description += "IOFunction=\t#{learningStrat.strategyArgs[:ioFunction]}\n" unless(learningStrat.nil?)
     return description
   end
 end
