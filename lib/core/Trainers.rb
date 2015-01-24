@@ -192,26 +192,6 @@ module SelfOrg
   end
 end
 
-module SelfOrgAtOutput
-
-  def selOrgNoContext(learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
-    propagatingLayers, willNotUseControllingLayer = layerDetermination(learningLayers.to_LayerAry)
-    strategyArguments = {:ioFunction => ioFunction}
-    mse, totalEpochs = normalizationAndSelfOrgNoContext(learningLayers, propagatingLayers, strategyArguments, epochsDuringPhase, totalEpochs)
-    return mse, totalEpochs
-  end
-
-  def normalizationAndSelfOrgNoContext(learningLayers, propagatingLayers, strategyArguments, epochsForSelfOrg, totalEpochs)
-    learningLayers.attachLearningStrategy(NormalizationForOutputNeuron, strategyArguments)
-    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForNormalization=1, totalEpochs)
-
-    learningLayers.attachLearningStrategy(SelfOrgStratOutput, strategyArguments)
-    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForSelfOrg, totalEpochs)
-    return mse, totalEpochs
-  end
-end
-
-
 
 module ForwardPropWithContext
 
@@ -335,7 +315,7 @@ end
 
 class OneNeuronSelfOrgTrainer < TrainerBase
 
-  include SelfOrgAtOutput
+  include SelfOrg
   # include SelfOrgMixture
 
   def postInitialize
@@ -436,10 +416,8 @@ class Trainer3SelfOrgContextSuper < TrainerBase
   def supervisedTraining(learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
     propagatingLayers, controllingLayers = layerDetermination(learningLayers)
 
-    outputLayersIOFunction = SigmoidIOFunction
-    strategyArguments = {:ioFunction => outputLayersIOFunction}
-    # strategyArguments = {:ioFunction => ioFunction}
-    learningLayers.attachLearningStrategy(LearningBPOutput, strategyArguments) if learningLayers.include?(outputLayer)
+    strategyArguments = {:ioFunction => SigmoidIOFunction}
+    learningLayers.attachLearningStrategy(LearningBP, strategyArguments) if learningLayers.include?(outputLayer)
 
     strategyArguments = {:ioFunction => ioFunction}
     otherLearningLayers = learningLayers - outputLayer

@@ -71,7 +71,6 @@ class NeuronBase
     @args = args
     @logger = @args[:resultsStringIOorFileIO]
     @output = 0.0
-    postInitialize
   end
 
   def to_s
@@ -83,7 +82,8 @@ end
 class BiasNeuron < NeuronBase #TODO should make this a singleton class!
   attr_reader :outputLinks
 
-  def postInitialize
+  def initialize(args)
+    super
     @outputLinks = []
     @output = 1.0
   end
@@ -101,7 +101,9 @@ end
 class InputNeuron < NeuronBase
   attr_accessor :outputLinks, :exampleNumber, :arrayOfSelectedData, :keyToExampleData
 
-  def postInitialize
+
+  def initialize(args)
+    super
     @outputLinks =[]
     @exampleNumber = nil
     @arrayOfSelectedData = nil
@@ -125,27 +127,39 @@ end
 
 class Neuron < NeuronBase
   attr_accessor :outputLinks
-  attr_accessor :netInput, :inputLinks, :error, :exampleNumber, :metricRecorder
+  attr_accessor :netInput, :inputLinks, :error, :outputError, :exampleNumber, :metricRecorder
   include CommonNeuronCalculations
   include SigmoidIOFunction
 
-  def postInitialize
+  def initialize(args)
+    super
     @inputLinks = []
     @netInput = 0.0
     @outputLinks = []
     @error = 0.0
+    @outputError = nil
     @exampleNumber = nil
     # self.output = self.ioFunction(netInput) # Only doing this in case we wish to use this code for recurrent networks
   end
 
+
   def propagate(exampleNumber)
     self.exampleNumber = exampleNumber
-    self.netInput = calcNetInputToNeuron
+    self.netInput = calcNetInputToNeuron()
+    propagateToOutput
+  end
+
+  def propagateToOutput
     self.output = ioFunction(netInput)
   end
 
   def backPropagate
-    self.error = calcNetError * ioDerivativeFromNetInput(netInput)
+    backPropagateFromOutputs
+    self.error = outputError * ioDerivativeFromNetInput(netInput)
+  end
+
+  def backPropagateFromOutputs
+    self.outputError = calcNetError
   end
 
   def to_s
@@ -163,35 +177,28 @@ class Neuron < NeuronBase
   end
 end
 
-class OutputNeuron < NeuronBase
+class OutputNeuron < Neuron
   attr_accessor :arrayOfSelectedData, :keyToExampleData, :target, :outputError, :weightedErrorMetric
   attr_accessor :netInput, :inputLinks, :error, :exampleNumber, :metricRecorder
   include CommonNeuronCalculations
   include SigmoidIOFunction
 
-  def postInitialize
-    @netInput = 0.0
-    @inputLinks = []
-    @error = 0.0
-    @outputError = nil
+  def initialize(args)
+    super
     @arrayOfSelectedData = nil
-    @exampleNumber = nil
     @weightedErrorMetric = nil
     @target = nil
     @keyToExampleData = :targets
     # self.output = self.ioFunction(netInput) # Only doing this in case we wish to use this code for recurrent networks
   end
 
-  def propagate(exampleNumber)
-    self.exampleNumber = exampleNumber
-    self.netInput = calcNetInputToNeuron()
+  def propagateToOutput
     self.output = ioFunction(netInput)
     self.target = arrayOfSelectedData[exampleNumber]
-    self.outputError = output - target
   end
 
-  def backPropagate
-    self.error = outputError * ioDerivativeFromNetInput(netInput)
+  def backPropagateFromOutputs
+    self.outputError = output - target
   end
 
   def calcSumOfSquaredErrors
@@ -258,14 +265,14 @@ class Neuron2 < Neuron
   attr_accessor :learningStrat
   include ForwardingToLearningStrategy
 
-  def postInitialize
+  def initialize(args)
     super
     @learningStrat = nil
   end
 
   def to_s
     description = super
-    description += "IOFunction=\t#{learningStrat.strategyArgs[:ioFunction]}\n"  unless(learningStrat.nil?)
+    description += "IOFunction=\t#{learningStrat.strategyArgs[:ioFunction]}\n" unless (learningStrat.nil?)
     return description
   end
 end
@@ -274,14 +281,14 @@ class OutputNeuron2 < OutputNeuron
   attr_accessor :learningStrat
   include ForwardingToLearningStrategy
 
-  def postInitialize
+  def initialize(args)
     super
     @learningStrat = nil
   end
 
   def to_s
     description = super
-    description += "IOFunction=\t#{learningStrat.strategyArgs[:ioFunction]}\n" unless(learningStrat.nil?)
+    description += "IOFunction=\t#{learningStrat.strategyArgs[:ioFunction]}\n" unless (learningStrat.nil?)
     return description
   end
 end
@@ -289,7 +296,7 @@ end
 class Neuron3 < Neuron2
   attr_accessor :inputDistributionModel
 
-  def postInitialize
+  def initialize(args)
     super
     @inputDistributionModel = nil
   end
@@ -298,7 +305,7 @@ end
 class OutputNeuron3 < OutputNeuron2
   attr_accessor :inputDistributionModel
 
-  def postInitialize
+  def initialize(args)
     super
     @inputDistributionModel = nil
   end

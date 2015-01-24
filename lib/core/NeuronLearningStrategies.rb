@@ -49,12 +49,12 @@ class LearningStrategyBase # strategy for standard bp learning for output neuron
   # simple accessors to neuron's embedded objects
   protected
 
-  def netInput
-    neuron.netInput
+  def outputError
+    neuron.outputError
   end
 
-  def netInput=(aValue)
-    neuron.netInput = aValue
+  def netInput
+    neuron.netInput
   end
 
   def inputDistributionModel
@@ -66,8 +66,8 @@ end
 class ForwardPropOnly < LearningStrategyBase # just forward propagation
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
-    self.netInput = calcNetInputToNeuron
-    neuron.output = ioFunction(netInput)
+    neuron.netInput = calcNetInputToNeuron
+    neuron.propagateToOutput
   end
 end
 
@@ -79,12 +79,13 @@ class LearningBP < LearningStrategyBase # strategy for standard bp learning for 
 
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
-    self.netInput = calcNetInputToNeuron
-    neuron.output = ioFunction(netInput)
+    neuron.netInput = calcNetInputToNeuron
+    neuron.propagateToOutput
   end
 
   def learnExample
-    neuron.error = calcNetError * ioDerivativeFromNetInput(netInput)
+    neuron.backPropagateFromOutputs
+    neuron.error = outputError * ioDerivativeFromNetInput(netInput)
     calcDeltaWsAndAccumulate
   end
 
@@ -94,19 +95,6 @@ class LearningBP < LearningStrategyBase # strategy for standard bp learning for 
 end
 
 class LearningBPOutput < LearningBP
-
-  def propagate(exampleNumber)
-    neuron.exampleNumber = exampleNumber
-    self.netInput = calcNetInputToNeuron()
-    neuron.output = output = ioFunction(netInput)
-    neuron.target = target = neuron.arrayOfSelectedData[exampleNumber]
-    neuron.outputError = output - target
-  end
-
-  def learnExample
-    neuron.error = neuron.outputError * ioDerivativeFromNetInput(netInput)
-    calcDeltaWsAndAccumulate
-  end
 end
 
 class Normalization < LearningStrategyBase
@@ -130,15 +118,6 @@ end
 
 
 class NormalizationForOutputNeuron < Normalization
-
-  def propagate(exampleNumber)
-    neuron.exampleNumber = exampleNumber
-
-    self.netInput = calcNetInputToNeuron()
-    neuron.output = output = ioFunction(netInput)
-    neuron.target = target = neuron.arrayOfSelectedData[exampleNumber]
-    neuron.outputError = output - target
-  end
 end
 
 
@@ -158,8 +137,8 @@ class SelfOrgStrat < LearningStrategyBase
 
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
-    self.netInput = calcNetInputToNeuron
-    neuron.output = ioFunction(netInput)
+    neuron.netInput = calcNetInputToNeuron
+    neuron.propagateToOutput
   end
 
   def learnExample
@@ -173,36 +152,7 @@ class SelfOrgStrat < LearningStrategyBase
 end
 
 
-class SelfOrgStratOutput < LearningStrategyBase
-  attr_accessor :targetMinus, :distanceBetweenTargets
-
-  def initialize(theEnclosingNeuron, ** strategyArgs)
-    super
-    @targetPlus = self.findNetInputThatGeneratesMaximumOutput
-    @targetMinus = -1.0 * @targetPlus
-    @distanceBetweenTargets = @targetPlus - @targetMinus
-  end
-
-  def startEpoch
-    zeroDeltaWAccumulated
-  end
-
-  def propagate(exampleNumber)
-    neuron.exampleNumber = exampleNumber
-    self.netInput = calcNetInputToNeuron
-    neuron.output = output = ioFunction(netInput)
-    neuron.target = target = neuron.arrayOfSelectedData[exampleNumber]
-    neuron.outputError = output - target
-  end
-
-  def learnExample
-    neuron.error = -1.0 * neuron.ioDerivativeFromNetInput(netInput) * (((netInput - targetMinus)/distanceBetweenTargets) - 0.5)
-    calcDeltaWsAndAccumulate
-  end
-
-  def endEpoch
-    addAccumulationToWeight
-  end
+class SelfOrgStratOutput < SelfOrgStrat
 end
 
 #########
@@ -433,7 +383,6 @@ class EstimateInputDistributionOutput < LearningStrategyBase
   end
 
 end
-
 
 
 #class MixSelfOrgStrat < LearningStrategyBase
