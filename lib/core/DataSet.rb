@@ -127,6 +127,8 @@ class ORDataGenerator < GenerateDataSet
   end
 end
 
+
+
 class Generate4ClassDataSet < GenerateDataSet
   def generate(numberOfExamples, standardDeviationOfAddedGaussianNoise)
     gaussianRandomNumberGenerator = NormalDistribution.new(meanOfGaussianNoise = 0.0, standardDeviationOfAddedGaussianNoise)

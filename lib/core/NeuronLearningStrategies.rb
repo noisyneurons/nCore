@@ -311,6 +311,8 @@ class ExampleDistributionModel
   # use this method at the END of EACH EPOCH -- YES
   def atEpochsEndCalculateModelParams
     @models.each { |model| model.atEpochsEndCalculateModelParams }
+    puts
+    puts self
   end
 
   def calcError(netInputOrOutput)
@@ -342,7 +344,8 @@ class EstimateInputDistribution < LearningStrategyBase
 
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
-    self.netInput = calcNetInputToNeuron
+    neuron.netInput = calcNetInputToNeuron
+    puts "netInput= #{netInput}"
     neuron.output = ioFunction(netInput)
     inputDistributionModel.useExampleToImproveDistributionModel(netInput)
   end

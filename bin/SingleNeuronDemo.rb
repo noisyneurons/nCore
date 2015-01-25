@@ -11,7 +11,6 @@ require_relative '../lib/core/NeuronLearningStrategies'
 require_relative '../lib/core/Trainers'
 
 require_relative '../lib/plot/CorePlottingCode'
-require_relative '../lib/core/SimulationDataStore'
 
 require_relative 'BaseLearningExperiment'
 
@@ -28,9 +27,9 @@ args = {
 
     # training parameters re. Output Error
     :learningRate => 3.0,
-    :minMSE => 0.001,
-    :epochsForSelfOrg => 0, #150,
-    :epochsForSupervisedTraining => 500, # 600,
+    :minMSE => 0.0, #0.001,
+    :epochsForSelfOrg => 150, #150,
+    :epochsForSupervisedTraining => 1, # 600,
     :trainingSequence => TrainingSequence,
 
     # Network Architecture
@@ -39,13 +38,18 @@ args = {
     :weightRange => 1.0,
 
     :typeOfLink => LinkWithNormalization,
-    :typeOfNeuron => Neuron2,
-    :typeOfOutputNeuron => OutputNeuron2,
+    :typeOfNeuron => Neuron3,
+    :typeOfOutputNeuron => OutputNeuron3,
 
 
     # Training Set parameters
     :numberOfExamples => 4,
     :numberOfTestingExamples => 4,
+    :standardDeviationOfAddedGaussianNoise => 0.0,
+    :verticalShift => 0.0,
+    :horizontalShift => 0.0,
+    :angleOfClockwiseRotationOfInputData => 0.0,
+
 
     # Results and debugging information storage/access
     :logger => logger

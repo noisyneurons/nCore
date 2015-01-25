@@ -24,7 +24,7 @@ class Layer
     arrayOfNeurons.each { |aNeuron| aNeuron.startEpoch }
   end
 
-  def propagateExample(exampleNumber)
+  def propagate(exampleNumber)
     arrayOfNeurons.each { |aNeuron| aNeuron.propagate(exampleNumber) }
   end
 
@@ -122,8 +122,8 @@ class LayerArray
     arrayOfLayers.each { |aLayer| aLayer.startEpoch }
   end
 
-  def propagateExample(exampleNumber)
-    arrayOfLayers.each { |aLayer| aLayer.propagateExample(exampleNumber) }
+  def propagate(exampleNumber)
+    arrayOfLayers.each { |aLayer| aLayer.propagate(exampleNumber) }
   end
 
   def learnExample
@@ -137,7 +137,7 @@ class LayerArray
   def propagateAndLearnForAnEpoch(learningLayers, numberOfExamples)
     learningLayers.startEpoch
     numberOfExamples.times do |exampleNumber|
-      propagateExample(exampleNumber)
+      propagate(exampleNumber)
       learningLayers.learnExample
     end
     learningLayers.endEpoch

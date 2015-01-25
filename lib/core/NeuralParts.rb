@@ -48,7 +48,8 @@ module CommonNeuronCalculations
     numberOfInputsToNeuron = inputLinks.length
     inputLinks.each do |aLink|
       verySmallNoise = 0.0001 * (rand - 0.5)
-      weight = (0.2 + verySmallNoise) / numberOfInputsToNeuron # TODO may want sqrt(numberOfInputsToNeuron)
+      weight = (1.0 + verySmallNoise) / numberOfInputsToNeuron # TODO may want sqrt(numberOfInputsToNeuron)
+      # weight = (0.2 + verySmallNoise) / numberOfInputsToNeuron # TODO may want sqrt(numberOfInputsToNeuron)
       aLink.weight = weight
       aLink.weightAtBeginningOfTraining = weight
     end
@@ -142,7 +143,6 @@ class Neuron < NeuronBase
     # self.output = self.ioFunction(netInput) # Only doing this in case we wish to use this code for recurrent networks
   end
 
-
   def propagate(exampleNumber)
     self.exampleNumber = exampleNumber
     self.netInput = calcNetInputToNeuron()
@@ -164,7 +164,7 @@ class Neuron < NeuronBase
 
   def to_s
     description = super
-    description += "Net Input=\t#{netInput}\tError=\t#{error}\n"
+    description += "Net Input=\t#{netInput}\tError=\t#{error}\tOutput Error=\t#{outputError}\n"
     description += "\t\tNumber of Input Links=\t#{inputLinks.length}\n"
     inputLinks.each_with_index do |link, linkNumber|
       description += "\t\t\t\t\t\tInput Link:\t#{linkNumber}\t#{link}\n"
@@ -213,8 +213,9 @@ class OutputNeuron < Neuron
   end
 
   def to_s
-    description = super
-    description += "Net Input=\t#{netInput}\tError=\t#{error}\tWeightedErrorMetric=\t#{weightedErrorMetric}\n"
+    description = ""
+    description += "\n\t#{self.class} Class; ID = #{id}\tOutput= #{output}"
+    description += "\tNet Input=\t#{netInput}\tError=\t#{error}\tOutput Error=\t#{outputError}\tWeightedErrorMetric=\t#{weightedErrorMetric}\n"
     description += "\t\tNumber of Input Links=\t#{inputLinks.length}\n"
     inputLinks.each_with_index do |link, linkNumber|
       description += "\t\t\t\t\t\tInput Link:\t#{linkNumber}\t#{link}\n"

@@ -8,7 +8,9 @@
 module DisplayAndErrorCalculations
 
   def calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
-    genericCalcMeanSumSquaredErrors(numberOfExamples)
+    mse = 1e100
+    mse = genericCalcMeanSumSquaredErrors(numberOfExamples)  unless(outputLayer[0].outputError.nil?)
+    return mse
   end
 
   def calcTestingMeanSquaredErrors
@@ -26,7 +28,7 @@ module DisplayAndErrorCalculations
   def genericCalcMeanSumSquaredErrors(numberOfExamples)
     squaredErrors = []
     numberOfExamples.times do |exampleNumber|
-      allNeuronLayers.propagateExample(exampleNumber)
+      allNeuronLayers.propagate(exampleNumber)
       squaredErrors << calcWeightedErrorMetricForExample()
     end
     sse = squaredErrors.flatten.reduce(:+)
@@ -65,7 +67,7 @@ module DisplayAndErrorCalculations
     #
     examples.each_with_index do |anExample, exampleNumber|
       inputs = anExample[:inputs]
-      propagatingLayers.propagateExample(exampleNumber)
+      propagatingLayers.propagate(exampleNumber)
       results = resultsLayer.collect { |aResultsNeuron| aResultsNeuron.output }
       logger.puts "\t\t\tinputs= #{inputs}\tresults= #{results}"
     end
@@ -153,7 +155,7 @@ class TrainerBase
     while ((mse >= minMSE) && trainingSequence.stillMoreEpochs)
       propagatingLayers.propagateAndLearnForAnEpoch(learningLayers, numberOfExamples)
       trainingSequence.nextEpoch
-      mse = calcMeanSumSquaredErrors if (entireNetworkSetup?)
+      mse = calcMeanSumSquaredErrors
 
       currentEpochNumber = trainingSequence.epochs + totalEpochs
       logger.puts "current epoch number= #{currentEpochNumber}\tmse = #{mse}" if (currentEpochNumber % 100 == 0)
@@ -161,11 +163,6 @@ class TrainerBase
 
     totalEpochs += trainingSequence.epochs
     return mse, totalEpochs
-  end
-
-  def entireNetworkSetup?
-    aLayerArray = allNeuronLayers[1..-1].to_LayerAry
-    return aLayerArray.setup?
   end
 end
 
@@ -191,7 +188,6 @@ module SelfOrg
     return mse, totalEpochs
   end
 end
-
 
 module ForwardPropWithContext
 
@@ -305,6 +301,8 @@ module SelfOrgMixture
   def normalizationAndSelfOrgNoContext(learningLayers, propagatingLayers, strategyArguments, epochsForSelfOrg, totalEpochs)
     learningLayers.attachLearningStrategy(Normalization, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForNormalization=1, totalEpochs)
+    # outputNeuron = outputLayer[0]
+    puts network
 
     learningLayers.attachLearningStrategy(EstimateInputDistribution, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForSelfOrg, totalEpochs)
@@ -312,16 +310,12 @@ module SelfOrgMixture
   end
 end
 
-
 class OneNeuronSelfOrgTrainer < TrainerBase
 
-  include SelfOrg
-  # include SelfOrgMixture
+  #include SelfOrg
+  include SelfOrgMixture
 
-  def postInitialize
-  end
-
-  def train
+   def train
     distributeSetOfExamples(examples)
 
     totalEpochs = 0
@@ -332,10 +326,8 @@ class OneNeuronSelfOrgTrainer < TrainerBase
     learningLayers.initWeights # Needed only when the given layer is self-organizing for the first time
     mse, totalEpochs = selOrgNoContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
-    mse, totalEpochs = hook(ioFunction, mse, totalEpochs) ## ?? TODO is this necessary for this version??
-
     #display:
-    logger.puts "Output Layer:"
+    logger.puts "Output Layer BEFORE SUPERVISED TRAINING:"
     forEachExampleDisplayInputsAndOutputs(outputLayer)
 
     layersThatWereNormalized = outputLayer.to_LayerAry
@@ -343,6 +335,10 @@ class OneNeuronSelfOrgTrainer < TrainerBase
 
     learningLayers = outputLayer.to_LayerAry
     mse, totalEpochs = supervisedTraining(learningLayers, ioFunction, args[:epochsForSupervisedTraining], totalEpochs)
+
+    logger.puts "Output Layer AFTER SUPERVISED TRAINING:"
+    forEachExampleDisplayInputsAndOutputs(outputLayer)
+
 
     return totalEpochs, mse, calcTestingMeanSquaredErrors
   end
@@ -357,13 +353,6 @@ class OneNeuronSelfOrgTrainer < TrainerBase
     return mse, totalEpochs
   end
 
-  def distributeSetOfExamples(examples)
-    distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
-  end
-
-  def hook(ioFunction, mse, totalEpochs)
-    return [mse, totalEpochs]
-  end
 end
 
 
@@ -398,7 +387,7 @@ class Trainer3SelfOrgContextSuper < TrainerBase
     learningLayers.initWeights # Needed only when the given layer is self-organizing for the first time
     mse, totalEpochs = normalizationAndSelfOrgWithContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
-    mse, totalEpochs = hook(ioFunction, mse, totalEpochs)
+    mse, totalEpochs = temporaryHookName(ioFunction, mse, totalEpochs)
 
     #display:
     logger.puts "Hidden Layer 2 outputs:"
@@ -417,11 +406,7 @@ class Trainer3SelfOrgContextSuper < TrainerBase
     propagatingLayers, controllingLayers = layerDetermination(learningLayers)
 
     strategyArguments = {:ioFunction => SigmoidIOFunction}
-    learningLayers.attachLearningStrategy(LearningBP, strategyArguments) if learningLayers.include?(outputLayer)
-
-    strategyArguments = {:ioFunction => ioFunction}
-    otherLearningLayers = learningLayers - outputLayer
-    otherLearningLayers.attachLearningStrategy(LearningBP, strategyArguments)
+    learningLayers.attachLearningStrategy(LearningBP, strategyArguments)
 
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase, totalEpochs)
     return mse, totalEpochs
@@ -431,7 +416,7 @@ class Trainer3SelfOrgContextSuper < TrainerBase
     distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
   end
 
-  def hook(ioFunction, mse, totalEpochs)
+  def temporaryHookName(ioFunction, mse, totalEpochs)
     return [mse, totalEpochs]
   end
 end
@@ -441,9 +426,8 @@ end
 ; ######################## Trainer4SelfOrgContextSuper #############
 
 class Trainer4SelfOrgContextSuper < Trainer3SelfOrgContextSuper
-  include ForwardPropWithContext
 
-  def hook(ioFunction, mse, totalEpochs)
+  def temporaryHookName(ioFunction, mse, totalEpochs)
     selfOrgWithOutContext2ndLayer(ioFunction, mse, totalEpochs)
   end
 
