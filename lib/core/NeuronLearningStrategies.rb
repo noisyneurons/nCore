@@ -61,6 +61,8 @@ class LearningStrategyBase # strategy for standard bp learning for output neuron
     return neuron.inputDistributionModel
   end
 
+
+
 end
 
 class ForwardPropOnly < LearningStrategyBase # just forward propagation
@@ -117,10 +119,6 @@ class Normalization < LearningStrategyBase
 end
 
 
-class NormalizationForOutputNeuron < Normalization
-end
-
-
 class SelfOrgStrat < LearningStrategyBase
   attr_accessor :targetMinus, :distanceBetweenTargets
 
@@ -152,9 +150,6 @@ class SelfOrgStrat < LearningStrategyBase
 end
 
 
-class SelfOrgStratOutput < SelfOrgStrat
-end
-
 #########
 
 
@@ -184,10 +179,24 @@ end
 #  return variance
 #end
 
-class GaussModel
-  attr_reader :mean, :std, :prior, :bayesNumerator
+class BaseModel
   include Distribution
   include Distribution::Shorthand
+
+  # calculates the gaussian probability DENSITY function for any specified standard deviation and mean
+  # the 'norm_pdf' function only properly calculates this when the standard deviation == 1.0
+  # @param [real] x
+  # @param [real] mean
+  # @param [real] std
+  def gaussPdf(x, mean, std)
+    normalizedDeviationFromMean = ((x - mean) / std).abs
+    return 0.0 if(normalizedDeviationFromMean > 15.0)
+    return norm_pdf(normalizedDeviationFromMean).abs / std   # NOTE: the .abs gets rid of imaginary results in some cases
+  end
+end
+
+class GaussModel < BaseModel
+  attr_reader :mean, :std, :prior, :bayesNumerator
 
   def initialize(mean, std, prior, numberOfExamples)
     @numberOfExamples = numberOfExamples
@@ -207,10 +216,9 @@ class GaussModel
   # called for each example
   # @param [real] inputOrOutputForExample net summed input to neuron; or analog output of neuron
   def calculateBayesNumerator(inputOrOutputForExample)
-    @bayesNumerator = 0.0
-    stdErr = (inputOrOutputForExample - @mean) / @std
-    @bayesNumerator = norm_pdf(stdErr).abs * (@prior / @std) if (stdErr.abs < 15.0)
+    @bayesNumerator =  @prior * gaussPdf(inputOrOutputForExample, @mean, @std)
   end
+
 
   # called for each example
   # @param [real] bayesDenominator
@@ -274,7 +282,7 @@ class GaussModelAdaptable < GaussModel
   end
 end
 
-class ExampleDistributionModel
+class ExampleDistributionModel  < BaseModel
   attr_reader :models
 
   def initialize(args)
@@ -282,7 +290,7 @@ class ExampleDistributionModel
     @numberOfExamples = args[:numberOfExamples]
     @classesOfModels = [GaussModelAdaptable, GaussModelAdaptable, GaussModel]
     @mean = [1.0, -1.0, 0.0]
-    @std = [2.0, 2.0, 4.0] # [0.05, 0.05, 4.0]
+    @std = [0.5, 0.5, 4.0]
     @prior = [0.33, 0.33, 0.34]
     @models = []
   end
@@ -293,12 +301,12 @@ class ExampleDistributionModel
     numberOfModels.times { |i| @models << @classesOfModels[i].new(@mean[i], @std[i], @prior[i], @numberOfExamples) }
   end
 
-  # use this method at beginning of EACH EPOCH  -- YES
+  # use this method at beginning of EACH EPOCH
   def initEpoch
     @models.each { |model| model.initEpoch }
   end
 
-  # use this method for EACH EXAMPLE   -- YES
+  # use this method for EACH EXAMPLE
   def useExampleToImproveDistributionModel(netInputOrOutput)
     @models.each { |model| model.calculateBayesNumerator(netInputOrOutput) }
     bayesDenominator = @models.inject(0.0) { |sum, model| sum + model.bayesNumerator }
@@ -308,7 +316,7 @@ class ExampleDistributionModel
     end
   end
 
-  # use this method at the END of EACH EPOCH -- YES
+  # use this method at the END of EACH EPOCH
   def atEpochsEndCalculateModelParams
     @models.each { |model| model.atEpochsEndCalculateModelParams }
     puts
@@ -316,6 +324,9 @@ class ExampleDistributionModel
   end
 
   def calcError(netInputOrOutput)
+    error = @models.inject(0.0) do |sum, model|
+      (netInputOrOutput - model.mean) * gaussPdf(netInputOrOutput, model.mean, model.std)
+    end
   end
 
   def to_s
@@ -355,66 +366,6 @@ class EstimateInputDistribution < LearningStrategyBase
   end
 end
 
-class EstimateInputDistributionOutput < LearningStrategyBase
-
-  def initialize(theEnclosingNeuron, ** strategyArgs)
-    super
-    classOfInputDistributionModel = @strategyArgs[:classOfInputDistributionModel]
-    neuron.inputDistributionModel = classOfInputDistributionModel.new(@strategyArgs) # keeping inputDistributionModel
-    # in neuron for continuity across the invoking of different learning strategies.
-  end
-
-  def startStrategy
-    inputDistributionModel.initMetaEpoch
-  end
-
-  def startEpoch
-    inputDistributionModel.initEpoch
-  end
-
-  def propagate(exampleNumber)
-    neuron.exampleNumber = exampleNumber
-    self.netInput = calcNetInputToNeuron
-    neuron.output = output = ioFunction(netInput)
-    neuron.target = target = neuron.arrayOfSelectedData[exampleNumber]
-    neuron.outputError = output - targe
-    inputDistributionModel.useExampleToImproveDistributionModel(netInput)
-  end
-
-  def endEpoch
-    inputDistributionModel.atEpochsEndCalculateModelParams
-  end
-
-end
-
-
-#class MixSelfOrgStrat < LearningStrategyBase
-#
-#  def initialize(theEnclosingNeuron, ** strategyArgs)
-#    super
-#  end
-#
-#  def startEpoch
-#    zeroDeltaWAccumulated
-#  end
-#
-#  def propagate(exampleNumber)
-#    neuron.exampleNumber = exampleNumber
-#    self.netInput = calcNetInputToNeuron
-#    neuron.output = ioFunction(netInput)
-#  end
-#
-#  def learnExample
-#    neuron.error = -1.0 * neuron.ioDerivativeFromNetInput(netInput) * (((netInput - targetMinus)/distanceBetweenTargets) - 0.5)
-#    calcDeltaWsAndAccumulate
-#  end
-#
-#  def endEpoch
-#    addAccumulationToWeight
-#  end
-#
-#end
-
 
 class SelfOrgByContractingBothLobesOfDistribution < LearningStrategyBase
 
@@ -424,7 +375,7 @@ class SelfOrgByContractingBothLobesOfDistribution < LearningStrategyBase
 
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
-    self.netInput = calcNetInputToNeuron
+    neuron.netInput = calcNetInputToNeuron
     neuron.output = ioFunction(netInput)
   end
 
@@ -436,7 +387,6 @@ class SelfOrgByContractingBothLobesOfDistribution < LearningStrategyBase
   def endEpoch
     addAccumulationToWeight
   end
-
 end
 
 

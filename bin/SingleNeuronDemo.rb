@@ -23,10 +23,10 @@ args = {
 
     :classOfTheNetwork => Simplest1LayerNet,
     :classOfTheTrainer => OneNeuronSelfOrgTrainer, #TrainerBase,
-    :classOfDataSetGenerator => ORDataGenerator,
+    :classOfDataSetGenerator => ORCenteredDataGenerator,
 
     # training parameters re. Output Error
-    :learningRate => 3.0,
+    :learningRate => -0.3,
     :minMSE => 0.0, #0.001,
     :epochsForSelfOrg => 150, #150,
     :epochsForSupervisedTraining => 1, # 600,

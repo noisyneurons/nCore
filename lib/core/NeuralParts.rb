@@ -47,7 +47,7 @@ module CommonNeuronCalculations
   def initWeights ###  only used for special form of self-org/normalization
     numberOfInputsToNeuron = inputLinks.length
     inputLinks.each do |aLink|
-      verySmallNoise = 0.0001 * (rand - 0.5)
+      verySmallNoise = 0.0001 * (rand - 0.5)     # This gets rid of perfect symmetry -- which can completely stall covergence
       weight = (1.0 + verySmallNoise) / numberOfInputsToNeuron # TODO may want sqrt(numberOfInputsToNeuron)
       # weight = (0.2 + verySmallNoise) / numberOfInputsToNeuron # TODO may want sqrt(numberOfInputsToNeuron)
       aLink.weight = weight

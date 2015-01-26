@@ -9,7 +9,7 @@ module DisplayAndErrorCalculations
 
   def calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
     mse = 1e100
-    mse = genericCalcMeanSumSquaredErrors(numberOfExamples)  unless(outputLayer[0].outputError.nil?)
+    mse = genericCalcMeanSumSquaredErrors(numberOfExamples) unless (outputLayer[0].outputError.nil?)
     return mse
   end
 
@@ -302,10 +302,20 @@ module SelfOrgMixture
     learningLayers.attachLearningStrategy(Normalization, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForNormalization=1, totalEpochs)
     # outputNeuron = outputLayer[0]
-    puts network
+    #puts "Network just after Normalization"
+    #puts network
 
-    learningLayers.attachLearningStrategy(EstimateInputDistribution, strategyArguments)
-    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForSelfOrg, totalEpochs)
+    30.times do |i|
+      puts "START #{i}"
+      learningLayers.attachLearningStrategy(EstimateInputDistribution, strategyArguments)
+      mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForEstimation=10, totalEpochs)
+      #puts "Network just after EstimateInputDistribution"
+      #puts network
+
+      learningLayers.attachLearningStrategy(SelfOrgByContractingBothLobesOfDistribution, strategyArguments)
+      mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForAdapting=1, totalEpochs)
+    end
+
     return mse, totalEpochs
   end
 end
@@ -315,7 +325,7 @@ class OneNeuronSelfOrgTrainer < TrainerBase
   #include SelfOrg
   include SelfOrgMixture
 
-   def train
+  def train
     distributeSetOfExamples(examples)
 
     totalEpochs = 0
@@ -323,7 +333,7 @@ class OneNeuronSelfOrgTrainer < TrainerBase
 
     ### self-org 1st hidden layer
     learningLayers = outputLayer
-    learningLayers.initWeights # Needed only when the given layer is self-organizing for the first time
+    #learningLayers.initWeights # Needed only when the given layer is self-organizing for the first time
     mse, totalEpochs = selOrgNoContext(learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
     #display:

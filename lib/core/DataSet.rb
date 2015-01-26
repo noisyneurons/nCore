@@ -127,6 +127,16 @@ class ORDataGenerator < GenerateDataSet
   end
 end
 
+class ORCenteredDataGenerator < GenerateDataSet
+  def generate(numberOfExamples=4, standardDeviationOfAddedGaussianNoise=0.0)
+    examples = []
+    examples << {:inputs => [-1.0, -1.0], :targets => [0.0], :exampleNumber => 0, :class => 0}
+    examples << {:inputs => [-1.0, 1.0], :targets => [1.0], :exampleNumber => 1, :class => 1}
+    examples << {:inputs => [1.0, -1.0], :targets => [1.0], :exampleNumber => 2, :class => 1}
+    examples << {:inputs => [1.0, 1.0], :targets => [1.0], :exampleNumber => 3, :class => 1}
+    return examples
+  end
+end
 
 
 class Generate4ClassDataSet < GenerateDataSet
