@@ -314,6 +314,9 @@ module SelfOrgMixture
 
       learningLayers.attachLearningStrategy(SelfOrgByContractingBothLobesOfDistribution, strategyArguments)
       mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForAdapting=1, totalEpochs)
+      puts "Network just after SelfOrgByContractingBothLobesOfDistribution"
+      puts network
+
     end
 
     return mse, totalEpochs

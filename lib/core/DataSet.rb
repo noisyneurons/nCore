@@ -19,21 +19,21 @@ module ExampleDistribution
     theNeuron.arrayOfSelectedData = examples.collect { |anExample| anExample[keyToExampleData][arrayIndexToExampleData] }
   end
 
-  def normalizeDataSet(examples)
-    transformedExampleDataSet = examples.deep_clone
-    arrayOfInputRows = extractArrayOfExampleInputVectors(examples)
-    numberOfNetworkInputs = arrayOfInputRows[0].length
-    std("numberOfNetworkInputs ", numberOfNetworkInputs)
-    numberOfNetworkInputs.times do |inputNumber|
-      std("inputNumber ", inputNumber)
-      allExampleValuesForOneNetworkInput = extractArrayOfAllExamplesForJustOneNetworkInput(inputNumber, arrayOfInputRows)
-      std("\tallExampleValuesForOneNetworkInput ", allExampleValuesForOneNetworkInput)
-      normalizedExampleValuesForInput = allExampleValuesForOneNetworkInput.normalize
-      std("\tnormalizedExampleValuesForInput ", normalizedExampleValuesForInput)
-      insertExampleValuesForInput(transformedExampleDataSet, normalizedExampleValuesForInput, inputNumber)
-    end
-    transformedExampleDataSet
-  end
+  #def normalizeDataSet(examples)                        ## TODO does this routine use an "improper" version of Array normalize. ?? See Utilities.rb and RUBY CORE documentation.
+  #  transformedExampleDataSet = examples.deep_clone
+  #  arrayOfInputRows = extractArrayOfExampleInputVectors(examples)
+  #  numberOfNetworkInputs = arrayOfInputRows[0].length
+  #  std("numberOfNetworkInputs ", numberOfNetworkInputs)
+  #  numberOfNetworkInputs.times do |inputNumber|
+  #    std("inputNumber ", inputNumber)
+  #    allExampleValuesForOneNetworkInput = extractArrayOfAllExamplesForJustOneNetworkInput(inputNumber, arrayOfInputRows)
+  #    std("\tallExampleValuesForOneNetworkInput ", allExampleValuesForOneNetworkInput)
+  #    normalizedExampleValuesForInput = allExampleValuesForOneNetworkInput.normalize
+  #    std("\tnormalizedExampleValuesForInput ", normalizedExampleValuesForInput)
+  #    insertExampleValuesForInput(transformedExampleDataSet, normalizedExampleValuesForInput, inputNumber)
+  #  end
+  #  transformedExampleDataSet
+  #end
 
   def extractArrayOfExampleInputVectors(examples)
     arrayOfInputRows = []

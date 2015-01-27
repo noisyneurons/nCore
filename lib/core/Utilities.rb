@@ -93,22 +93,29 @@ class Array
   end
 
   def mean
-    sumOfArray = self.inject { |sum, n| sum + n }
-    return (sumOfArray.to_f / self.length)
+    self.reduce(:+).to_f / size
+  end
+
+  def average
+    mean
   end
 
   def abs
     self.collect { |value| value.abs }
   end
 
-  def standardError
-    meanOfArray = self.mean
-    sumOfSquares = self.inject { |sum, n| sum + ((n-meanOfArray)**2) }
-    return Math.sqrt(sumOfSquares / self.length)
+  def std
+    meanOfAry = self.mean
+    sumOfSquares = self.inject { |sum, n| sum + ((n-meanOfAry)**2) }
+    Math.sqrt(sumOfSquares / self.length)
   end
 
-  def normalize
-    meanValue = self.mean
+  def standardError
+    std
+  end
+
+  def normalize ## TODO Is this the same or does this "interact" with normal RUBY ARRAY NORMALIZE
+    meanValue = mean
     centeredArray = self.collect { |value| value - meanValue }
     largestAbsoluteArrayElement = centeredArray.minmax.abs.max.to_f
     centeredArray.collect { |value| value / largestAbsoluteArrayElement }

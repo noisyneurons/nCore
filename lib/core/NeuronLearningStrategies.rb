@@ -15,8 +15,8 @@ class LearningStrategyBase # strategy for standard bp learning for output neuron
     @neuron = theEnclosingNeuron
     @strategyArgs = strategyArgs
     ioFunction = @strategyArgs[:ioFunction]
-    self.extend(ioFunction)
     neuron.extend(ioFunction)
+    self.extend(ioFunction)
     neuron.output = ioFunction(neuron.netInput) # only needed for recurrent simulators
     @inputLinks = @neuron.inputLinks
     @outputLinks = @neuron.outputLinks if @neuron.respond_to?(:outputLinks)
@@ -60,7 +60,6 @@ class LearningStrategyBase # strategy for standard bp learning for output neuron
   def inputDistributionModel
     return neuron.inputDistributionModel
   end
-
 
 
 end
@@ -117,7 +116,6 @@ class Normalization < LearningStrategyBase
     inputLinks.each { |aLink| aLink.calculateNormalizationCoefficients }
   end
 end
-
 
 class SelfOrgStrat < LearningStrategyBase
   attr_accessor :targetMinus, :distanceBetweenTargets
@@ -189,9 +187,9 @@ class BaseModel
   # @param [real] mean
   # @param [real] std
   def gaussPdf(x, mean, std)
-    normalizedDeviationFromMean = ((x - mean) / std).abs
-    return 0.0 if(normalizedDeviationFromMean > 15.0)
-    return norm_pdf(normalizedDeviationFromMean).abs / std   # NOTE: the .abs gets rid of imaginary results in some cases
+    normalizedDeviationFromMean = ((x - mean) / std)
+    return 0.0 if (normalizedDeviationFromMean.abs > 15.0)
+    return norm_pdf(normalizedDeviationFromMean) / std # NOTE: the .abs gets rid of imaginary results in some cases
   end
 end
 
@@ -216,7 +214,7 @@ class GaussModel < BaseModel
   # called for each example
   # @param [real] inputOrOutputForExample net summed input to neuron; or analog output of neuron
   def calculateBayesNumerator(inputOrOutputForExample)
-    @bayesNumerator =  @prior * gaussPdf(inputOrOutputForExample, @mean, @std)
+    @bayesNumerator = @prior * gaussPdf(inputOrOutputForExample, @mean, @std)
   end
 
 
@@ -243,38 +241,70 @@ class GaussModel < BaseModel
   end
 end
 
+#class GaussModelAdaptable < GaussModel
+#
+#  def initialize(mean, std, prior, numberOfExamples)
+#    super
+#    @newMean = nil
+#    @m2 = nil
+#    @delta = nil
+#    self.initEpoch
+#  end
+#
+#  def initEpoch
+#    @n = 0.0
+#    @newMean = 0.0
+#    @m2 = 0.0
+#  end
+#
+#  def prepForRecalculatingModelsParams(inputOrOutputForExample)
+#    x = inputOrOutputForExample
+#    @n += @examplesProbability
+#    @delta = (x - @newMean) * @examplesProbability
+#    @newMean = @newMean + (@delta / @n) if (@n > 1.0e-10)
+#    deltaPrime = (x - @newMean) * @examplesProbability
+#    @m2 = @m2 + (@delta * deltaPrime)
+#  end
+#
+#  def atEpochsEndCalculateModelParams
+#    @prior = @n / @numberOfExamples
+#    @mean = @newMean
+#    variance = @m2/(@n - 1)
+#    newStd = Math.sqrt(variance)
+#    @std = newStd
+#    #@prior = @n / @numberOfExamples
+#  end
+#
+#  def to_s
+#    "\t\tmean=\t#{mean}\tstd=\t#{std}\tprior=\t#{prior}\n"
+#  end
+#end
+
+
 class GaussModelAdaptable < GaussModel
 
   def initialize(mean, std, prior, numberOfExamples)
     super
-    @newMean = nil
-    @m2 = nil
-    @delta = nil
+    @allInputs = Array.new(numberOfExamples)
     self.initEpoch
   end
 
   def initEpoch
     @n = 0.0
-    @newMean = 0.0
-    @m2 = 0.0
+    @exampleNumber = 0
+    @allInputs.clear
   end
 
   def prepForRecalculatingModelsParams(inputOrOutputForExample)
-    x = inputOrOutputForExample
+    @allInputs[@exampleNumber] = inputOrOutputForExample
     @n += @examplesProbability
-    @delta = (x - @newMean) * @examplesProbability
-    @newMean = @newMean + (@delta / @n) if (@n > 1.0e-10)
-    deltaPrime = (x - @newMean) * @examplesProbability
-    @m2 = @m2 + (@delta * deltaPrime)
+    @exampleNumber += 1
   end
 
   def atEpochsEndCalculateModelParams
+    @mean = @allInputs.mean
+    @std = @allInputs.std
     @prior = @n / @numberOfExamples
-    @mean = @newMean
-    variance = @m2/(@n - 1)
-    newStd = Math.sqrt(variance)
-    @std = newStd
-    #@prior = @n / @numberOfExamples
   end
 
   def to_s
@@ -282,7 +312,8 @@ class GaussModelAdaptable < GaussModel
   end
 end
 
-class ExampleDistributionModel  < BaseModel
+
+class ExampleDistributionModel < BaseModel
   attr_reader :models
 
   def initialize(args)
@@ -324,9 +355,26 @@ class ExampleDistributionModel  < BaseModel
   end
 
   def calcError(netInputOrOutput)
+    x = netInputOrOutput
+    sumOfLikelihoods = @models.inject(0.0) { |sum, model| sum + likelihood(x, model) }
     error = @models.inject(0.0) do |sum, model|
-      (netInputOrOutput - model.mean) * gaussPdf(netInputOrOutput, model.mean, model.std)
+      probabilityForModel = probabilityThatExampleCameFrom(model, x, sumOfLikelihoods)
+      errorComponentForModel =  (x - model.mean) * probabilityForModel
+
+      puts "probabilityForModel=\t#{probabilityForModel},\tnetInputOrOutput=\t#{x},\tmodel.mean=\t#{model.mean},\tmodel.std=\t#{model.std},\terrorComponentForModel=#{errorComponentForModel}"
+
+      sum +  errorComponentForModel
     end
+    puts "\t\terror=\t#{error}\n"
+    error
+  end
+
+  def probabilityThatExampleCameFrom(theModel, x, sumOfLikelihoods)
+    probability = likelihood(x, theModel) / sumOfLikelihoods
+  end
+
+  def likelihood(x, model)
+    model.prior * gaussPdf(x, model.mean, model.std)
   end
 
   def to_s
@@ -340,9 +388,11 @@ class EstimateInputDistribution < LearningStrategyBase
 
   def initialize(theEnclosingNeuron, ** strategyArgs)
     super
-    classOfInputDistributionModel = @strategyArgs[:classOfInputDistributionModel]
-    neuron.inputDistributionModel = classOfInputDistributionModel.new(@strategyArgs) # keeping inputDistributionModel
-    # in neuron for continuity across the invoking of different learning strategies.
+    if (neuron.inputDistributionModel.nil?)
+      classOfInputDistributionModel = @strategyArgs[:classOfInputDistributionModel]
+      neuron.inputDistributionModel = classOfInputDistributionModel.new(@strategyArgs) # keeping inputDistributionModel
+      # in neuron for continuity across the invoking of different learning strategies.
+    end
   end
 
   def startStrategy
