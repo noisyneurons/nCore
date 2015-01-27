@@ -92,6 +92,10 @@ class Array
     return Layer.new(self)
   end
 
+  def to_v
+     Vector.elements(self, false)
+  end
+
   def sum
     self.reduce(:+)
   end

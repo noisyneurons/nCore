@@ -157,26 +157,8 @@ end
 # A Gaussian model to incorporate into a "mixture of models" distribution model
 # of a neuron's netInputs or outputs across examples
 #
-# Using the following iterative method for single pass variance estimation:
+# See MiscellaneousCode.rb for iterative/streaming/on-line method for single pass variance estimation:
 # FROM  Wikipedia  http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
-#def online_variance(data):
-#    n = 0
-#mean = 0
-#M2 = 0
-#
-#for x in data:
-#  n = n + 1
-#  delta = x - mean
-#  mean = mean + delta/n
-#  M2 = M2 + delta*(x - mean)
-#
-#  if (n < 2):
-#      return 0
-#
-#  variance = M2/(n - 1)
-#  return variance
-#end
-
 class BaseModel
   include Distribution
   include Distribution::Shorthand
@@ -203,12 +185,12 @@ class GaussModel < BaseModel
     @prior = prior
     @bayesNumerator = nil
     @examplesProbability = nil
-    @n = 0.0
+    @sumOfProbabilities = 0.0
   end
 
   # called at the beginning of each epoch
   def initEpoch
-    @n = 0.0
+    @sumOfProbabilities = 0.0
   end
 
   # called for each example
@@ -227,12 +209,12 @@ class GaussModel < BaseModel
   # called for each example
   # @param [real]  inputOrOutputForExample; net summed input to neuron; or analog output of neuron
   def prepForRecalculatingModelsParams(inputOrOutputForExample)
-    @n += @examplesProbability
+    @sumOfProbabilities += @examplesProbability
   end
 
   # called at the end of each epoch
   def atEpochsEndCalculateModelParams
-    @prior = @n / @numberOfExamples
+    @prior = @sumOfProbabilities / @numberOfExamples
   end
 
   def to_s
@@ -240,47 +222,8 @@ class GaussModel < BaseModel
   end
 end
 
-#class GaussModelAdaptable < GaussModel
-#
-#  def initialize(mean, std, prior, numberOfExamples)
-#    super
-#    @newMean = nil
-#    @m2 = nil
-#    @delta = nil
-#    self.initEpoch
-#  end
-#
-#  def initEpoch
-#    @n = 0.0
-#    @newMean = 0.0
-#    @m2 = 0.0
-#  end
-#
-#  def prepForRecalculatingModelsParams(inputOrOutputForExample)
-#    x = inputOrOutputForExample
-#    @n += @examplesProbability
-#    @delta = (x - @newMean) * @examplesProbability
-#    @newMean = @newMean + (@delta / @n) if (@n > 1.0e-10)
-#    deltaPrime = (x - @newMean) * @examplesProbability
-#    @m2 = @m2 + (@delta * deltaPrime)
-#  end
-#
-#  def atEpochsEndCalculateModelParams
-#    @prior = @n / @numberOfExamples
-#    @mean = @newMean
-#    variance = @m2/(@n - 1)
-#    newStd = Math.sqrt(variance)
-#    @std = newStd
-#  end
-#
-#  def to_s
-#    "\t\tmean=\t#{mean}\tstd=\t#{std}\tprior=\t#{prior}\n"
-#  end
-#end
-
 
 class GaussModelAdaptable < GaussModel
-
   def initialize(mean, std, prior, numberOfExamples)
     super
     @exampleNumber = nil
@@ -297,36 +240,30 @@ class GaussModelAdaptable < GaussModel
 
   def prepForRecalculatingModelsParams(inputOrOutputForExample)
     @allInputs[@exampleNumber] = inputOrOutputForExample
-    @allProbabilites[@exampleNumber] = @examplesProbability
+    @allProbabilities[@exampleNumber] = @examplesProbability
     @exampleNumber += 1
-
-    #@n += @examplesProbability
-    #@sumSquaredProbabilities += (@examplesProbability**2)
-
   end
 
   def atEpochsEndCalculateModelParams
     puts "allInputs=\t#{@allInputs}"
-    sumOfProbabilities = @allProbabilites.sum
+    sumOfProbabilities = @allProbabilities.sum
     @mean = calcWeightedMean(sumOfProbabilities)
     @std = calcWeightedSTD(@mean)
     @prior = sumOfProbabilities / @numberOfExamples
-
-
   end
 
-  def calcWeightedMean(sumOfWeights)
-    vInputs = Vector.elements(@allInputs, false)
-    @vWeights = Vector.elements(@allProbabilites, false)
-    weightedSum = vInputs.inner_product(vWeights)
-    weightedSum / sumOfWeights
+  def calcWeightedMean(sumOfProbabilities)
+    weightedSum = @allInputs.to_v.inner_product(@allProbabilities.to_v)
+    @mean = weightedSum / sumOfProbabilities
   end
 
   def calcWeightedSTD(weightedMean)
-    unweightedErrors = @allInputs.collect {|input| input - weightedMean}
-    vUnweightedErrors = Vector.elements(unweightedErrors,false)
-    vWeightedErrors = vUnweightedErrors.collect2(vWeights) {|error, weight| error * weight}
-    sumSquaredErrors = vWeightedErrors.inner_product(vWeightedErrors)
+    weights = @allProbabilities.to_v
+    unweightedErrors = (@allInputs.to_v).collect {|input| input - weightedMean}
+    weightedErrors = (unweightedErrors.collect2(weights) {|error, weight| error * weight}).to_v
+    sumSquareWeightedErrors = weightedErrors.inner_product(weightedErrors)
+    sumSquaredWeights = weights.inner_product(weights)
+    @std = Math.sqrt(sumSquareWeightedErrors / sumSquaredWeights)
   end
 
   def to_s
@@ -346,12 +283,9 @@ class ExampleDistributionModel < BaseModel
     @std = [0.5, 0.5, 4.0]
     @prior = [0.33, 0.33, 0.34]
     @models = []
-  end
-
-  # use this method at beginning of EACH META-EPOCH
-  def initMetaEpoch
-    numberOfModels = @classesOfModels.length
-    numberOfModels.times { |i| @models << @classesOfModels[i].new(@mean[i], @std[i], @prior[i], @numberOfExamples) }
+    @classesOfModels.each_with_index do |classOfModel, i|
+      @models << classOfModel.new(@mean[i], @std[i], @prior[i], @numberOfExamples)
+    end
   end
 
   # use this method at beginning of EACH EPOCH
@@ -418,7 +352,6 @@ class EstimateInputDistribution < LearningStrategyBase
   end
 
   def startStrategy
-    inputDistributionModel.initMetaEpoch
   end
 
   def startEpoch

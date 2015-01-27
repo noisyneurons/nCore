@@ -302,20 +302,20 @@ module SelfOrgMixture
     learningLayers.attachLearningStrategy(Normalization, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForNormalization=1, totalEpochs)
     # outputNeuron = outputLayer[0]
-    #puts "Network just after Normalization"
+    puts "Network just after Normalization"
     #puts network
 
     2.times do |i|
       puts "START #{i}"
       learningLayers.attachLearningStrategy(EstimateInputDistribution, strategyArguments)
       mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForEstimation=10, totalEpochs)
-      #puts "Network just after EstimateInputDistribution"
+      puts "Network just after EstimateInputDistribution"
       #puts network
 
       learningLayers.attachLearningStrategy(SelfOrgByContractingBothLobesOfDistribution, strategyArguments)
       mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForAdapting=1, totalEpochs)
       puts "Network just after SelfOrgByContractingBothLobesOfDistribution"
-      puts network
+      #puts network
 
     end
 
