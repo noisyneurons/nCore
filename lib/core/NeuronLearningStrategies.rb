@@ -225,9 +225,8 @@ class GaussModel < BaseModel
   end
 
   # called for each example
-  # @param [real] x  aka inputOrOutputForExample; net summed input to neuron; or analog output of neuron
-  def prepForRecalculatingModelsParams(inputOrOutputForExample=0.0)
-    x = inputOrOutputForExample
+  # @param [real]  inputOrOutputForExample; net summed input to neuron; or analog output of neuron
+  def prepForRecalculatingModelsParams(inputOrOutputForExample)
     @n += @examplesProbability
   end
 
@@ -272,7 +271,6 @@ end
 #    variance = @m2/(@n - 1)
 #    newStd = Math.sqrt(variance)
 #    @std = newStd
-#    #@prior = @n / @numberOfExamples
 #  end
 #
 #  def to_s
@@ -285,26 +283,50 @@ class GaussModelAdaptable < GaussModel
 
   def initialize(mean, std, prior, numberOfExamples)
     super
+    @exampleNumber = nil
     @allInputs = Array.new(numberOfExamples)
+    @allProbabilities = Array.new(numberOfExamples)
     self.initEpoch
   end
 
   def initEpoch
-    @n = 0.0
     @exampleNumber = 0
     @allInputs.clear
+    @allProbabilities.clear
   end
 
   def prepForRecalculatingModelsParams(inputOrOutputForExample)
     @allInputs[@exampleNumber] = inputOrOutputForExample
-    @n += @examplesProbability
+    @allProbabilites[@exampleNumber] = @examplesProbability
     @exampleNumber += 1
+
+    #@n += @examplesProbability
+    #@sumSquaredProbabilities += (@examplesProbability**2)
+
   end
 
   def atEpochsEndCalculateModelParams
-    @mean = @allInputs.mean
-    @std = @allInputs.std
-    @prior = @n / @numberOfExamples
+    puts "allInputs=\t#{@allInputs}"
+    sumOfProbabilities = @allProbabilites.sum
+    @mean = calcWeightedMean(sumOfProbabilities)
+    @std = calcWeightedSTD(@mean)
+    @prior = sumOfProbabilities / @numberOfExamples
+
+
+  end
+
+  def calcWeightedMean(sumOfWeights)
+    vInputs = Vector.elements(@allInputs, false)
+    @vWeights = Vector.elements(@allProbabilites, false)
+    weightedSum = vInputs.inner_product(vWeights)
+    weightedSum / sumOfWeights
+  end
+
+  def calcWeightedSTD(weightedMean)
+    unweightedErrors = @allInputs.collect {|input| input - weightedMean}
+    vUnweightedErrors = Vector.elements(unweightedErrors,false)
+    vWeightedErrors = vUnweightedErrors.collect2(vWeights) {|error, weight| error * weight}
+    sumSquaredErrors = vWeightedErrors.inner_product(vWeightedErrors)
   end
 
   def to_s

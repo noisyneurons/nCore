@@ -92,8 +92,12 @@ class Array
     return Layer.new(self)
   end
 
+  def sum
+    self.reduce(:+)
+  end
+
   def mean
-    self.reduce(:+).to_f / size
+    sum.to_f / size
   end
 
   def average
@@ -106,8 +110,10 @@ class Array
 
   def std
     meanOfAry = self.mean
-    sumOfSquares = self.inject { |sum, n| sum + ((n-meanOfAry)**2) }
-    Math.sqrt(sumOfSquares / self.length)
+    sumOfSquares = self.inject(0.0) { |sum, n| sum + ((n - meanOfAry)**2) }
+    sqrtValue = Math.sqrt(sumOfSquares / self.length)
+    puts "sumOfSquares=\t#{sumOfSquares}\tsqrtValue=\t#{sqrtValue}\t"
+    sqrtValue
   end
 
   def standardError

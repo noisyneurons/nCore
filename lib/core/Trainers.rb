@@ -305,7 +305,7 @@ module SelfOrgMixture
     #puts "Network just after Normalization"
     #puts network
 
-    30.times do |i|
+    2.times do |i|
       puts "START #{i}"
       learningLayers.attachLearningStrategy(EstimateInputDistribution, strategyArguments)
       mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForEstimation=10, totalEpochs)
