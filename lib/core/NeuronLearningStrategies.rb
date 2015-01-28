@@ -130,13 +130,12 @@ class NormalizeByZeroingSumOfNetInputs < LearningStrategyBase
     @sumOfNetInputs += netInput
   end
 
-
   def endEpoch
-    inputLinks[-1].weight =  -1.0 * @sumOfNetInputs
+    biasWeight = inputLinks[-1].weight
+    sumOfNetInputsWithOutBiasContribution = @sumOfNetInputs - (4.0 * biasWeight)
+    inputLinks[-1].weight = -1.0 * (sumOfNetInputsWithOutBiasContribution / 4.0)
   end
 end
-
-
 
 class SelfOrgStrat < LearningStrategyBase
   attr_accessor :targetMinus, :distanceBetweenTargets
@@ -197,7 +196,8 @@ class BaseModel
 end
 
 class GaussModel < BaseModel
-  attr_reader :mean, :std, :prior, :bayesNumerator
+  attr_accessor :mean
+  attr_reader :std, :prior, :bayesNumerator
 
   def initialize(mean, std, prior, numberOfExamples)
     @numberOfExamples = numberOfExamples
@@ -243,7 +243,6 @@ class GaussModel < BaseModel
   end
 end
 
-
 class GaussModelAdaptable < GaussModel
   def initialize(mean, std, prior, numberOfExamples)
     super
@@ -266,7 +265,7 @@ class GaussModelAdaptable < GaussModel
   end
 
   def atEpochsEndCalculateModelParams
-    puts "allInputs=\t#{@allInputs}"
+    # puts "allInputs=\t#{@allInputs}"
     sumOfProbabilities = @allProbabilities.sum
     @mean = calcWeightedMean(sumOfProbabilities)
     @std = calcWeightedSTD(@mean)
@@ -291,7 +290,6 @@ class GaussModelAdaptable < GaussModel
     "\t\tmean=\t#{mean}\tstd=\t#{std}\tprior=\t#{prior}\n"
   end
 end
-
 
 class ExampleDistributionModel < BaseModel
   attr_reader :models
@@ -338,12 +336,25 @@ class ExampleDistributionModel < BaseModel
       probabilityForModel = probabilityThatExampleCameFrom(model, x, sumOfLikelihoods)
       errorComponentForModel = (x - model.mean) * probabilityForModel
 
-      puts "probabilityForModel=\t#{probabilityForModel},\tnetInputOrOutput=\t#{x},\tmodel.mean=\t#{model.mean},\tmodel.std=\t#{model.std},\terrorComponentForModel=#{errorComponentForModel}"
+      # puts "probabilityForModel=\t#{probabilityForModel},\tnetInputOrOutput=\t#{x},\tmodel.mean=\t#{model.mean},\tmodel.std=\t#{model.std},\terrorComponentForModel=#{errorComponentForModel}"
 
       sum + errorComponentForModel
     end
-    puts "\t\terror=\t#{error}\n"
+    # puts "\t\terror=\t#{error}\n"
     error
+  end
+
+  def makeMeansOfFirst2ModelsSymmetrical
+    algebraicDistanceBetweenMeans = @models[1].mean - @models[0].mean
+    averageAlgebraicMean = algebraicDistanceBetweenMeans / 2.0
+    @models[1].mean = averageAlgebraicMean
+    @models[0].mean = -1.0 * averageAlgebraicMean
+  end
+
+  def moveLobesApart(fractionToMove)
+    multiplier = 1.0 + fractionToMove
+    @models[1].mean = multiplier * @models[1].mean
+    @models[0].mean = multiplier * @models[0].mean
   end
 
   def probabilityThatExampleCameFrom(theModel, x, sumOfLikelihoods)
@@ -382,7 +393,7 @@ class EstimateInputDistribution < LearningStrategyBase
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
     neuron.netInput = calcNetInputToNeuron
-    puts "netInput= #{netInput}"
+    # puts "netInput= #{netInput}"
     neuron.output = ioFunction(netInput)
     inputDistributionModel.useExampleToImproveDistributionModel(netInput)
   end
@@ -392,11 +403,11 @@ class EstimateInputDistribution < LearningStrategyBase
   end
 end
 
-
 class SelfOrgByContractingBothLobesOfDistribution < LearningStrategyBase
 
   def startEpoch
     zeroDeltaWAccumulated
+    inputDistributionModel.makeMeansOfFirst2ModelsSymmetrical
   end
 
   def propagate(exampleNumber)
@@ -413,6 +424,17 @@ class SelfOrgByContractingBothLobesOfDistribution < LearningStrategyBase
   def endEpoch
     addAccumulationToWeight
   end
+end
+
+
+class SelfOrgContractingLobesMovingApart < SelfOrgByContractingBothLobesOfDistribution
+
+  def startEpoch
+    zeroDeltaWAccumulated
+    inputDistributionModel.makeMeansOfFirst2ModelsSymmetrical
+    inputDistributionModel.moveLobesApart(fractionToMove = 0.0)
+  end
+
 end
 
 

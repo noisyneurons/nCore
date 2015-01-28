@@ -305,15 +305,17 @@ module SelfOrgMixture
     puts "Network just after Normalization"
     #puts network
 
-    2.times do |i|
+    20.times do |i|
       puts "START #{i}"
       learningLayers.attachLearningStrategy(EstimateInputDistribution, strategyArguments)
       mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForEstimation=10, totalEpochs)
       puts "Network just after EstimateInputDistribution"
       #puts network
 
-      learningLayers.attachLearningStrategy(SelfOrgByContractingBothLobesOfDistribution, strategyArguments)
-      mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForAdapting=1, totalEpochs)
+
+      # learningLayers.attachLearningStrategy(SelfOrgByContractingBothLobesOfDistribution, strategyArguments)
+      learningLayers.attachLearningStrategy(SelfOrgContractingLobesMovingApart, strategyArguments)
+      mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForAdapting=10, totalEpochs)
       puts "Network just after SelfOrgByContractingBothLobesOfDistribution"
       #puts network
 
@@ -343,14 +345,14 @@ class OneNeuronSelfOrgTrainer < TrainerBase
     logger.puts "Output Layer BEFORE SUPERVISED TRAINING:"
     forEachExampleDisplayInputsAndOutputs(outputLayer)
 
-    learningLayers = outputLayer.to_LayerAry
-    mse, totalEpochs = supervisedTraining(learningLayers, ioFunction, args[:epochsForSupervisedTraining], totalEpochs)
+    #learningLayers = outputLayer.to_LayerAry
+    #mse, totalEpochs = supervisedTraining(learningLayers, ioFunction, args[:epochsForSupervisedTraining], totalEpochs)
+    #
+    #logger.puts "Output Layer AFTER SUPERVISED TRAINING:"
+    #forEachExampleDisplayInputsAndOutputs(outputLayer)
 
-    logger.puts "Output Layer AFTER SUPERVISED TRAINING:"
-    forEachExampleDisplayInputsAndOutputs(outputLayer)
 
-
-    return totalEpochs, mse, calcTestingMeanSquaredErrors
+    return totalEpochs, mse, 0.0 # calcTestingMeanSquaredErrors
   end
 
   def supervisedTraining(learningLayers, ioFunction, epochsDuringPhase, totalEpochs)

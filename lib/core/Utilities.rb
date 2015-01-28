@@ -93,7 +93,7 @@ class Array
   end
 
   def to_v
-     Vector.elements(self, false)
+    Vector.elements(self, false)
   end
 
   def sum

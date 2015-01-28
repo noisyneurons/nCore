@@ -23,10 +23,10 @@ args = {
 
     :classOfTheNetwork => Simplest1LayerNet,
     :classOfTheTrainer => OneNeuronSelfOrgTrainer, #TrainerBase,
-    :classOfDataSetGenerator => ORCenteredDataGenerator,
+    :classOfDataSetGenerator => ORDataGenerator, #ORCenteredDataGenerator,
 
     # training parameters re. Output Error
-    :learningRate => -0.3,
+    :learningRate => 0.1, # 0.1, just at instability (0.2 is unstable)
     :minMSE => 0.0, #0.001,
     :epochsForSelfOrg => 150, #150,
     :epochsForSupervisedTraining => 1, # 600,
@@ -63,7 +63,7 @@ numberOfRepetitions = 1
 
 runner = ExperimentRunner.new(args)
 lastExperimentRun, results = runner.repeatSimulation(numberOfRepetitions)
-#logger.puts lastExperimentRun.network
+logger.puts lastExperimentRun.network
 
 loggedData = logger.string
 
