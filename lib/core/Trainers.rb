@@ -293,41 +293,40 @@ module SelfOrgMixture
 
   def selOrgNoContext(learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
     propagatingLayers, willNotUseControllingLayer = layerDetermination(learningLayers.to_LayerAry)
-    strategyArguments = {:ioFunction => ioFunction, :numberOfExamples => args[:numberOfExamples], :classOfInputDistributionModel => ExampleDistributionModel}
+
+    strategyArguments = {:ioFunction => ioFunction, :numberOfExamples => args[:numberOfExamples], :classOfInputDistributionModel => ExampleDistributionModel, :desiredMeanNetInput => 1.0}
+
     mse, totalEpochs = normalizationAndSelfOrgNoContext(learningLayers, propagatingLayers, strategyArguments, epochsDuringPhase, totalEpochs)
     return mse, totalEpochs
   end
 
   def normalizationAndSelfOrgNoContext(learningLayers, propagatingLayers, strategyArguments, epochsForSelfOrg, totalEpochs)
     learningLayers.attachLearningStrategy(NormalizeByZeroingSumOfNetInputs, strategyArguments)
-    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForNormalization=1, totalEpochs)
-    # outputNeuron = outputLayer[0]
-    puts "Network just after Normalization"
-    #puts network
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, 1, totalEpochs)
 
-    20.times do |i|
+    3.times do |i|
       puts "START #{i}"
       learningLayers.attachLearningStrategy(EstimateInputDistribution, strategyArguments)
       mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForEstimation=10, totalEpochs)
       puts "Network just after EstimateInputDistribution"
-      #puts network
+
+      learningLayers.attachLearningStrategy(MoveLobesApart, strategyArguments)
+      mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, 1, totalEpochs)
+      puts "Network just after MoveLobesApart"
 
 
-      # learningLayers.attachLearningStrategy(SelfOrgByContractingBothLobesOfDistribution, strategyArguments)
-      learningLayers.attachLearningStrategy(SelfOrgContractingLobesMovingApart, strategyArguments)
-      mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForAdapting=10, totalEpochs)
+      learningLayers.attachLearningStrategy(SelfOrgByContractingBothLobesOfDistribution, strategyArguments)
+      mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForAdapting=50, totalEpochs)
       puts "Network just after SelfOrgByContractingBothLobesOfDistribution"
-      #puts network
 
     end
-
     return mse, totalEpochs
   end
 end
 
+
 class OneNeuronSelfOrgTrainer < TrainerBase
 
-  #include SelfOrg
   include SelfOrgMixture
 
   def train

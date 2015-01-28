@@ -26,7 +26,7 @@ args = {
     :classOfDataSetGenerator => ORDataGenerator, #ORCenteredDataGenerator,
 
     # training parameters re. Output Error
-    :learningRate => 0.1, # 0.1, just at instability (0.2 is unstable)
+    :learningRate => 0.05, # 0.1, just at instability (0.2 is unstable)
     :minMSE => 0.0, #0.001,
     :epochsForSelfOrg => 150, #150,
     :epochsForSupervisedTraining => 1, # 600,
