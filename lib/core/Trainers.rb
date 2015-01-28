@@ -299,7 +299,7 @@ module SelfOrgMixture
   end
 
   def normalizationAndSelfOrgNoContext(learningLayers, propagatingLayers, strategyArguments, epochsForSelfOrg, totalEpochs)
-    learningLayers.attachLearningStrategy(Normalization, strategyArguments)
+    learningLayers.attachLearningStrategy(NormalizeByZeroingSumOfNetInputs, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForNormalization=1, totalEpochs)
     # outputNeuron = outputLayer[0]
     puts "Network just after Normalization"
@@ -342,9 +342,6 @@ class OneNeuronSelfOrgTrainer < TrainerBase
     #display:
     logger.puts "Output Layer BEFORE SUPERVISED TRAINING:"
     forEachExampleDisplayInputsAndOutputs(outputLayer)
-
-    layersThatWereNormalized = outputLayer.to_LayerAry
-    layersThatWereNormalized.calcWeightsForUNNormalizedInputs # for understanding, convert to normal neural weight representation (without normalization variables)
 
     learningLayers = outputLayer.to_LayerAry
     mse, totalEpochs = supervisedTraining(learningLayers, ioFunction, args[:epochsForSupervisedTraining], totalEpochs)

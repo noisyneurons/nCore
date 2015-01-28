@@ -37,7 +37,7 @@ args = {
     :numberOfOutputNeurons => 1,
     :weightRange => 1.0,
 
-    :typeOfLink => LinkWithNormalization,
+    :typeOfLink => Link,
     :typeOfNeuron => Neuron3,
     :typeOfOutputNeuron => OutputNeuron3,
 

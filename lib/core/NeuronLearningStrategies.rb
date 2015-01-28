@@ -117,6 +117,27 @@ class Normalization < LearningStrategyBase
   end
 end
 
+
+class NormalizeByZeroingSumOfNetInputs < LearningStrategyBase
+
+  def startEpoch
+    @sumOfNetInputs = 0.0
+  end
+
+  def propagate(exampleNumber)
+    neuron.exampleNumber = exampleNumber
+    neuron.netInput = netInput = calcNetInputToNeuron
+    @sumOfNetInputs += netInput
+  end
+
+
+  def endEpoch
+    inputLinks[-1].weight =  -1.0 * @sumOfNetInputs
+  end
+end
+
+
+
 class SelfOrgStrat < LearningStrategyBase
   attr_accessor :targetMinus, :distanceBetweenTargets
 
@@ -259,8 +280,8 @@ class GaussModelAdaptable < GaussModel
 
   def calcWeightedSTD(weightedMean)
     weights = @allProbabilities.to_v
-    unweightedErrors = (@allInputs.to_v).collect {|input| input - weightedMean}
-    weightedErrors = (unweightedErrors.collect2(weights) {|error, weight| error * weight}).to_v
+    unweightedErrors = (@allInputs.to_v).collect { |input| input - weightedMean }
+    weightedErrors = (unweightedErrors.collect2(weights) { |error, weight| error * weight }).to_v
     sumSquareWeightedErrors = weightedErrors.inner_product(weightedErrors)
     sumSquaredWeights = weights.inner_product(weights)
     @std = Math.sqrt(sumSquareWeightedErrors / sumSquaredWeights)
@@ -315,11 +336,11 @@ class ExampleDistributionModel < BaseModel
     sumOfLikelihoods = @models.inject(0.0) { |sum, model| sum + likelihood(x, model) }
     error = @models.inject(0.0) do |sum, model|
       probabilityForModel = probabilityThatExampleCameFrom(model, x, sumOfLikelihoods)
-      errorComponentForModel =  (x - model.mean) * probabilityForModel
+      errorComponentForModel = (x - model.mean) * probabilityForModel
 
       puts "probabilityForModel=\t#{probabilityForModel},\tnetInputOrOutput=\t#{x},\tmodel.mean=\t#{model.mean},\tmodel.std=\t#{model.std},\terrorComponentForModel=#{errorComponentForModel}"
 
-      sum +  errorComponentForModel
+      sum + errorComponentForModel
     end
     puts "\t\terror=\t#{error}\n"
     error
