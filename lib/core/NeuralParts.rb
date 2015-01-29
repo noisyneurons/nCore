@@ -178,10 +178,7 @@ class Neuron < NeuronBase
 end
 
 class OutputNeuron < Neuron
-  attr_accessor :arrayOfSelectedData, :keyToExampleData, :target, :outputError, :weightedErrorMetric
-  attr_accessor :netInput, :inputLinks, :error, :exampleNumber, :metricRecorder
-  include CommonNeuronCalculations
-  include SigmoidIOFunction
+  attr_accessor :arrayOfSelectedData, :keyToExampleData, :target, :weightedErrorMetric
 
   def initialize(args)
     super
@@ -315,14 +312,27 @@ end
 
 #####################  Links & Weights     #########################
 
-class Link
-  attr_accessor :inputNeuron, :outputNeuron, :weightAtBeginningOfTraining,
-                :learningRate, :deltaWAccumulated, :deltaW, :weightRange, :args, :logger
+
+class LinkBase
+  attr_accessor :inputNeuron, :outputNeuron, :args
 
   def initialize(inputNeuron, outputNeuron, args)
     @inputNeuron = inputNeuron
     @outputNeuron = outputNeuron
     @args = args
+  end
+
+  def to_s
+    return "LinkBase\tFROM: #{inputNeuron.class.to_s} #{inputNeuron.id} TO: #{outputNeuron.class.to_s} #{outputNeuron.id}"
+  end
+
+end
+
+class Link < LinkBase
+  attr_accessor :weightAtBeginningOfTraining, :learningRate, :deltaWAccumulated, :deltaW, :weightRange, :logger
+
+  def initialize(inputNeuron, outputNeuron, args)
+    super
     @logger = @args[:resultsStringIOorFileIO]
     @learningRate = args[:learningRate]
     @weight = 0.0
@@ -387,6 +397,42 @@ class Link
 
   def to_s
     return "Weight=\t#{weight}\tDeltaW=\t#{deltaW}\tAccumulatedDeltaW=\t#{deltaWAccumulated}\tWeightAtBeginningOfTraining=\t#{weightAtBeginningOfTraining}\tFROM: #{inputNeuron.class.to_s} #{inputNeuron.id} TO: #{outputNeuron.class.to_s} #{outputNeuron.id}"
+  end
+end
+
+class SuppressorLink < LinkBase
+  attr_accessor :reverse, :disable
+
+  def initialize(inputNeuron, outputNeuron, args)
+    super
+    @disable = true
+    @reverse = false
+  end
+
+  # This could be stochastic, with probability of suppression a function
+  # of the input neuron's output
+  def suppress?
+    return false if(disable)
+    returnValue = transform(@inputNeuron.output)
+    case @reverse
+      when false
+        returnValue
+      when true
+        !returnValue
+    end
+  end
+
+  def transform(input)
+    if input >= 0.5
+      true
+    else
+      false
+    end
+  end
+
+
+  def to_s
+    return "SuppressorLink\tSuppress: #{self.suppress?}\tFROM: #{inputNeuron.class.to_s} #{inputNeuron.id} TO: #{outputNeuron.class.to_s} #{outputNeuron.id}"
   end
 end
 

@@ -2,8 +2,155 @@
 ; ## ../nCore/lib/core/NeuronLearningStrategies.rb
 
 require 'distribution'
+###################################################################
+###################################################################
+; ####################### Basic Learning Strategies ############################
 ;
-; ####### Distribution Models for Version 0.2 Learning Strategies ###############
+class LearningStrategyBase # strategy for standard bp learning for output neurons
+  attr_reader :neuron, :strategyArgs, :inputLinks, :outputLinks
+  include CommonNeuronCalculations
+
+  def initialize(theEnclosingNeuron, ** strategyArgs)
+    @neuron = theEnclosingNeuron
+    @strategyArgs = strategyArgs
+    ioFunction = @strategyArgs[:ioFunction]
+    neuron.extend(ioFunction)
+    self.extend(ioFunction)
+    neuron.output = ioFunction(neuron.netInput) # only needed for recurrent simulators
+    @inputLinks = @neuron.inputLinks
+    @outputLinks = @neuron.outputLinks if @neuron.respond_to?(:outputLinks)
+  end
+
+  def startStrategy
+  end
+
+  def startEpoch
+  end
+
+  def propagate(exampleNumber)
+  end
+
+  def learnExample
+  end
+
+  def endEpoch
+  end
+
+  def endStrategy
+  end
+
+
+  # service routines that may be used by version 0.1 learning strategies
+  # TODO this routine is not needed IFF ver. 0.1 learning strategies are to be deleted.
+  def calcWeightsForUNNormalizedInputs
+    biasWeight = inputLinks.inject(0.0) { |sum, link| sum + link.propagateUsingZeroInput }
+    inputLinks.each { |aLink| aLink.calcWeightsForUNNormalizedInputs }
+    inputLinks[-1].weight = biasWeight
+    inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
+  end
+
+  # simple accessors to neuron's embedded objects
+  protected
+
+  def outputError
+    neuron.outputError
+  end
+
+  def netInput
+    neuron.netInput
+  end
+
+  def inputDistributionModel
+    return neuron.inputDistributionModel
+  end
+end
+
+class ForwardPropOnly < LearningStrategyBase # just forward propagation
+  def propagate(exampleNumber)
+    neuron.exampleNumber = exampleNumber
+    neuron.netInput = calcNetInputToNeuron
+    neuron.propagateToOutput
+  end
+end
+
+class LearningBP < LearningStrategyBase # strategy for standard bp learning for hidden neurons
+
+  def startEpoch
+    zeroDeltaWAccumulated
+  end
+
+  def propagate(exampleNumber)
+    neuron.exampleNumber = exampleNumber
+    neuron.netInput = calcNetInputToNeuron
+    neuron.propagateToOutput
+  end
+
+  def learnExample
+    neuron.backPropagateFromOutputs
+    neuron.error = outputError * ioDerivativeFromNetInput(netInput)
+    calcDeltaWsAndAccumulate
+  end
+
+  def endEpoch
+    addAccumulationToWeight
+  end
+end
+
+;
+; ####################### Version 0.1 Learning Strategies #######################
+;
+class Normalization < LearningStrategyBase
+
+  def startEpoch
+    inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
+  end
+
+  def propagate(exampleNumber)
+    neuron.exampleNumber = exampleNumber
+  end
+
+  def learnExample
+    inputLinks.each { |link| link.storeEpochHistory }
+  end
+
+  def endEpoch
+    inputLinks.each { |aLink| aLink.calculateNormalizationCoefficients }
+  end
+end
+
+class SelfOrgStrat < LearningStrategyBase
+  attr_accessor :targetMinus, :distanceBetweenTargets
+
+  def initialize(theEnclosingNeuron, ** strategyArgs)
+    super
+    @targetPlus = self.findNetInputThatGeneratesMaximumOutput
+    @targetMinus = -1.0 * @targetPlus
+    @distanceBetweenTargets = @targetPlus - @targetMinus
+  end
+
+  def startEpoch
+    zeroDeltaWAccumulated
+  end
+
+  def propagate(exampleNumber)
+    neuron.exampleNumber = exampleNumber
+    neuron.netInput = calcNetInputToNeuron
+    neuron.propagateToOutput
+  end
+
+  def learnExample
+    neuron.error = -1.0 * neuron.ioDerivativeFromNetInput(netInput) * (((netInput - targetMinus)/distanceBetweenTargets) - 0.5)
+    calcDeltaWsAndAccumulate
+  end
+
+  def endEpoch
+    addAccumulationToWeight
+  end
+end
+;
+; ####################### Version 0.2 Learning Strategies #######################
+;
+; #---- Support Classes: Distribution Models (and sub-models)
 ;
 # base Gaussian model for estimating a single gaussian's parameters
 # This base model is only useful as part of a mixture of models, where some
@@ -136,9 +283,8 @@ class ExampleDistributionModel < BaseModel
     @std = [0.5, 0.5, 4.0]
     @prior = [0.33, 0.33, 0.34]
     @models = []
-    @classesOfModels.each_with_index do |classOfModel, i|
-      @models << classOfModel.new(@mean[i], @std[i], @prior[i], @numberOfExamples)
-    end
+    @classesOfModels.each_with_index { |classOfModel, i| @models << classOfModel.new(@mean[i], @std[i], @prior[i], @numberOfExamples) }
+    # @lobeModels = [@models[0], @models[1]]
   end
 
   # use this method at beginning of EACH EPOCH
@@ -163,18 +309,17 @@ class ExampleDistributionModel < BaseModel
     puts self
   end
 
+  # Key calculation for flocking/clustering examples' netinputs
+  # TODO May want to restrict calculation to the 1st 2 models; or, in other cases, for "deflocking" we may want to only
+  # calculate error for the 3rd model (i.e., the model with 'always' zero mean)
   def calcError(netInputOrOutput)
     x = netInputOrOutput
     sumOfLikelihoods = @models.inject(0.0) { |sum, model| sum + likelihood(x, model) }
     error = @models.inject(0.0) do |sum, model|
       probabilityForModel = probabilityThatExampleCameFrom(model, x, sumOfLikelihoods)
       errorComponentForModel = (x - model.mean) * probabilityForModel
-
-      # puts "probabilityForModel=\t#{probabilityForModel},\tnetInputOrOutput=\t#{x},\tmodel.mean=\t#{model.mean},\tmodel.std=\t#{model.std},\terrorComponentForModel=#{errorComponentForModel}"
-
       sum + errorComponentForModel
     end
-    # puts "\t\terror=\t#{error}\n"
     error
   end
 
@@ -183,12 +328,6 @@ class ExampleDistributionModel < BaseModel
     averageAlgebraicMean = algebraicDistanceBetweenMeans / 2.0
     @models[1].mean = averageAlgebraicMean
     @models[0].mean = -1.0 * averageAlgebraicMean
-  end
-
-  def moveLobesApart(fractionToMove)
-    multiplier = 1.0 + fractionToMove
-    @models[1].mean = multiplier * @models[1].mean
-    @models[0].mean = multiplier * @models[0].mean
   end
 
   def probabilityThatExampleCameFrom(theModel, x, sumOfLikelihoods)
@@ -203,171 +342,32 @@ class ExampleDistributionModel < BaseModel
     models.inject("") { |concat, model| concat + model.to_s }
   end
 end
-
-###################################################################
-###################################################################
-; ####################### Basic Learning Strategies ############################
 ;
-class LearningStrategyBase # strategy for standard bp learning for output neurons
-  attr_reader :neuron, :strategyArgs, :inputLinks, :outputLinks
-  include CommonNeuronCalculations
-
-  def initialize(theEnclosingNeuron, ** strategyArgs)
-    @neuron = theEnclosingNeuron
-    @strategyArgs = strategyArgs
-    ioFunction = @strategyArgs[:ioFunction]
-    neuron.extend(ioFunction)
-    self.extend(ioFunction)
-    neuron.output = ioFunction(neuron.netInput) # only needed for recurrent simulators
-    @inputLinks = @neuron.inputLinks
-    @outputLinks = @neuron.outputLinks if @neuron.respond_to?(:outputLinks)
-  end
-
-  def startStrategy
-  end
-
-  def startEpoch
-  end
-
-  def propagate(exampleNumber)
-  end
-
-  def learnExample
-  end
-
-  def endEpoch
-  end
-
-  # service routines that may be used by version 0.1 learning strategies
-  def calcWeightsForUNNormalizedInputs
-    biasWeight = inputLinks.inject(0.0) { |sum, link| sum + link.propagateUsingZeroInput }
-    inputLinks.each { |aLink| aLink.calcWeightsForUNNormalizedInputs }
-    inputLinks[-1].weight = biasWeight
-    inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
-  end
-
-  # simple accessors to neuron's embedded objects
-  protected
-
-  def outputError
-    neuron.outputError
-  end
-
-  def netInput
-    neuron.netInput
-  end
-
-  def inputDistributionModel
-    return neuron.inputDistributionModel
-  end
-end
-
-class ForwardPropOnly < LearningStrategyBase # just forward propagation
-  def propagate(exampleNumber)
-    neuron.exampleNumber = exampleNumber
-    neuron.netInput = calcNetInputToNeuron
-    neuron.propagateToOutput
-  end
-end
-
-class LearningBP < LearningStrategyBase # strategy for standard bp learning for hidden neurons
-
-  def startEpoch
-    zeroDeltaWAccumulated
-  end
-
-  def propagate(exampleNumber)
-    neuron.exampleNumber = exampleNumber
-    neuron.netInput = calcNetInputToNeuron
-    neuron.propagateToOutput
-  end
-
-  def learnExample
-    neuron.backPropagateFromOutputs
-    neuron.error = outputError * ioDerivativeFromNetInput(netInput)
-    calcDeltaWsAndAccumulate
-  end
-
-  def endEpoch
-    addAccumulationToWeight
-  end
-end
-
-class LearningBPOutput < LearningBP
-end
-;
-; ####################### Version 0.1 Learning Strategies #######################
-;
-class Normalization < LearningStrategyBase
-
-  def startEpoch
-    inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
-  end
-
-  def propagate(exampleNumber)
-    neuron.exampleNumber = exampleNumber
-  end
-
-  def learnExample
-    inputLinks.each { |link| link.storeEpochHistory }
-  end
-
-  def endEpoch
-    inputLinks.each { |aLink| aLink.calculateNormalizationCoefficients }
-  end
-end
-
-class SelfOrgStrat < LearningStrategyBase
-  attr_accessor :targetMinus, :distanceBetweenTargets
-
-  def initialize(theEnclosingNeuron, ** strategyArgs)
-    super
-    @targetPlus = self.findNetInputThatGeneratesMaximumOutput
-    @targetMinus = -1.0 * @targetPlus
-    @distanceBetweenTargets = @targetPlus - @targetMinus
-  end
-
-  def startEpoch
-    zeroDeltaWAccumulated
-  end
-
-  def propagate(exampleNumber)
-    neuron.exampleNumber = exampleNumber
-    neuron.netInput = calcNetInputToNeuron
-    neuron.propagateToOutput
-  end
-
-  def learnExample
-    neuron.error = -1.0 * neuron.ioDerivativeFromNetInput(netInput) * (((netInput - targetMinus)/distanceBetweenTargets) - 0.5)
-    calcDeltaWsAndAccumulate
-  end
-
-  def endEpoch
-    addAccumulationToWeight
-  end
-end
-;
-; ####################### Version 0.2 Learning Strategies #######################
+; #---- 0.2 Learning Strategies
 ;
 class NormalizeByZeroingSumOfNetInputs < LearningStrategyBase
 
   def startEpoch
     @sumOfNetInputs = 0.0
+    @sumOfBiasWeightsContributionToNetInput = 0.0
+    @biasWeight = inputLinks[-1].weight
+    @numExamplesCounted = 0
   end
 
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
     neuron.netInput = netInput = calcNetInputToNeuron
     @sumOfNetInputs += netInput
+    @sumOfBiasWeightsContributionToNetInput += @biasWeight
+    @numExamplesCounted += 1
   end
 
   def endEpoch
     biasWeight = inputLinks[-1].weight
-    sumOfNetInputsWithOutBiasContribution = @sumOfNetInputs - (4.0 * biasWeight)
-    inputLinks[-1].weight = -1.0 * (sumOfNetInputsWithOutBiasContribution / 4.0)
+    sumOfNetInputsWithOutBiasContribution = @sumOfNetInputs - @sumOfBiasWeightsContributionToNetInput
+    inputLinks[-1].weight = -1.0 * (sumOfNetInputsWithOutBiasContribution / @numExamplesCounted)
   end
 end
-
 # Using Mixture Model to Estimate the distribution a Neuron's netInputs from all examples in an epoch
 # This class is one part of of a multi-part learning strategy...
 class EstimateInputDistribution < LearningStrategyBase
@@ -516,5 +516,3 @@ class LearningControlledByNeuronNOT < LearningControlledByNeuron
                   end
   end
 end
-
-
