@@ -287,14 +287,13 @@ end
 ; ####################################
 
 
-
-
 module SelfOrgMixture
 
   def selOrgNoContext(learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
     propagatingLayers, willNotUseControllingLayer = layerDetermination(learningLayers.to_LayerAry)
     strategyArguments = {:ioFunction => ioFunction, :numberOfExamples => args[:numberOfExamples],
-                         :classOfInputDistributionModel => ExampleDistributionModel, :desiredMeanNetInput => 1.0}
+                         :classOfInputDistributionModel => ExampleDistributionModel, :desiredMeanNetInput => 1.0,
+                         :extendStrategyWithModule => nil}
     mse, totalEpochs = normalizationAndSelfOrgNoContext(learningLayers, propagatingLayers, strategyArguments, epochsDuringPhase, totalEpochs)
     return mse, totalEpochs
   end
@@ -425,7 +424,6 @@ module SelfOrgMixtureWithContext
   end
 
 end
-
 
 
 ###################################################################

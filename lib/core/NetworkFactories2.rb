@@ -36,6 +36,21 @@ class ContextNetwork < BaseNetwork
     connectAllLearningNeuronsToBiasNeuron
   end
 
+  ### bew below
+
+
+   def context_connect_layers(sendingLayer, receivingLayer, typeOfLink, args)
+    sendingLayer.each_index do |sendingNeuron, index|
+      receivingNeuron = receivingLayer[index * 2]
+      connect_neuron_to_context_neuron(sendingNeuron, receivingNeuron, typeOfLink, args)
+      receivingNeuron = receivingLayer[(index * 2) + 1]
+      connect_neuron_to_context_neuron(sendingNeuron, receivingNeuron, typeOfLink, args)
+    end
+  end
+
+
+ #### old below
+
   def connectAllLearningNeuronsToBiasNeuron
     addLinksFromBiasNeuronTo(hiddenNeurons, args[:typeOfLink])
     addLinksFromBiasNeuronTo(outputLayer, args[:typeOfLinkToOutput])
@@ -57,6 +72,8 @@ class Context4LayerNetwork < ContextNetwork
 
     hiddenLayer2 = createAndConnectLayer(inputLayer, typeOfNeuron = args[:typeOfNeuron], typeOfLink = args[:typeOfLink], args[:numberOfHiddenLayer2Neurons])
     self.allNeuronLayers << hiddenLayer2
+
+    context_connect_layers(hiddenLayer1, hiddenLayer2, SuppressorLink, args)
 
     self.outputLayer = createAndConnectLayer((hiddenLayer1 + hiddenLayer2), typeOfNeuron = args[:typeOfOutputNeuron], typeOfLink = args[:typeOfLinkToOutput], args[:numberOfOutputNeurons])
     self.allNeuronLayers << outputLayer

@@ -37,7 +37,12 @@ class Layer
   end
 
   def attachLearningStrategy(learningStrategy, strategyArgs)
-    arrayOfNeurons.each { |aNeuron| aNeuron.learningStrat = learningStrategy.new(aNeuron, strategyArgs) }
+    arrayOfNeurons.each do |aNeuron|
+      currentStrategy =  learningStrategy.new(aNeuron, strategyArgs)
+      extensionModule = strategyArgs[:extendStrategyWithModule]
+      currentStrategy.extend(extensionModule)   unless(extensionModule.nil?)
+      aNeuron.learningStrat = learningStrategy.new(aNeuron, strategyArgs)
+    end
   end
 
   def calcWeightsForUNNormalizedInputs

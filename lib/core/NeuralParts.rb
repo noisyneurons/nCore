@@ -260,12 +260,13 @@ end
 ####### Neurons with Plug-in Learning Strategies ################
 
 class Neuron2 < Neuron
-  attr_accessor :learningStrat
+  attr_accessor :learningStrat, :suppressorLink
   include ForwardingToLearningStrategy
 
   def initialize(args)
     super
     @learningStrat = nil
+    @suppressorLink = nil
   end
 
   def to_s
@@ -276,12 +277,13 @@ class Neuron2 < Neuron
 end
 
 class OutputNeuron2 < OutputNeuron
-  attr_accessor :learningStrat
+  attr_accessor :learningStrat, :suppressorLink
   include ForwardingToLearningStrategy
 
   def initialize(args)
     super
     @learningStrat = nil
+    @suppressorLink = nil
   end
 
   def to_s
@@ -320,6 +322,33 @@ class LinkBase
     @inputNeuron = inputNeuron
     @outputNeuron = outputNeuron
     @args = args
+  end
+
+  def weight
+  end
+
+  def weight=(someObject)
+  end
+
+  def calcDeltaWAndAccumulate
+  end
+
+  def addAccumulationToWeight
+  end
+
+  def propagate
+  end
+
+  def backPropagate
+  end
+
+  def calcDeltaW
+  end
+
+  def weightUpdate
+  end
+
+  def randomizeWeightWithinTheRange(weightRange)
   end
 
   def to_s
@@ -406,7 +435,7 @@ class SuppressorLink < LinkBase
   def initialize(inputNeuron, outputNeuron, args)
     super
     @disable = true
-    @reverse = false
+    @reverse = @id.odd?
   end
 
   # This could be stochastic, with probability of suppression a function
@@ -430,14 +459,13 @@ class SuppressorLink < LinkBase
     end
   end
 
-
   def to_s
     return "SuppressorLink\tSuppress: #{self.suppress?}\tFROM: #{inputNeuron.class.to_s} #{inputNeuron.id} TO: #{outputNeuron.class.to_s} #{outputNeuron.id}"
   end
 end
 
-### Link for normalization of inputs
 
+# Link for normalization of inputs
 class LinkWithNormalization < Link
   attr_accessor :inputsOverEpoch, :normalizationOffset, :largestAbsoluteArrayElement, :normalizationMultiplier
 
