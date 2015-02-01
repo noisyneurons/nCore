@@ -26,18 +26,18 @@ logger = StringIO.new
 
 args = {
     :experimentNumber => $globalExperimentNumber,
-    :descriptionOfExperiment => "Proj3SelfOrgContextSuper; 2 in 4 out; divide but NO Integration",
+    :descriptionOfExperiment => "Proj3MixtureSelfOrgContextSuper; 2 in 4 out; divide but NO Integration",
     :baseRandomNumberSeed => 0,
 
     :classOfTheNetwork => Context4LayerNetworkVer2,
-    :classOfTheTrainer => Trainer3SelfOrgContextSuper,
+    :classOfTheTrainer => MixtureTrainer3SelfOrgContextSuper,
     :classOfDataSetGenerator => Generate4ClassDataSet,
 
     # training parameters
     :learningRate => 0.1,
     :minMSE => 0.0,
-    :epochsForSelfOrg => 150, # 300, for 30 degree angle rotation of data
-    :epochsForSupervisedTraining => 600,
+    :epochsForSelfOrg => 300, # 300, for 30 degree angle rotation of data
+    :epochsForSupervisedTraining => 1,
     :trainingSequence => TrainingSequence,
 
     # Network Architecture
@@ -47,10 +47,10 @@ args = {
     :numberOfOutputNeurons => 4,
 
     # Neural Parts Specifications
-    :typeOfLink => LinkWithNormalization,
-    :typeOfNeuron => Neuron2,
+    :typeOfLink => Link,
+    :typeOfNeuron => Neuron3,
     :typeOfLinkToOutput => LinkWithNormalization,
-    :typeOfOutputNeuron => OutputNeuron2,
+    :typeOfOutputNeuron => OutputNeuron3,
 
     :weightRange => 0.1,
 

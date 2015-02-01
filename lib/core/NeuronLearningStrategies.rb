@@ -95,59 +95,58 @@ class LearningBP < LearningStrategyBase # strategy for standard bp learning for 
     addAccumulationToWeight
   end
 end
-
 ;
 ; ####################### Version 0.1 Learning Strategies #######################
 ;
-class Normalization < LearningStrategyBase
-
-  def startEpoch
-    inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
-  end
-
-  def propagate(exampleNumber)
-    neuron.exampleNumber = exampleNumber
-  end
-
-  def learnExample
-    inputLinks.each { |link| link.storeEpochHistory }
-  end
-
-  def endEpoch
-    inputLinks.each { |aLink| aLink.calculateNormalizationCoefficients }
-  end
-end
-
-class SelfOrgStrat < LearningStrategyBase
-  attr_accessor :targetMinus, :distanceBetweenTargets
-
-  def initialize(theEnclosingNeuron, ** strategyArgs)
-    super
-    @targetPlus = self.findNetInputThatGeneratesMaximumOutput
-    @targetMinus = -1.0 * @targetPlus
-    @distanceBetweenTargets = @targetPlus - @targetMinus
-  end
-
-  def startEpoch
-    zeroDeltaWAccumulated
-  end
-
-  def propagate(exampleNumber)
-    neuron.exampleNumber = exampleNumber
-    neuron.netInput = calcNetInputToNeuron
-    neuron.propagateToOutput
-  end
-
-  def learnExample
-    neuron.error = -1.0 * neuron.ioDerivativeFromNetInput(netInput) * (((netInput - targetMinus)/distanceBetweenTargets) - 0.5)
-    calcDeltaWsAndAccumulate
-  end
-
-  def endEpoch
-    addAccumulationToWeight
-  end
-end
-;
+#class Normalization < LearningStrategyBase
+#
+#  def startEpoch
+#    inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
+#  end
+#
+#  def propagate(exampleNumber)
+#    neuron.exampleNumber = exampleNumber
+#  end
+#
+#  def learnExample
+#    inputLinks.each { |link| link.storeEpochHistory }
+#  end
+#
+#  def endEpoch
+#    inputLinks.each { |aLink| aLink.calculateNormalizationCoefficients }
+#  end
+#end
+#
+#class SelfOrgStrat < LearningStrategyBase
+#  attr_accessor :targetMinus, :distanceBetweenTargets
+#
+#  def initialize(theEnclosingNeuron, ** strategyArgs)
+#    super
+#    @targetPlus = self.findNetInputThatGeneratesMaximumOutput
+#    @targetMinus = -1.0 * @targetPlus
+#    @distanceBetweenTargets = @targetPlus - @targetMinus
+#  end
+#
+#  def startEpoch
+#    zeroDeltaWAccumulated
+#  end
+#
+#  def propagate(exampleNumber)
+#    neuron.exampleNumber = exampleNumber
+#    neuron.netInput = calcNetInputToNeuron
+#    neuron.propagateToOutput
+#  end
+#
+#  def learnExample
+#    neuron.error = -1.0 * neuron.ioDerivativeFromNetInput(netInput) * (((netInput - targetMinus)/distanceBetweenTargets) - 0.5)
+#    calcDeltaWsAndAccumulate
+#  end
+#
+#  def endEpoch
+#    addAccumulationToWeight
+#  end
+#end
+#;
 ; ####################### Version 0.2 Learning Strategies #######################
 ;
 ; #---- Support Classes: Distribution Models (and sub-models)
@@ -446,73 +445,94 @@ class MoveLobesApart < LearningStrategyBase
 
 end
 ;
-; ####################### Module used by Learning Controllers #######################
+; ####################### Module for Modulation of Learning #######################
 ;
-module ContextForLearning
-  attr_accessor :learningController
-
+module LearningSuppressionViaLink
   def propagate(exampleNumber)
-    if learningController.output == 1.0
+    unless neuron.suppressorLink.suppress?
       super(exampleNumber)
     else
-      dropOutNeuron
+      neuronDoesNotRespond
     end
   end
 
   def learnExample
-    if learningController.output == 1.0
-      super
-    end
+    super unless neuron.suppressorLink.suppress?
   end
 
-  protected
-
-  def dropOutNeuron
+  def neuronDoesNotRespond
     neuron.netInput = netInput = 0.0
     neuron.output = ioFunction(netInput)
   end
 end
 ;
-; ######################## Learning Controllers ####################################
+; ####################### Module used by Learning Controllers #######################
 ;
-class LearningController
-  attr_accessor :sensor
-
-  def initialize(sensor=nil)
-    @sensor = sensor
-  end
-
-  def output
-    1.0
-  end
-end
-
-class LearningControlledByNeuron < LearningController
-  def output
-    transform(sensor.output)
-  end
-
-  def transform(input)
-    if input >= 0.5
-      1.0
-    else
-      0.0
-    end
-  end
-end
-
-class LearningControlledByNeuronNOT < LearningControlledByNeuron
-  def output
-    logicalNOT(transform(sensor.output))
-  end
-
-  protected
-
-  def logicalNOT(input)
-    returnValue = if input == 1.0
-                    0.0
-                  else
-                    1.0
-                  end
-  end
-end
+#module ContextForLearning
+#  attr_accessor :learningController
+#
+#  def propagate(exampleNumber)
+#    if learningController.output == 1.0
+#      super(exampleNumber)
+#    else
+#      dropOutNeuron
+#    end
+#  end
+#
+#  def learnExample
+#    if learningController.output == 1.0
+#      super
+#    end
+#  end
+#
+#  protected
+#
+#  def dropOutNeuron
+#    neuron.netInput = netInput = 0.0
+#    neuron.output = ioFunction(netInput)
+#  end
+#end
+#;
+#; ######################## Learning Controllers ####################################
+#;
+#class LearningController
+#  attr_accessor :sensor
+#
+#  def initialize(sensor=nil)
+#    @sensor = sensor
+#  end
+#
+#  def output
+#    1.0
+#  end
+#end
+#
+#class LearningControlledByNeuron < LearningController
+#  def output
+#    transform(sensor.output)
+#  end
+#
+#  def transform(input)
+#    if input >= 0.5
+#      1.0
+#    else
+#      0.0
+#    end
+#  end
+#end
+#
+#class LearningControlledByNeuronNOT < LearningControlledByNeuron
+#  def output
+#    logicalNOT(transform(sensor.output))
+#  end
+#
+#  protected
+#
+#  def logicalNOT(input)
+#    returnValue = if input == 1.0
+#                    0.0
+#                  else
+#                    1.0
+#                  end
+#  end
+#end

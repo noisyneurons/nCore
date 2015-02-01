@@ -435,7 +435,7 @@ class SuppressorLink < LinkBase
   def initialize(inputNeuron, outputNeuron, args)
     super
     @disable = true
-    @reverse = @id.odd?
+    @reverse = @outputNeuron.id.odd?
   end
 
   # This could be stochastic, with probability of suppression a function

@@ -40,7 +40,7 @@ class ContextNetwork < BaseNetwork
 
 
   def context_connect_layers(sendingLayer, receivingLayer, typeOfLink, args)
-    sendingLayer.each_index do |sendingNeuron, index|
+    sendingLayer.each_with_index do |sendingNeuron, index|
       receivingNeuron = receivingLayer[index * 2]
       connect_neuron_to_context_neuron(sendingNeuron, receivingNeuron, typeOfLink, args)
       receivingNeuron = receivingLayer[(index * 2) + 1]
@@ -48,6 +48,11 @@ class ContextNetwork < BaseNetwork
     end
   end
 
+  def connect_neuron_to_context_neuron(sendingNeuron, receivingNeuron, typeOfLink, args)
+    theLink = createLink(sendingNeuron, receivingNeuron, typeOfLink, args)
+    sendingNeuron.outputLinks << theLink
+    receivingNeuron.suppressorLink = theLink
+  end
 
   #### old below
 
