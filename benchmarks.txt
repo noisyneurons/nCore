@@ -1,0 +1,20 @@
+Proj 3
+lastEpoch, trainingMSE, testMSE, startingTime, endingTime
+902, 0.004174735781773948, 0.004174735781773983, 2015-02-01 15:43:43 -0500, 2015-02-01 15:43:51 -0500
+
+Proj 4
+lastEpoch, trainingMSE, testMSE, startingTime, endingTime
+1053, 0.004174735302558576, 0.004174735302558586, 2015-02-01 15:45:40 -0500, 2015-02-01 15:45:51 -0500
+
+BasicBPDemo
+lastEpoch, trainingMSE, testMSE, startingTime, endingTime
+1573, 0.0009991535734837121, 0.0009991535734837121, 2015-02-01 15:46:49 -0500, 2015-02-01 15:46:51 -0500
+
+SingleNeuronDemo
+Layer 1
+
+	OutputNeuron3 Class; ID = 3	Output= 0.5250073949143996	Net Input=	0.1001131123710473	Error=	8.669570468466947e-08	Output Error=		WeightedErrorMetric=
+		Number of Input Links=	3
+						Input Link:	0	Weight=	1.9718610624481034e-06	DeltaW=	8.669570468466948e-09	AccumulatedDeltaW=	0.0	WeightAtBeginningOfTraining=	0.04881350392732475	FROM: InputNeuron 1 TO: OutputNeuron3 3
+						Input Link:	1	Weight=	2.0000000413100176	DeltaW=	8.669570468466948e-09	AccumulatedDeltaW=	0.0	WeightAtBeginningOfTraining=	0.21518936637241948	FROM: InputNeuron 2 TO: OutputNeuron3 3
+						Input Link:	2	Weight=	-1.0000011964584112	DeltaW=	8.669570468466948e-09	AccumulatedDeltaW=	0.0	WeightAtBeginningOfTraining=	0.10276337607164387	FROM: BiasNeuron 0 TO: OutputNeuron3 3
