@@ -30,7 +30,7 @@ args = {
     :descriptionOfExperiment => "Proj4SelfOrgContextSuper; 2 in 4 out; divide then integrate",
     :baseRandomNumberSeed => 0,
 
-    :classOfTheNetwork => Context4LayerNetwork,
+    :classOfTheNetwork => Context4LayerNetworkVer1,
     :classOfTheTrainer => Trainer4SelfOrgContextSuper,
     :classOfDataSetGenerator => Generate4ClassDataSet,
 

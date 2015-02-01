@@ -41,7 +41,7 @@ class Layer
       currentStrategy =  learningStrategy.new(aNeuron, strategyArgs)
       extensionModule = strategyArgs[:extendStrategyWithModule]
       currentStrategy.extend(extensionModule)   unless(extensionModule.nil?)
-      aNeuron.learningStrat = learningStrategy.new(aNeuron, strategyArgs)
+      aNeuron.learningStrat = currentStrategy
     end
   end
 

@@ -1,15 +1,12 @@
 ### VERSION "nCore"
-## ../nCore/bin/Proj4SelfOrgContextSuper.rb
+## ../nCore/bin/Proj3MixtureSelfOrgContextSuper.rb
 
-# Specific Purpose for this experiment: Get NEXT simplest versions of self-org, context, AND combined with Supervised Learning, understood and "working."
-#   In this 4th project, we append a "relearning or re- self-org WITHOUT CONTEXT" just prior to the bp supervised training.
-#   Presumably this will improve the accuracy of the hyperplanes in the 2nd hidden layer, compared to those in proj 3.
-
-# General Purpose:  Start of Project 4; project to split example set to learn sub-parts, and then combine those parts/neuron-functions that
+# Specific Purpose for this experiment: Get SIMPLEST versions of self-org, context, AND combined with Supervised Learning,  understood and "working."
+# Purpose:  Start of Project 7; project to split example set to learn sub-parts, and then combine those parts/neuron-functions that
 # didn't need to be separated, but instead need to be integrated to obtain better generalization.
-# Ultimate goal is develop analogy processing -- where one function useful for solving one problem
-# can be of use in solving another "similar-but-different" problem.  The common function(s)/neuron(s) can be thus be 'reused' -- and even potentially made
-# better by improving the accuracy of the function parameters because more examples are used to learn the parameters. ala Bayes
+# Ultimate goal of project 6 is develop analogy processing -- where one function useful for solving one problem
+# can be of use in solving another problem.  The common function(s)/neuron(s) can be thus be 'reused' -- and even potentially made
+# better by improving the accuracy of the function parameters because more examples are used to learn the parameters.
 
 require_relative '../lib/core/Utilities'
 require_relative '../lib/core/DataSet'
@@ -29,18 +26,18 @@ logger = StringIO.new
 
 args = {
     :experimentNumber => $globalExperimentNumber,
-    :descriptionOfExperiment => "Proj4SelfOrgContextSuper; 2 in 4 out; divide then integrate",
+    :descriptionOfExperiment => "Proj3SelfOrgContextSuper; 2 in 4 out; divide but NO Integration",
     :baseRandomNumberSeed => 0,
 
-    :classOfTheNetwork => Context4LayerNetworkVer1,
-    :classOfTheTrainer => Trainer4SelfOrgContextSuper,
+    :classOfTheNetwork => Context4LayerNetworkVer2,
+    :classOfTheTrainer => Trainer3SelfOrgContextSuper,
     :classOfDataSetGenerator => Generate4ClassDataSet,
 
     # training parameters
     :learningRate => 0.1,
     :minMSE => 0.0,
-    :epochsForSelfOrg => 150, #150,
-    :epochsForSupervisedTraining => 600, # 600,
+    :epochsForSelfOrg => 150, # 300, for 30 degree angle rotation of data
+    :epochsForSupervisedTraining => 600,
     :trainingSequence => TrainingSequence,
 
     # Network Architecture
@@ -67,6 +64,7 @@ args = {
 
     # Results and debugging information storage/access
     :logger => logger
+
 }
 
 
@@ -76,7 +74,7 @@ numberOfRepetitions = 1
 
 runner = ExperimentRunner.new(args)
 lastExperimentRun, results = runner.repeatSimulation(numberOfRepetitions)
-# logger.puts lastExperimentRun.network
+#logger.puts lastExperimentRun.network
 
 loggedData = logger.string
 

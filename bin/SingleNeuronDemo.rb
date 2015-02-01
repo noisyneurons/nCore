@@ -28,7 +28,7 @@ args = {
     # training parameters re. Output Error
     :learningRate => 0.1, # 0.1, just at instability (0.5 is unstable)
     :minMSE => 0.0, #0.001,
-    :epochsForSelfOrg => 150, #150,
+    :epochsForSelfOrg => 300, #150,
     :epochsForSupervisedTraining => 1, # 600,
     :trainingSequence => TrainingSequence,
 

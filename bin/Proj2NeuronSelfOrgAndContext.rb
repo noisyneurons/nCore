@@ -117,7 +117,7 @@ class Experiment
   #end
 
   def createNetworkAndTrainer
-    network = Context4LayerNetwork.new(args)
+    network = Context4LayerNetworkVer1.new(args)
 
     # temporarilySetSpecificWeights(network)
 

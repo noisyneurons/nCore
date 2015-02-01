@@ -441,7 +441,7 @@ class SuppressorLink < LinkBase
   # This could be stochastic, with probability of suppression a function
   # of the input neuron's output
   def suppress?
-    return false if(disable)
+    return false if (disable)
     returnValue = transform(@inputNeuron.output)
     case @reverse
       when false
