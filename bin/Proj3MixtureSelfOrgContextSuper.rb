@@ -37,7 +37,7 @@ args = {
     :learningRate => 0.1,
     :minMSE => 0.0,
     :epochsForSelfOrg => 30, # 300, for 30 degree angle rotation of data
-    :epochsForSupervisedTraining => 1,
+    :epochsForSupervisedTraining => 100,
     :trainingSequence => TrainingSequence,
 
     # Network Architecture
@@ -49,7 +49,7 @@ args = {
     # Neural Parts Specifications
     :typeOfLink => Link,
     :typeOfNeuron => Neuron3,
-    :typeOfLinkToOutput => LinkWithNormalization,
+    :typeOfLinkToOutput => Link,
     :typeOfOutputNeuron => OutputNeuron3,
 
     :weightRange => 1.0,
@@ -57,7 +57,7 @@ args = {
     # Training Set parameters
     :numberOfExamples => 16,
     :numberOfTestingExamples => 160,
-    :standardDeviationOfAddedGaussianNoise => 0.0,
+    :standardDeviationOfAddedGaussianNoise => 0.1,
     :verticalShift => 0.0,
     :horizontalShift => 0.0,
     :angleOfClockwiseRotationOfInputData => 0.0,

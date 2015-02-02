@@ -98,6 +98,7 @@ class Context4LayerNetworkVer2 < ContextNetwork
     context_connect_layers(hiddenLayer1, hiddenLayer2, SuppressorLink, args)
 
     self.outputLayer = createAndConnectLayer((hiddenLayer1 + hiddenLayer2), typeOfNeuron = args[:typeOfOutputNeuron], typeOfLink = args[:typeOfLinkToOutput], args[:numberOfOutputNeurons])
+    #self.outputLayer = createAndConnectLayer(hiddenLayer2, typeOfNeuron = args[:typeOfOutputNeuron], typeOfLink = args[:typeOfLinkToOutput], args[:numberOfOutputNeurons])
     self.allNeuronLayers << outputLayer
   end
 

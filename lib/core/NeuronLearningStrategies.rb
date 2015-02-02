@@ -179,19 +179,20 @@ class GaussModel < BaseModel
   attr_accessor :mean, :std
   attr_reader :prior, :bayesNumerator
 
-  def initialize(mean, std, prior, numberOfExamples)
-    @numberOfExamples = numberOfExamples
+  def initialize(mean, std, prior)
     @mean = mean
     @std = std
     @prior = prior
     @bayesNumerator = nil
     @examplesProbability = nil
     @sumOfProbabilities = 0.0
+    @exampleNumber = 0
   end
 
   # called at the beginning of each epoch
   def initEpoch
     @sumOfProbabilities = 0.0
+    @exampleNumber = 0
   end
 
   # called for each example
@@ -210,12 +211,13 @@ class GaussModel < BaseModel
   # called for each example
   # @param [real]  inputOrOutputForExample; net summed input to neuron; or analog output of neuron
   def prepForRecalculatingModelsParams(inputOrOutputForExample)
+    @exampleNumber += 1
     @sumOfProbabilities += @examplesProbability
   end
 
   # called at the end of each epoch
   def atEpochsEndCalculateModelParams
-    @prior = @sumOfProbabilities / @numberOfExamples
+    @prior = @sumOfProbabilities / @exampleNumber
   end
 
   def to_s
@@ -224,15 +226,14 @@ class GaussModel < BaseModel
 end
 
 class GaussModelAdaptable < GaussModel
-  def initialize(mean, std, prior, numberOfExamples)
+  def initialize(mean, std, prior)
     super
-    @exampleNumber = nil
-    @allInputs = Array.new(numberOfExamples)
-    @allProbabilities = Array.new(numberOfExamples)
-    self.initEpoch
+    @allInputs = []
+    @allProbabilities = []
   end
 
   def initEpoch
+    @sumOfProbabilities = 0.0
     @exampleNumber = 0
     @allInputs.clear
     @allProbabilities.clear
@@ -250,7 +251,7 @@ class GaussModelAdaptable < GaussModel
     sumOfProbabilities = @allProbabilities.sum
     @mean = calcWeightedMean(sumOfProbabilities)
     @std = calcWeightedSTD(@mean)
-    @prior = sumOfProbabilities / @numberOfExamples
+    @prior = sumOfProbabilities / @exampleNumber # which represents the total number of examples processed by this neuron
   end
 
   def calcWeightedMean(sumOfProbabilities)
@@ -281,11 +282,10 @@ class ExampleDistributionModel < BaseModel
     # puts "numberOfExamples= \t #{@numberOfExamples}"
     @classesOfModels = [GaussModelAdaptable, GaussModelAdaptable, GaussModel]
     @mean = [1.0, -1.0, 0.0] # [0.026, -0.026, 0.0]
-    @std =  [0.5, 0.5, 4.0]   # [0.01, 0.01, 0.4]
+    @std = [0.5, 0.5, 4.0] # [0.01, 0.01, 0.4]
     @prior = [0.33, 0.33, 0.34]
     @models = []
-    @classesOfModels.each_with_index { |classOfModel, i| @models << classOfModel.new(@mean[i], @std[i], @prior[i], @numberOfExamples) }
-    # @lobeModels = [@models[0], @models[1]]
+    @classesOfModels.each_with_index { |classOfModel, i| @models << classOfModel.new(@mean[i], @std[i], @prior[i]) }
   end
 
   # use this method at beginning of EACH EPOCH
@@ -388,7 +388,7 @@ class ScaleNeuronWeights < LearningStrategyBase
 
   def endEpoch
     scaleFactor = @desiredMaxNetInput / @largestNetInput
-    inputLinks.each {|link| link.weight = scaleFactor *link.weight }
+    inputLinks.each { |link| link.weight = scaleFactor *link.weight }
   end
 end
 

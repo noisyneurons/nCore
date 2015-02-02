@@ -63,38 +63,38 @@ require 'distribution'
 
 
 # testing multiple extensions...
-module ModuleA
-  def methA
-    puts @varB
-  end
-
-  def methB
-    puts @varA
-  end
-end
-
-module ModuleB
-  def methA
-    #super
-    puts @varA
-    super
-  end
-  def methC
-    puts "HI there"
-  end
-end
-
-
-class A
-  def initialize
-    @varA = 1.0
-    @varB = 2.0
-  end
-
-  def methA
-    puts @varA
-  end
-end
+#module ModuleA
+#  def methA
+#    puts @varB
+#  end
+#
+#  def methB
+#    puts @varA
+#  end
+#end
+#
+#module ModuleB
+#  def methA
+#    #super
+#    puts @varA
+#    super
+#  end
+#  def methC
+#    puts "HI there"
+#  end
+#end
+#
+#
+#class A
+#  def initialize
+#    @varA = 1.0
+#    @varB = 2.0
+#  end
+#
+#  def methA
+#    puts @varA
+#  end
+#end
 
 #anA = A.new
 #anA.methA
@@ -112,16 +112,26 @@ end
 #puts
 
 
-arrayOfNeurons = [A.new, A.new, A.new]
+#arrayOfNeurons = [A.new, A.new, A.new]
+#
+## arrayOfNeurons.each { |aNeuron| aNeuron.extend(ModuleA) }
+#
+#
+## arrayOfNeurons.collect! { |aNeuron| aNeuron.dup }
+#
+##arrayOfNeurons.replace(arrayOfDupedNeurons)
+#
+#arrayOfNeurons.each { |aNeuron| aNeuron.methA }
+#
+#id = 2
+#puts  id.odd?
 
-# arrayOfNeurons.each { |aNeuron| aNeuron.extend(ModuleA) }
+ary = []
 
+ary[0] = 0
+ary[1] = 1
+ary[10] = 10
 
-# arrayOfNeurons.collect! { |aNeuron| aNeuron.dup }
-
-#arrayOfNeurons.replace(arrayOfDupedNeurons)
-
-arrayOfNeurons.each { |aNeuron| aNeuron.methA }
-
-id = 2
-puts  id.odd?
+#puts ary.flatten
+ary.clear
+puts ary.length

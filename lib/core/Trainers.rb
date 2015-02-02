@@ -245,7 +245,7 @@ module SelfOrgMixtureWithContext
 
   def selfOrgWithContextStrategyArgs
     {:numberOfExamples => args[:numberOfExamples],
-     :classOfInputDistributionModel => ExampleDistributionModel, :desiredMeanNetInput => 1.0,
+     :classOfInputDistributionModel => ExampleDistributionModel, :desiredMeanNetInput => 3.0,
      :extendStrategyWithModule => LearningSuppressionViaLink}
   end
 end
@@ -276,16 +276,14 @@ class OneNeuronSelfOrgTrainer < TrainerBase
     #logger.puts "Output Layer AFTER SUPERVISED TRAINING:"
     #forEachExampleDisplayInputsAndOutputs(outputLayer)
 
-
     return totalEpochs, mse, 0.0 # calcTestingMeanSquaredErrors
   end
 
   def supervisedTraining(learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
-    propagatingLayers, controllingLayers = layerDetermination(learningLayers)
+    propagatingLayers, xxxxxx = layerDetermination(learningLayers)
 
     strategyArguments = {:ioFunction => ioFunction}
     learningLayers.attachLearningStrategy(LearningBP, strategyArguments) if learningLayers.include?(outputLayer)
-
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase, totalEpochs)
     return mse, totalEpochs
   end
@@ -299,8 +297,8 @@ end
 class MixtureTrainer3SelfOrgContextSuper < TrainerBase
   attr_accessor :hiddenLayer1, :hiddenLayer2
   include SelfOrgMixture
- # include SelfOrgMixtureWithContext
- # include ForwardPropWithContext
+  include SelfOrgMixtureWithContext
+  #include ForwardPropWithContext
 
   def postInitialize
     @hiddenLayer1 = allNeuronLayers[1]
@@ -317,26 +315,30 @@ class MixtureTrainer3SelfOrgContextSuper < TrainerBase
     learningLayers = hiddenLayer1
     # learningLayers.initWeights # Needed only when the given layer is self-organizing for the first time
     mse, totalEpochs = selOrg(selfOrgNoContextStrategyArgs, learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
+    puts "FIRST LAYER PROCESSING DONE"
 
-    ### self-org 2nd hidden layer WITH CONTEXT!!
-    #learningLayers = hiddenLayer2
-    #learningLayers.initWeights # Needed only when the given layer is self-organizing for the first time
-    #mse, totalEpochs = selOrg(selfOrgWithContextStrategyArgs, learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
-    #
-    #mse, totalEpochs = temporaryHookName(ioFunction, mse, totalEpochs)
+    ## self-org 2nd hidden layer WITH CONTEXT!!
+    learningLayers = hiddenLayer2
+    mse, totalEpochs = selOrg(selfOrgWithContextStrategyArgs, learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
+    # mse, totalEpochs = selOrg(selfOrgNoContextStrategyArgs, learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
 
-    #display:
-    #logger.puts "Hidden Layer 2 outputs:"
-    #forEachExampleDisplayInputsAndOutputs(hiddenLayer2)
-    ##
-    #learningLayers = outputLayer.to_LayerAry
-    #mse, totalEpochs = supervisedTraining(learningLayers, ioFunction, args[:epochsForSupervisedTraining], totalEpochs)
+    mse, totalEpochs = temporaryHookName(ioFunction, mse, totalEpochs)
+
+    # display:
+    logger.puts "Hidden Layer 2 outputs:"
+    forEachExampleDisplayInputsAndOutputs(hiddenLayer2)
+
+    learningLayers = outputLayer.to_LayerAry
+    mse, totalEpochs = supervisedTraining(learningLayers, ioFunction, args[:epochsForSupervisedTraining], totalEpochs)
+
+    logger.puts "Output Layer AFTER SUPERVISED TRAINING:"
+    forEachExampleDisplayInputsAndOutputs(outputLayer)
 
     return totalEpochs, mse, 0.0 # calcTestingMeanSquaredErrors
   end
 
   def supervisedTraining(learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
-    propagatingLayers, controllingLayers = layerDetermination(learningLayers)
+    propagatingLayers, xxxxxxx = layerDetermination(learningLayers)
 
     strategyArguments = {:ioFunction => SigmoidIOFunction}
     learningLayers.attachLearningStrategy(LearningBP, strategyArguments)
