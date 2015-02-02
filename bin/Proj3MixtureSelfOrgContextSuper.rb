@@ -36,7 +36,7 @@ args = {
     # training parameters
     :learningRate => 0.1,
     :minMSE => 0.0,
-    :epochsForSelfOrg => 300, # 300, for 30 degree angle rotation of data
+    :epochsForSelfOrg => 30, # 300, for 30 degree angle rotation of data
     :epochsForSupervisedTraining => 1,
     :trainingSequence => TrainingSequence,
 
@@ -52,7 +52,7 @@ args = {
     :typeOfLinkToOutput => LinkWithNormalization,
     :typeOfOutputNeuron => OutputNeuron3,
 
-    :weightRange => 0.1,
+    :weightRange => 1.0,
 
     # Training Set parameters
     :numberOfExamples => 16,

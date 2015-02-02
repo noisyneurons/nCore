@@ -115,7 +115,6 @@ class XORDataGenerator < GenerateDataSet
   end
 end
 
-
 class ORDataGenerator < GenerateDataSet
   def generate(numberOfExamples=4, standardDeviationOfAddedGaussianNoise=0.0)
     examples = []

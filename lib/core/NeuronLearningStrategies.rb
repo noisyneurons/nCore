@@ -245,7 +245,8 @@ class GaussModelAdaptable < GaussModel
   end
 
   def atEpochsEndCalculateModelParams
-    # puts "allInputs=\t#{@allInputs}"
+    # puts "allInputs=\t#{@allInputs.join(" ")}"
+    # puts "@allProbabilities=\t#{@allProbabilities.join(" ")}\n"
     sumOfProbabilities = @allProbabilities.sum
     @mean = calcWeightedMean(sumOfProbabilities)
     @std = calcWeightedSTD(@mean)
@@ -277,9 +278,10 @@ class ExampleDistributionModel < BaseModel
   def initialize(args)
     @args = args
     @numberOfExamples = args[:numberOfExamples]
+    # puts "numberOfExamples= \t #{@numberOfExamples}"
     @classesOfModels = [GaussModelAdaptable, GaussModelAdaptable, GaussModel]
-    @mean = [1.0, -1.0, 0.0]
-    @std = [0.5, 0.5, 4.0]
+    @mean = [1.0, -1.0, 0.0] # [0.026, -0.026, 0.0]
+    @std =  [0.5, 0.5, 4.0]   # [0.01, 0.01, 0.4]
     @prior = [0.33, 0.33, 0.34]
     @models = []
     @classesOfModels.each_with_index { |classOfModel, i| @models << classOfModel.new(@mean[i], @std[i], @prior[i], @numberOfExamples) }
@@ -356,6 +358,7 @@ class NormalizeByZeroingSumOfNetInputs < LearningStrategyBase
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
     neuron.netInput = netInput = calcNetInputToNeuron
+    # puts "netInputAtNormalization = \t#{netInput}"
     @sumOfNetInputs += netInput
     @sumOfBiasWeightsContributionToNetInput += @biasWeight
     @numExamplesCounted += 1
@@ -367,6 +370,28 @@ class NormalizeByZeroingSumOfNetInputs < LearningStrategyBase
     inputLinks[-1].weight = -1.0 * (sumOfNetInputsWithOutBiasContribution / @numExamplesCounted)
   end
 end
+
+class ScaleNeuronWeights < LearningStrategyBase
+
+  def startEpoch
+    @numExamplesCounted = 0
+    @largestNetInput = 0.0
+    @desiredMaxNetInput = 1.0
+  end
+
+  def propagate(exampleNumber)
+    neuron.exampleNumber = exampleNumber
+    neuron.netInput = netInput = calcNetInputToNeuron
+    v = netInput.abs
+    @largestNetInput = v if (v > @largestNetInput)
+  end
+
+  def endEpoch
+    scaleFactor = @desiredMaxNetInput / @largestNetInput
+    inputLinks.each {|link| link.weight = scaleFactor *link.weight }
+  end
+end
+
 # Using Mixture Model to Estimate the distribution a Neuron's netInputs from all examples in an epoch
 # This class is one part of of a multi-part learning strategy...
 class EstimateInputDistribution < LearningStrategyBase
@@ -390,7 +415,7 @@ class EstimateInputDistribution < LearningStrategyBase
   def propagate(exampleNumber)
     neuron.exampleNumber = exampleNumber
     neuron.netInput = calcNetInputToNeuron
-    # puts "netInput= #{netInput}"
+    # puts "netInputAtEstimation = \t#{netInput}"
     neuron.output = ioFunction(netInput)
     inputDistributionModel.useExampleToImproveDistributionModel(netInput)
   end

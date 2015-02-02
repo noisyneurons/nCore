@@ -215,9 +215,12 @@ module SelfOrgMixture
   end
 
   def selfOrgTraining(learningLayers, propagatingLayers, strategyArguments, epochsForSelfOrg, totalEpochs)
-    iterations = (epochsForSelfOrg - 2)/2
+    iterations = (epochsForSelfOrg - 4)/2
 
     learningLayers.attachLearningStrategy(NormalizeByZeroingSumOfNetInputs, strategyArguments)
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, 1, totalEpochs)
+
+    learningLayers.attachLearningStrategy(ScaleNeuronWeights, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, 1, totalEpochs)
 
     iterations.times do |i|
@@ -230,6 +233,10 @@ module SelfOrgMixture
 
     learningLayers.attachLearningStrategy(MoveLobesApart, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, 1, totalEpochs)
+
+    learningLayers.attachLearningStrategy(EstimateInputDistribution, strategyArguments)
+    mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsForEstimation=1, totalEpochs)
+
     return mse, totalEpochs
   end
 end
@@ -292,8 +299,8 @@ end
 class MixtureTrainer3SelfOrgContextSuper < TrainerBase
   attr_accessor :hiddenLayer1, :hiddenLayer2
   include SelfOrgMixture
-  include SelfOrgMixtureWithContext
-  include ForwardPropWithContext
+ # include SelfOrgMixtureWithContext
+ # include ForwardPropWithContext
 
   def postInitialize
     @hiddenLayer1 = allNeuronLayers[1]
