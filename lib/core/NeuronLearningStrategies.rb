@@ -235,8 +235,10 @@ class GaussModelAdaptable < GaussModel
   def initEpoch
     @sumOfProbabilities = 0.0
     @exampleNumber = 0
-    @allInputs.clear
-    @allProbabilities.clear
+    #@allInputs.length.times {|i| @allInputs[i] = nil}
+    #@allProbabilities.length.times {|i| @allProbabilities[i] = nil}
+    #@allInputs.clear
+    #@allProbabilities.clear
   end
 
   def prepForRecalculatingModelsParams(inputOrOutputForExample)
@@ -278,8 +280,6 @@ class ExampleDistributionModel < BaseModel
 
   def initialize(args)
     @args = args
-    @numberOfExamples = args[:numberOfExamples]
-    # puts "numberOfExamples= \t #{@numberOfExamples}"
     @classesOfModels = [GaussModelAdaptable, GaussModelAdaptable, GaussModel]
     @mean = [1.0, -1.0, 0.0] # [0.026, -0.026, 0.0]
     @std = [0.5, 0.5, 4.0] # [0.01, 0.01, 0.4]
@@ -368,6 +368,7 @@ class NormalizeByZeroingSumOfNetInputs < LearningStrategyBase
     biasWeight = inputLinks[-1].weight
     sumOfNetInputsWithOutBiasContribution = @sumOfNetInputs - @sumOfBiasWeightsContributionToNetInput
     inputLinks[-1].weight = -1.0 * (sumOfNetInputsWithOutBiasContribution / @numExamplesCounted)
+    puts "@numExamplesCounted=\t#{@numExamplesCounted}"
   end
 end
 

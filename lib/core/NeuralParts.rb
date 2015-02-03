@@ -434,7 +434,7 @@ class SuppressorLink < LinkBase
 
   def initialize(inputNeuron, outputNeuron, args)
     super
-    @disable = false # true
+    @disable = false
     @reverse = @outputNeuron.id.odd?
   end
 

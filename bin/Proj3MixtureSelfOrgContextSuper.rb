@@ -57,7 +57,7 @@ args = {
     # Training Set parameters
     :numberOfExamples => 16,
     :numberOfTestingExamples => 160,
-    :standardDeviationOfAddedGaussianNoise => 0.1,
+    :standardDeviationOfAddedGaussianNoise => 0.0, #0.000001,
     :verticalShift => 0.0,
     :horizontalShift => 0.0,
     :angleOfClockwiseRotationOfInputData => 0.0,
