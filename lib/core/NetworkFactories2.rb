@@ -36,9 +36,6 @@ class ContextNetwork < BaseNetwork
     connectAllLearningNeuronsToBiasNeuron
   end
 
-  ### bew below
-
-
   def context_connect_layers(sendingLayer, receivingLayer, typeOfLink, args)
     sendingLayer.each_with_index do |sendingNeuron, index|
       receivingNeuron = receivingLayer[index * 2]

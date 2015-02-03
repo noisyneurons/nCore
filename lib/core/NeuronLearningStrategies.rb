@@ -39,16 +39,6 @@ class LearningStrategyBase # strategy for standard bp learning for output neuron
   def endStrategy
   end
 
-
-  # service routines that may be used by version 0.1 learning strategies
-  # TODO this routine is not needed IFF ver. 0.1 learning strategies are to be deleted.
-  def calcWeightsForUNNormalizedInputs
-    biasWeight = inputLinks.inject(0.0) { |sum, link| sum + link.propagateUsingZeroInput }
-    inputLinks.each { |aLink| aLink.calcWeightsForUNNormalizedInputs }
-    inputLinks[-1].weight = biasWeight
-    inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
-  end
-
   # simple accessors to neuron's embedded objects
   protected
 
@@ -95,57 +85,8 @@ class LearningBP < LearningStrategyBase # strategy for standard bp learning for 
     addAccumulationToWeight
   end
 end
-;
-; ####################### Version 0.1 Learning Strategies #######################
-;
-#class Normalization < LearningStrategyBase
-#
-#  def startEpoch
-#    inputLinks.each { |aLink| aLink.resetAllNormalizationVariables }
-#  end
-#
-#  def propagate(exampleNumber)
-#    neuron.exampleNumber = exampleNumber
-#  end
-#
-#  def learnExample
-#    inputLinks.each { |link| link.storeEpochHistory }
-#  end
-#
-#  def endEpoch
-#    inputLinks.each { |aLink| aLink.calculateNormalizationCoefficients }
-#  end
-#end
-#
-#class SelfOrgStrat < LearningStrategyBase
-#  attr_accessor :targetMinus, :distanceBetweenTargets
-#
-#  def initialize(theEnclosingNeuron, ** strategyArgs)
-#    super
-#    @targetPlus = self.findNetInputThatGeneratesMaximumOutput
-#    @targetMinus = -1.0 * @targetPlus
-#    @distanceBetweenTargets = @targetPlus - @targetMinus
-#  end
-#
-#  def startEpoch
-#    zeroDeltaWAccumulated
-#  end
-#
-#  def propagate(exampleNumber)
-#    neuron.exampleNumber = exampleNumber
-#    neuron.netInput = calcNetInputToNeuron
-#    neuron.propagateToOutput
-#  end
-#
-#  def learnExample
-#    neuron.error = -1.0 * neuron.ioDerivativeFromNetInput(netInput) * (((netInput - targetMinus)/distanceBetweenTargets) - 0.5)
-#    calcDeltaWsAndAccumulate
-#  end
-#
-#  def endEpoch
-#    addAccumulationToWeight
-#  end
-#end
+
+
 #;
 ; ####################### Version 0.2 Learning Strategies #######################
 ;
@@ -163,14 +104,18 @@ class BaseModel
   include Distribution
   include Distribution::Shorthand
 
+  def startStrategy;
+  end
+
   # calculates the gaussian probability DENSITY function for any specified standard deviation and mean
   # the 'norm_pdf' function only properly calculates this when the standard deviation == 1.0
+  # TODO may want to use LogGaussian instead!!!!
   # @param [real] x
   # @param [real] mean
   # @param [real] std
   def gaussPdf(x, mean, std)
-    normalizedDeviationFromMean = ((x - mean) / std)
-    return 0.0 if (normalizedDeviationFromMean.abs > 15.0)
+    std = 1e-15 if (std < 1e-15) # 1e-20 does NOT work.  You get NaN in simulation results
+    normalizedDeviationFromMean = (x - mean) / std
     return norm_pdf(normalizedDeviationFromMean) / std # NOTE: the .abs gets rid of imaginary results in some cases
   end
 end
@@ -200,7 +145,6 @@ class GaussModel < BaseModel
   def calculateBayesNumerator(inputOrOutputForExample)
     @bayesNumerator = @prior * gaussPdf(inputOrOutputForExample, @mean, @std)
   end
-
 
   # called for each example
   # @param [real] bayesDenominator
@@ -232,13 +176,14 @@ class GaussModelAdaptable < GaussModel
     @allProbabilities = []
   end
 
+  def startStrategy
+    @allInputs.clear
+    @allProbabilities.clear
+  end
+
   def initEpoch
     @sumOfProbabilities = 0.0
     @exampleNumber = 0
-    #@allInputs.length.times {|i| @allInputs[i] = nil}
-    #@allProbabilities.length.times {|i| @allProbabilities[i] = nil}
-    #@allInputs.clear
-    #@allProbabilities.clear
   end
 
   def prepForRecalculatingModelsParams(inputOrOutputForExample)
@@ -286,6 +231,10 @@ class ExampleDistributionModel < BaseModel
     @prior = [0.33, 0.33, 0.34]
     @models = []
     @classesOfModels.each_with_index { |classOfModel, i| @models << classOfModel.new(@mean[i], @std[i], @prior[i]) }
+  end
+
+  def startStrategy
+    @models.each { |model| model.startStrategy }
   end
 
   # use this method at beginning of EACH EPOCH
@@ -407,6 +356,7 @@ class EstimateInputDistribution < LearningStrategyBase
   end
 
   def startStrategy
+    inputDistributionModel.startStrategy
   end
 
   def startEpoch

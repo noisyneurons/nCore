@@ -459,6 +459,10 @@ class SuppressorLink < LinkBase
     end
   end
 
+  def backPropagate
+    0.0
+  end
+
   def to_s
     return "SuppressorLink\tSuppress: #{self.suppress?}\tFROM: #{inputNeuron.class.to_s} #{inputNeuron.id} TO: #{outputNeuron.class.to_s} #{outputNeuron.id}"
   end

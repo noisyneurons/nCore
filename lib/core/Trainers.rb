@@ -203,8 +203,8 @@ end
 module SelfOrgMixture
   def selfOrgNoContextStrategyArgs
     {
-     :classOfInputDistributionModel => ExampleDistributionModel, :desiredMeanNetInput => 1.0,
-     :ioFunction => SigmoidIOFunction, :extendStrategyWithModule => nil
+        :classOfInputDistributionModel => ExampleDistributionModel, :desiredMeanNetInput => 3.0,
+        :ioFunction => SigmoidIOFunction, :extendStrategyWithModule => nil
     }
   end
 
@@ -249,12 +249,11 @@ module SelfOrgMixtureWithContext
 
   def selfOrgWithContextStrategyArgs
     {
-     :classOfInputDistributionModel => ExampleDistributionModel, :desiredMeanNetInput => 3.0,
-     :ioFunction => SigmoidIOFunction, :extendStrategyWithModule => LearningSuppressionViaLink
+        :classOfInputDistributionModel => ExampleDistributionModel, :desiredMeanNetInput => 3.0,
+        :ioFunction => SigmoidIOFunction, :extendStrategyWithModule => LearningSuppressionViaLink
     }
   end
 end
-
 
 #module SupervisedTrainingWithContext
 #
@@ -265,7 +264,6 @@ end
 #    }
 #  end
 #end
-
 
 
 ###################################################################
@@ -339,7 +337,7 @@ class MixtureTrainer3SelfOrgContextSuper < TrainerBase
     ## self-org 2nd hidden layer WITH CONTEXT!!
     learningLayers = hiddenLayer2
     mse, totalEpochs = selOrg(selfOrgWithContextStrategyArgs, learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
-    learningLayers.attachLearningStrategy(ForwardPropOnly, selfOrgWithContextStrategyArgs)   # selfOrgNoContextStrategyArgs)
+    learningLayers.attachLearningStrategy(ForwardPropOnly, selfOrgWithContextStrategyArgs) # selfOrgNoContextStrategyArgs)
 
     mse, totalEpochs = temporaryHookName(ioFunction, mse, totalEpochs)
     # display

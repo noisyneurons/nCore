@@ -57,6 +57,12 @@ class Layer
     LayerArray.new(self)
   end
 
+  def +(aLayer)
+    aLayerAry = self.to_LayerAry
+    aLayerAry << aLayer
+    return aLayerAry
+  end
+
   def <<(aNeuron)
     begin
       if aNeuron.kind_of?(NeuronBase)

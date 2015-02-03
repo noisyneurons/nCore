@@ -126,12 +126,69 @@ require 'distribution'
 #id = 2
 #puts  id.odd?
 
-ary = []
+#ary = []
+#
+#ary[0] = 0
+#ary[1] = 1
+#ary[10] = 10
+#
+##puts ary.flatten
+#ary.clear
+#puts ary.length
 
-ary[0] = 0
-ary[1] = 1
-ary[10] = 10
 
-#puts ary.flatten
-ary.clear
-puts ary.length
+include Distribution
+include Distribution::Shorthand
+
+def gaussPdf(x, mean, std)
+  normalizedDeviationFromMean = (x - mean) / std
+return norm_pdf(normalizedDeviationFromMean)  / std # NOTE: the .abs gets rid of imaginary results in some cases
+end
+
+
+
+def gaussPdf2(x, mean, std)
+  std = 1e-20 if(std < 1e-20)   # 1e-20 does NOT work.  You get NaN in simulation results
+  normalizedDeviationFromMean = (x - mean) / std
+  return norm_pdf(normalizedDeviationFromMean)  / std # NOTE: the .abs gets rid of imaginary results in some cases
+end
+
+def gaussPdf3(x, mean, std)
+  diff = x - mean
+  ratio = diff / std
+  std = 1e-10 if(std < 1e-10)   # 1e-20 does NOT work.  You get NaN in simulation results
+  diff = ratio * std
+  # puts "std=\t#{std}\tdiff=\t#{diff}\n"
+  normalizedDeviationFromMean = diff / std
+  return norm_pdf(normalizedDeviationFromMean)  / std
+end
+
+
+
+
+
+std = 1e-20
+mean = 1e-19 # ==> 0.0  because diff is 100 larger than std
+puts "#{gaussPdf(0.0, mean, std)}\t#{gaussPdf2(0.0, mean, std)}   "
+
+
+std = 1e-17
+mean = 1e-16 # ==> 0.0  because diff is 100 larger than std
+puts "#{gaussPdf(0.0, mean, std)}\t#{gaussPdf2(0.0, mean, std)}   "
+
+
+std = 1e-10
+mean = 1e-9 # ==> 0.0  because diff is 100 larger than std
+puts "#{gaussPdf(0.0, mean, std)}\t#{gaussPdf2(0.0, mean, std)}   "
+
+std = 1.0
+mean = 10.0 # ==> 0.0  because diff is 100 larger than std
+puts "#{gaussPdf(0.0, mean, std)}\t#{gaussPdf2(0.0, mean, std)}   "
+
+std = 1e10
+mean = 1e11 # ==> 0.0  because diff is 100 larger than std
+puts "#{gaussPdf(0.0, mean, std)}\t#{gaussPdf2(0.0, mean, std)}   "
+
+
+
+# puts gaussPdf(0.0, mean, std)
