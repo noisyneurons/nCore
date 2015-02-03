@@ -16,6 +16,12 @@ class Layer
     arrayOfNeurons.each { |aNeuron| aNeuron.initWeights }
   end
 
+  def zeroWeights
+    arrayOfNeurons.each do |aNeuron|
+      aNeuron.inputLinks.each { |aLink| aLink.weight = 0.0 }
+    end
+  end
+
   def startStrategy
     arrayOfNeurons.each { |aNeuron| aNeuron.startStrategy }
   end
@@ -38,9 +44,9 @@ class Layer
 
   def attachLearningStrategy(learningStrategy, strategyArgs)
     arrayOfNeurons.each do |aNeuron|
-      currentStrategy =  learningStrategy.new(aNeuron, strategyArgs)
+      currentStrategy = learningStrategy.new(aNeuron, strategyArgs)
       extensionModule = strategyArgs[:extendStrategyWithModule]
-      currentStrategy.extend(extensionModule)   unless(extensionModule.nil?)
+      currentStrategy.extend(extensionModule) unless (extensionModule.nil?)
       aNeuron.learningStrat = currentStrategy
     end
   end
@@ -123,6 +129,10 @@ class LayerArray
 
   def initWeights
     arrayOfLayers.each { |aLayer| aLayer.initWeights }
+  end
+
+  def zeroWeights
+    arrayOfLayers.each { |aLayer| aLayer.zeroWeights }
   end
 
   def startStrategy

@@ -51,8 +51,6 @@ class ContextNetwork < BaseNetwork
     receivingNeuron.suppressorLink = theLink
   end
 
-  #### old below
-
   def connectAllLearningNeuronsToBiasNeuron
     addLinksFromBiasNeuronTo(hiddenNeurons, args[:typeOfLink])
     addLinksFromBiasNeuronTo(outputLayer, args[:typeOfLinkToOutput])
