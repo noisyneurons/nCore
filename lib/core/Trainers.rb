@@ -168,37 +168,37 @@ end
 ###################################################################
 ; ########### MODULES: SelfOrg and ForwardProp modules #############
 
-module ForwardPropWithContext
-
-  def forwardPropWithContext(layerReceivingContext, ioFunction)
-    propagatingLayers, controllingLayers = layerDetermination(layerReceivingContext.to_LayerAry)
-    singleLayerControllingLearning = controllingLayers[-1]
-    strategyArguments = {:ioFunction => ioFunction}
-    setupForwardPropWithContext(singleLayerControllingLearning, layerReceivingContext, strategyArguments)
-  end
-
-  def setupForwardPropWithContext(singleLayerControllingLearning, singleLayerReceivingContext, strategyArguments)
-    singleLayerControllingLearning.each_with_index do |neuronInControllingLayer, indexToControlNeuron|
-      indexToLearningNeuron = 2 * indexToControlNeuron
-
-      forwardPropWithContextSetup(LearningControlledByNeuron, indexToLearningNeuron, neuronInControllingLayer,
-                                  singleLayerReceivingContext, strategyArguments)
-      forwardPropWithContextSetup(LearningControlledByNeuronNOT, (indexToLearningNeuron + 1), neuronInControllingLayer,
-                                  singleLayerReceivingContext, strategyArguments)
-    end
-  end
-
-  def forwardPropWithContextSetup(classOfLearningController, indexToLearningNeuron, neuronInControllingLayer,
-      singleLearningLayer, strategyArguments)
-    aLearningNeuron = singleLearningLayer[indexToLearningNeuron]
-    strategy = ForwardPropOnly.new(aLearningNeuron, strategyArguments)
-    strategy.extend(ContextForLearning)
-    learningController = classOfLearningController.new(neuronInControllingLayer)
-    strategy.learningController = learningController
-    aLearningNeuron.learningStrat = strategy
-  end
-
-end
+#module ForwardPropWithContext
+#
+#  def forwardPropWithContext(layerReceivingContext, ioFunction)
+#    propagatingLayers, controllingLayers = layerDetermination(layerReceivingContext.to_LayerAry)
+#    singleLayerControllingLearning = controllingLayers[-1]
+#    strategyArguments = {:ioFunction => ioFunction}
+#    setupForwardPropWithContext(singleLayerControllingLearning, layerReceivingContext, strategyArguments)
+#  end
+#
+#  def setupForwardPropWithContext(singleLayerControllingLearning, singleLayerReceivingContext, strategyArguments)
+#    singleLayerControllingLearning.each_with_index do |neuronInControllingLayer, indexToControlNeuron|
+#      indexToLearningNeuron = 2 * indexToControlNeuron
+#
+#      forwardPropWithContextSetup(LearningControlledByNeuron, indexToLearningNeuron, neuronInControllingLayer,
+#                                  singleLayerReceivingContext, strategyArguments)
+#      forwardPropWithContextSetup(LearningControlledByNeuronNOT, (indexToLearningNeuron + 1), neuronInControllingLayer,
+#                                  singleLayerReceivingContext, strategyArguments)
+#    end
+#  end
+#
+#  def forwardPropWithContextSetup(classOfLearningController, indexToLearningNeuron, neuronInControllingLayer,
+#      singleLearningLayer, strategyArguments)
+#    aLearningNeuron = singleLearningLayer[indexToLearningNeuron]
+#    strategy = ForwardPropOnly.new(aLearningNeuron, strategyArguments)
+#    strategy.extend(ContextForLearning)
+#    learningController = classOfLearningController.new(neuronInControllingLayer)
+#    strategy.learningController = learningController
+#    aLearningNeuron.learningStrat = strategy
+#  end
+#
+#end
 
 module SelfOrgMixture
   def selfOrgNoContextStrategyArgs
@@ -212,6 +212,7 @@ module SelfOrgMixture
     strategyArgs[:ioFunction] = ioFunction
     propagatingLayers, notUsed = layerDetermination(learningLayers.to_LayerAry)
     mse, totalEpochs = selfOrgTraining(learningLayers, strategyArgs, propagatingLayers, epochsDuringPhase, totalEpochs)
+    learningLayers.attachLearningStrategy(ForwardPropOnly, strategyArgs)
     return mse, totalEpochs
   end
 
@@ -309,7 +310,6 @@ end
 ###################################################################
 ; ######################## MixtureTrainer3SelfOrgContextSuper # TODO ???? !!!! #############
 
-
 class MixtureTrainer3SelfOrgContextSuper < TrainerBase
   attr_accessor :hiddenLayer1, :hiddenLayer2
   include SelfOrgMixture
@@ -330,17 +330,17 @@ class MixtureTrainer3SelfOrgContextSuper < TrainerBase
     ### self-org 1st hidden layer
     learningLayers = hiddenLayer1
     mse, totalEpochs = selOrg(selfOrgNoContextStrategyArgs, learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
-    learningLayers.attachLearningStrategy(ForwardPropOnly, selfOrgNoContextStrategyArgs)
     puts "FIRST LAYER PROCESSING DONE"
-
 
     ## self-org 2nd hidden layer WITH CONTEXT!!
     learningLayers = hiddenLayer2
-    mse, totalEpochs = selOrg(selfOrgWithContextStrategyArgs, learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
-    learningLayers.attachLearningStrategy(ForwardPropOnly, selfOrgWithContextStrategyArgs) # selfOrgNoContextStrategyArgs)
+
+    # mse, totalEpochs = selOrg(selfOrgWithContextStrategyArgs, learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
+    mse, totalEpochs = selOrg(selfOrgNoContextStrategyArgs, learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
+    puts "SECOND LAYER PROCESSING DONE"
 
     mse, totalEpochs = temporaryHookName(ioFunction, mse, totalEpochs)
-    # display
+
     logger.puts "Hidden Layer 2 outputs:"
     forEachExampleDisplayInputsAndOutputs(hiddenLayer2)
 
@@ -370,7 +370,6 @@ class MixtureTrainer3SelfOrgContextSuper < TrainerBase
     return [mse, totalEpochs]
   end
 end
-
 
 ###################################################################
 ###################################################################

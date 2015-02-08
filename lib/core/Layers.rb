@@ -44,10 +44,16 @@ class Layer
 
   def attachLearningStrategy(learningStrategy, strategyArgs)
     arrayOfNeurons.each do |aNeuron|
-      currentStrategy = learningStrategy.new(aNeuron, strategyArgs)
+      newStrategy = learningStrategy.new(aNeuron, strategyArgs)
+      aNeuron.learningStrat = newStrategy
+
+      # TODO This code is too complex.  Furthermore it is in the wrong place!  I should move this part of the learning strategy UP HIGHER!!
+      aNeuron.suppressorLink.disable = true unless (aNeuron.suppressorLink.nil?)
       extensionModule = strategyArgs[:extendStrategyWithModule]
-      currentStrategy.extend(extensionModule) unless (extensionModule.nil?)
-      aNeuron.learningStrat = currentStrategy
+      unless extensionModule.nil?
+        newStrategy.extend(extensionModule)
+        aNeuron.suppressorLink.disable = false if (extensionModule == LearningSuppressionViaLink)
+      end
     end
   end
 
@@ -114,6 +120,7 @@ class Layer
     return description
   end
 end
+
 
 ###############
 

@@ -425,10 +425,10 @@ end
 ;
 module LearningSuppressionViaLink
   def propagate(exampleNumber)
-    unless neuron.suppressorLink.suppress?
-      super(exampleNumber)
-    else
+    if neuron.suppressorLink.suppress?
       neuronDoesNotRespond
+    else
+      super(exampleNumber)
     end
   end
 
