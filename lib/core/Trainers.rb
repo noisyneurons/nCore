@@ -115,7 +115,7 @@ class TrainerBase
     totalEpochs = 0
 
     learningLayers = allNeuronLayers - inputLayer
-    propagatingLayers, controllingLayers = layerDetermination(learningLayers)
+    propagatingLayers = layerDetermination(learningLayers)
 
     strategyArgs = {:ioFunction => SigmoidIOFunction}
     learningLayers.attachLearningStrategy(LearningBP, strategyArgs)
@@ -132,15 +132,11 @@ class TrainerBase
   def layerDetermination(learningLayers)
     lastLearningLayer = learningLayers[-1]
     propagatingLayers = LayerArray.new
-    controllingLayers = LayerArray.new
-
     allNeuronLayers.each do |aLayer|
       propagatingLayers << aLayer
       break if aLayer == lastLearningLayer
-      controllingLayers << aLayer
     end
-
-    return [propagatingLayers, controllingLayers]
+    return propagatingLayers
   end
 
   def trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase, totalEpochs)
@@ -164,63 +160,18 @@ class TrainerBase
   end
 end
 
-###################################################################
-###################################################################
-; ########### MODULES: SelfOrg and ForwardProp modules #############
-
-#module ForwardPropWithContext
-#
-#  def forwardPropWithContext(layerReceivingContext, ioFunction)
-#    propagatingLayers, controllingLayers = layerDetermination(layerReceivingContext.to_LayerAry)
-#    singleLayerControllingLearning = controllingLayers[-1]
-#    strategyArguments = {:ioFunction => ioFunction}
-#    setupForwardPropWithContext(singleLayerControllingLearning, layerReceivingContext, strategyArguments)
-#  end
-#
-#  def setupForwardPropWithContext(singleLayerControllingLearning, singleLayerReceivingContext, strategyArguments)
-#    singleLayerControllingLearning.each_with_index do |neuronInControllingLayer, indexToControlNeuron|
-#      indexToLearningNeuron = 2 * indexToControlNeuron
-#
-#      forwardPropWithContextSetup(LearningControlledByNeuron, indexToLearningNeuron, neuronInControllingLayer,
-#                                  singleLayerReceivingContext, strategyArguments)
-#      forwardPropWithContextSetup(LearningControlledByNeuronNOT, (indexToLearningNeuron + 1), neuronInControllingLayer,
-#                                  singleLayerReceivingContext, strategyArguments)
-#    end
-#  end
-#
-#  def forwardPropWithContextSetup(classOfLearningController, indexToLearningNeuron, neuronInControllingLayer,
-#      singleLearningLayer, strategyArguments)
-#    aLearningNeuron = singleLearningLayer[indexToLearningNeuron]
-#    strategy = ForwardPropOnly.new(aLearningNeuron, strategyArguments)
-#    strategy.extend(ContextForLearning)
-#    learningController = classOfLearningController.new(neuronInControllingLayer)
-#    strategy.learningController = learningController
-#    aLearningNeuron.learningStrat = strategy
-#  end
-#
-#end
-
 module SelfOrgMixture
-  def selfOrgNoContextStrategyArgs
-    {
-        :classOfInputDistributionModel => ExampleDistributionModel, :desiredMeanNetInput => 3.0,
-        :ioFunction => SigmoidIOFunction, :extendStrategyWithModule => nil
-    }
-  end
 
-  def selOrg(strategyArgs, learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
-    strategyArgs[:ioFunction] = ioFunction
-    propagatingLayers, notUsed = layerDetermination(learningLayers.to_LayerAry)
+  def selOrg(strategyArgs, learningLayers, epochsDuringPhase, totalEpochs)
+    propagatingLayers = layerDetermination(learningLayers.to_LayerAry)
     mse, totalEpochs = selfOrgTraining(learningLayers, strategyArgs, propagatingLayers, epochsDuringPhase, totalEpochs)
     learningLayers.attachLearningStrategy(ForwardPropOnly, strategyArgs)
     return mse, totalEpochs
   end
 
   def selfOrgTraining(learningLayers, strategyArguments, propagatingLayers, epochsForSelfOrg, totalEpochs)
-    iterations = (epochsForSelfOrg - 4)/2
 
-    #puts (propagatingLayers - inputLayer)
-    #(propagatingLayers - inputLayer).attachLearningStrategy(ForwardPropOnly, strategyArguments)
+    iterations = (epochsForSelfOrg - 4)/2
 
     learningLayers.attachLearningStrategy(NormalizeByZeroingSumOfNetInputs, strategyArguments)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, 1, totalEpochs)
@@ -246,49 +197,35 @@ module SelfOrgMixture
   end
 end
 
-module SelfOrgMixtureWithContext
-
-  def selfOrgWithContextStrategyArgs
-    {
-        :classOfInputDistributionModel => ExampleDistributionModel, :desiredMeanNetInput => 3.0,
-        :ioFunction => SigmoidIOFunction, :extendStrategyWithModule => LearningSuppressionViaLink
-    }
-  end
-end
-
-#module SupervisedTrainingWithContext
-#
-#  def selfOrgWithContextStrategyArgs
-#    {
-#        :classOfInputDistributionModel => ExampleDistributionModel, :desiredMeanNetInput => 3.0,
-#        :extendStrategyWithModule => LearningSuppressionViaLink
-#    }
-#  end
-#end
-
-
 ###################################################################
 ; ######################## OneNeuronSelfOrgTrainer #############
 
 class OneNeuronSelfOrgTrainer < TrainerBase
   include SelfOrgMixture
 
+  def postInitialize
+    @selfOrgNoContextStrategyArgs = {:classOfInputDistributionModel => ExampleDistributionModel, :desiredMeanNetInput => 3.0,
+                                     :ioFunction => SigmoidIOFunction, :extendStrategyWithModule => nil}
+    @selfOrgWithContextStrategyArgs = @selfOrgNoContextStrategyArgs.merge({:extendStrategyWithModule => LearningSuppressionViaLink})
+    @supervisedTrainingStrategyArgs = {:ioFunction => SigmoidIOFunction}
+
+  end
+
   def train
     distributeSetOfExamples(examples)
 
     totalEpochs = 0
-    ioFunction = SigmoidIOFunction #NonMonotonicIOFunction
 
     ### self-org 1st hidden layer
     learningLayers = outputLayer
-    mse, totalEpochs = selOrg(selfOrgNoContextStrategyArgs, learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
+    mse, totalEpochs = selOrg(@selfOrgNoContextStrategyArgs, learningLayers, args[:epochsForSelfOrg], totalEpochs)
 
     #display:
     logger.puts "Output Layer BEFORE SUPERVISED TRAINING:"
     forEachExampleDisplayInputsAndOutputs(outputLayer)
 
     #learningLayers = outputLayer.to_LayerAry
-    #mse, totalEpochs = supervisedTraining(learningLayers, ioFunction, args[:epochsForSupervisedTraining], totalEpochs)
+    #mse, totalEpochs = supervisedTraining(@supervisedTrainingStrategyArgs, learningLayers, args[:epochsForSupervisedTraining], totalEpochs)
     #
     #logger.puts "Output Layer AFTER SUPERVISED TRAINING:"
     #forEachExampleDisplayInputsAndOutputs(outputLayer)
@@ -296,10 +233,9 @@ class OneNeuronSelfOrgTrainer < TrainerBase
     return totalEpochs, mse, 0.0 # calcTestingMeanSquaredErrors
   end
 
-  def supervisedTraining(learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
-    propagatingLayers, xxxxxx = layerDetermination(learningLayers)
+  def supervisedTraining(strategyArguments, learningLayers, epochsDuringPhase, totalEpochs)
+    propagatingLayers = layerDetermination(learningLayers)
 
-    strategyArguments = {:ioFunction => ioFunction}
     learningLayers.attachLearningStrategy(LearningBP, strategyArguments) if learningLayers.include?(outputLayer)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase, totalEpochs)
     return mse, totalEpochs
@@ -313,39 +249,41 @@ end
 class MixtureTrainer3SelfOrgContextSuper < TrainerBase
   attr_accessor :hiddenLayer1, :hiddenLayer2
   include SelfOrgMixture
-  include SelfOrgMixtureWithContext
   # include SupervisedTraining
 
   def postInitialize
     @hiddenLayer1 = allNeuronLayers[1]
     @hiddenLayer2 = allNeuronLayers[2]
+    @selfOrgNoContextStrategyArgs = {:classOfInputDistributionModel => ExampleDistributionModel, :desiredMeanNetInput => 3.0,
+                                     :ioFunction => SigmoidIOFunction, :extendStrategyWithModule => nil}
+    @selfOrgWithContextStrategyArgs = @selfOrgNoContextStrategyArgs.merge({:extendStrategyWithModule => LearningSuppressionViaLink})
+    @supervisedTrainingStrategyArgs = {:ioFunction => SigmoidIOFunction}
+
   end
 
   def train
     distributeSetOfExamples(examples)
 
     totalEpochs = 0
-    ioFunction = SigmoidIOFunction
 
     ### self-org 1st hidden layer
     learningLayers = hiddenLayer1
-    mse, totalEpochs = selOrg(selfOrgNoContextStrategyArgs, learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
+    mse, totalEpochs = selOrg(@selfOrgNoContextStrategyArgs, learningLayers, args[:epochsForSelfOrg], totalEpochs)
     puts "FIRST LAYER PROCESSING DONE"
 
     ## self-org 2nd hidden layer WITH CONTEXT!!
     learningLayers = hiddenLayer2
 
-    # mse, totalEpochs = selOrg(selfOrgWithContextStrategyArgs, learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
-    mse, totalEpochs = selOrg(selfOrgNoContextStrategyArgs, learningLayers, ioFunction, args[:epochsForSelfOrg], totalEpochs)
+    mse, totalEpochs = selOrg(@selfOrgWithContextStrategyArgs, learningLayers, args[:epochsForSelfOrg], totalEpochs)
     puts "SECOND LAYER PROCESSING DONE"
 
-    mse, totalEpochs = temporaryHookName(ioFunction, mse, totalEpochs)
+    mse, totalEpochs = temporaryHookName(mse, totalEpochs)
 
     logger.puts "Hidden Layer 2 outputs:"
     forEachExampleDisplayInputsAndOutputs(hiddenLayer2)
 
     learningLayers = outputLayer
-    mse, totalEpochs = supervisedTraining(strategyArgs={}, learningLayers, ioFunction, args[:epochsForSupervisedTraining], totalEpochs)
+    mse, totalEpochs = supervisedTraining(@supervisedTrainingStrategyArgs, learningLayers, args[:epochsForSupervisedTraining], totalEpochs)
 
     logger.puts "Output Layer AFTER SUPERVISED TRAINING:"
     forEachExampleDisplayInputsAndOutputs(outputLayer)
@@ -353,9 +291,8 @@ class MixtureTrainer3SelfOrgContextSuper < TrainerBase
     return totalEpochs, mse, 0.0 # calcTestingMeanSquaredErrors
   end
 
-  def supervisedTraining(strategyArgs, learningLayers, ioFunction, epochsDuringPhase, totalEpochs)
-    propagatingLayers, notUsed = layerDetermination(learningLayers)
-    strategyArgs[:ioFunction] = ioFunction
+  def supervisedTraining(strategyArgs, learningLayers, epochsDuringPhase, totalEpochs)
+    propagatingLayers = layerDetermination(learningLayers)
 
     learningLayers.attachLearningStrategy(LearningBP, strategyArgs)
     mse, totalEpochs = trainingPhaseFor(propagatingLayers, learningLayers, epochsDuringPhase, totalEpochs)
@@ -366,7 +303,7 @@ class MixtureTrainer3SelfOrgContextSuper < TrainerBase
     distributeDataToInputAndOutputNeurons(examples, [inputLayer, outputLayer])
   end
 
-  def temporaryHookName(ioFunction, mse, totalEpochs)
+  def temporaryHookName(mse, totalEpochs)
     return [mse, totalEpochs]
   end
 end
