@@ -37,7 +37,7 @@ args = {
     :learningRate => 0.1,
     :minMSE => 0.0,
     :epochsForSelfOrg => 30, # 300, for 30 degree angle rotation of data
-    :epochsForSupervisedTraining => 100,
+    :epochsForSupervisedTraining => 1000,
     :trainingSequence => TrainingSequence,
 
     # Network Architecture
@@ -57,7 +57,7 @@ args = {
     # Training Set parameters
     :numberOfExamples => 16,
     :numberOfTestingExamples => 160,
-    :standardDeviationOfAddedGaussianNoise => 0.0, # 0.000001,
+    :standardDeviationOfAddedGaussianNoise => 0.6, # 0.000001,
     :verticalShift => 0.0,
     :horizontalShift => 0.0,
     :angleOfClockwiseRotationOfInputData => 0.0,
@@ -74,7 +74,9 @@ numberOfRepetitions = 1
 
 runner = ExperimentRunner.new(args)
 lastExperimentRun, results = runner.repeatSimulation(numberOfRepetitions)
-logger.puts lastExperimentRun.network
+# logger.puts lastExperimentRun.network
+logger.puts results
+
 
 loggedData = logger.string
 

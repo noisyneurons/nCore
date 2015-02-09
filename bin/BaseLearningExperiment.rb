@@ -43,8 +43,8 @@ class Experiment
   def createTestingSet
     testExamples = dataSetGenerator.generate(args[:numberOfTestingExamples], args[:standardDeviationOfAddedGaussianNoise])
     logger.puts "Number of Testing examples = #{testExamples.length}"
-    # logger.puts "Test Examples:"
-    # logger.puts testExamples
+    logger.puts "Test Examples:"
+    logger.puts testExamples
     return testExamples
   end
 
@@ -85,19 +85,19 @@ class ExperimentRunner
     @args = args
   end
 
-  def repeatSimulation(numberOfReps = 1, randomSeedForSimulationSequence = 0)
+  def repeatSimulation(numberOfReps = 1, randomSeedForSimulationSequence = @args[:baseRandomNumberSeed])
     aryOfTrainingMSEs = []
     aryOfTestingMSEs = []
     experiment = nil
 
     numberOfReps.times do |i|
-      experimentsRandomNumberSeed = randomSeedForSimulationSequence + i
-      args[:baseRandomNumberSeed] = experimentsRandomNumberSeed
+      args[:baseRandomNumberSeed] = randomSeedForSimulationSequence + i
       experiment = Experiment.new(args)
       lastEpoch, trainingMSE, testingMSE, startingTime, endingTime = experiment.performSimulation()
       aryOfTrainingMSEs << trainingMSE
       aryOfTestingMSEs << testingMSE
     end
+    args[:baseRandomNumberSeed] = randomSeedForSimulationSequence  # restored original baseRandomNumberSeed into args hash.  Not great, but...
     lastExperiment = experiment
     results = {:trainingMSEs => aryOfTrainingMSEs, :testingMSEs => aryOfTestingMSEs}
     return [lastExperiment, results]

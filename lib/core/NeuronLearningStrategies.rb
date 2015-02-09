@@ -143,7 +143,10 @@ class GaussModel < BaseModel
   # called for each example
   # @param [real] inputOrOutputForExample net summed input to neuron; or analog output of neuron
   def calculateBayesNumerator(inputOrOutputForExample)
-    @bayesNumerator = @prior * gaussPdf(inputOrOutputForExample, @mean, @std)
+    numerator = @prior * gaussPdf(inputOrOutputForExample, @mean, @std)
+    floorForNumerator =  1.0e-10
+    numerator = floorForNumerator if (numerator < floorForNumerator)
+    @bayesNumerator = numerator
   end
 
   # called for each example
@@ -181,11 +184,6 @@ class GaussModelAdaptable < GaussModel
     @allProbabilities.clear
   end
 
-  def initEpoch
-    @sumOfProbabilities = 0.0
-    @exampleNumber = 0
-  end
-
   def prepForRecalculatingModelsParams(inputOrOutputForExample)
     @allInputs[@exampleNumber] = inputOrOutputForExample
     @allProbabilities[@exampleNumber] = @examplesProbability
@@ -193,8 +191,6 @@ class GaussModelAdaptable < GaussModel
   end
 
   def atEpochsEndCalculateModelParams
-    # puts "allInputs=\t#{@allInputs.join(" ")}"
-    # puts "@allProbabilities=\t#{@allProbabilities.join(" ")}\n"
     sumOfProbabilities = @allProbabilities.sum
     @mean = calcWeightedMean(sumOfProbabilities)
     @std = calcWeightedSTD(@mean)

@@ -2,13 +2,13 @@
 ; ## ../nCore/lib/core/Trainers.rb
 
 ###################################################################
-###################################################################
 ; ################# MODULE: DisplayAndErrorCalculations #############
 
 module DisplayAndErrorCalculations
 
   def calcMeanSumSquaredErrors # Does NOT assume squared error for each example and output neuron is stored in NeuronRecorder
     mse = 1e100
+    distributeSetOfExamples(examples)
     mse = genericCalcMeanSumSquaredErrors(numberOfExamples) unless (outputLayer[0].outputError.nil?)
     return mse
   end
@@ -16,7 +16,7 @@ module DisplayAndErrorCalculations
   def calcTestingMeanSquaredErrors
     testMSE = nil
     testingExamples = args[:testingExamples]
-    numberOfTestingExamples = args[:numberOfTestingExamples]
+    numberOfTestingExamples = testingExamples.length
     unless (testingExamples.nil?)
       distributeSetOfExamples(testingExamples)
       testMSE = genericCalcMeanSumSquaredErrors(numberOfTestingExamples)
@@ -31,6 +31,7 @@ module DisplayAndErrorCalculations
       allNeuronLayers.propagate(exampleNumber)
       squaredErrors << calcWeightedErrorMetricForExample()
     end
+    puts "\n\t\t\t\t\t\t\t\t\t\t\t\t\t\tsquaredErrors = \t#{squaredErrors}" if (numberOfExamples == 160)
     sse = squaredErrors.flatten.reduce(:+)
     return (sse / (numberOfExamples * numberOfOutputNeurons))
   end
@@ -273,7 +274,6 @@ class MixtureTrainer3SelfOrgContextSuper < TrainerBase
 
     ## self-org 2nd hidden layer WITH CONTEXT!!
     learningLayers = hiddenLayer2
-
     mse, totalEpochs = selOrg(@selfOrgWithContextStrategyArgs, learningLayers, args[:epochsForSelfOrg], totalEpochs)
     puts "SECOND LAYER PROCESSING DONE"
 
@@ -288,7 +288,7 @@ class MixtureTrainer3SelfOrgContextSuper < TrainerBase
     logger.puts "Output Layer AFTER SUPERVISED TRAINING:"
     forEachExampleDisplayInputsAndOutputs(outputLayer)
 
-    return totalEpochs, mse, 0.0 # calcTestingMeanSquaredErrors
+    return totalEpochs, mse, calcTestingMeanSquaredErrors
   end
 
   def supervisedTraining(strategyArgs, learningLayers, epochsDuringPhase, totalEpochs)

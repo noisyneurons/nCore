@@ -192,6 +192,7 @@ class OutputNeuron < Neuron
   def propagateToOutput
     self.output = ioFunction(netInput)
     self.target = arrayOfSelectedData[exampleNumber]
+    self.outputError = output - target
   end
 
   def backPropagateFromOutputs
